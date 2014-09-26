@@ -7,6 +7,7 @@ initial begin
   for (int unsigned adr=0; adr<64; adr++) begin
     $system ({"echo 'DASM(", $sformatf("%08x", mem[adr]), ")' | /opt/riscv/bin/riscv-dis >> code_ref.dis"});
     $system ({"echo '", riscv_asm::dis(mem[adr]),                                     "' >> code_dut.dis"});
+    $display(riscv_asm::dis(mem[adr]));
   end
 end
 
