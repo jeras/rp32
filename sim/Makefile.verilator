@@ -6,9 +6,10 @@ RTL =${PATH_RTL}/rp32_core.sv
 TBN =${PATH_TBN}/mem.sv
 TBN+=${PATH_TBN}/rp32_tb.sv
 
-HDL =${RTL}+${TBN}
+HDL =${RTL}
+HDL+=${TBN}
 
 all: lint
 
-lint:
-
+lint: ${HDL}
+	verilator --lint-only ${HDL}

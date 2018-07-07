@@ -5,12 +5,12 @@ module rp32_tb #(
   int unsigned PAW = 16,    // program address width
   int unsigned PDW = 32,    // program data    width
   int unsigned DAW = 16,    // data    address width
-  int unsigned DDW = 32     // data    data    width
+  int unsigned DDW = 32,    // data    data    width
   int unsigned DSW = DDW/8  // data    select  width
 )(
   // system signals
-  logic clk; // clock
-  logic rst; // reset
+  input  logic clk,    // clock
+  input  logic rst_n   // reset
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,21 +42,21 @@ rp32_core #(
   .DDW (DDW)
 ) DUT (
   // system signals
-  .clk     (clk),
-  .rst     (rst),
+  .clk      (clk),
+  .rst_n    (rst_n),
   // program bus
-  .bp_req  (bp_req),
-  .bp_adr  (bp_adr),
-  .bp_rdt  (bp_rdt),
-  .bp_ack  (bp_ack),
+  .bup_req  (bup_req),
+  .bup_adr  (bup_adr),
+  .bup_rdt  (bup_rdt),
+  .bup_ack  (bup_ack),
   // data bus
-  .bd_req  (bp_req),
-  .bd_wen  (bp_wen),
-  .bd_sel  (bp_sel),
-  .bd_adr  (bp_adr),
-  .bd_wdt  (bp_wdt),
-  .bd_rdt  (bp_rdt),
-  .bd_ack  (bp_ack)
+  .bud_req  (bud_req),
+  .bud_wen  (bud_wen),
+  .bud_sel  (bud_sel),
+  .bud_adr  (bud_adr),
+  .bud_wdt  (bud_wdt),
+  .bud_rdt  (bud_rdt),
+  .bud_ack  (bud_ack)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -100,9 +100,9 @@ mem #(
 // waveforms
 ////////////////////////////////////////////////////////////////////////////////
 
-initial begin
-  $dumpfile("rp32_tb.vcd");
-  $dumpvars(0, rp32_tb);
-end
+//initial begin
+//  $dumpfile("rp32_tb.vcd");
+//  $dumpvars(0, rp32_tb);
+//end
 
 endmodule: rp32_tb
