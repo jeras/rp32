@@ -1,6 +1,7 @@
 #!/bin/sh
 
-export MODELSIM_BIN="$HOME/altera/14.0/modelsim_ase/bin"
+#export MODELSIM_BIN="$HOME/intelFPGA_lite/18.0/modelsim_ase/bin"
+MODELSIM_BIN="$HOME/intelFPGA_lite/18.0/modelsim_ase/linuxaloem"
 
 # cleanup
 rm -f code_ref.dis

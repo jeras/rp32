@@ -1,0 +1,14 @@
+PATH_RTL=../rtl
+PATH_TBN=../tbn
+
+RTL =${PATH_RTL}/rp32_core.sv
+
+TBN =${PATH_TBN}/mem.sv
+TBN+=${PATH_TBN}/rp32_tb.sv
+
+HDL =${RTL}+${TBN}
+
+all: lint
+
+lint:
+
