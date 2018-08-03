@@ -36,11 +36,11 @@ function logic signed [32-1:0] imm32 (t_format_32 i, t_format_sel sel);
   case (sel)
     TYPE_32_R4,
     TYPE_32_R: imm32 = 'x;
-    TYPE_32_I: imm32 = {{20{i.i.imm_11_0[11]}}, i.i.imm_11_0}; // s11
-    TYPE_32_S: imm32 = {{20{i.s.imm_11_5[11]}}, i.s.imm_11_5, i.s.imm_4_0}; // s11
-    TYPE_32_B: imm32 = {{20{i.b.imm_12      }}, i.b.imm_11  , i.b.imm_10_5, i.b.imm_04_01, 1'b0      }; // s12
-    TYPE_32_U: imm32 = {    i.u.imm_31_12, 12'h000                                               }; // s31
-    TYPE_32_J: imm32 = {{12{i.j.imm_20_01[20]}}, i.j.imm_20_01, 1'b0      }; // s20
+    TYPE_32_I: imm32 = {{20[i[31]}},        i[30:25], i[24:21], i[20]}; // s11
+    TYPE_32_S: imm32 = {{20[i[31]}},        i[30:25], i[11:08], i[07]}; // s11
+    TYPE_32_B: imm32 = {{19[i[31]}}, i[07], i[30:25], i[11:08], 1'b0 }; // s12
+    TYPE_32_U: imm32 = {    i[31:12], 12'h000}; // s31
+    TYPE_32_J: imm32 = {{12{i[31]}}, i[19:12], i[20], i[30:25], i[24:21], 1'b0}; // s20
     default:   imm32 = 'x;
   endcase
 endfunction: imm32
@@ -90,6 +90,8 @@ typedef enum logic [3:0] {
 function logic signed [15:0] imm16 (t_format_16 i, t_format_16_sel sel, t_format_16_wdh wdh);
   logic [15:0] imm16 = '0;
   case (sel)
+    TYPE_16_CR:
+	imm16 = 'x;
     TYPE_16_CI:
       case (wdh)
         TYPE_16_W: {imm16[5], {imm16[4:2], imm16[7:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
@@ -108,7 +110,7 @@ function logic signed [15:0] imm16 (t_format_16 i, t_format_16_sel sel, t_format
     TYPE_16_CS:
       case (wdh)
         TYPE_16_W: {imm16[5:3], imm16[2], imm16[  6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
-        TYPE_16_D: {imm16[5:3],         imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
+        TYPE_16_D: {imm16[5:3],           imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
         TYPE_16_Q: {imm16[5:4], imm16[8], imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
 	default: imm16 = 'x;
       endcase

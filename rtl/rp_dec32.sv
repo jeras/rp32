@@ -1,4 +1,9 @@
-function rp_dec_32 (t_format_32 opcode);
+
+
+module rp_dec32 #()(
+);
+
+function dec32 (t_format_32 opcode);
   casez (opcode)
     //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
     32'b0000_0000_0000_0000_0000_0000_0001_0011: decode_32 = '{"nop               ", TYPE_32_0};
@@ -150,50 +155,6 @@ function rp_dec_32 (t_format_32 opcode);
     32'b1000_0000_0000_0000_0000_0000_0111_0011: decode_32 = '{"sret              ", TYPE_32_0};
     default                                    : decode_32 = '{"illegal           ", TYPE_32_X};
   endcase
-endfunction: decode_32
+endfunction: dec32
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-parameter string REG_X [0:31] = '{"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0/fp", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
-                                  "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
-parameter string REG_F [0:31] = '{"ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7", "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",
-                                  "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"};
-parameter string REG_P [0:31] = '{ "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7", "cr8", "cr9","cr10","cr11","cr12","cr13","cr14","cr15",
-                                  "cr16","cr17","cr18","cr19","cr20","cr21","cr22","cr23","cr24","cr25","cr26","cr27","cr28","cr29","cr30","cr31"};
-
-function string reg_x (logic [5-1:0] r, bit abi);
-  reg_x = abi ? REG_X[r] : $sformatf("r%0d", r);
-endfunction: reg_x
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-function string dis_32 (t_format_32 code, bit abi=1);  // enable "ABI" style register names
-  logic [32-1:0] imm;
-  t_asm op;
-
-  op  = decode_32(code);
-  imm = immediate_32(code, op.typ);
-  case (op.typ)
-    TYPE_32_R:  dis_32 = $sformatf("%s %s, %s, %s"        , op.nam, reg_x(code.r .rd , abi),      reg_x(code.r.rs1, abi), reg_x(code.r.rs2, abi)     );
-    TYPE_32_0:  dis_32 = $sformatf("%s"                   , op.nam                                                                                   );
-    TYPE_32_I:  dis_32 = $sformatf("%s %s, %s, 0x%03x"    , op.nam, reg_x(code.i .rd , abi),      reg_x(code.i.rs1, abi),                         imm);
-    TYPE_32_B:  dis_32 = $sformatf("%s %s, %s, 0x%04x"    , op.nam,                               reg_x(code.b.rs1, abi), reg_x(code.b.rs2, abi), imm);
-    TYPE_32_J:  dis_32 = $sformatf("%s 0x%06x"            , op.nam,                                                                               imm);
-    TYPE_32_U:  dis_32 = $sformatf("%s %s, 0x%08x"        , op.nam, reg_x(code.u .rd , abi),                                                      imm);
-    TYPE_32_L:  dis_32 = $sformatf("%s %s, 0x%03x (%s)"   , op.nam, reg_x(code.i .rd , abi), imm, reg_x(code.i.rs1, abi)                             );
-    TYPE_32_S:  dis_32 = $sformatf("%s %s, 0x%03x (%s)"   , op.nam, reg_x(code.s .rs2, abi), imm, reg_x(code.s.rs1, abi)                             );
-    default:  dis_32 =           "unknown";
-  endcase
-endfunction: dis_32
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-//function logic [32-1:0] asm (
-//  input byte [128-1:0] str;
-//);
-//endfunction
-
-endpackage: riscv_asm
+endmodule: rp_dec32
