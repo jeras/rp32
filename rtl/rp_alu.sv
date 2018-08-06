@@ -8,7 +8,7 @@ module rp_alu #(
   input  logic [XW-1:0] rs2,  // source register 2 / PC
   output logic [XW-1:0] rd,   // destination register
   // dedicated output for branch address
-  output logic [XW-1:0 sum,  // equal
+  output logic [XW-1:0] sum   // equal
 );
 
 logic ovf;  // overflow bit
@@ -21,7 +21,7 @@ assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2))
 // * see if overflow can be used
 
 always_comb
-case ctl inside
+case (ctl) inside
   ALU_ADD,            //   $signed(rs1) +   $signed(rs2)
   ALU_SUB: rd = sum;  //   $signed(rs1) -   $signed(rs2)
   ALU_LTS: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs2[XW-1];   //   $signed(rs1) <   $signed(rs2)
