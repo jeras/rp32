@@ -1,10 +1,12 @@
 PATH_RTL=../rtl
 PATH_TBN=../tbn
 
-RTL =${PATH_RTL}/rp32_core.sv
+RTL =${PATH_RTL}/riscv_isa_pkg.sv
+RTL+=${PATH_RTL}/rp_alu.sv
+RTL+=${PATH_RTL}/rp_core.sv
 
 TBN =${PATH_TBN}/mem.sv
-TBN+=${PATH_TBN}/rp32_tb.sv
+TBN+=${PATH_TBN}/rp_tb.sv
 
 HDL =${RTL}
 HDL+=${TBN}

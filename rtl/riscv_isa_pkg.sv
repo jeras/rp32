@@ -9,26 +9,26 @@ package riscv_isa_pkg;
 // 2-level type `bit` is used for parameters
 ///////////////////////////////////////////////////////////////////////////////
 
-struct packed {
+typedef struct packed {
   // ISA base
-  logic e,  // RV32E  - embedded
-  logic w,  // RV32I  - word
-  logic d,  // RV64I  - double
-  logic q   // RV128I - quad
+  logic e;  // RV32E  - embedded
+  logic w;  // RV32I  - word
+  logic d;  // RV64I  - double
+  logic q;  // RV128I - quad
   // extensions
-  logic m,  // integer multiplication and division
-  logic a,  // atomic
-  logic f,  // single-precision floating-point
-  logic d,  // double-precision floating-point
-  logic q,  // quad-precision floating-point
-  logic l,  // decimal precision floating-point
-//logic c,  // compressed
-  logic b,  // bit manipulation
-  logic j,  // dynamically translated languages
-  logic t,  // transactional memory
-  logic p,  // packed-SIMD
-  logic v,  // vector operations
-  logic n   // user-level interrupts
+  logic m;  // integer multiplication and division
+  logic a;  // atomic
+  logic f;  // single-precision floating-point
+  logic d;  // double-precision floating-point
+  logic q;  // quad-precision floating-point
+  logic l;  // decimal precision floating-point
+//logic c;  // compressed
+  logic b;  // bit manipulation
+  logic j;  // dynamically translated languages
+  logic t;  // transactional memory
+  logic p;  // packed-SIMD
+  logic v;  // vector operations
+  logic n;  // user-level interrupts
 } isa_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,48 +38,47 @@ struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 // generic size type
-enum logic [2-1:0] {
-  SZ_B = 3'b000;
-  SZ_B = 3'b000;
-  SZ_H = 3'b001;
-  SZ_W = 3'b010;
-  SZ_D = 3'b100;
-  SZ_Q = 3'b110;
+typedef enum logic [2-1:0] {
+  SZ_B = 3'b000,  // byte
+  SZ_H = 3'b001,  // half
+  SZ_W = 3'b010,  // word
+  SZ_D = 3'b100,  // double
+  SZ_Q = 3'b110   // quad
 } sz_t;
 
 // PC multiplexer
-enum logic [2-1:0] {
-  PC_PC2 = 2'b00;  // next   address 32bit instruction
-  PC_PC4 = 2'b01;  // next   address 16bit instruction
-  PC_ALU = 2'b10;  // branch address
-  PC_EPC = 2'b10;  // EPC value from CSR
+typedef enum logic [2-1:0] {
+  PC_PC2 = 2'b00,  // next   address 32bit instruction
+  PC_PC4 = 2'b01,  // next   address 16bit instruction
+  PC_ALU = 2'b10,  // branch address
+  PC_EPC = 2'b10   // EPC value from CSR
 } pc_t;
 
 // branch type
-enum logic [3-1:0] {
-  BR_EQ  = 3'b00_0;  //     equal
-  BR_NE  = 3'b00_1;  // not equal
-  BR_LTS = 3'b10_0;  // less    then            signed
-  BR_GES = 3'b10_1;  // greater then or equal   signed
-  BR_LTU = 3'b11_0;  // less    then          unsigned
-  BR_GEU = 3'b11_1;  // greater then or equal unsigned
-  BR_XXX = 3'bxx_x;  // idle
+typedef enum logic [3-1:0] {
+  BR_EQ  = 3'b00_0,  //     equal
+  BR_NE  = 3'b00_1,  // not equal
+  BR_LTS = 3'b10_0,  // less    then            signed
+  BR_GES = 3'b10_1,  // greater then or equal   signed
+  BR_LTU = 3'b11_0,  // less    then          unsigned
+  BR_GEU = 3'b11_1,  // greater then or equal unsigned
+  BR_XXX = 3'bxx_x   // idle
 } br_t;
 
 // ALU argument 1 multiplexer (RS1,...)
-enum logic {
-  A1_GPR = 1'b0;
-  A1_PC  = 1'b1;
+typedef enum logic {
+  A1_GPR = 1'b0,
+  A1_PC  = 1'b1
 } a1_t;
 
 // ALU argument 2 multiplexer (RS2,...)
-enum logic {
-  A2_GPR = 1'b0;
-  A2_IMM = 1'b1;
+typedef enum logic {
+  A2_GPR = 1'b0,
+  A2_IMM = 1'b1
 } a2_t;
 
 // ALU operation
-enum logic [4-1:0] {
+typedef enum logic [4-1:0] {
   // adder based instructions
   AO_ADD,  // addition
   AO_SUB,  // subtraction
@@ -97,62 +96,62 @@ enum logic [4-1:0] {
   AO_CP1,  // copy rs1
   AO_CP2,  // copy rs2
   // explicit idle
-  AO_XXX,  // do nothing
-} alu_t;
+  AO_XXX   // do nothing
+} ao_t;
 
 // ALU result width
-enum logic [2-1:0] {
-  AR_S = 2'b00;  // XW
-  AR_W = 2'b01;  // word
-  AR_D = 2'b10;  // double
-  AR_Q = 2'b11;  // quad
+typedef enum logic [2-1:0] {
+  AR_S = 2'b00,  // XW
+  AR_W = 2'b01,  // word
+  AR_D = 2'b10,  // double
+  AR_Q = 2'b11   // quad
 } ar_t;
 
 // TODO: check AXI4 encoding for transfer size
 
 // store type
-enum logic [3-1:0] {
-  ST_B = SZ_B;
-  ST_H = SZ_H;
-  ST_W = SZ_W;
-  ST_D = SZ_D;
-  ST_Q = SZ_Q;
+typedef enum logic [3-1:0] {
+  ST_B = SZ_B,  // byte
+  ST_H = SZ_H,  // half
+  ST_W = SZ_W,  // word
+  ST_D = SZ_D,  // double
+  ST_Q = SZ_Q   // quad
 } st_t;
 
 // load type
-enum logic [4-1:0] {
-  LD_B  = {1'b0, SZ_B};  LD_BU = {1'b1, SZ_B};
-  LD_H  = {1'b0, SZ_H};  LD_HU = {1'b1, SZ_H};
-  LD_W  = {1'b0, SZ_W};  LD_WU = {1'b1, SZ_W};
-  LD_D  = {1'b0, SZ_D};  LD_DU = {1'b1, SZ_D};
-  LD_Q  = {1'b0, SZ_Q};  LD_QU = {1'b1, SZ_Q};
+typedef enum logic [4-1:0] {
+  LD_B  = {1'b0, SZ_B},  LD_BU = {1'b1, SZ_B},  // byte
+  LD_H  = {1'b0, SZ_H},  LD_HU = {1'b1, SZ_H},  // half
+  LD_W  = {1'b0, SZ_W},  LD_WU = {1'b1, SZ_W},  // word
+  LD_D  = {1'b0, SZ_D},  LD_DU = {1'b1, SZ_D},  // double
+  LD_Q  = {1'b0, SZ_Q},  LD_QU = {1'b1, SZ_Q}   // quad
 } ld_t;
 
 // write back multiplexer
-enum logic [3-1:0] {
-  WB_ALU = 2'b00;
-  WB_MEM = 2'b01;
-  WB_PC4 = 2'b10;
-  WB_CSR = 2'b11;
+typedef enum logic [3-1:0] {
+  WB_ALU = 2'b00,  
+  WB_MEM = 2'b01,  
+  WB_PC4 = 2'b10,  
+  WB_CSR = 2'b11 
 } wb_t;
 
 // control structure
 typedef struct packed {
-  pc_t   pc,   // PC multiplexer
-  br_t   br,   // branch type
-  a1_t   a1,   // ALU RS1 multiplexer
-  a2_t   a2,  // ALU RS1 multiplexer
-  frm32_t   imm,  // immediate select
-  alu_t  alu,  // ALU operation
-  sz_t   sza,  // ALU operation size
-  st_t   st,   // store type
-  logic  ste,  // store enable
-  ld_t   ld,   // load type
-  logic  lde,  // load enable
-  wb_t   wb,   // write back multiplexer
-  logic  wbe,  // write back enable
-  logic  csr,  // CSR operation
-  logic  ill   // illegal
+  pc_t    pc;   // PC multiplexer
+  br_t    br;   // branch type
+  a1_t    a1;   // ALU RS1 multiplexer
+  a2_t    a2;   // ALU RS1 multiplexer
+  integer imm;  // immediate select
+  ao_t    ao;   // ALU operation
+  sz_t    sza;  // ALU operation size
+  st_t    st;   // store type
+  logic   ste;  // store enable
+  ld_t    ld;   // load type
+  logic   lde;  // load enable
+  wb_t    wb;   // write back multiplexer
+  logic   wbe;  // write back enable
+  logic   csr;  // CSR operation
+  logic   ill;  // illegal
 } ctli_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -160,50 +159,53 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 // M operation
-enum logic [2-1:0] {
-  MOP_MUL = 2'b00;  // multiplication lower  half result
-  MOP_MUH = 2'b01;  // multiplication higher half result
-  MOP_DIV = 2'b10;  // division
-  MOP_REM = 2'b11;  // reminder
+typedef enum logic [2-1:0] {
+  MOP_MUL = 2'b00,  // multiplication lower  half result
+  MOP_MUH = 2'b01,  // multiplication higher half result
+  MOP_DIV = 2'b10,  // division
+  MOP_REM = 2'b11   // reminder
 } mop_t;
 
 // control structure
 typedef struct packed {
-  mop_t op,  // operation
-  logic s1,  // sign operand 1
-  logic s2,  // sign operand 2
-  logic xw,  // XWIDTH (0 - full width, 1 - M64 additional opcodes)
-  logic en   // enable
+  mop_t op;  // operation
+  logic s1;  // sign operand 1
+  logic s2;  // sign operand 2
+  logic xw;  // XWIDTH (0 - full width, 1 - M64 additional opcodes)
+  logic en;  // enable
 } ctlm_t;
 
+///////////////////////////////////////////////////////////////////////////////
+// A extension
+///////////////////////////////////////////////////////////////////////////////
 
-// RV.A32
-//   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                 pc,     rs1,     rs2,   imm,     alu,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
-{16'b????_????????????, 32'b0001_0??0_0000_????_?010_????_?010_1111}: dec32 = '{"lr.w              ", TYPE_32_R};
-{16'b????_????????????, 32'b0001_1???_????_????_?010_????_?010_1111}: dec32 = '{"sc.w              ", TYPE_32_R};
-{16'b????_????????????, 32'b0000_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoadd.w          ", TYPE_32_R};
-{16'b????_????????????, 32'b0010_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoxor.w          ", TYPE_32_R};
-{16'b????_????????????, 32'b0100_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoor.w           ", TYPE_32_R};
-{16'b????_????????????, 32'b0110_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoand.w          ", TYPE_32_R};
-{16'b????_????????????, 32'b1000_0???_????_????_?010_????_?010_1111}: dec32 = '{"amomin.w          ", TYPE_32_R};
-{16'b????_????????????, 32'b1010_0???_????_????_?010_????_?010_1111}: dec32 = '{"amomax.w          ", TYPE_32_R};
-{16'b????_????????????, 32'b1100_0???_????_????_?010_????_?010_1111}: dec32 = '{"amominu.w         ", TYPE_32_R};
-{16'b????_????????????, 32'b1110_0???_????_????_?010_????_?010_1111}: dec32 = '{"amomaxu.w         ", TYPE_32_R};
-{16'b????_????????????, 32'b0000_1???_????_????_?010_????_?010_1111}: dec32 = '{"amoswap.w         ", TYPE_32_R};
-
-// RV.A64
-//   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                 pc,     rs1,     rs2,   imm,     alu,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
-{16'b????_????????????, 32'b0001_0??0_0000_????_?011_????_?010_1111}: dec32 = '{"lr.d              ", TYPE_32_R};
-{16'b????_????????????, 32'b0001_1???_????_????_?011_????_?010_1111}: dec32 = '{"sc.d              ", TYPE_32_R};
-{16'b????_????????????, 32'b0000_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoadd.d          ", TYPE_32_R};
-{16'b????_????????????, 32'b0010_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoxor.d          ", TYPE_32_R};
-{16'b????_????????????, 32'b0100_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoor.d           ", TYPE_32_R};
-{16'b????_????????????, 32'b0110_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoand.d          ", TYPE_32_R};
-{16'b????_????????????, 32'b1000_0???_????_????_?011_????_?010_1111}: dec32 = '{"amomin.d          ", TYPE_32_R};
-{16'b????_????????????, 32'b1010_0???_????_????_?011_????_?010_1111}: dec32 = '{"amomax.d          ", TYPE_32_R};
-{16'b????_????????????, 32'b1100_0???_????_????_?011_????_?010_1111}: dec32 = '{"amominu.d         ", TYPE_32_R};
-{16'b????_????????????, 32'b1110_0???_????_????_?011_????_?010_1111}: dec32 = '{"amomaxu.d         ", TYPE_32_R};
-{16'b????_????????????, 32'b0000_1???_????_????_?011_????_?010_1111}: dec32 = '{"amoswap.d         ", TYPE_32_R};
+//// RV.A32
+////   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                 pc,     rs1,     rs2,   imm,     alu,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
+//{16'b????_????????????, 32'b0001_0??0_0000_????_?010_????_?010_1111}: dec32 = '{"lr.w              ", TYPE_32_R};
+//{16'b????_????????????, 32'b0001_1???_????_????_?010_????_?010_1111}: dec32 = '{"sc.w              ", TYPE_32_R};
+//{16'b????_????????????, 32'b0000_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoadd.w          ", TYPE_32_R};
+//{16'b????_????????????, 32'b0010_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoxor.w          ", TYPE_32_R};
+//{16'b????_????????????, 32'b0100_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoor.w           ", TYPE_32_R};
+//{16'b????_????????????, 32'b0110_0???_????_????_?010_????_?010_1111}: dec32 = '{"amoand.w          ", TYPE_32_R};
+//{16'b????_????????????, 32'b1000_0???_????_????_?010_????_?010_1111}: dec32 = '{"amomin.w          ", TYPE_32_R};
+//{16'b????_????????????, 32'b1010_0???_????_????_?010_????_?010_1111}: dec32 = '{"amomax.w          ", TYPE_32_R};
+//{16'b????_????????????, 32'b1100_0???_????_????_?010_????_?010_1111}: dec32 = '{"amominu.w         ", TYPE_32_R};
+//{16'b????_????????????, 32'b1110_0???_????_????_?010_????_?010_1111}: dec32 = '{"amomaxu.w         ", TYPE_32_R};
+//{16'b????_????????????, 32'b0000_1???_????_????_?010_????_?010_1111}: dec32 = '{"amoswap.w         ", TYPE_32_R};
+//
+//// RV.A64
+////   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                 pc,     rs1,     rs2,   imm,     alu,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
+//{16'b????_????????????, 32'b0001_0??0_0000_????_?011_????_?010_1111}: dec32 = '{"lr.d              ", TYPE_32_R};
+//{16'b????_????????????, 32'b0001_1???_????_????_?011_????_?010_1111}: dec32 = '{"sc.d              ", TYPE_32_R};
+//{16'b????_????????????, 32'b0000_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoadd.d          ", TYPE_32_R};
+//{16'b????_????????????, 32'b0010_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoxor.d          ", TYPE_32_R};
+//{16'b????_????????????, 32'b0100_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoor.d           ", TYPE_32_R};
+//{16'b????_????????????, 32'b0110_0???_????_????_?011_????_?010_1111}: dec32 = '{"amoand.d          ", TYPE_32_R};
+//{16'b????_????????????, 32'b1000_0???_????_????_?011_????_?010_1111}: dec32 = '{"amomin.d          ", TYPE_32_R};
+//{16'b????_????????????, 32'b1010_0???_????_????_?011_????_?010_1111}: dec32 = '{"amomax.d          ", TYPE_32_R};
+//{16'b????_????????????, 32'b1100_0???_????_????_?011_????_?010_1111}: dec32 = '{"amominu.d         ", TYPE_32_R};
+//{16'b????_????????????, 32'b1110_0???_????_????_?011_????_?010_1111}: dec32 = '{"amomaxu.d         ", TYPE_32_R};
+//{16'b????_????????????, 32'b0000_1???_????_????_?011_????_?010_1111}: dec32 = '{"amoswap.d         ", TYPE_32_R};
 
 ///////////////////////////////////////////////////////////////////////////////
 // full control structure
@@ -211,19 +213,19 @@ typedef struct packed {
 
 // control structure
 typedef struct packed {
-  ctli_t  i,  // integer
-  ctlm_t  m,  // integer multiplication and division
-  ctla_t  a,  // atomic
-  ctlf_t  f,  // single-precision floating-point
-  ctld_t  d,  // double-precision floating-point
-  ctlq_t  q,  // quad-precision floating-point
-  ctll_t  l,  // decimal precision floating-point
-  ctlb_t  b,  // bit manipulation
-  ctlj_t  j,  // dynamically translated languages
-  ctlt_t  t,  // transactional memory
-  ctlp_t  p,  // packed-SIMD
-  ctlv_t  v,  // vector operations
-  ctln_t  n   // user-level interrupts
+  ctli_t  i;  // integer
+  ctlm_t  m;  // integer multiplication and division
+//  ctla_t  a;  // atomic
+//  ctlf_t  f;  // single-precision floating-point
+//  ctld_t  d;  // double-precision floating-point
+//  ctlq_t  q;  // quad-precision floating-point
+//  ctll_t  l;  // decimal precision floating-point
+//  ctlb_t  b;  // bit manipulation
+//  ctlj_t  j;  // dynamically translated languages
+//  ctlt_t  t;  // transactional memory
+//  ctlp_t  p;  // packed-SIMD
+//  ctlv_t  v;  // vector operations
+//  ctln_t  n;  // user-level interrupts
 } ctl_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -231,12 +233,12 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 function int unsigned opsiz (logic [16-1:0] op);
-       if (op =?= 16'bx111_xxxx_x111_111)  opsiz = 192;
-  else if (op =?= 16'bxxxx_xxxx_x1111111)  opsiz = 80 + 16 * op[14:12];
-  else if (op =?= 16'bxxxx_xxxx_x0111111)  opsiz = 64;
-  else if (op =?= 16'bxxxx_xxxx_xx011111)  opsiz = 48;
-  else if (op !?= 16'bxxxx_xxxx_xxx111xx
-       &&  op =?= 16'bxxxx_xxxx_xxxxxx11)  opsiz = 32;
+       if (op ==? 16'bx111_xxxx_x111_111)  opsiz = 192;
+  else if (op ==? 16'bxxxx_xxxx_x1111111)  opsiz = 80 + 16 * op[14:12];
+  else if (op ==? 16'bxxxx_xxxx_x0111111)  opsiz = 64;
+  else if (op ==? 16'bxxxx_xxxx_xx011111)  opsiz = 48;
+  else if (op !=? 16'bxxxx_xxxx_xxx111xx
+       &&  op ==? 16'bxxxx_xxxx_xxxxxx11)  opsiz = 32;
   else                                     opsiz = 16;
 endfunction: opsiz
 
@@ -272,7 +274,7 @@ typedef enum logic [3:0] {
   T32_J
 } frm_sel_t;
 
-function logic signed [32-1:0] imm32 (t_format_32 i, t_format_sel sel);
+function logic signed [32-1:0] imm32 (frm32_t i, frm_sel_t sel);
   case (sel)
     T32_R4,
     T32_R: imm32 = 'x;
@@ -285,6 +287,10 @@ function logic signed [32-1:0] imm32 (t_format_32 i, t_format_sel sel);
   endcase
 endfunction: imm32
 
+///////////////////////////////////////////////////////////////////////////////
+// 32 bit instruction decoder
+///////////////////////////////////////////////////////////////////////////////
+
 function ctli_t dec32 (isa_t isa, frm32_t op);
 // default values
 //              pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
@@ -292,7 +298,7 @@ dec32.i = '{PC_PC4, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x,
 //         {op, s1, s2, xw, en}
 dec32.m = '{'x, 'x, 'x, 'x, '0};
 
-casez ({isa, ext, op})
+casez ({isa, op})
 //   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                   pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
 {16'b????_????????????, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec32.i = '{PC_PC4,     'x,     'x,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0}; // 32'000000013 - nop
 {16'b????_????????????, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec32.i = '{PC_PC4,     'x,     'x,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0}; // 32'h00004033 - machine gen. bubble
@@ -324,7 +330,7 @@ casez ({isa, ext, op})
 {16'b????_????????????, 32'b????_????_????_????_?110_????_?001_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_IMM, IMM_I, AO_OR ,   'x,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // ori
 {16'b????_????????????, 32'b????_????_????_????_?111_????_?001_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_IMM, IMM_I, AO_AND,   'x,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // andi
 {16'b????_????????????, 32'b0000_000?_????_????_?001_????_?001_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_IMM, IMM_I, AO_SLL, AR_X,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, |op[6:$clog2(xw)]};  // slli TODO:imm mask
-{16'b????_????????????, 32'b0000_000?_????_????_?101_????_?001_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_IMM, IMM_I, AO_SRL, AR_X,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, |};  // srli
+{16'b????_????????????, 32'b0000_000?_????_????_?101_????_?001_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_IMM, IMM_I, AO_SRL, AR_X,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // srli
 {16'b????_????????????, 32'b0100_000?_????_????_?101_????_?001_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_IMM, IMM_I, AO_SRA, AR_X,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, |op[6:$clog2(xw)]};  // srai
 {16'b????_????????????, 32'b0000_000?_????_????_?000_????_?011_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_RS2,    'x, AO_ADD, AR_X,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // add
 {16'b????_????????????, 32'b0100_000?_????_????_?000_????_?011_0011}: dec32.i = '{PC_PC4, A1_RS1, A2_RS2,    'x, AO_SUB, AR_X,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // sub
@@ -483,7 +489,7 @@ typedef union packed {
   frm_cs  cs;
   frm_cb  cb;
   frm_cj  cj;
-} t_format_16;
+} frm16_t;
 
 typedef enum logic [3:0] {
   T16_CR,
@@ -494,16 +500,16 @@ typedef enum logic [3:0] {
   T16_CS,
   T16_CB,
   T16_CJ
-} t_format_16_sel;
+} frm16_sel_t;
 
 // register width
 typedef enum logic [3:0] {
   T16_W,
   T16_D,
   T16_Q
-} t_format_16_wdh;
+} frm16_wdh_t;
 
-function logic signed [16:0] imm16 (t_format_16 i, t_format_16_sel sel, t_format_16_wdh wdh);
+function logic signed [16:0] imm16 (frm16_t i, frm16_sel_t sel, frm16_wdh_t wdh);
   logic [15:0] imm16 = '0;
   case (sel)
     T16_CR:
@@ -544,8 +550,14 @@ function logic [4:0] reg_5 (logic [2:0] reg_3);
   reg_5 = {2'b01, reg_3};
 endfunction: reg_5
 
-function ctli_t dec16 (frm16_t op, isa_t isa, int unsigned xw);
-casez (op)
+function ctli_t dec16 (isa_t isa, frm16_t op);
+// default values
+//              pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
+dec32.i = '{PC_PC4, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0};
+//         {op, s1, s2, xw, en}
+dec32.m = '{'x, 'x, 'x, 'x, '0};
+
+casez ({isa, op})
 //  fedc_ba98_7654_3210                pc,     rs1,     rs2,                 imm,     alu,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
 16'b0000_0000_0000_0000: dec32 = '{PC_PC2,      'x,      'x,                  'x,      'x,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, '1}; // illegal instruction
 16'b000?_????_????_??00: dec32 = '{PC_PC2, A1_SP , A2_IMM, 4*imm16(op,T16_CIW), AO_ADD,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, ~|imm16(op,T16_CIW)}; // C.ADDI4SP
