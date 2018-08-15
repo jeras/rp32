@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-module rp32_tb #(
+module rp_tb #(
   int unsigned PAW = 16,    // program address width
   int unsigned PDW = 32,    // program data    width
   int unsigned DAW = 16,    // data    address width
@@ -9,8 +9,8 @@ module rp32_tb #(
   int unsigned DSW = DDW/8  // data    select  width
 )(
   // system signals
-  input  logic clk,    // clock
-  input  logic rst_n   // reset
+  input  logic clk,  // clock
+  input  logic rst   // reset
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ rp32_core #(
 ) DUT (
   // system signals
   .clk      (clk),
-  .rst_n    (rst_n),
+  .rst      (rst),
   // program bus
   .bup_req  (bup_req),
   .bup_adr  (bup_adr),
@@ -105,4 +105,4 @@ mem #(
 //  $dumpvars(0, rp32_tb);
 //end
 
-endmodule: rp32_tb
+endmodule: rp_tb

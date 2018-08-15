@@ -67,13 +67,13 @@ typedef enum logic [3-1:0] {
 
 // ALU argument 1 multiplexer (RS1,...)
 typedef enum logic {
-  A1_GPR = 1'b0,
+  A1_RS1 = 1'b0,
   A1_PC  = 1'b1
 } a1_t;
 
 // ALU argument 2 multiplexer (RS2,...)
 typedef enum logic {
-  A2_GPR = 1'b0,
+  A2_RS2 = 1'b0,
   A2_IMM = 1'b1
 } a2_t;
 
@@ -291,7 +291,7 @@ endfunction: imm32
 // 32 bit instruction decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function ctli_t dec32 (isa_t isa, frm32_t op);
+function ctl_t dec32 (isa_t isa, frm32_t op);
 // default values
 //              pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
 dec32.i = '{PC_PC4, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0};
@@ -299,9 +299,9 @@ dec32.i = '{PC_PC4, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x,
 dec32.m = '{'x, 'x, 'x, 'x, '0};
 
 casez ({isa, op})
-//   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                   pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
-{16'b????_????????????, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec32.i = '{PC_PC4,     'x,     'x,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0}; // 32'000000013 - nop
-{16'b????_????????????, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec32.i = '{PC_PC4,     'x,     'x,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0}; // 32'h00004033 - machine gen. bubble
+//   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                   pc,    rs1,    rs2,  imm,     alu,   ar,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
+{16'b????_????????????, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec32.i = '{PC_PC4,     'x,     'x,   'x,      'x,   'x,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0}; // 32'000000013 - nop
+{16'b????_????????????, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec32.i = '{PC_PC4,     'x,     'x,   'x,      'x,   'x,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0}; // 32'h00004033 - machine gen. bubble
 
 // RV.I32
 //   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                   pc,    rs1,    rs2,  imm,     alu,   ar,     br,   st,ste,    ld,lde,     wb,wbe,   csr,ill

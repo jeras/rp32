@@ -1,8 +1,10 @@
+import riscv_isa_pkg::*;
+
 module rp_alu #(
   int unsigned XW = 32
 )(
   // control
-  input  rp_alu_t       ctl,
+  input  ao_t           ctl,
   // data input/output
   input  logic [XW-1:0] rs1,  // source register 1 / immediate
   input  logic [XW-1:0] rs2,  // source register 2 / PC
@@ -22,19 +24,19 @@ assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2))
 
 always_comb
 case (ctl) inside
-  ALU_ADD,            //   $signed(rs1) +   $signed(rs2)
-  ALU_SUB: rd = sum;  //   $signed(rs1) -   $signed(rs2)
-  ALU_LTS: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs2[XW-1];   //   $signed(rs1) <   $signed(rs2)
-  ALU_LTU: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs1[XW-1];   // $unsigned(rs1) < $unsigned(rs2)
-  ALU_SRA: rd =   $signed(rs1) >>> rs2[$clog2(XD)-1:0];
-  ALU_SRL: rd = $unsigned(rs1)  >> rs2[$clog2(XD)-1:0];
-  ALU_SLL: rd = $unsigned(rs1)  << rs2[$clog2(XD)-1:0];
-  ALU_AND: rd = rs1 & rs2;
-  ALU_OR : rd = rs1 | rs2;
-  ALU_XOR: rd = rs1 ^ rs2;
-  ALU_CP1: rd = rs1;
-  ALU_CP2: rd = rs2;
-  ALU_XXX: rd = 'x;
+  AO_ADD,            //   $signed(rs1) +   $signed(rs2)
+  AO_SUB: rd = sum;  //   $signed(rs1) -   $signed(rs2)
+  AO_LTS: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs2[XW-1];   //   $signed(rs1) <   $signed(rs2)
+  AO_LTU: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs1[XW-1];   // $unsigned(rs1) < $unsigned(rs2)
+  AO_SRA: rd =   $signed(rs1) >>> rs2[$clog2(XW)-1:0];
+  AO_SRL: rd = $unsigned(rs1)  >> rs2[$clog2(XW)-1:0];
+  AO_SLL: rd = $unsigned(rs1)  << rs2[$clog2(XW)-1:0];
+  AO_AND: rd = rs1 & rs2;
+  AO_OR : rd = rs1 | rs2;
+  AO_XOR: rd = rs1 ^ rs2;
+  AO_CP1: rd = rs1;
+  AO_CP2: rd = rs2;
+  AO_XXX: rd = 'x;
   default: rd = 'x;
 endcase
 

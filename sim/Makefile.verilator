@@ -2,6 +2,8 @@ PATH_RTL=../rtl
 PATH_TBN=../tbn
 
 RTL =${PATH_RTL}/riscv_isa_pkg.sv
+RTL+=${PATH_RTL}/rp_br.sv
+RTL+=${PATH_RTL}/rp_gpr.sv
 RTL+=${PATH_RTL}/rp_alu.sv
 RTL+=${PATH_RTL}/rp_core.sv
 
