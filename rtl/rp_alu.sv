@@ -16,7 +16,8 @@ module rp_alu #(
 logic ovf;  // overflow bit
 
 // adder (summation, subtraction)
-assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
+//assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
+assign {ovf, sum} = $signed(rs1) + $signed(rs2);
 
 // TODO:
 // * check comparison

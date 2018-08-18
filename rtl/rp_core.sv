@@ -31,7 +31,9 @@ module rp32_core #(
   // data bus
   int unsigned DAW = 32,    // data    address width
   int unsigned DDW = 32,    // data    data    width
-  int unsigned DSW = DDW/8  // data    select  width
+  int unsigned DSW = DDW/8, // data    select  width
+  // constants ???
+  logic [PAW-1:0] PC0 = '0
 )(
   // system signals
   input  logic                  clk,
@@ -88,12 +90,12 @@ logic [XW-1:0] alu_sum;
 ///////////////////////////////////////////////////////////////////////////////
 
 // request becomes active after reset
-always_ff @ (posedge clk, negedge rst_n)
+always_ff @ (posedge clk, posedge rst)
 if (rst)  bup_req <= 1'b0;
 else      bup_req <= 1'b1;
 
 // program counter
-always_ff @ (posedge clk, negedge rst_n)
+always_ff @ (posedge clk, posedge rst)
 if (rst)  pc <= PC0;
 else begin
   if (~stall) pc <= pcn;
@@ -112,12 +114,16 @@ rp_br #(
   .tkn  (tkn)
 );
 
+logic           csr_expt;
+logic [PAW-1:0] csr_evec;
+logic [PAW-1:0] csr_epc;
+
 // program counter next
 always_comb
 if (csr_expt)  pcn = csr_evec;
 else case (ctl.i.pc)
   PC_EPC: pcn = csr_epc;
-  PC_ALU: pcn = taken ? alu_sum : pc+4;
+  PC_ALU: pcn = tkn ? alu_sum : pc+4;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,7 +136,7 @@ assign ctl = dec32(ISA, op);
 
 // general purpose registers
 rp_gpr #(
-  .AW  (ISA.e ? 4 : 5),
+  .AW  (ISA.ie ? 4 : 5),
   .XW  (XW)
 ) gpr (
   // system signals
@@ -158,12 +164,12 @@ rp_gpr #(
 always_comb begin
   // RS1
   unique case (ctl.i.a1)
-    A1_GPR: alu_rs1 = gpr_rs1;
+    A1_RS1: alu_rs1 = gpr_rs1;
     A1_PC : alu_rs1 = pc;
   endcase
   // RS2
   unique case (ctl.i.a2)
-    A2_GPR: alu_rs2 = gpr_rs2;
+    A2_RS2: alu_rs2 = gpr_rs2;
     A2_IMM: alu_rs2 = ctl.i.imm;
   endcase
 end
