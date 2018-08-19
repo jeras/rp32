@@ -58,7 +58,7 @@ module rp32_core #(
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO
-localparam XW = 32;
+localparam int unsigned XW = 32;
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -108,8 +108,8 @@ rp_br #(
   // control
   .ctl  (ctl.i.br),
   // data
-  .rs1  (op.r.rs1),
-  .rs2  (op.r.rs2),
+  .rs1  (gpr_rs1),
+  .rs2  (gpr_rs2),
   // status
   .tkn  (tkn)
 );
@@ -123,7 +123,7 @@ always_comb
 if (csr_expt)  pcn = csr_evec;
 else case (ctl.i.pc)
   PC_EPC: pcn = csr_epc;
-  PC_ALU: pcn = tkn ? alu_sum : pc+4;
+  PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,7 +145,7 @@ rp_gpr #(
   // read/write enable
   .e_rs1  (),
   .e_rs2  (),
-  .e_rd   (ctl.i.wbe),
+  .e_rd   (ctl.i.wb != WB_XXX),
   // read/write address
   .a_rs1  (op.r.rs1),
   .a_rs2  (op.r.rs2),

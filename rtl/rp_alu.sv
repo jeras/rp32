@@ -15,6 +15,7 @@ module rp_alu #(
 
 logic ovf;  // overflow bit
 
+// TODO: construct proper subtraction condition
 // adder (summation, subtraction)
 //assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
 assign {ovf, sum} = $signed(rs1) + $signed(rs2);
@@ -27,8 +28,8 @@ always_comb
 case (ctl) inside
   AO_ADD,            //   $signed(rs1) +   $signed(rs2)
   AO_SUB: rd = sum;  //   $signed(rs1) -   $signed(rs2)
-  AO_LTS: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs2[XW-1];   //   $signed(rs1) <   $signed(rs2)
-  AO_LTU: rd = (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs1[XW-1];   // $unsigned(rs1) < $unsigned(rs2)
+  AO_LTS: rd = {31'b0, (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs2[XW-1]};   //   $signed(rs1) <   $signed(rs2)
+  AO_LTU: rd = {31'b0, (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs1[XW-1]};   // $unsigned(rs1) < $unsigned(rs2)
   AO_SRA: rd =   $signed(rs1) >>> rs2[$clog2(XW)-1:0];
   AO_SRL: rd = $unsigned(rs1)  >> rs2[$clog2(XW)-1:0];
   AO_SLL: rd = $unsigned(rs1)  << rs2[$clog2(XW)-1:0];
