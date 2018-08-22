@@ -124,6 +124,7 @@ if (csr_expt)  pcn = csr_evec;
 else case (ctl.i.pc)
   PC_EPC: pcn = csr_epc;
   PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
+  default: pcn = 'x;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -165,7 +166,7 @@ always_comb begin
   // RS1
   unique case (ctl.i.a1)
     A1_RS1: alu_rs1 = gpr_rs1;
-    A1_PC : alu_rs1 = pc;
+    A1_PC : alu_rs1 = XW'(pc);
   endcase
   // RS2
   unique case (ctl.i.a2)
