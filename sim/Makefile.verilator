@@ -10,10 +10,42 @@ RTL+=${PATH_RTL}/rp_core.sv
 TBN =${PATH_TBN}/mem.sv
 TBN+=${PATH_TBN}/rp_tb.sv
 
+SRC =${PATH_TBN}/sc_main.cpp
+
+
 HDL =${RTL}
 HDL+=${TBN}
 
-all: lint
+TOP = rp_tb
+
+V_FLAGS =
+# Generate SystemC in executable form
+V_FLAGS += -sc --exe
+# Generate makefile dependencies (not shown as complicates the Makefile)
+#V_FLAGS += -MMD
+# Optimize
+V_FLAGS += -O2 -x-assign 0
+# Warn abount lint issues; may not want this on less solid designs
+#V_FLAGS += -Wall
+# Make waveforms
+V_FLAGS += --trace
+# Check SystemVerilog assertions
+V_FLAGS += --assert
+# Generate coverage analysis
+V_FLAGS += --coverage
+# Run Verilator in debug mode
+#V_FLAGS += --debug
+# Add this trace to get a backtrace in gdb
+#V_FLAGS += --gdbbt
+
+
+all: sim
 
 lint: ${HDL}
-	verilator --lint-only ${HDL}
+	verilator --lint-only ${HDL} --top_module ${TOP}
+
+sim: ${HDL}
+	verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${SRC}
+	make -j 4 -C obj_dir -f V${TOP}.mk
+#	verilator_coverage --annotate logs/annotated logs/coverage.dat
+	obj_dir/V${TOP} +trace

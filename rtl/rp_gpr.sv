@@ -6,8 +6,8 @@ module rp_gpr #(
   input  logic          clk,  // clock
   input  logic          rst,  // reset
   // read/write enable
-  input  logic          e_rs1,
-  input  logic          e_rs2,
+//input  logic          e_rs1,
+//input  logic          e_rs2,
   input  logic          e_rd,
   // read/write address
   input  logic [AW-1:0] a_rs1,

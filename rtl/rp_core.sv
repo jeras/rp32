@@ -1,6 +1,6 @@
 import riscv_isa_pkg::*;
 
-module rp32_core #(
+module rp_core #(
   // RISC-V ISA
   isa_t ISA = 16'b0100_000000000000,
 //  isa_t ISA = '{
@@ -127,6 +127,8 @@ else case (ctl.i.pc)
   default: pcn = 'x;
 endcase
 
+assign bup_adr = pcn;
+
 ///////////////////////////////////////////////////////////////////////////////
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
@@ -144,8 +146,8 @@ rp_gpr #(
   .clk    (clk),
   .rst    (rst),
   // read/write enable
-  .e_rs1  (),
-  .e_rs2  (),
+//.e_rs1  (),
+//.e_rs2  (),
   .e_rd   (ctl.i.wb != WB_XXX),
   // read/write address
   .a_rs1  (op.r.rs1),
@@ -191,4 +193,4 @@ rp_alu #(
 // load/store
 ///////////////////////////////////////////////////////////////////////////////
 
-endmodule: rp32_core
+endmodule: rp_core
