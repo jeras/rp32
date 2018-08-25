@@ -46,8 +46,8 @@ module rp_core #(
   // data bus (load/store)
   output logic                  bud_req,  // write or read request
   output logic                  bud_wen,  // write enable
-  output logic [DSW-1:0]        bud_sel,  // byte select
   output logic [DAW-1:0]        bud_adr,  // address
+  output logic [DSW-1:0]        bud_sel,  // byte select
   output logic [DSW-1:0][8-1:0] bud_wdt,  // write data
   input  logic [DSW-1:0][8-1:0] bud_rdt,  // read data
   input  logic                  bud_ack   // write or read acknowledge
@@ -74,6 +74,11 @@ logic           stall;
 frm32_t op;   // structured opcode
 ctl_t   ctl;  // control structure
 
+// CSR
+logic           csr_expt;
+logic [PAW-1:0] csr_evec;
+logic [PAW-1:0] csr_epc;
+
 // GPR
 logic [XW-1:0] gpr_rs1;
 logic [XW-1:0] gpr_rs2;
@@ -94,6 +99,12 @@ always_ff @ (posedge clk, posedge rst)
 if (rst)  bup_req <= 1'b0;
 else      bup_req <= 1'b1;
 
+assign bup_adr = pcn;
+
+///////////////////////////////////////////////////////////////////////////////
+// program counter
+///////////////////////////////////////////////////////////////////////////////
+
 // program counter
 always_ff @ (posedge clk, posedge rst)
 if (rst)  pc <= PC0;
@@ -101,7 +112,7 @@ else begin
   if (~stall) pc <= pcn;
 end
 
-// general purpose registers
+// branch unit
 rp_br #(
   .XW  (XW)
 ) br (
@@ -114,20 +125,16 @@ rp_br #(
   .tkn  (tkn)
 );
 
-logic           csr_expt;
-logic [PAW-1:0] csr_evec;
-logic [PAW-1:0] csr_epc;
-
 // program counter next
 always_comb
 if (csr_expt)  pcn = csr_evec;
-else case (ctl.i.pc)
-  PC_EPC: pcn = csr_epc;
-  PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
-  default: pcn = 'x;
-endcase
-
-assign bup_adr = pcn;
+else if (bup_ack) begin
+  case (ctl.i.pc)
+    PC_EPC: pcn = csr_epc;
+    PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
+    default: pcn = 'x;
+  endcase
+end
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction decode
@@ -189,8 +196,25 @@ rp_alu #(
   // dedicated output for branch address
   .sum  (alu_sum)
 );
+
 ///////////////////////////////////////////////////////////////////////////////
 // load/store
 ///////////////////////////////////////////////////////////////////////////////
+
+// request
+assign bud_req = (ctl.i.st != ST_X) | (ctl.i.ld != LD_XX);
+
+// write enable
+assign bud_wen = (ctl.i.st != ST_X);
+
+// address
+assign bud_adr = alu_sum[DAW-1:0];
+
+// byte select
+// TODO
+assign bud_sel = '1;
+
+// write data
+assign bud_wdt = gpr_rd;
 
 endmodule: rp_core

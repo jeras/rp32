@@ -25,8 +25,8 @@ logic           bup_ack;
 // data bus
 logic           bud_req;
 logic           bud_wen;
-logic [DSW-1:0] bud_sel;
 logic [DAW-1:0] bud_adr;
+logic [DSW-1:0] bud_sel;
 logic [DDW-1:0] bud_wdt;
 logic [DDW-1:0] bud_rdt;
 logic           bud_ack;
@@ -52,8 +52,8 @@ rp_core #(
   // data bus
   .bud_req  (bud_req),
   .bud_wen  (bud_wen),
-  .bud_sel  (bud_sel),
   .bud_adr  (bud_adr),
+  .bud_sel  (bud_sel),
   .bud_wdt  (bud_wdt),
   .bud_rdt  (bud_rdt),
   .bud_ack  (bud_ack)
