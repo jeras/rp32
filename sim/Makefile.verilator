@@ -1,21 +1,27 @@
 PATH_RTL=../rtl
 PATH_TBN=../tbn
+PATH_SRC=../src
 
+# SystemVerilog RTL
 RTL =${PATH_RTL}/riscv_isa_pkg.sv
 RTL+=${PATH_RTL}/rp_br.sv
 RTL+=${PATH_RTL}/rp_gpr.sv
 RTL+=${PATH_RTL}/rp_alu.sv
 RTL+=${PATH_RTL}/rp_core.sv
 
-TBN =${PATH_TBN}/mem.sv
-TBN+=${PATH_TBN}/rp_tb.sv
+# SystemVerilog bench
+TSV =${PATH_TBN}/mem.sv
+TSV+=${PATH_TBN}/rp_tb.sv
 
-SRC =${PATH_TBN}/sc_main.cpp
+# SystemC bench
+TSC =${PATH_TBN}/sc_main.cpp
 
-
+# combined HDL sources
 HDL =${RTL}
-HDL+=${TBN}
+HDL+=${TSV}
 
+# top level file
+# TODO: pass it as macro to CS compiler
 TOP = rp_tb
 
 V_FLAGS =
@@ -41,11 +47,15 @@ V_FLAGS += --coverage
 
 all: sim
 
+src:
+	make -C ${PATH_SRC}
+	cp ${PATH_SRC}/test_isa.vmem .
+
 lint: ${HDL}
 	verilator --lint-only ${HDL} --top_module ${TOP}
 
-sim: ${HDL}
-	verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${SRC}
+sim: ${HDL} src
+	verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${TSC}
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
 	obj_dir/V${TOP} +trace
