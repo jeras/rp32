@@ -26,7 +26,7 @@ logic [SW-1:0][8-1:0] mem [0:SZ/SW-1];
 
 // write and read access
 always @(posedge clk)
-if (req & ack) begin
+if (req) begin
   if (wen) begin
     // write access
     for (int unsigned i=0; i<SW; i++) begin
@@ -39,7 +39,8 @@ if (req & ack) begin
 end
 
 // trivial acknowledge
-assign ack = 1'b1;
+always @(posedge clk)
+  ack <= req;
 
 // initialization
 initial
