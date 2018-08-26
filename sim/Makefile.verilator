@@ -35,6 +35,7 @@ V_FLAGS += -O2 -x-assign 0
 #V_FLAGS += -Wall
 # Make waveforms
 V_FLAGS += --trace
+V_FLAGS += --trace-structs
 # Check SystemVerilog assertions
 V_FLAGS += --assert
 # Generate coverage analysis
