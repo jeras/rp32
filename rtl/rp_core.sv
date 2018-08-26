@@ -105,6 +105,9 @@ assign bup_adr = pcn;
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO:
+assign stall = 1'b0;
+
 // program counter
 always_ff @ (posedge clk, posedge rst)
 if (rst)  pc <= PC0;
@@ -130,6 +133,8 @@ always_comb
 if (csr_expt)  pcn = csr_evec;
 else if (bup_ack) begin
   case (ctl.i.pc)
+    PC_PC2: pcn = pc + 'd2;
+    PC_PC4: pcn = pc + 'd4;
     PC_EPC: pcn = csr_epc;
     PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
     default: pcn = 'x;
