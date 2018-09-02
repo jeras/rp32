@@ -56,7 +56,7 @@ src:
 lint: ${HDL}
 	verilator --lint-only ${HDL} --top_module ${TOP}
 
-sim: ${HDL} src
+sim: ${HDL}
 	verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${TSC}
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
