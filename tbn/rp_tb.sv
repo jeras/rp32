@@ -13,6 +13,8 @@ module rp_tb #(
   input  logic rst   // reset
 );
 
+import riscv_asm_pkg::*;
+
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,5 +106,9 @@ mem #(
 //  $dumpfile("rp32_tb.vcd");
 //  $dumpvars(0, rp32_tb);
 //end
+
+initial begin
+  $display("%s %s", "test", reg_x(5'd1));
+end
 
 endmodule: rp_tb
