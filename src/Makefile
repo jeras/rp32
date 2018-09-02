@@ -18,7 +18,7 @@ all:
 	${TOOL}-as         -march=rv32i test_isa.S -o test_isa.o
 #	${TOOL}-objdump -d -march=rv32i test_isa.o  > test_isa.elf.dump
 	${TOOL}-objcopy -j .text -j .data -O binary test_isa.o test_isa.bin
-	${TOOL}-objcopy -j .text -j .data -O ihex   test_isa.o test_isa.vmem
+	${TOOL}-objcopy -j .text -j .data -O ihex   test_isa.o test_isa.hex
 	srec_cat test_isa.hex -Intel -byte-swap 4 -Output test_isa.vmem -VMem 4
 #	${TOOL}-objdump -j .sec1 -d -m avr31 test_isa.hex > test_isa.dump
 
