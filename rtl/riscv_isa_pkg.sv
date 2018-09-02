@@ -283,15 +283,15 @@ typedef enum logic [3:0] {
   T32_J
 } frm_sel_t;
 
-function logic signed [32-1:0] imm32 (frm32_t i, frm_sel_t sel);
+function logic signed [32-1:0] imm32 (frm32_t op, frm_sel_t sel);
   case (sel)
     T32_R4,
     T32_R: imm32 = 'x;
-    T32_I: imm32 = {{21{i[31]}},        i[30:25], i[24:21], i[20]}; // s11
-    T32_S: imm32 = {{21{i[31]}},        i[30:25], i[11:08], i[07]}; // s11
-    T32_B: imm32 = {{20{i[31]}}, i[07], i[30:25], i[11:08], 1'b0 }; // s12
-    T32_U: imm32 = {    i[31:12], 12'h000}; // s31
-    T32_J: imm32 = {{12{i[31]}}, i[19:12], i[20], i[30:25], i[24:21], 1'b0}; // s20
+    T32_I: imm32 = {{21{op[31]}},         op[30:25], op[24:21], op[20]}; // s11
+    T32_S: imm32 = {{21{op[31]}},         op[30:25], op[11:08], op[07]}; // s11
+    T32_B: imm32 = {{20{op[31]}}, op[07], op[30:25], op[11:08], 1'b0  }; // s12
+    T32_U: imm32 = {    op[31:12],  12'h000}; // s31
+    T32_J: imm32 = {{12{op[31]}}, op[19:12], op[20], op[30:25], op[24:21], 1'b0}; // s20
     default:   imm32 = 'x;
   endcase
 endfunction: imm32
