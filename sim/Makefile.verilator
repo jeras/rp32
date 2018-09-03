@@ -49,15 +49,8 @@ V_FLAGS += --coverage
 
 all: sim
 
-src:
-	make -C ${PATH_SRC}
-	cp ${PATH_SRC}/test_isa.vmem .
-
-lint: ${HDL}
-	verilator --lint-only ${HDL} --top_module ${TOP}
-
 sim: ${HDL}
-	verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${TSC}
-	make -j 4 -C obj_dir -f V${TOP}.mk
-#	verilator_coverage --annotate logs/annotated logs/coverage.dat
+	../../verilator/bin/verilator $(V_FLAGS) --top-module ${TOP} -cc ${HDL} -exe ../tbn/main.cpp
+	make -j -C obj_dir -f V${TOP}.mk V${TOP}
 	obj_dir/V${TOP} +trace
+
