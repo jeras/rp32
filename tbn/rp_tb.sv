@@ -1,19 +1,15 @@
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-module rp_tb #(
-  int unsigned PAW = 16,    // program address width
-  int unsigned PDW = 32,    // program data    width
-  int unsigned DAW = 16,    // data    address width
-  int unsigned DDW = 32,    // data    data    width
-  int unsigned DSW = DDW/8  // data    select  width
-)(
+module rp_tb (
   // system signals
   input  logic clk,  // clock
   input  logic rst   // reset
 );
 
-import riscv_asm_pkg::*;
+localparam string REG_X [0:31] = '{"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0/fp", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+                                   "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
+
+function string reg_x (logic [5-1:0] r, bit abi=1'b0);
+  reg_x = abi ? REG_X[r] : $sformatf("x%0d", r);
+endfunction: reg_x
 
 initial begin
   $display("%s %s", "test", reg_x(5'd1));

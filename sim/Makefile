@@ -1,8 +1,6 @@
 PATH_TBN=../tbn
-PATH_SRC=../src
 
 # SystemVerilog bench
-TSV =${PATH_TBN}/riscv_asm_pkg.sv
 TSV+=${PATH_TBN}/rp_tb.sv
 
 # combined HDL sources
