@@ -1,37 +1,42 @@
-MODELSIM_BIN=$(HOME)/altera/14.1/modelsim_ase/bin
+PATH_TBN=../tbn
+PATH_SRC=../src
 
-RTL=../rtl/rp8.sv ../rtl/rp8_gpio.sv ../rtl/mem.sv
-TBN=../tbn/avr_disasm.sv ../tbn/rp8_tb.sv
+# SystemVerilog bench
+TSV =${PATH_TBN}/riscv_asm_pkg.sv
+TSV+=${PATH_TBN}/rp_tb.sv
 
-all: modelsim
+# combined HDL sources
+HDL =${TSV}
 
-copy_test_isa:
-	cp -f ../src/test_isa/test_isa.elf .
-	cp -f ../src/test_isa/test_isa.vmem .
+# top level file
+# TODO: pass it as macro to CS compiler
+TOP = rp_tb
 
-iverilog:
-	iverilog -g2012 -o $(RTL) $(TBN)
-	vvp rp8.out
+V_FLAGS =
+# Generate SystemC in executable form
+V_FLAGS += -sc --exe
+# Generate makefile dependencies (not shown as complicates the Makefile)
+#V_FLAGS += -MMD
+# Optimize
+V_FLAGS += -O2 -x-assign 0
+# Warn abount lint issues; may not want this on less solid designs
+#V_FLAGS += -Wall
+# Make waveforms
+V_FLAGS += --trace
+V_FLAGS += --trace-structs
+# Check SystemVerilog assertions
+V_FLAGS += --assert
+# Generate coverage analysis
+V_FLAGS += --coverage
+# Run Verilator in debug mode
+#V_FLAGS += --debug
+# Add this trace to get a backtrace in gdb
+#V_FLAGS += --gdbbt
 
-verilator: copy_test_isa
-	# compile SystemVerilog sources
-	verilator -Wall --cc --trace --exe ../tbn/rp8_verilator.cpp --top-module rp8_verilator \
-	-Wno-fatal \
-	-y ../tbn/ \
-	-CFLAGS -I/usr/local/include/simavr/ \
-	-LDFLAGS -lsimavr \
-	../tbn/rp8_verilator.sv \
-	$(RTL)
-	# build C++ project
-	make -j -C obj_dir/ -f Vrp8_verilator.mk Vrp8_verilator
-	# run executable simulation
-	LD_LIBRARY_PATH=/usr/local/lib/ obj_dir/Vrp8_verilator
+all: sim
 
-modelsim: copy_test_isa
-	$(MODELSIM_BIN)/vlib work
-	$(MODELSIM_BIN)/vlog $(RTL) $(TBN)
-	$(MODELSIM_BIN)/vsim -c -do 'run -all;quit' rp8_tb
+sim: ${HDL}
+	../../verilator/bin/verilator $(V_FLAGS) --top-module ${TOP} -cc ${HDL} -exe ../tbn/main.cpp
+	make -j -C obj_dir -f V${TOP}.mk V${TOP}
+	obj_dir/V${TOP} +trace
 
-gtkwave:
-	gtkwave rp8_tb.vcd        -a rp8_tb.gtkw
-	gtkwave rp8_verilator.vcd -a rp8_verilator.gtkw
