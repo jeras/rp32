@@ -1,10 +1,4 @@
-PATH_TBN=../tbn
-
 # SystemVerilog bench
-TSV+=${PATH_TBN}/rp_tb.sv
-
-# combined HDL sources
-HDL =${TSV}
 
 # top level file
 # TODO: pass it as macro to CS compiler
@@ -34,7 +28,7 @@ V_FLAGS += --coverage
 all: sim
 
 sim: ${HDL}
-	../../verilator/bin/verilator $(V_FLAGS) --top-module ${TOP} -cc ${HDL} -exe ../tbn/main.cpp
+	$(VERILATOR_ROOT)/bin/verilator $(V_FLAGS) --top-module ${TOP} -cc rp_tb.sv -exe main.cpp
 	make -j -C obj_dir -f V${TOP}.mk V${TOP}
 	obj_dir/V${TOP} +trace
 
