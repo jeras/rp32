@@ -54,10 +54,10 @@ src:
 	cp ${PATH_SRC}/test_isa.vmem .
 
 lint: ${HDL}
-	verilator --lint-only ${HDL} --top_module ${TOP}
+	$(VERILATOR_ROOT)/bin/verilator --lint-only ${HDL} --top_module ${TOP}
 
 sim: ${HDL} src
-	verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${TSC}
+	$(VERILATOR_ROOT)/bin/verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${TSC}
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
 	obj_dir/V${TOP} +trace
