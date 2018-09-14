@@ -107,8 +107,13 @@ mem #(
 //  $dumpvars(0, rp32_tb);
 //end
 
-initial begin
-  $display("%s %s", "test", reg_x(5'd1));
+////////////////////////////////////////////////////////////////////////////////
+// debug
+////////////////////////////////////////////////////////////////////////////////
+
+always @(posedge clk)
+begin
+  $display("OP: @0x%08x 0x%08x: %s", bup_adr, bup_rdt, disasm32(bup_rdt));
 end
 
 endmodule: rp_tb
