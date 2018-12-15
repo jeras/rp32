@@ -25,27 +25,34 @@ HDL+=${TSV}
 # TODO: pass it as macro to CS compiler
 TOP = rp_tb
 
-V_FLAGS =
+VFLAGS =
 # Generate SystemC in executable form
-V_FLAGS += -sc --exe
+VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
-#V_FLAGS += -MMD
+#VFLAGS += -MMD
 # Optimize
-V_FLAGS += -O2 -x-assign 0
+VFLAGS += -O2 -x-assign 0
 # Warn abount lint issues; may not want this on less solid designs
-#V_FLAGS += -Wall
+#VFLAGS += -Wall
 # Make waveforms
-V_FLAGS += --trace
-V_FLAGS += --trace-structs
+VFLAGS += --trace
+VFLAGS += --trace-structs
 # Check SystemVerilog assertions
-V_FLAGS += --assert
+VFLAGS += --assert
 # Generate coverage analysis
-V_FLAGS += --coverage
+VFLAGS += --coverage
 # Run Verilator in debug mode
-#V_FLAGS += --debug
+#VFLAGS += --debug
 # Add this trace to get a backtrace in gdb
-#V_FLAGS += --gdbbt
+#VFLAGS += --gdbbt
 
+# simulator
+SPIKE_ROOT ?= /home/${USER}/Workplace/spike
+CFLAGS  = -I${SPIKE_ROOT}/riscv -I${SPIKE_ROOT}/build -I${SPIKE_ROOT}/softfloat -I/opt/riscv/include/
+LDFLAGS = -lriscv
+LDLIBS  = -L${SPIKE_ROOT}/build
+VFLAGS += -CFLAGS "${CFLAGS}" -LDFLAGS ${LDFLAGS}
+# -LDLIBS ${LDLIBS}
 
 all: sim
 
@@ -57,7 +64,8 @@ lint: ${HDL}
 	$(VERILATOR_ROOT)/bin/verilator --lint-only ${HDL} --top_module ${TOP}
 
 sim: ${HDL} src
-	$(VERILATOR_ROOT)/bin/verilator $(V_FLAGS) --top-module ${TOP} ${HDL} ${TSC}
+	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) --top-module ${TOP} ${HDL} ${TSC}
+
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
-	obj_dir/V${TOP} +trace
+	LD_LIBRARY_PATH=${SPIKE_ROOT}/build obj_dir/V${TOP} +trace
