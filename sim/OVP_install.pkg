@@ -1,0 +1,3 @@
+install RUNTIME OVPsim CpuManager
+install microsemi_riscv.toolchain
+install Imperas.iGen

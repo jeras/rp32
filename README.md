@@ -27,6 +27,7 @@ sudo apt-get update
 sudo apt-get install libc6-i386
 sudo apt-get install lib32stdc++6
 sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0
+sudo apt-get install gcc-multilib g++-multilib
 ```
 
 To be able to download OVPsim, an account must be first created on OVPworld.org.

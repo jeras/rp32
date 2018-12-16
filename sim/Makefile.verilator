@@ -1,3 +1,7 @@
+################################################################################
+# HDL source files
+################################################################################
+
 PATH_RTL=../rtl
 PATH_TBN=../tbn
 PATH_SRC=../src
@@ -15,7 +19,7 @@ TSV+=${PATH_TBN}/mem.sv
 TSV+=${PATH_TBN}/rp_tb.sv
 
 # SystemC bench
-TSC =${PATH_TBN}/sc_main.cpp
+TSC = ../sc_main.cpp
 
 # combined HDL sources
 HDL =${RTL}
@@ -24,6 +28,13 @@ HDL+=${TSV}
 # top level file
 # TODO: pass it as macro to CS compiler
 TOP = rp_tb
+
+################################################################################
+# Verilator compiler/linker flags
+################################################################################
+
+# by default the system verilaror is used, can be changed to a custom one
+VERILATOR_ROOT = /usr
 
 VFLAGS =
 # Generate SystemC in executable form
@@ -46,26 +57,49 @@ VFLAGS += --coverage
 # Add this trace to get a backtrace in gdb
 #VFLAGS += --gdbbt
 
-# simulator
-SPIKE_ROOT ?= /home/${USER}/Workplace/spike
-CFLAGS  = -I${SPIKE_ROOT}/riscv -I${SPIKE_ROOT}/build -I${SPIKE_ROOT}/softfloat -I/opt/riscv/include/
-LDFLAGS = -lriscv
-LDLIBS  = -L${SPIKE_ROOT}/build
-VFLAGS += -CFLAGS "${CFLAGS}" -LDFLAGS ${LDFLAGS}
-# -LDLIBS ${LDLIBS}
+################################################################################
+# OVPsim compiler/linker flags
+################################################################################
+
+# make: Entering directory '$(IMPERAS_HOME)/customProcessorTrace/harness'
+# 
+# # Host Depending obj/Linux32/harness.d
+# mkdir -p obj/Linux32
+# gcc -MM harness.c -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host -Wall -Werror -O0 -g -gdwarf-2 -m32   -MT obj/Linux32/harness.o -MF obj/Linux32/harness.d
+# mkdir -p obj/Linux32
+# 
+# # Host Compiling Harness obj/Linux32/harness.o
+# gcc -c -o obj/Linux32/harness.o harness.c -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host -Wall -Werror -O0 -g -gdwarf-2 -m32 
+# mkdir -p .
+# 
+# # Host Linking Harness harness.Linux32.exe
+# gcc -o harness.Linux32.exe obj/Linux32/harness.o -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader -m32 
+# 
+# # if we are not compiling locally, copy out the .xml files to the destination
+# make: Leaving directory '$(IMPERAS_HOME)/customProcessorTrace/harness'
+
+OPCFLAGS  =
+OPCFLAGS += -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host
+OPCFLAGS += -m32 
+
+OPLDFLAGS  =
+OPLDFLAGS += -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader
+OPLDFLAGS += -m32 
+
+OPFLAGS = -CFLAGS "$(OPCFLAGS)" -LDFLAGS "$(OPLDFLAGS)"
+
+################################################################################
+#
+################################################################################
 
 all: sim
-
-src:
-	make -C ${PATH_SRC}
-	cp ${PATH_SRC}/test_isa.vmem .
 
 lint: ${HDL}
 	$(VERILATOR_ROOT)/bin/verilator --lint-only ${HDL} --top_module ${TOP}
 
-sim: ${HDL} src
-	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) --top-module ${TOP} ${HDL} ${TSC}
+sim: ${HDL}
+	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(OPFLAGS) --top-module ${TOP} ${HDL} ${TSC}
 
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
-	LD_LIBRARY_PATH=${SPIKE_ROOT}/build obj_dir/V${TOP} +trace
+	obj_dir/V${TOP} +trace
