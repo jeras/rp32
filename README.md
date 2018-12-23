@@ -58,3 +58,46 @@ setupImperas -m32 $OVP_HOME
 switchRuntimeImperas
 ```
 
+
+https://wiki.ubuntu.com/DebootstrapChroot
+https://github.com/shoes/shoes3/wiki/Setup-an-schroot-build-environment
+http://logan.tw/posts/2018/02/24/manage-chroot-environments-with-schroot/
+
+```shell
+# apt install debootstrap schroot
+# vi /etc/schroot/chroot.d/bionic32
+$ mkdir $HOME/Workplace/bionic32
+sudo debootstrap --variant=buildd --arch i386 bionic $HOME/Workplace/bionic32 http://archive.ubuntu.com/ubuntu/
+schroot -c bionic32 -u root
+```
+
+```
+cat <<EOT >> /etc/apt/sources.list
+deb http://archive.ubuntu.com/ubuntu/ bionic main restricted
+deb http://archive.ubuntu.com/ubuntu/ bionic-updates main restricted
+deb http://archive.ubuntu.com/ubuntu/ bionic universe
+deb http://archive.ubuntu.com/ubuntu/ bionic-updates universe
+deb http://archive.ubuntu.com/ubuntu/ bionic multiverse
+deb http://archive.ubuntu.com/ubuntu/ bionic-updates multiverse
+deb http://security.ubuntu.com/ubuntu bionic-security main restricted
+deb http://security.ubuntu.com/ubuntu bionic-security universe
+deb http://security.ubuntu.com/ubuntu bionic-security multiverse
+EOT
+apt update
+apt upgrade
+apt install software-properties-common
+add-apt-repository ppa:aelmahmoudy/ppa
+add-apt-repository ppa:iztok.jeras/ppa
+apt install gcc g++ verilator libsystemc-dev
+
+```
+
+```ini
+[bionic32]
+description=Ubuntu 18.04 (Bionic Beaver) 32-bit
+directory=$HOME/Workplace/bionic32
+personality=linux32
+root-users=$USER
+type=directory
+users=$USER
+```
