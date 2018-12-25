@@ -19,7 +19,7 @@ TSV+=${PATH_TBN}/mem.sv
 TSV+=${PATH_TBN}/rp_tb.sv
 
 # SystemC bench
-TSC = ../sc_main.cpp
+TSC = sc_main.cpp
 
 # combined HDL sources
 HDL =${RTL}
@@ -80,11 +80,13 @@ VFLAGS += --coverage
 
 OPCFLAGS  =
 OPCFLAGS += -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host
-OPCFLAGS += -m32 
+#OPCFLAGS += -O0 -g -gdwarf-2 -m32
+
 
 OPLDFLAGS  =
+#OPLDFLAGS += -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader -lRuntimeLoader++ -lOVPsim
 OPLDFLAGS += -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader
-OPLDFLAGS += -m32 
+#OPLDFLAGS += -m32
 
 OPFLAGS = -CFLAGS "$(OPCFLAGS)" -LDFLAGS "$(OPLDFLAGS)"
 

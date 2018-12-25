@@ -9,12 +9,14 @@
 #include <sys/stat.h>  // mkdir
 
 // OVP RISC-V simulator
+extern "C" {
 #include "op/op.h"
+}
 
 // RTL
 #include "Vrp_tb.h"
 
-int sc_main(int argc, const char **argv) {
+int sc_main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////
     // verilator initialization
     ////////////////////////////////////////////////////////////////////////////
@@ -57,7 +59,7 @@ int sc_main(int argc, const char **argv) {
 
     opSessionInit(OP_VERSION);
 
-    opCmdParseStd (argv[0], OP_AC_ALL, argc, argv);
+    opCmdParseStd (argv[0], OP_AC_ALL, argc, (const char**) argv);
 
     optModuleP mr = opRootModuleNew(0, 0, 0);
     optModuleP mi = opModuleNew(mr, "module", "u1", 0, 0);
