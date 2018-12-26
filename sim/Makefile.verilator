@@ -13,13 +13,13 @@ RTL+=${PATH_RTL}/rp_gpr.sv
 RTL+=${PATH_RTL}/rp_alu.sv
 RTL+=${PATH_RTL}/rp_core.sv
 
-# SystemVerilog bench
+# SystemVerilog bench (Test SV)
 TSV =${PATH_TBN}/riscv_asm_pkg.sv
 TSV+=${PATH_TBN}/mem.sv
 TSV+=${PATH_TBN}/rp_tb.sv
 
-# SystemC bench
-TSC = sc_main.cpp
+# SystemC bench (Test SystemC)
+TSC  = sc_main.cpp
 
 # combined HDL sources
 HDL =${RTL}
@@ -81,7 +81,6 @@ VFLAGS += --coverage
 OPCFLAGS  =
 OPCFLAGS += -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host
 #OPCFLAGS += -O0 -g -gdwarf-2 -m32
-
 
 OPLDFLAGS  =
 #OPLDFLAGS += -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader -lRuntimeLoader++ -lOVPsim

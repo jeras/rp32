@@ -62,7 +62,7 @@ int sc_main(int argc, char **argv) {
     opCmdParseStd (argv[0], OP_AC_ALL, argc, (const char**) argv);
 
     optModuleP mr = opRootModuleNew(0, 0, 0);
-    optModuleP mi = opModuleNew(mr, "module", "u1", 0, 0);
+    optModuleP mi = opModuleNew(mr, "OVP_module", "u1", 0, 0);
 
     opRootModulePreSimulate(mr);
 
