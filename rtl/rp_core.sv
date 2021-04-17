@@ -139,6 +139,8 @@ else if (bup_ack) begin
     PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
     default: pcn = 'x;
   endcase
+end else begin
+  pcn = 'x;
 end
 
 ///////////////////////////////////////////////////////////////////////////////
