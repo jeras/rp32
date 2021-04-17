@@ -24,33 +24,33 @@ module r5p_core #(
 //                .v = 1'b0,  // vector operations
 //                .n = 1'b0   // user-level interrupts
 //	      },
-  // program bus
-  int unsigned PAW = 32,    // program address width
-  int unsigned PDW = 32,    // program data    width
-  int unsigned PSW = PDW/8, // program select  width
+  // instruction bus
+  int unsigned IAW = 32,    // program address width
+  int unsigned IDW = 32,    // program data    width
+  int unsigned ISW = IDW/8, // program select  width
   // data bus
   int unsigned DAW = 32,    // data    address width
   int unsigned DDW = 32,    // data    data    width
   int unsigned DSW = DDW/8, // data    select  width
   // constants ???
-  logic [PAW-1:0] PC0 = '0
+  logic [IAW-1:0] PC0 = '0
 )(
   // system signals
   input  logic                  clk,
   input  logic                  rst,
   // program bus (instruction fetch)
-  output logic                  bup_req,
-  output logic [PAW-1:0]        bup_adr,
-  input  logic [PSW-1:0][8-1:0] bup_rdt,
-  input  logic                  bup_ack,
+  output logic                  if_req,
+  output logic [IAW-1:0]        if_adr,
+  input  logic [ISW-1:0][8-1:0] if_rdt,
+  input  logic                  if_ack,
   // data bus (load/store)
-  output logic                  bud_req,  // write or read request
-  output logic                  bud_wen,  // write enable
-  output logic [DAW-1:0]        bud_adr,  // address
-  output logic [DSW-1:0]        bud_sel,  // byte select
-  output logic [DSW-1:0][8-1:0] bud_wdt,  // write data
-  input  logic [DSW-1:0][8-1:0] bud_rdt,  // read data
-  input  logic                  bud_ack   // write or read acknowledge
+  output logic                  ls_req,  // write or read request
+  output logic                  ls_wen,  // write enable
+  output logic [DAW-1:0]        ls_adr,  // address
+  output logic [DSW-1:0]        ls_sel,  // byte select
+  output logic [DSW-1:0][8-1:0] ls_wdt,  // write data
+  input  logic [DSW-1:0][8-1:0] ls_rdt,  // read data
+  input  logic                  ls_ack   // write or read acknowledge
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,8 +66,8 @@ localparam int unsigned XW = 32;
 
 // instruction fetch
 logic           tkn;  // taken
-logic [PAW-1:0] pc;   // program counter
-logic [PAW-1:0] pcn;  // program counter next
+logic [IAW-1:0] pc;   // program counter
+logic [IAW-1:0] pcn;  // program counter next
 logic           stall;
 
 // instruction decode
@@ -76,8 +76,8 @@ ctl_t   ctl;  // control structure
 
 // CSR
 logic           csr_expt;
-logic [PAW-1:0] csr_evec;
-logic [PAW-1:0] csr_epc;
+logic [IAW-1:0] csr_evec;
+logic [IAW-1:0] csr_epc;
 
 // GPR
 logic [XW-1:0] gpr_rs1;
@@ -96,10 +96,10 @@ logic [XW-1:0] alu_sum;
 
 // request becomes active after reset
 always_ff @ (posedge clk, posedge rst)
-if (rst)  bup_req <= 1'b0;
-else      bup_req <= 1'b1;
+if (rst)  if_req <= 1'b0;
+else      if_req <= 1'b1;
 
-assign bup_adr = pcn;
+assign if_adr = pcn;
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
@@ -131,12 +131,12 @@ r5p_br #(
 // program counter next
 always_comb
 if (csr_expt)  pcn = csr_evec;
-else if (bup_ack) begin
+else if (if_ack) begin
   case (ctl.i.pc)
     PC_PC2: pcn = pc + 'd2;
     PC_PC4: pcn = pc + 'd4;
     PC_EPC: pcn = csr_epc;
-    PC_ALU: pcn = tkn ? alu_sum[PAW-1:0] : pc + 'd4;
+    PC_ALU: pcn = tkn ? alu_sum[IAW-1:0] : pc + 'd4;
     default: pcn = 'x;
   endcase
 end else begin
@@ -147,7 +147,7 @@ end
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-assign op = bup_rdt;
+assign op = if_rdt;
 
 assign ctl = dec32(ISA, op);
 
@@ -209,19 +209,19 @@ r5p_alu #(
 ///////////////////////////////////////////////////////////////////////////////
 
 // request
-assign bud_req = (ctl.i.st != ST_X) | (ctl.i.ld != LD_XX);
+assign ls_req = (ctl.i.st != ST_X) | (ctl.i.ld != LD_XX);
 
 // write enable
-assign bud_wen = (ctl.i.st != ST_X);
+assign ls_wen = (ctl.i.st != ST_X);
 
 // address
-assign bud_adr = alu_sum[DAW-1:0];
+assign ls_adr = alu_sum[DAW-1:0];
 
 // byte select
 // TODO
-assign bud_sel = '1;
+assign ls_sel = '1;
 
 // write data
-assign bud_wdt = gpr_rd;
+assign ls_wdt = gpr_rd;
 
 endmodule: r5p_core

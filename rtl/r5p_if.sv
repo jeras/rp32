@@ -1,4 +1,6 @@
-module p5r_if #(
+import riscv_isa_pkg::*;
+
+module r5p_if #(
   int unsigned XW = 32,
   int unsigned AW = XW   // address width
 )(
@@ -11,12 +13,18 @@ module p5r_if #(
 );
 
 // local signals
-logic eq;  // equal
-logic lts;  // less then   signed
-logic ltu;  // less then unsigned
+logic [XW-1:0] sum;  // equal
+logic          ovf;  // overflow bit
+logic          eq ;  // equal
+logic          lts;  // less then   signed
+logic          ltu;  // less then unsigned
+
+assign eq  =           rs1 ==           rs2 ;  // equal
+assign lts =   $signed(rs1) <   $signed(rs2);  // less then   signed
+assign ltu = $unsigned(rs1) < $unsigned(rs2);  // less then unsigned
 
 always_comb
-case ctl inside
+case (ctl) inside
   BR_EQ:   sts =  eq;
   BR_NE:   sts = ~eq;
   BR_LTS:  sts =  lts;

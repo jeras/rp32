@@ -2,11 +2,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_tb #(
-  int unsigned PAW = 16,    // program address width
-  int unsigned PDW = 32,    // program data    width
-  int unsigned DAW = 16,    // data    address width
-  int unsigned DDW = 32,    // data    data    width
-  int unsigned DSW = DDW/8  // data    select  width
+  int unsigned IAW = 16,    // instruction address width
+  int unsigned IDW = 32,    // instruction data    width
+  int unsigned DAW = 16,    // data address width
+  int unsigned DDW = 32,    // data data    width
+  int unsigned DSW = DDW/8  // data select  width
 )(
   // system signals
   input  logic clk,  // clock
@@ -20,26 +20,26 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
 // program bus
-logic           bup_req;
-logic [PAW-1:0] bup_adr;
-logic [PDW-1:0] bup_rdt;
-logic           bup_ack;
+logic           if_req;
+logic [IAW-1:0] if_adr;
+logic [IDW-1:0] if_rdt;
+logic           if_ack;
 // data bus
-logic           bud_req;
-logic           bud_wen;
-logic [DAW-1:0] bud_adr;
-logic [DSW-1:0] bud_sel;
-logic [DDW-1:0] bud_wdt;
-logic [DDW-1:0] bud_rdt;
-logic           bud_ack;
+logic           ls_req;
+logic           ls_wen;
+logic [DAW-1:0] ls_adr;
+logic [DSW-1:0] ls_sel;
+logic [DDW-1:0] ls_wdt;
+logic [DDW-1:0] ls_rdt;
+logic           ls_ack;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_core #(
-  .PDW (PDW),
-  .PAW (PAW),
+  .IDW (IDW),
+  .IAW (IAW),
   .DAW (DAW),
   .DDW (DDW)
 ) DUT (
@@ -47,18 +47,18 @@ r5p_core #(
   .clk      (clk),
   .rst      (rst),
   // program bus
-  .bup_req  (bup_req),
-  .bup_adr  (bup_adr),
-  .bup_rdt  (bup_rdt),
-  .bup_ack  (bup_ack),
+  .if_req  (if_req),
+  .if_adr  (if_adr),
+  .if_rdt  (if_rdt),
+  .if_ack  (if_ack),
   // data bus
-  .bud_req  (bud_req),
-  .bud_wen  (bud_wen),
-  .bud_adr  (bud_adr),
-  .bud_sel  (bud_sel),
-  .bud_wdt  (bud_wdt),
-  .bud_rdt  (bud_rdt),
-  .bud_ack  (bud_ack)
+  .ls_req  (ls_req),
+  .ls_wen  (ls_wen),
+  .ls_adr  (ls_adr),
+  .ls_sel  (ls_sel),
+  .ls_wdt  (ls_wdt),
+  .ls_rdt  (ls_rdt),
+  .ls_ack  (ls_ack)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,17 +67,17 @@ r5p_core #(
 
 mem #(
   .FN ("test_isa.vmem"),
-  .SZ (2**PAW),
-  .DW (PDW)
+  .SZ (2**IAW),
+  .DW (IDW)
 ) mem_prg (
   .clk (clk),
-  .req (bup_req),
-  .wen ('0),
+  .req (if_req),
+  .wen (1'b0),
   .sel ('1),
-  .adr (bup_adr),
+  .adr (if_adr),
   .wdt ('x),
-  .rdt (bup_rdt),
-  .ack (bup_ack)
+  .rdt (if_rdt),
+  .ack (if_ack)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,13 +89,13 @@ mem #(
   .DW (DDW)
 ) mem_dat (
   .clk (clk),
-  .req (bud_req),
-  .wen (bud_wen),
-  .sel (bud_sel),
-  .adr (bud_adr),
-  .wdt (bud_wdt),
-  .rdt (bud_rdt),
-  .ack (bud_ack)
+  .req (ls_req),
+  .wen (ls_wen),
+  .sel (ls_sel),
+  .adr (ls_adr),
+  .wdt (ls_wdt),
+  .rdt (ls_rdt),
+  .ack (ls_ack)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +113,7 @@ mem #(
 
 always @(posedge clk)
 begin
-  $display("OP: @0x%08x 0x%08x: %s", bup_adr, bup_rdt, disasm32(bup_rdt));
+  $display("OP: @0x%08x 0x%08x: %s", if_adr, if_rdt, disasm32(if_rdt));
 end
 
 endmodule: r5p_tb

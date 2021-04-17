@@ -1,7 +1,7 @@
 package r5p_pkg;
 
 // PC multiplexer
-enum logic [2-1:0] {
+typedef enum logic [2-1:0] {
   PC_0   = 2'b00,  // current PC
   PC_NXT = 2'b01,  // next   address
   PC_ALU = 2'b10,  // branch address
@@ -9,19 +9,19 @@ enum logic [2-1:0] {
 } r5p_sel_pc_t;
 
 // ALU RS1 multiplexer
-enum logic {
+typedef enum logic {
   RS1_GPR = 1'b0,
   RS1_PC  = 1'b1
 } r5p_sel_rs1_t;
 
 // ALU RS1 multiplexer
-enum logic {
+typedef enum logic {
   RS2_GPR = 1'b0,
   RS2_IMM = 1'b1
 } r5p_sel_rs2_t;
 
 // branch type
-enum logic [3-1:0] {
+typedef enum logic [3-1:0] {
   BR_EQ  = 3'b00_0,  //     equal
   BR_NE  = 3'b00_1,  // not equal
   BR_LTS = 3'b10_0,  // less    then            signed
@@ -32,7 +32,7 @@ enum logic [3-1:0] {
 } r5p_br_t;
 
 // ALU operation
-enum logic [4-1:0] {
+typedef enum logic [4-1:0] {
   ALU_ADD = 4'b0010,  // addition
   ALU_SUB = 4'b0110,  // subtraction
   ALU_AND = 4'b0000,  // logic AND
@@ -45,13 +45,13 @@ enum logic [4-1:0] {
   ALU_SRA,  // shift right arithmetic
   ALU_CP1,  // copy rs1
   ALU_CP2,  // copy rs2
-  ALU_XXX,  // do nothing
+  ALU_XXX   // do nothing
 } r5p_alu_t;
 
 // TODO: check AXI4 encoding for transfer size
 
 // store type
-enum logic [3-1:0] {
+typedef enum logic [3-1:0] {
   ST_SB = 3'b000,
   ST_SH = 3'b001,
   ST_SW = 3'b010,
@@ -60,7 +60,7 @@ enum logic [3-1:0] {
 } r5p_st_t;
 
 // load type
-enum logic [3-1:0] {
+typedef enum logic [3-1:0] {
   LD_LB  = 4'b0_000,
   LD_LH  = 4'b0_001,
   LD_LW  = 4'b0_010,
@@ -74,7 +74,7 @@ enum logic [3-1:0] {
 } r5p_ld_t;
 
 // write back multiplexer
-enum logic [3-1:0] {
+typedef enum logic [3-1:0] {
   WB_ALU = 2'b00,
   WB_MEM = 2'b01,
   WB_PC4 = 2'b10,
@@ -83,18 +83,18 @@ enum logic [3-1:0] {
 
 // control structure
 typedef struct packed {
-  r5p_sel_pc_t  pc,   // PC multiplexer
-  r5p_br_t,     br,   // branch type
-  r5p_sel_rs1_t rs1,  // ALU RS1 multiplexer
-  r5p_sel_rs2_t rs2,  // ALU RS1 multiplexer
-  r5p_imm_t     imm,  // immediate select
-  r5p_alu_t     alu,  // ALU operation
-  r5p_st_t      st,   // store type
-  r5p_ld_t      ld,   // load type
-  r5p_wb_t      wb,   // write back multiplexer
-  logic         wbe,  // write back enable
-  logic         csr,  // CSR operation
-  logic         ill   // illegal
+  r5p_sel_pc_t  pc ;  // PC multiplexer
+  r5p_br_t      br ;  // branch type
+  r5p_sel_rs1_t rs1;  // ALU RS1 multiplexer
+  r5p_sel_rs2_t rs2;  // ALU RS1 multiplexer
+//r5p_imm_t     imm;  // immediate select
+  r5p_alu_t     alu;  // ALU operation
+  r5p_st_t      st ;  // store type
+  r5p_ld_t      ld ;  // load type
+  r5p_wb_t      wb ;  // write back multiplexer
+  logic         wbe;  // write back enable
+  logic         csr;  // CSR operation
+  logic         ill;  // illegal
 } r5p_ctl_t;
 
 endpackage: r5p_pkg
