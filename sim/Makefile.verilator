@@ -33,10 +33,9 @@ TOP = rp_tb
 # Verilator compiler/linker flags
 ################################################################################
 
-# by default the system verilaror is used, can be changed to a custom one
-VERILATOR_ROOT = /usr
-
 VFLAGS =
+# specify SystemVerilog LRM version
+#VFLAGS += +1800-2012ext+sv
 # Generate SystemC in executable form
 VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
@@ -96,10 +95,11 @@ OPFLAGS = -CFLAGS "$(OPCFLAGS)" -LDFLAGS "$(OPLDFLAGS)"
 all: sim
 
 lint: ${HDL}
-	$(VERILATOR_ROOT)/bin/verilator --lint-only ${HDL} --top_module ${TOP}
+	${VERILATOR_ROOT}/bin/verilator --lint-only ${HDL} --top ${TOP}
 
 sim: ${HDL}
-	$(VERILATOR_ROOT)/bin/verilator $(VFLAGS) $(OPFLAGS) --top-module ${TOP} ${HDL} ${TSC}
+	${VERILATOR_ROOT}/bin/verilator $(VFLAGS) --top ${TOP} ${HDL} ${TSC}
+#	${VERILATOR_ROOT}/bin/verilator $(VFLAGS) $(OPFLAGS) --top ${TOP} ${HDL} ${TSC}
 
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
