@@ -14,7 +14,7 @@ extern "C" {
 }
 
 // RTL
-#include "Vrp_tb.h"
+#include "Vr5p_tb.h"
 
 int sc_main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////
@@ -28,8 +28,8 @@ int sc_main(int argc, char **argv) {
     sc_clock        clk ("clk", 10, SC_NS, 0.5, 3, SC_NS, true);
     sc_signal<bool> rst;
 
-    Vrp_tb* top;
-    top = new Vrp_tb("top");   // SP_CELL (top, Vour);
+    Vr5p_tb* top;
+    top = new Vr5p_tb("top");   // SP_CELL (top, Vour);
 
     top->clk(clk);           // SP_PIN  (top, clk, clk);
     top->rst(rst);           // TODO add a sequence

@@ -1,4 +1,4 @@
-module pr_if #(
+module p5r_if #(
   int unsigned XW = 32,
   int unsigned AW = XW   // address width
 )(
@@ -26,4 +26,4 @@ case ctl inside
   default: sts = 1'b0;
 endcase
 
-endmodule: rp_if
+endmodule: r5p_if

@@ -1,6 +1,6 @@
 import riscv_isa_pkg::*;
 
-module rp_core #(
+module r5p_core #(
   // RISC-V ISA
   isa_t ISA = 16'b0100_000000000000,
 //  isa_t ISA = '{
@@ -116,7 +116,7 @@ else begin
 end
 
 // branch unit
-rp_br #(
+r5p_br #(
   .XW  (XW)
 ) br (
   // control
@@ -152,7 +152,7 @@ assign op = bup_rdt;
 assign ctl = dec32(ISA, op);
 
 // general purpose registers
-rp_gpr #(
+r5p_gpr #(
   .AW  (ISA.ie ? 4 : 5),
   .XW  (XW)
 ) gpr (
@@ -191,7 +191,7 @@ always_comb begin
   endcase
 end
 
-rp_alu #(
+r5p_alu #(
   .XW  (XW)
 ) alu (
   // control
@@ -224,4 +224,4 @@ assign bud_sel = '1;
 // write data
 assign bud_wdt = gpr_rd;
 
-endmodule: rp_core
+endmodule: r5p_core

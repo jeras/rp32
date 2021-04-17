@@ -1,4 +1,4 @@
-module rp_gpr #(
+module r5p_gpr #(
   int unsigned AW = 5,  // can be 4 for RV32E base ISA
   int unsigned XW = 32  // XLEN width
 )(
@@ -33,4 +33,4 @@ end
 assign d_rs1 = |a_rs1 ? gpr[a_rs1] : '0;
 assign d_rs2 = |a_rs2 ? gpr[a_rs2] : '0;
 
-endmodule: rp_gpr
+endmodule: r5p_gpr

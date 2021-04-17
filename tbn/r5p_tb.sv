@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-module rp_tb #(
+module r5p_tb #(
   int unsigned PAW = 16,    // program address width
   int unsigned PDW = 32,    // program data    width
   int unsigned DAW = 16,    // data    address width
@@ -37,7 +37,7 @@ logic           bud_ack;
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-rp_core #(
+r5p_core #(
   .PDW (PDW),
   .PAW (PAW),
   .DAW (DAW),
@@ -116,4 +116,4 @@ begin
   $display("OP: @0x%08x 0x%08x: %s", bup_adr, bup_rdt, disasm32(bup_rdt));
 end
 
-endmodule: rp_tb
+endmodule: r5p_tb

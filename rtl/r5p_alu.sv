@@ -1,6 +1,6 @@
 import riscv_isa_pkg::*;
 
-module rp_alu #(
+module r5p_alu #(
   int unsigned XW = 32
 )(
   // control
@@ -42,4 +42,4 @@ case (ctl) inside
   default: rd = 'x;
 endcase
 
-endmodule: rp_alu
+endmodule: r5p_alu

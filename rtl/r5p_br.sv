@@ -1,6 +1,6 @@
 import riscv_isa_pkg::*;
 
-module rp_br #(
+module r5p_br #(
   int unsigned XW = 32
 )(
   // control
@@ -31,4 +31,4 @@ case (ctl) inside
   default: tkn = 'x;
 endcase
 
-endmodule: rp_br
+endmodule: r5p_br

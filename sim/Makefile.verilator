@@ -8,15 +8,15 @@ PATH_SRC=../src
 
 # SystemVerilog RTL
 RTL =${PATH_RTL}/riscv_isa_pkg.sv
-RTL+=${PATH_RTL}/rp_br.sv
-RTL+=${PATH_RTL}/rp_gpr.sv
-RTL+=${PATH_RTL}/rp_alu.sv
-RTL+=${PATH_RTL}/rp_core.sv
+RTL+=${PATH_RTL}/r5p_br.sv
+RTL+=${PATH_RTL}/r5p_gpr.sv
+RTL+=${PATH_RTL}/r5p_alu.sv
+RTL+=${PATH_RTL}/r5p_core.sv
 
 # SystemVerilog bench (Test SV)
 TSV =${PATH_TBN}/riscv_asm_pkg.sv
 TSV+=${PATH_TBN}/mem.sv
-TSV+=${PATH_TBN}/rp_tb.sv
+TSV+=${PATH_TBN}/r5p_tb.sv
 
 # SystemC bench (Test SystemC)
 TSC  = sc_main.cpp
@@ -27,7 +27,7 @@ HDL+=${TSV}
 
 # top level file
 # TODO: pass it as macro to CS compiler
-TOP = rp_tb
+TOP = r5p_tb
 
 ################################################################################
 # Verilator compiler/linker flags
