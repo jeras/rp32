@@ -52,7 +52,7 @@ VFLAGS += -O2 -x-assign 0
 # Warn abount lint issues; may not want this on less solid designs
 #VFLAGS += -Wall
 # Make waveforms
-VFLAGS += --trace
+VFLAGS += --trace-fst
 VFLAGS += --trace-structs
 # Check SystemVerilog assertions
 VFLAGS += --assert

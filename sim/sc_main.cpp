@@ -3,7 +3,7 @@
 
 // Include common routines
 #include <verilated.h>
-#include <verilated_vcd_sc.h>
+#include <verilated_fst_sc.h>
 
 // OS tools
 #include <sys/stat.h>  // mkdir
@@ -43,14 +43,14 @@ int sc_main(int argc, char **argv) {
 
     // If Verilator was invoked with --trace argument,
     // and if at run time passed the +trace argument, turn on tracing
-    VerilatedVcdSc* tfp = NULL;
+    VerilatedFstSc* tfp = NULL;
     const char* flag = Verilated::commandArgsPlusMatch("trace");
     if (flag && 0==strcmp(flag, "+trace")) {
-        cout << "Enabling waves into logs/vlt_dump.vcd...\n";
-        tfp = new VerilatedVcdSc;
+        cout << "Enabling waves into logs/vlt_dump.fst...\n";
+        tfp = new VerilatedFstSc;
         top->trace(tfp, 99);
         mkdir("logs", 0777);
-        tfp->open("logs/vlt_dump.vcd");
+        tfp->open("logs/vlt_dump.fst");
     }
 
 //    ////////////////////////////////////////////////////////////////////////////
