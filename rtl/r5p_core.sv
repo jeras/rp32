@@ -71,8 +71,9 @@ logic [IAW-1:0] pcn;  // program counter next
 logic           stall;
 
 // instruction decode
-frm32_t op;   // structured opcode
-ctl_t   ctl;  // control structure
+op32_t id_op;   // operation code
+ctl_t  id_ctl;  // control structure
+logic  id_vld;  // instruction valid
 
 // CSR
 logic           csr_expt;
@@ -101,18 +102,23 @@ else      if_req <= 1'b1;
 
 assign if_adr = pcn;
 
+// instruction valid
+always_ff @ (posedge clk, posedge rst)
+if (rst)  id_vld <= 1'b0;
+else      id_vld <= if_req & if_ack;
+
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = 1'b0;
+assign stall = ~if_ack;
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
 if (rst)  pc <= PC0;
 else begin
-  if (~stall) pc <= pcn;
+  if (id_vld & ~stall) pc <= pcn;
 end
 
 // branch unit
@@ -120,7 +126,7 @@ r5p_br #(
   .XW  (XW)
 ) br (
   // control
-  .ctl  (ctl.i.br),
+  .ctl  (id_ctl.i.br),
   // data
   .rs1  (gpr_rs1),
   .rs2  (gpr_rs2),
@@ -131,8 +137,8 @@ r5p_br #(
 // program counter next
 always_comb
 if (csr_expt)  pcn = csr_evec;
-else if (if_ack) begin
-  case (ctl.i.pc)
+else if (if_ack & id_vld) begin
+  case (id_ctl.i.pc)
     PC_PC2: pcn = pc + 'd2;
     PC_PC4: pcn = pc + 'd4;
     PC_EPC: pcn = csr_epc;
@@ -140,16 +146,16 @@ else if (if_ack) begin
     default: pcn = 'x;
   endcase
 end else begin
-  pcn = 'x;
+  pcn = pc;
 end
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-assign op = if_rdt;
+assign id_op = if_rdt;
 
-assign ctl = dec32(ISA, op);
+assign id_ctl = dec32(ISA, id_op);
 
 // general purpose registers
 r5p_gpr #(
@@ -162,11 +168,11 @@ r5p_gpr #(
   // read/write enable
 //.e_rs1  (),
 //.e_rs2  (),
-  .e_rd   (ctl.i.wb != WB_XXX),
+  .e_rd   (id_ctl.i.wb != WB_XXX),
   // read/write address
-  .a_rs1  (op.r.rs1),
-  .a_rs2  (op.r.rs2),
-  .a_rd   (op.r.rd ),
+  .a_rs1  (id_op.r.rs1),
+  .a_rs2  (id_op.r.rs2),
+  .a_rd   (id_op.r.rd ),
   // read/write data
   .d_rs1  (gpr_rs1),
   .d_rs2  (gpr_rs2),
@@ -180,14 +186,14 @@ r5p_gpr #(
 // ALU input multiplexer
 always_comb begin
   // RS1
-  unique case (ctl.i.a1)
+  unique case (id_ctl.i.a1)
     A1_RS1: alu_rs1 = gpr_rs1;
     A1_PC : alu_rs1 = XW'(pc);
   endcase
   // RS2
-  unique case (ctl.i.a2)
+  unique case (id_ctl.i.a2)
     A2_RS2: alu_rs2 = gpr_rs2;
-    A2_IMM: alu_rs2 = ctl.i.imm;
+    A2_IMM: alu_rs2 = id_ctl.i.imm;
   endcase
 end
 
@@ -195,7 +201,7 @@ r5p_alu #(
   .XW  (XW)
 ) alu (
   // control
-  .ctl  (ctl.i.ao),
+  .ctl  (id_ctl.i.ao),
   // data input/output
   .rs1  (alu_rs1),
   .rs2  (alu_rs2),
@@ -209,10 +215,10 @@ r5p_alu #(
 ///////////////////////////////////////////////////////////////////////////////
 
 // request
-assign ls_req = (ctl.i.st != ST_X) | (ctl.i.ld != LD_XX);
+assign ls_req = (id_ctl.i.st != ST_X) | (id_ctl.i.ld != LD_XX);
 
 // write enable
-assign ls_wen = (ctl.i.st != ST_X);
+assign ls_wen = (id_ctl.i.st != ST_X);
 
 // address
 assign ls_adr = alu_sum[DAW-1:0];

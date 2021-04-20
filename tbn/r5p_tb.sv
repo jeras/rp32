@@ -46,12 +46,12 @@ r5p_core #(
   // system signals
   .clk      (clk),
   .rst      (rst),
-  // program bus
+  // instruction fetch
   .if_req  (if_req),
   .if_adr  (if_adr),
   .if_rdt  (if_rdt),
   .if_ack  (if_ack),
-  // data bus
+  // data load/store
   .ls_req  (ls_req),
   .ls_wen  (ls_wen),
   .ls_adr  (ls_adr),
@@ -69,7 +69,7 @@ mem #(
   .FN ("test_isa.vmem"),
   .SZ (2**IAW),
   .DW (IDW)
-) mem_prg (
+) mem_if (
   .clk (clk),
   .req (if_req),
   .wen (1'b0),
@@ -87,7 +87,7 @@ mem #(
 mem #(
   .SZ (2**DAW),
   .DW (DDW)
-) mem_dat (
+) mem_ls (
   .clk (clk),
   .req (ls_req),
   .wen (ls_wen),
@@ -111,9 +111,22 @@ mem #(
 // debug
 ////////////////////////////////////////////////////////////////////////////////
 
+logic           if_trn = 1'b0;
+logic [IAW-1:0] if_adr_r;
+
+always_ff @(posedge clk)
+  if (if_req & if_ack) begin
+    if_trn <= 1'b1;
+    if_adr_r <= if_adr;
+  end else begin
+    if_trn <= 1'b0;
+  end
+
 always @(posedge clk)
 begin
-  $display("OP: @0x%08x 0x%08x: %s", if_adr, if_rdt, disasm32(if_rdt));
+  if (if_trn) begin
+    $display("OP: @0x%08x 0x%08x: %s", if_adr_r, if_rdt, disasm32(if_rdt));
+  end
 end
 
 endmodule: r5p_tb

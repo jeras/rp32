@@ -11,14 +11,15 @@ localparam string REG_F [0:31] = '{"ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft
                                    "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"};
 
 function string reg_x (logic [5-1:0] r, bit abi=1'b0);
-  reg_x = abi ? REG_X[r] : $sformatf("x%0d", r);
+//  reg_x = abi ? REG_X[r] : $sformatf("x%0d", r);
+  reg_x = $sformatf("x%0d", r);
 endfunction: reg_x
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 
-function string disasm32 (frm32_t op, bit abi=0);
+function string disasm32 (op32_t op, bit abi=0);
 casez (op)
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
 32'b0000_0000_0000_0000_0000_0000_0001_0011: disasm32 = $sformatf("nop");

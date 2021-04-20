@@ -11,24 +11,24 @@ package riscv_isa_pkg;
 
 typedef struct packed {
   // ISA base
-  logic ie;  // RV32E  - embedded
-  logic iw;  // RV32I  - word
-  logic id;  // RV64I  - double
-  logic iq;  // RV128I - quad
+  bit ie;  // RV32E  - embedded
+  bit iw;  // RV32I  - word
+  bit id;  // RV64I  - double
+  bit iq;  // RV128I - quad
   // extensions
-  logic m;  // integer multiplication and division
-  logic a;  // atomic
-  logic f;  // single-precision floating-point
-  logic d;  // double-precision floating-point
-  logic q;  // quad-precision floating-point
-  logic l;  // decimal precision floating-point
-//logic c;  // compressed
-  logic b;  // bit manipulation
-  logic j;  // dynamically translated languages
-  logic t;  // transactional memory
-  logic p;  // packed-SIMD
-  logic v;  // vector operations
-  logic n;  // user-level interrupts
+  bit m;  // integer multiplication and division
+  bit a;  // atomic
+  bit f;  // single-precision floating-point
+  bit d;  // double-precision floating-point
+  bit q;  // quad-precision floating-point
+  bit l;  // decimal precision floating-point
+//bit c;  // compressed
+  bit b;  // bit manipulation
+  bit j;  // dynamically translated languages
+  bit t;  // transactional memory
+  bit p;  // packed-SIMD
+  bit v;  // vector operations
+  bit n;  // user-level interrupts
 } isa_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,8 +48,8 @@ typedef enum logic [3-1:0] {
 
 // PC multiplexer
 typedef enum logic [2-1:0] {
-  PC_PC2 = 2'b00,  // next   address 32bit instruction
-  PC_PC4 = 2'b01,  // next   address 16bit instruction
+  PC_PC4 = 2'b00,  // next   address 32bit instruction
+  PC_PC2 = 2'b01,  // next   address 16bit instruction
   PC_ALU = 2'b10,  // branch address
   PC_EPC = 2'b11   // EPC value from CSR
 } pc_t;
@@ -126,16 +126,16 @@ typedef enum logic [1+1+3-1:0] {
   LD_WS = {1'b1, 1'b1, SZ_W},  LD_WU = {1'b1, 1'b0, SZ_W},  // word
   LD_DS = {1'b1, 1'b1, SZ_D},  LD_DU = {1'b1, 1'b0, SZ_D},  // double
   LD_QS = {1'b1, 1'b1, SZ_Q},  LD_QU = {1'b1, 1'b0, SZ_Q},  // quad
-  LD_XX = {1'b0, 1'bx, 3'dx}
+  LD_XX = {1'b0, 1'bx, 3'dx}                                // none
 } ld_t;
 
 // write back multiplexer
 typedef enum logic [3-1:0] {
-  WB_ALU = 3'b1_00,  
-  WB_MEM = 3'b1_01,  
-  WB_PC4 = 3'b1_10,  
-  WB_CSR = 3'b1_11,
-  WB_XXX = 3'b0_xx
+  WB_ALU = 3'b1_00,  // Arithmetic Logic Unit
+  WB_MEM = 3'b1_01,  // memory
+  WB_PC4 = 3'b1_10,  //
+  WB_CSR = 3'b1_11,  // 
+  WB_XXX = 3'b0_xx   // none
 } wb_t;
 
 // CSR operations
@@ -147,13 +147,15 @@ typedef enum logic [3-1:0] {
   CSR_N = {1'b0, 2'bxx}   // none
 } csr_t;
 
+typedef logic signed [32-1:0] imm32_t;
+
 // control structure
 typedef struct packed {
   pc_t    pc;   // PC multiplexer
   br_t    br;   // branch type
   a1_t    a1;   // ALU RS1 multiplexer
   a2_t    a2;   // ALU RS1 multiplexer
-  integer imm;  // immediate select
+  imm32_t imm;  // immediate select // TODO: find better type
   ao_t    ao;   // ALU operation
   ar_t    ar;   // ALU result size
   st_t    st;   // store type/enable
@@ -161,7 +163,7 @@ typedef struct packed {
   wb_t    wb;   // write back multiplexer/enable
   csr_t   csr;  // CSR operation
   logic   ill;  // illegal
-} ctli_t;
+} ctl_i_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // M extension
@@ -182,7 +184,7 @@ typedef struct packed {
   logic s2;  // sign operand 2
   logic xw;  // XWIDTH (0 - full width, 1 - M64 additional opcodes)
   logic en;  // enable
-} ctlm_t;
+} ctl_m_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // A extension
@@ -222,19 +224,19 @@ typedef struct packed {
 
 // control structure
 typedef struct packed {
-  ctli_t  i;  // integer
-  ctlm_t  m;  // integer multiplication and division
-//  ctla_t  a;  // atomic
-//  ctlf_t  f;  // single-precision floating-point
-//  ctld_t  d;  // double-precision floating-point
-//  ctlq_t  q;  // quad-precision floating-point
-//  ctll_t  l;  // decimal precision floating-point
-//  ctlb_t  b;  // bit manipulation
-//  ctlj_t  j;  // dynamically translated languages
-//  ctlt_t  t;  // transactional memory
-//  ctlp_t  p;  // packed-SIMD
-//  ctlv_t  v;  // vector operations
-//  ctln_t  n;  // user-level interrupts
+  ctl_i_t  i;  // integer
+  ctl_m_t  m;  // integer multiplication and division
+//  ctl_a_t  a;  // atomic
+//  ctl_f_t  f;  // single-precision floating-point
+//  ctl_d_t  d;  // double-precision floating-point
+//  ctl_q_t  q;  // quad-precision floating-point
+//  ctl_l_t  l;  // decimal precision floating-point
+//  ctl_b_t  b;  // bit manipulation
+//  ctl_j_t  j;  // dynamically translated languages
+//  ctl_t_t  t;  // transactional memory
+//  ctl_p_t  p;  // packed-SIMD
+//  ctl_v_t  v;  // vector operations
+//  ctl_n_t  n;  // user-level interrupts
 } ctl_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -255,23 +257,24 @@ endfunction: opsiz
 // 32 bit instruction format
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef struct packed {logic [4:0] rs3; logic [1:0] func2;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:0] rd     ;                       logic [6:0] opcode;} frm_r4;
-typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:0] rd     ;                       logic [6:0] opcode;} frm_r;
-typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; logic [2:0] func3; logic [4:0] rd     ;                       logic [6:0] opcode;} frm_i;
-typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:0] imm_4_0;                       logic [6:0] opcode;} frm_s;
-typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:1] imm_4_1; logic [11:11] imm_11; logic [6:0] opcode;} frm_b;
-typedef struct packed {logic [31:12] imm_31_12;                                                                          logic [4:0] rd     ;                       logic [6:0] opcode;} frm_u;
-typedef struct packed {logic [20:20] imm_20; logic [10:1] imm_10_1; logic [11:11] imm_11; logic [19:12] imm_19_12;       logic [4:0] rd     ;                       logic [6:0] opcode;} frm_j;
+typedef struct packed {logic [4:0] rs3; logic [1:0] func2;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:0] rd     ;                       logic [6:0] opcode;} op32_r4_t;
+typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:0] rd     ;                       logic [6:0] opcode;} op32_r_t;
+typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; logic [2:0] func3; logic [4:0] rd     ;                       logic [6:0] opcode;} op32_i_t;
+typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:0] imm_4_0;                       logic [6:0] opcode;} op32_s_t;
+typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; logic [2:0] func3; logic [4:1] imm_4_1; logic [11:11] imm_11; logic [6:0] opcode;} op32_b_t;
+typedef struct packed {logic [31:12] imm_31_12;                                                                          logic [4:0] rd     ;                       logic [6:0] opcode;} op32_u_t;
+typedef struct packed {logic [20:20] imm_20; logic [10:1] imm_10_1; logic [11:11] imm_11; logic [19:12] imm_19_12;       logic [4:0] rd     ;                       logic [6:0] opcode;} op32_j_t;
+
 
 typedef union packed {
-  frm_r4 r4;
-  frm_r r;
-  frm_i i;
-  frm_s s;
-  frm_b b;
-  frm_u u;
-  frm_j j;
-} frm32_t;
+  op32_r4_t r4;
+  op32_r_t  r;
+  op32_i_t  i;
+  op32_s_t  s;
+  op32_b_t  b;
+  op32_u_t  u;
+  op32_j_t  j;
+} op32_t;
 
 typedef enum logic [3:0] {
   T32_R4,
@@ -281,9 +284,9 @@ typedef enum logic [3:0] {
   T32_B,
   T32_U,
   T32_J
-} frm_sel_t;
+} op32_sel_t;
 
-function logic signed [32-1:0] imm32 (frm32_t op, frm_sel_t sel);
+function imm32_t imm32 (op32_t op, op32_sel_t sel);
   case (sel)
     T32_R4,
     T32_R: imm32 = 'x;
@@ -292,7 +295,7 @@ function logic signed [32-1:0] imm32 (frm32_t op, frm_sel_t sel);
     T32_B: imm32 = {{20{op[31]}}, op[07], op[30:25], op[11:08], 1'b0  }; // s12
     T32_U: imm32 = {    op[31:12],  12'h000}; // s31
     T32_J: imm32 = {{12{op[31]}}, op[19:12], op[20], op[30:25], op[24:21], 1'b0}; // s20
-    default:   imm32 = 'x;
+    default: imm32 = 'x;
   endcase
 endfunction: imm32
 
@@ -300,7 +303,7 @@ endfunction: imm32
 // 32 bit instruction decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function ctl_t dec32 (isa_t isa, frm32_t op);
+function ctl_t dec32 (isa_t isa, op32_t op);
 // default values
 //              pc,    br,    rs1,    rs2,  imm,     alu,   ar,   st,    ld,     wb,   csr,ill
 dec32.i = '{PC_PC4,    'x, A1_RS1, A2_RS2,   'x,      'x,   'x, ST_X, LD_XX, WB_XXX,    'x, '0};
@@ -484,25 +487,25 @@ endfunction: dec32
 // 16 bit instruction format
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef struct packed {logic [ 3: 0] funct4;                          logic [ 4: 0] rd_rs1;                          logic [ 4: 0] rs2 ; logic [1:0] opcode;} frm_cr;
-typedef struct packed {logic [ 2: 0] funct3; logic [12:12] imm_12_12; logic [ 4: 0] rd_rs1; logic [ 6: 2] imm_06_02;                     logic [1:0] opcode;} frm_ci;
-typedef struct packed {logic [ 2: 0] funct3; logic [12: 7] imm_12_07; logic [ 4: 0] rd_rs1;                          logic [ 4: 0] rs2 ; logic [1:0] opcode;} frm_css;
-typedef struct packed {logic [ 2: 0] funct3; logic [12: 5] imm_12_05;                                                logic [ 2: 0] rd_ ; logic [1:0] opcode;} frm_ciw;
-typedef struct packed {logic [ 2: 0] funct3; logic [12:10] imm_12_10; logic [ 2: 0] rs1_  ; logic [ 6: 5] imm_06_05; logic [ 2: 0] rd_ ; logic [1:0] opcode;} frm_cl;
-typedef struct packed {logic [ 2: 0] funct3; logic [12:10] imm_12_10; logic [ 2: 0] rs1_  ; logic [ 6: 5] imm_06_05; logic [ 2: 0] rs2_; logic [1:0] opcode;} frm_cs;
-typedef struct packed {logic [ 2: 0] funct3; logic [12:10] off_12_10; logic [ 2: 0] rs1_  ; logic [ 6: 2] off_06_02;                     logic [1:0] opcode;} frm_cb;
-typedef struct packed {logic [ 2: 0] funct3; logic [12: 2] target;                                                                       logic [1:0] opcode;} frm_cj;
+typedef struct packed {logic [ 3: 0] funct4;                          logic [ 4: 0] rd_rs1;                          logic [ 4: 0] rs2 ; logic [1:0] opcode;} op16_cr_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12:12] imm_12_12; logic [ 4: 0] rd_rs1; logic [ 6: 2] imm_06_02;                     logic [1:0] opcode;} op16_ci_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12: 7] imm_12_07; logic [ 4: 0] rd_rs1;                          logic [ 4: 0] rs2 ; logic [1:0] opcode;} op16_css_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12: 5] imm_12_05;                                                logic [ 2: 0] rd_ ; logic [1:0] opcode;} op16_ciw_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12:10] imm_12_10; logic [ 2: 0] rs1_  ; logic [ 6: 5] imm_06_05; logic [ 2: 0] rd_ ; logic [1:0] opcode;} op16_cl_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12:10] imm_12_10; logic [ 2: 0] rs1_  ; logic [ 6: 5] imm_06_05; logic [ 2: 0] rs2_; logic [1:0] opcode;} op16_cs_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12:10] off_12_10; logic [ 2: 0] rs1_  ; logic [ 6: 2] off_06_02;                     logic [1:0] opcode;} op16_cb_t;
+typedef struct packed {logic [ 2: 0] funct3; logic [12: 2] target;                                                                       logic [1:0] opcode;} op16_cj_t;
 
 typedef union packed {
-  frm_cr  cr;
-  frm_ci  ci;
-  frm_css css;
-  frm_ciw ciw;
-  frm_cl  cl;
-  frm_cs  cs;
-  frm_cb  cb;
-  frm_cj  cj;
-} frm16_t;
+  op16_cr_t  cr;
+  op16_ci_t  ci;
+  op16_css_t css;
+  op16_ciw_t ciw;
+  op16_cl_t  cl;
+  op16_cs_t  cs;
+  op16_cb_t  cb;
+  op16_cj_t  cj;
+} op16_t;
 
 typedef enum logic [3:0] {
   T16_CR,
@@ -513,33 +516,35 @@ typedef enum logic [3:0] {
   T16_CS,
   T16_CB,
   T16_CJ
-} frm16_sel_t;
+} op16_sel_t;
 
 // register width
 typedef enum logic [3:0] {
-  T16_W,
-  T16_D,
-  T16_Q
-} frm16_wdh_t;
+  T16_W,  // word
+  T16_D,  // double
+  T16_Q   // quad
+} op16_wdh_t;
 
-function logic signed [16:0] imm16 (frm16_t i, frm16_sel_t sel, frm16_wdh_t wdh);
-  logic [15:0] imm16 = '0;
+typedef logic signed [16-1:0] imm16_t;
+
+function imm16_t imm16 (op16_t i, op16_sel_t sel, op16_wdh_t wdh);
+  imm16 = '0;
   case (sel)
     T16_CR:
-	imm16 = 'x;
+      imm16 = 'x;
     T16_CI:
       case (wdh)
         T16_W: {imm16[5], {imm16[4:2], imm16[7:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
         T16_D: {imm16[5], {imm16[4:3], imm16[8:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
         T16_Q: {imm16[5], {imm16[4:4], imm16[9:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
-	default: imm16 = 'x;
+        default: imm16 = 'x;
       endcase
     T16_CSS:
       case (wdh)
         T16_W: {imm16[5:2], imm16[7:6]} = i.css.imm_12_07;
         T16_D: {imm16[5:3], imm16[8:6]} = i.css.imm_12_07;
         T16_Q: {imm16[5:4], imm16[9:6]} = i.css.imm_12_07;
-	default: imm16 = 'x;
+        default: imm16 = 'x;
       endcase
     T16_CIW:
       {imm16[5:4], imm16[9:6], imm16[2], imm16[3]} = i.ciw.imm_12_05;
@@ -549,7 +554,7 @@ function logic signed [16:0] imm16 (frm16_t i, frm16_sel_t sel, frm16_wdh_t wdh)
         T16_W: {imm16[5:3], imm16[2], imm16[  6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
         T16_D: {imm16[5:3],           imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
         T16_Q: {imm16[5:4], imm16[8], imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
-	default: imm16 = 'x;
+        default: imm16 = 'x;
       endcase
     T16_CJ:
       {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]} = i.cj.target;
@@ -564,7 +569,7 @@ function logic [4:0] reg_5 (logic [2:0] reg_3);
 endfunction: reg_5
 
 /*
-function ctli_t dec16 (isa_t isa, frm16_t op);
+function ctl_i_t dec16 (isa_t isa, op16_t op);
 // default values
 //              pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
 dec16.i = '{PC_PC4, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0};
