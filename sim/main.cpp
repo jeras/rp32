@@ -1,22 +1,14 @@
-// SystemC global header
-#include <systemc.h>
-
 // Include common routines
 #include <verilated.h>
-#include <verilated_vcd_sc.h>
+#include <verilated_vcd_c.h>
 
 // OS tools
 #include <sys/stat.h>  // mkdir
 
-// OVP RISC-V simulator
-//extern "C" {
-//#include "op/op.h"
-//}
-
 // RTL
 #include "Vr5p_tb.h"
 
-int sc_main(int argc, char **argv) {
+int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////
     // verilator initialization
     ////////////////////////////////////////////////////////////////////////////
@@ -25,7 +17,7 @@ int sc_main(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
 
     // system signals
-    sc_clock        clk ("clk", 10, SC_NS, 0.5, 0, SC_NS, true);
+    sc_clock        clk ("clk", 10, SC_NS, 0.5, 3, SC_NS, true);
     sc_signal<bool> rst;
 
     Vr5p_tb* top;
@@ -41,7 +33,7 @@ int sc_main(int argc, char **argv) {
     // SystemC to interconnect everything for testing.
     sc_start(1,SC_NS);
 
-    // If Verilator was invoked with --trace argument,
+    // If verilator was invoked with --trace argument,
     // and if at run time passed the +trace argument, turn on tracing
     VerilatedVcdSc* tfp = NULL;
     const char* flag = Verilated::commandArgsPlusMatch("trace");
@@ -53,26 +45,26 @@ int sc_main(int argc, char **argv) {
         tfp->open("logs/vlt_dump.vcd");
     }
 
-//    ////////////////////////////////////////////////////////////////////////////
-//    // OVPsim initialization
-//    ////////////////////////////////////////////////////////////////////////////
-//
-//    opSessionInit(OP_VERSION);
-//
-//    opCmdParseStd (argv[0], OP_AC_ALL, argc, (const char**) argv);
-//
-//    optModuleP mr = opRootModuleNew(0, 0, 0);
-//    optModuleP mi = opModuleNew(mr, "OVP_module", "u1", 0, 0);
-//
-//    opRootModulePreSimulate(mr);
-//
-//    // Get processor
-//    optProcessorP processor = opProcessorNext(mi, NULL);
-//
-//    if(!processor)
-//        opMessage("F", "MODULE", "No Processor Found");
-//
-//    opMessage("I", "MODULE", "Trace processor '%s'", opObjectName(processor));
+    ////////////////////////////////////////////////////////////////////////////
+    // OVPsim initialization
+    ////////////////////////////////////////////////////////////////////////////
+
+    opSessionInit(OP_VERSION);
+
+    opCmdParseStd (argv[0], OP_AC_ALL, argc, (const char**) argv);
+
+    optModuleP mr = opRootModuleNew(0, 0, 0);
+    optModuleP mi = opModuleNew(mr, "OVP_module", "u1", 0, 0);
+
+    opRootModulePreSimulate(mr);
+
+    // Get processor
+    optProcessorP processor = opProcessorNext(mi, NULL);
+
+    if(!processor)
+        opMessage("F", "MODULE", "No Processor Found");
+
+    opMessage("I", "MODULE", "Trace processor '%s'", opObjectName(processor));
 
     ////////////////////////////////////////////////////////////////////////////
     // test sequence
@@ -80,7 +72,7 @@ int sc_main(int argc, char **argv) {
 
     // reset sequence
     rst = 1;
-    sc_start(20, SC_NS);
+    sc_start(100, SC_NS);
     rst = 0;
 
     //while (!Verilated::gotFinish()) { sc_start(30, SC_NS); }
@@ -97,11 +89,11 @@ int sc_main(int argc, char **argv) {
     // cleanup
     delete top;
 
-//    ////////////////////////////////////////////////////////////////////////////
-//    // OVPsim cleanup
-//    ////////////////////////////////////////////////////////////////////////////
-//
-//    opSessionTerminate();
+    ////////////////////////////////////////////////////////////////////////////
+    // OVPsim cleanup
+    ////////////////////////////////////////////////////////////////////////////
+
+    opSessionTerminate();
 
     ////////////////////////////////////////////////////////////////////////////
     // exit simulation

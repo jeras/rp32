@@ -9,7 +9,6 @@ PATH_SRC=../src
 # SystemVerilog RTL
 RTL =${PATH_RTL}/riscv_isa_pkg.sv
 #RTL+=${PATH_RTL}/r5p_pkg.sv
-RTL+=${PATH_RTL}/r5p_if.sv
 RTL+=${PATH_RTL}/r5p_br.sv
 RTL+=${PATH_RTL}/r5p_gpr.sv
 RTL+=${PATH_RTL}/r5p_alu.sv
@@ -30,6 +29,12 @@ HDL+=${TSV}
 # top level file
 # TODO: pass it as macro to CS compiler
 TOP = r5p_tb
+
+################################################################################
+# SystemC
+################################################################################
+
+
 
 ################################################################################
 # Verilator compiler/linker flags

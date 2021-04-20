@@ -1,3 +1,16 @@
+# Short
+
+```bash
+
+```
+
+```bash
+export VERILATOR_ROOT=/home/ijeras/VLSI/verilator
+cd sim
+make -f Makefile.verilator lint
+make -f Makefile.verilator
+```
+
 # Requirements
 
 The default script is using ModelSim (version from Altera/Intel) for simulation.
