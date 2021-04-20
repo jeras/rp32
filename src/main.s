@@ -5,27 +5,27 @@ _start:
     lui t0, 0x10010
 
     andi t1, t1, 0
-    addi t1, t1, 72
+    addi t1, t1, 0x48  # H
     sw t1, 0(t0)
 
     andi t1, t1, 0
-    addi t1, t1, 101
+    addi t1, t1, 0x65  # e
     sw t1, 0(t0)
 
     andi t1, t1, 0
-    addi t1, t1, 108
+    addi t1, t1, 0x6c  # l
     sw t1, 0(t0)
 
     andi t1, t1, 0
-    addi t1, t1, 108
+    addi t1, t1, 0x6c  # l
     sw t1, 0(t0)
 
     andi t1, t1, 0
-    addi t1, t1, 111
+    addi t1, t1, 0x6f  # o
     sw t1, 0(t0)
 
     andi t1, t1, 0
-    addi t1, t1, 10
+    addi t1, t1, 0x0a  # \n
     sw t1, 0(t0)
 
 finish:
