@@ -65,9 +65,10 @@ localparam int unsigned XW = 32;
 ///////////////////////////////////////////////////////////////////////////////
 
 // instruction fetch
-logic           tkn;  // taken
-logic [IAW-1:0] pc;   // program counter
-logic [IAW-1:0] pcn;  // program counter next
+logic           if_tkn;  // taken
+logic [IAW-1:0] if_pc;   // program counter
+logic [IAW-1:0] if_pca;  // program counter adder
+logic [IAW-1:0] if_pcn;  // program counter next
 logic           stall;
 
 // instruction decode
@@ -100,7 +101,7 @@ always_ff @ (posedge clk, posedge rst)
 if (rst)  if_req <= 1'b0;
 else      if_req <= 1'b1;
 
-assign if_adr = pcn;
+assign if_adr = if_pcn;
 
 // instruction valid
 always_ff @ (posedge clk, posedge rst)
@@ -116,9 +117,9 @@ assign stall = ~if_ack;
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
-if (rst)  pc <= PC0;
+if (rst)  if_pc <= PC0;
 else begin
-  if (id_vld & ~stall) pc <= pcn;
+  if (id_vld & ~stall) if_pc <= if_pcn;
 end
 
 // branch unit
@@ -131,31 +132,46 @@ r5p_br #(
   .rs1  (gpr_rs1),
   .rs2  (gpr_rs2),
   // status
-  .tkn  (tkn)
+  .tkn  (if_tkn)
 );
+
+// program counter adder
+assign if_pca = if_pc + IAW'(opsiz(id_op[16-1:0]));
 
 // program counter next
 always_comb
-if (csr_expt)  pcn = csr_evec;
+if (csr_expt)  if_pcn = csr_evec;
 else if (if_ack & id_vld) begin
   case (id_ctl.i.pc)
-    PC_PC2: pcn = pc + 'd2;
-    PC_PC4: pcn = pc + 'd4;
-    PC_EPC: pcn = csr_epc;
-    PC_ALU: pcn = tkn ? alu_sum[IAW-1:0] : pc + 'd4;
-    default: pcn = 'x;
+    PC_PCN: if_pcn = if_pca;
+    PC_EPC: if_pcn = csr_epc;
+    PC_ALU: if_pcn = if_tkn ? alu_sum[IAW-1:0] : if_pca;
+    default: if_pcn = 'x;
   endcase
 end else begin
-  pcn = pc;
+  if_pcn = if_pc;
 end
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
+// opcode from instruction fetch
 assign id_op = if_rdt;
 
+// 32-bit instruction decoder
 assign id_ctl = dec32(ISA, id_op);
+
+// write back multiplexer
+always_comb begin
+  unique case (id_ctl.i.wb)
+    WB_ALU: gpr_rd =     alu_rd ;  // ALU output
+    WB_MEM: gpr_rd =     ls_rdt ;  // memory read data
+    WB_PCN: gpr_rd = XW'(if_pcn);  // PC next
+    WB_CSR: gpr_rd = 'x;           // CSR
+    default: gpr_rd = 'x;           // none
+  endcase
+end
 
 // general purpose registers
 r5p_gpr #(
@@ -188,7 +204,7 @@ always_comb begin
   // RS1
   unique case (id_ctl.i.a1)
     A1_RS1: alu_rs1 = gpr_rs1;
-    A1_PC : alu_rs1 = XW'(pc);
+    A1_PC : alu_rs1 = XW'(if_pc);
   endcase
   // RS2
   unique case (id_ctl.i.a2)
