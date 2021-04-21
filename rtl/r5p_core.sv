@@ -244,6 +244,6 @@ assign ls_adr = alu_sum[DAW-1:0];
 assign ls_sel = '1;
 
 // write data
-assign ls_wdt = gpr_rd;
+assign ls_wdt = gpr_rs2;
 
 endmodule: r5p_core
