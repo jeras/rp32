@@ -2,7 +2,7 @@
 
 _start:
 
-    lui t0, 0x10010
+    li t0, 0x00001000
 
     andi t1, t1, 0
     addi t1, t1, 0x48  # H
