@@ -39,8 +39,9 @@ if (req) begin
 end
 
 // trivial acknowledge
-always @(posedge clk)
-  ack <= req;
+assign ack = 1'b1;
+//always @(posedge clk)
+//  ack <= req;
 
 // initialization
 initial
