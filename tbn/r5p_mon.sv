@@ -103,6 +103,75 @@ mem #(
 );
 
 ////////////////////////////////////////////////////////////////////////////////
+// LS debug
+////////////////////////////////////////////////////////////////////////////////
+
+// data bus
+logic           ls_req_r;
+logic           ls_wen_r;
+logic [DAW-1:0] ls_adr_r;
+logic [DSW-1:0] ls_sel_r;
+logic [DDW-1:0] ls_wdt_r;
+logic [DDW-1:0] ls_rdt_r;
+logic           ls_ack_r;
+
+// delayed signals
+always_ff @(posedge clk, posedge rst)
+if (rst) begin
+  ls_req_r <= '0;
+  ls_wen_r <= 'x;
+  ls_sel_r <= 'x;
+  ls_adr_r <= 'x;
+  ls_wdt_r <= 'x;
+  ls_rdt_r <= 'x;
+  ls_ack_r <= '0;
+end else begin
+  ls_req_r <= ls_req;
+  ls_wen_r <= ls_wen;
+  ls_sel_r <= ls_sel;
+  ls_adr_r <= ls_adr;
+  ls_wdt_r <= ls_wdt;
+  ls_rdt_r <= ls_rdt;
+  ls_ack_r <= ls_ack;
+end
+
+// write access
+always @(posedge clk)
+if (ls_req & ls_ack & ls_wen) begin
+  $display("STORE: address=@0x%08h data=0x%08h mask=0b%04b, TXT=%s", ls_adr, ls_wdt, ls_sel, ls_wdt[8-1:0]);
+end
+
+// read access
+always @(posedge clk)
+if (ls_req_r & ls_ack_r & ~ls_wen_r) begin
+  $display("LOAD: address=@0x%08h data=0x%08h mask=0b%04b, TXT=%s", ls_adr_r, ls_rdt, ls_sel_r, ls_rdt[8-1:0]);
+end
+
+////////////////////////////////////////////////////////////////////////////////
+// IF debug
+////////////////////////////////////////////////////////////////////////////////
+
+logic           if_trn = 1'b0;
+logic [IAW-1:0] if_adr_r;
+
+always_ff @(posedge clk)
+if (if_req & if_ack) begin
+  if_trn <= 1'b1;
+  if_adr_r <= if_adr;
+end else begin
+  if_trn <= 1'b0;
+end
+
+always @(posedge clk)
+if (if_trn) begin
+  $display("OP: @0x%08x 0x%08x: %s", if_adr_r, if_rdt, disasm32(if_rdt));
+end
+
+////////////////////////////////////////////////////////////////////////////////
+// LS debug
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
 // waveforms
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -15,8 +15,8 @@ RTL+=${PATH_RTL}/r5p_alu.sv
 RTL+=${PATH_RTL}/r5p_core.sv
 
 # SystemVerilog bench (Test SV)
-TSV =${PATH_TBN}/mem.sv
-TSV+=${PATH_TBN}/riscv_asm_pkg.sv
+TSV =${PATH_TBN}/riscv_asm_pkg.sv
+TSV+=${PATH_TBN}/mem.sv
 TSV+=${PATH_TBN}/r5p_tb.sv
 
 # SystemC bench (Test SystemC)
