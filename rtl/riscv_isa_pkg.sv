@@ -39,11 +39,14 @@ typedef struct packed {
 
 // generic size type
 typedef enum logic [3-1:0] {
-  SZ_B = 3'b000,  // byte
-  SZ_H = 3'b001,  // half
-  SZ_W = 3'b010,  // word
-  SZ_D = 3'b100,  // double
-  SZ_Q = 3'b110   // quad
+  SZ_B = 3'b000,  //   1B - byte
+  SZ_H = 3'b001,  //   2B - half
+  SZ_W = 3'b010,  //   4B - word
+  SZ_D = 3'b011,  //   8B - double
+  SZ_Q = 3'b100,  //  16B - quad
+  SZ_5 = 3'b101,  //  32B
+  SZ_6 = 3'b110,  //  64B
+  SZ_7 = 3'b111   // 128B
 } sz_t;
 
 // PC multiplexer
@@ -313,8 +316,8 @@ dec32.m = '{'x, 'x, 'x, 'x, '0};
 
 unique casez ({isa, op})
 //   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                   pc,     br,    rs1,    rs2,             imm,    alu,   ar,   st,    ld,     wb,   csr,ill
-{16'b????_????????????, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec32.i = '{PC_PCN,     'x,     'x,     'x,              'x,     'x,   'x, ST_X, LD_XX, WB_XXX,    'x, '0}; // 32'000000013 - nop
-{16'b????_????????????, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec32.i = '{PC_PCN,     'x,     'x,     'x,              'x,     'x,   'x, ST_X, LD_XX, WB_XXX,    'x, '0}; // 32'h00004033 - machine gen. bubble
+{16'b????_????????????, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec32.i = '{PC_PCN,     'x,     'x,     'x,              'x,     'x,   'x,   'x, LD_XX, WB_XXX,    'x, '0}; // 32'000000013 - nop
+{16'b????_????????????, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec32.i = '{PC_PCN,     'x,     'x,     'x,              'x,     'x,   'x,   'x, LD_XX, WB_XXX,    'x, '0}; // 32'h00004033 - machine gen. bubble
                                                                                                  
 // RV.I32                                                                                        
 //   ewdq mafdqlbjtpvn      fedc_ba98_7654_3210_fedc_ba98_7654_3210                   pc,     br,    rs1,    rs2,             imm,    alu,   ar,   st,    ld,     wb,   csr,ill

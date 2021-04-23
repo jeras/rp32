@@ -182,8 +182,8 @@ r5p_gpr #(
   .clk    (clk),
   .rst    (rst),
   // read/write enable
-//.e_rs1  (),
-//.e_rs2  (),
+  .e_rs1  (1'b1),
+  .e_rs2  (1'b1),
   .e_rd   (id_ctl.i.wb != WB_XXX),
   // read/write address
   .a_rs1  (id_op.r.rs1),
@@ -241,7 +241,15 @@ assign ls_adr = alu_sum[DAW-1:0];
 
 // byte select
 // TODO
-assign ls_sel = '1;
+always_comb
+unique case (id_ctl.i.st)
+  ST_B: ls_sel = DSW'('b0000_0000_0000_0001);
+  ST_H: ls_sel = DSW'('b0000_0000_0000_0011);
+  ST_W: ls_sel = DSW'('b0000_0000_0000_1111);
+  ST_D: ls_sel = DSW'('b0000_0000_1111_1111);
+  ST_Q: ls_sel = DSW'('b1111_1111_1111_1111);
+  default: ls_sel = '1;
+endcase
 
 // write data
 assign ls_wdt = gpr_rs2;

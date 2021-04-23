@@ -6,8 +6,8 @@ module r5p_gpr #(
   input  logic          clk,  // clock
   input  logic          rst,  // reset
   // read/write enable
-//input  logic          e_rs1,
-//input  logic          e_rs2,
+  input  logic          e_rs1,
+  input  logic          e_rs2,
   input  logic          e_rd,
   // read/write address
   input  logic [AW-1:0] a_rs1,
@@ -30,7 +30,7 @@ else if (e_rd & |a_rd) begin
 end
 
 // read access
-assign d_rs1 = |a_rs1 ? gpr[a_rs1] : '0;
-assign d_rs2 = |a_rs2 ? gpr[a_rs2] : '0;
+assign d_rs1 = (e_rs1 & |a_rs1) ? gpr[a_rs1] : '0;
+assign d_rs2 = (e_rs2 & |a_rs2) ? gpr[a_rs2] : '0;
 
 endmodule: r5p_gpr
