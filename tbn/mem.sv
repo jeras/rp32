@@ -98,9 +98,9 @@ if (req) begin
       else         dat[i] = mem[int'(adr)+i];
     end
   end
-  $write("%s %s: adr=@0x%08h dat=0x0%h sel=0b%0b", DBG, wen ? "W" : "R", adr, dat, sel);
+  $write("%s %s: adr=0x%08h dat=0x0%h sel=0b%0b", DBG, wen ? "W" : "R", adr, dat, sel);
   if (TXT) $write(" txt='%s'", dat);
-  if (OPC) $write(" opc='%s'", disasm32(dat));
+  if (OPC) $write(" opc='%s'", riscv_disasm(dat));
   $write("\n");
 end
 

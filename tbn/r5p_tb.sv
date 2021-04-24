@@ -38,14 +38,14 @@ logic           ls_ack;
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_core #(
-  .IDW (IDW),
-  .IAW (IAW),
-  .DAW (DAW),
-  .DDW (DDW)
+  .IDW  (IDW),
+  .IAW  (IAW),
+  .DAW  (DAW),
+  .DDW  (DDW)
 ) DUT (
   // system signals
-  .clk      (clk),
-  .rst      (rst),
+  .clk     (clk),
+  .rst     (rst),
   // instruction fetch
   .if_req  (if_req),
   .if_adr  (if_adr),
@@ -66,20 +66,39 @@ r5p_core #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
-  .FN ("../src/main.bin"),
-  .SZ (2**IAW),
-  .DW (IDW),
-  .DBG ("INS"),
-  .OPC (1'b1)
+  .FN   ("../src/main.bin"),
+  .SZ   (2**IAW),
+  .DW   (IDW),
+  .DBG  ("INS"),
+  .OPC  (1'b1)
 ) mem_if (
-  .clk (clk),
-  .req (if_req),
-  .wen (1'b0),
-  .sel ('1),
-  .adr (if_adr),
-  .wdt ('x),
-  .rdt (if_rdt),
-  .ack (if_ack)
+  // system signals
+  .clk  (clk),
+  // instruction fetch
+  .req  (if_req),
+  .wen  (1'b0),
+  .sel  ('1),
+  .adr  (if_adr),
+  .wdt  ('x),
+  .rdt  (if_rdt),
+  .ack  (if_ack)
+);
+
+r5p_bus_mon #(
+  .DW   (IDW),
+  .AW   (IAW),
+) bus_mon_if (
+  // system signals
+  .clk  (clk),
+  .rst  (rst),
+  // instruction fetch
+  .req  (if_req),
+  .wen  (1'b0),
+  .adr  (if_adr),
+  .sel  ('1),
+  .wdt  ('x),
+  .rdt  (if_rdt),
+  .ack  (if_ack)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,19 +106,38 @@ mem #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
-  .SZ (2**DAW),
-  .DW (DDW),
-  .DBG ("DAT"),
-  .TXT (1'b1)
+  .SZ   (2**DAW),
+  .DW   (DDW),
+  .DBG  ("DAT"),
+  .TXT  (1'b1)
 ) mem_ls (
-  .clk (clk),
-  .req (ls_req),
-  .wen (ls_wen),
-  .sel (ls_sel),
-  .adr (ls_adr),
-  .wdt (ls_wdt),
-  .rdt (ls_rdt),
-  .ack (ls_ack)
+  // system signals
+  .clk  (clk),
+  // data load/store
+  .req  (ls_req),
+  .wen  (ls_wen),
+  .sel  (ls_sel),
+  .adr  (ls_adr),
+  .wdt  (ls_wdt),
+  .rdt  (ls_rdt),
+  .ack  (ls_ack)
+);
+
+r5p_bus_mon #(
+  .DW   (DDW),
+  .AW   (DAW),
+) bus_mon_ls (
+  // system signals
+  .clk  (clk),
+  .rst  (rst),
+  // data load/store
+  .req  (ls_req),
+  .wen  (ls_wen),
+  .adr  (ls_adr),
+  .sel  (ls_sel),
+  .wdt  (ls_wdt),
+  .rdt  (ls_rdt),
+  .ack  (ls_ack)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
