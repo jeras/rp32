@@ -24,6 +24,8 @@ module r5p_core #(
 //                .v = 1'b0,  // vector operations
 //                .n = 1'b0   // user-level interrupts
 //	      },
+  // TODO
+  int unsigned XW  = 32,
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
@@ -57,8 +59,8 @@ module r5p_core #(
 // calculated parameters
 ///////////////////////////////////////////////////////////////////////////////
 
-// TODO
-localparam int unsigned XW = 32;
+// word address width
+localparam int unsigned DWW = $clog2(DSW);
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -230,24 +232,40 @@ r5p_alu #(
 // load/store
 ///////////////////////////////////////////////////////////////////////////////
 
+// intermediate signals
+logic [XW-1:0] ls_adr_t;
+logic [XW-1:0] ls_wdt_t;
+logic [XW-1:0] ls_rdt_t;
+logic [DWW-1:0] ls_tmp;
+
+// temprary values
+assign ls_adr_t = alu_sum;
+assign ls_wdt_t = gpr_rs2;
+assign ls_wdt_t = gpr_rs2;
+
 // request
-assign ls_req = (id_ctl.i.st != ST_X) | (id_ctl.i.ld != LD_XX);
+assign ls_req = id_ctl.i.ls.en;
 
 // write enable
-assign ls_wen = (id_ctl.i.st != ST_X);
+assign ls_wen = id_ctl.i.ls.we;
 
 // address
-assign ls_adr = alu_sum[DAW-1:0];
+assign ls_adr = {ls_adr_t[DAW-1:DWW], DWW'('1)};
+
+assign ls_tmp = ls_adr_t[DWW-1:0];
 
 // byte select
 // TODO
 always_comb
-unique case (id_ctl.i.st)
-  ST_B: ls_sel = DSW'('b0000_0000_0000_0001);
-  ST_H: ls_sel = DSW'('b0000_0000_0000_0011);
-  ST_W: ls_sel = DSW'('b0000_0000_0000_1111);
-  ST_D: ls_sel = DSW'('b0000_0000_1111_1111);
-  ST_Q: ls_sel = DSW'('b1111_1111_1111_1111);
+//for (int unsigned i=0; i<SDW; i++) begin
+//  ls_sel[i] = (2**id_ctl.i.st) &
+//end
+unique case (id_ctl.i.ls.sz)
+  SZ_B: ls_sel = DSW'('b0000_0000_0000_0001 << ls_adr_t[DWW-1:0]);
+  SZ_H: ls_sel = DSW'('b0000_0000_0000_0011 << ls_adr_t[DWW-1:0]);
+  SZ_W: ls_sel = DSW'('b0000_0000_0000_1111 << ls_adr_t[DWW-1:0]);
+  SZ_D: ls_sel = DSW'('b0000_0000_1111_1111 << ls_adr_t[DWW-1:0]);
+  SZ_Q: ls_sel = DSW'('b1111_1111_1111_1111 << ls_adr_t[DWW-1:0]);
   default: ls_sel = '1;
 endcase
 
