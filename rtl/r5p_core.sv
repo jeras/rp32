@@ -84,15 +84,21 @@ logic [IAW-1:0] csr_evec;
 logic [IAW-1:0] csr_epc;
 
 // GPR
-logic [XW-1:0] gpr_rs1;
-logic [XW-1:0] gpr_rs2;
-logic [XW-1:0] gpr_rd ;
+logic [XW-1:0] gpr_rs1;  // register source 1
+logic [XW-1:0] gpr_rs2;  // register source 2
+logic [XW-1:0] gpr_rd ;  // register destination
 
 // ALU
-logic [XW-1:0] alu_rs1;
-logic [XW-1:0] alu_rs2;
-logic [XW-1:0] alu_rd ;
-logic [XW-1:0] alu_sum;
+logic [XW-1:0] alu_rs1;  // register source 1
+logic [XW-1:0] alu_rs2;  // register source 2
+logic [XW-1:0] alu_rd ;  // register destination
+logic [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
+
+// load/sore unit temporary signals
+logic [XW-1:0] ls_adr_t;  // address
+logic [XW-1:0] ls_wdt_t;  // write data
+logic [XW-1:0] ls_rdt_t;  // read data
+logic [XW-1:0] ls_mal;    // misaligned
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction fetch
@@ -103,6 +109,7 @@ always_ff @ (posedge clk, posedge rst)
 if (rst)  if_req <= 1'b0;
 else      if_req <= 1'b1;
 
+// PC next is used as IF address
 assign if_adr = if_pcn;
 
 // instruction valid
@@ -167,10 +174,10 @@ assign id_ctl = dec32(ISA, id_op);
 // write back multiplexer
 always_comb begin
   unique case (id_ctl.i.wb)
-    WB_ALU: gpr_rd =     alu_rd ;  // ALU output
-    WB_MEM: gpr_rd =     ls_rdt ;  // memory read data
-    WB_PCN: gpr_rd = XW'(if_pcn);  // PC next
-    WB_CSR: gpr_rd = 'x;           // CSR
+    WB_ALU: gpr_rd =     alu_rd ;   // ALU output
+    WB_MEM: gpr_rd =     ls_rdt_t;  // memory read data
+    WB_PCN: gpr_rd = XW'(if_pcn);   // PC next
+    WB_CSR: gpr_rd = 'x;            // CSR
     default: gpr_rd = 'x;           // none
   endcase
 end
@@ -232,15 +239,8 @@ r5p_alu #(
 // load/store
 ///////////////////////////////////////////////////////////////////////////////
 
-// intermediate signals
-logic [XW-1:0] ls_adr_t;
-logic [XW-1:0] ls_wdt_t;
-logic [XW-1:0] ls_rdt_t;
-logic [DWW-1:0] ls_tmp;
-
 // temprary values
 assign ls_adr_t = alu_sum;
-assign ls_wdt_t = gpr_rs2;
 assign ls_wdt_t = gpr_rs2;
 
 // request
@@ -252,8 +252,6 @@ assign ls_wen = id_ctl.i.ls.we;
 // address
 assign ls_adr = {ls_adr_t[DAW-1:DWW], DWW'('1)};
 
-assign ls_tmp = ls_adr_t[DWW-1:0];
-
 // byte select
 // TODO
 always_comb
@@ -261,15 +259,37 @@ always_comb
 //  ls_sel[i] = (2**id_ctl.i.st) &
 //end
 unique case (id_ctl.i.ls.sz)
-  SZ_B: ls_sel = DSW'('b0000_0000_0000_0001 << ls_adr_t[DWW-1:0]);
-  SZ_H: ls_sel = DSW'('b0000_0000_0000_0011 << ls_adr_t[DWW-1:0]);
-  SZ_W: ls_sel = DSW'('b0000_0000_0000_1111 << ls_adr_t[DWW-1:0]);
-  SZ_D: ls_sel = DSW'('b0000_0000_1111_1111 << ls_adr_t[DWW-1:0]);
-  SZ_Q: ls_sel = DSW'('b1111_1111_1111_1111 << ls_adr_t[DWW-1:0]);
-  default: ls_sel = '1;
+  SZ_B: ls_sel = DSW'(16'b0000_0000_0000_0001 << ls_adr_t[DWW-1:0]);
+  SZ_H: ls_sel = DSW'(16'b0000_0000_0000_0011 << ls_adr_t[DWW-1:0]);
+  SZ_W: ls_sel = DSW'(16'b0000_0000_0000_1111 << ls_adr_t[DWW-1:0]);
+  SZ_D: ls_sel = DSW'(16'b0000_0000_1111_1111 << ls_adr_t[DWW-1:0]);
+  SZ_Q: ls_sel = DSW'(16'b1111_1111_1111_1111 << ls_adr_t[DWW-1:0]);
+  default: ls_sel = '0;
 endcase
 
 // write data
-assign ls_wdt = gpr_rs2;
+always_comb
+unique case (id_ctl.i.ls.sz)
+  SZ_B: ls_wdt = (ls_wdt_t & DDW'(128'h00000000_00000000_00000000_000000ff)) << (8*ls_adr_t[DWW-1:0]);
+  SZ_H: ls_wdt = (ls_wdt_t & DDW'(128'h00000000_00000000_00000000_0000ffff)) << (8*ls_adr_t[DWW-1:0]);
+  SZ_W: ls_wdt = (ls_wdt_t & DDW'(128'h00000000_00000000_00000000_ffffffff)) << (8*ls_adr_t[DWW-1:0]);
+  SZ_D: ls_wdt = (ls_wdt_t & DDW'(128'h00000000_00000000_ffffffff_ffffffff)) << (8*ls_adr_t[DWW-1:0]);
+  SZ_Q: ls_wdt = (ls_wdt_t & DDW'(128'hffffffff_ffffffff_ffffffff_ffffffff)) << (8*ls_adr_t[DWW-1:0]);
+  default: ls_wdt = 'x;
+endcase
+
+// read data
+always_comb begin
+  logic [XW-1:0] tmp;
+  tmp = ls_rdt >> (8*ls_adr_t[DWW-1:0]);
+  unique case (id_ctl.i.ls.sz)
+    SZ_B: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed(  8'(tmp))) : DDW'($unsigned(  8'(tmp)));
+    SZ_H: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed( 16'(tmp))) : DDW'($unsigned( 16'(tmp)));
+    SZ_W: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed( 32'(tmp))) : DDW'($unsigned( 32'(tmp)));
+    SZ_D: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed( 64'(tmp))) : DDW'($unsigned( 64'(tmp)));
+    SZ_Q: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed(128'(tmp))) : DDW'($unsigned(128'(tmp)));
+    default: ls_rdt_t = 'x;
+  endcase
+end
 
 endmodule: r5p_core
