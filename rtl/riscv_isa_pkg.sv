@@ -268,11 +268,11 @@ function imm32_t imm32 (op32_t op, op32_sel_t sel);
   case (sel)
     T32_R4,
     T32_R: imm32 = 'x;
-    T32_I: imm32 = {{21{op[31]}},         op[30:25], op[24:21], op[20]}; // s11
-    T32_S: imm32 = {{21{op[31]}},         op[30:25], op[11:08], op[07]}; // s11
-    T32_B: imm32 = {{20{op[31]}}, op[07], op[30:25], op[11:08], 1'b0  }; // s12
-    T32_U: imm32 = {    op[31:12],  12'h000}; // s31
-    T32_J: imm32 = {{12{op[31]}}, op[19:12], op[20], op[30:25], op[24:21], 1'b0}; // s20
+    T32_I: imm32 = imm32_t'($signed({op.i.imm_11_0})); // s11
+    T32_S: imm32 = imm32_t'($signed({op.s.imm_11_5, op.s.imm_11_5})); // s11
+    T32_B: imm32 = imm32_t'($signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0})); // s12
+    T32_U: imm32 = imm32_t'($signed({op.u.imm_31_12, 12'h000})); // s31
+    T32_J: imm32 = imm32_t'($signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0})); // s20
     default: imm32 = 'x;
   endcase
 endfunction: imm32
