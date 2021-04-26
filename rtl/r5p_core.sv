@@ -169,18 +169,11 @@ end
 assign id_op = if_rdt;
 
 // 32-bit instruction decoder
-assign id_ctl = dec32(ISA, id_op);
+assign id_ctl = dec(ISA, id_op);
 
-// write back multiplexer
-always_comb begin
-  unique case (id_ctl.i.wb)
-    WB_ALU: gpr_rd =     alu_rd ;   // ALU output
-    WB_MEM: gpr_rd =     ls_rdt_t;  // memory read data
-    WB_PCN: gpr_rd = XW'(if_pcn);   // PC next
-    WB_CSR: gpr_rd = 'x;            // CSR
-    default: gpr_rd = 'x;           // none
-  endcase
-end
+///////////////////////////////////////////////////////////////////////////////
+// execute
+///////////////////////////////////////////////////////////////////////////////
 
 // general purpose registers
 r5p_gpr #(
@@ -191,22 +184,18 @@ r5p_gpr #(
   .clk    (clk),
   .rst    (rst),
   // read/write enable
-  .e_rs1  (1'b1),
-  .e_rs2  (1'b1),
-  .e_rd   (id_ctl.i.wb != WB_XXX),
+  .e_rs1  (id_ctl.i.gpr.e.rs1),
+  .e_rs2  (id_ctl.i.gpr.e.rs2),
+  .e_rd   (id_ctl.i.gpr.e.rd ),  // there are additional conditions for load write back
   // read/write address
-  .a_rs1  (id_op.r.rs1),
-  .a_rs2  (id_op.r.rs2),
-  .a_rd   (id_op.r.rd ),
+  .a_rs1  (id_ctl.i.gpr.a.rs1),
+  .a_rs2  (id_ctl.i.gpr.a.rs2),
+  .a_rd   (id_ctl.i.gpr.a.rd ),
   // read/write data
   .d_rs1  (gpr_rs1),
   .d_rs2  (gpr_rs2),
   .d_rd   (gpr_rd )
 );
-
-///////////////////////////////////////////////////////////////////////////////
-// execute
-///////////////////////////////////////////////////////////////////////////////
 
 // ALU input multiplexer
 always_comb begin
@@ -289,6 +278,21 @@ always_comb begin
     SZ_D: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed( 64'(tmp))) : DDW'($unsigned( 64'(tmp)));
     SZ_Q: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed(128'(tmp))) : DDW'($unsigned(128'(tmp)));
     default: ls_rdt_t = 'x;
+  endcase
+end
+
+///////////////////////////////////////////////////////////////////////////////
+// write back
+///////////////////////////////////////////////////////////////////////////////
+
+// write back multiplexer
+always_comb begin
+  unique case (id_ctl.i.wb)
+    WB_ALU: gpr_rd =     alu_rd ;   // ALU output
+    WB_MEM: gpr_rd =     ls_rdt_t;  // memory read data
+    WB_PCN: gpr_rd = XW'(if_pcn);   // PC next
+    WB_CSR: gpr_rd = 'x;            // CSR
+    default: gpr_rd = 'x;           // none
   endcase
 end
 
