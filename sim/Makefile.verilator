@@ -13,6 +13,8 @@ RTL+=${PATH_RTL}/r5p_br.sv
 RTL+=${PATH_RTL}/r5p_gpr.sv
 RTL+=${PATH_RTL}/r5p_alu.sv
 RTL+=${PATH_RTL}/r5p_core.sv
+RTL+=${PATH_RTL}/r5p_bus_arb.sv
+RTL+=${PATH_RTL}/r5p_bus_dec.sv
 
 # SystemVerilog bench (Test SV)
 TSV =${PATH_TBN}/riscv_asm_pkg.sv

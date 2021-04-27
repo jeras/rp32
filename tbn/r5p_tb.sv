@@ -19,19 +19,19 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-// program bus
+// instruction fetch bus
 logic           if_req;
 logic [IAW-1:0] if_adr;
 logic [IDW-1:0] if_rdt;
 logic           if_ack;
-// data bus
-logic           ls_req;
-logic           ls_wen;
-logic [DAW-1:0] ls_adr;
-logic [DSW-1:0] ls_sel;
-logic [DDW-1:0] ls_wdt;
-logic [DDW-1:0] ls_rdt;
-logic           ls_ack;
+// load/store bus, LS memory bus, controller bus
+logic           ls_req, ls_mem_req, ls_ctl_req;
+logic           ls_wen, ls_mem_wen, ls_ctl_wen;
+logic [DAW-0:0] ls_adr, ls_mem_adr, ls_ctl_adr;  // +1 bits for decoder
+logic [DSW-1:0] ls_sel, ls_mem_sel, ls_ctl_sel;
+logic [DDW-1:0] ls_wdt, ls_mem_wdt, ls_ctl_wdt;
+logic [DDW-1:0] ls_rdt, ls_mem_rdt, ls_ctl_rdt;
+logic           ls_ack, ls_mem_ack, ls_ctl_ack;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -40,7 +40,7 @@ logic           ls_ack;
 r5p_core #(
   .IDW  (IDW),
   .IAW  (IAW),
-  .DAW  (DAW),
+  .DAW  (DAW+1),
   .DDW  (DDW)
 ) DUT (
   // system signals
@@ -66,7 +66,7 @@ r5p_core #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
-  .FN   ("../src/main.bin"),
+  .FN   ("../src/mem_if.bin"),
   .SZ   (2**IAW),
   .DW   (IDW),
   .DBG  ("INS"),
@@ -104,10 +104,36 @@ r5p_bus_mon #(
 */
 
 ////////////////////////////////////////////////////////////////////////////////
+// load/store bus decoder
+////////////////////////////////////////////////////////////////////////////////
+
+r5p_bus_dec #(
+  .AW  (DAW+1),
+  .DW  (DDW),
+  .BN  (2)       // bus number
+//  .AS  ('{DAW'('h0_xxxx),   // 0x0_0000 ~ 0x0_ffff - data memory
+//          DAW'('h1_xxxx)})  // 0x1_0000 ~ 0x1_ffff - controller
+) ls_dec (
+  // system signals
+  .clk  (clk),
+  .rst  (rst),
+  // data load/store
+  // slave port and master ports
+  .s_req  (ls_req),  .m_req  ('{ls_ctl_req, ls_mem_req}),
+  .s_wen  (ls_wen),  .m_wen  ('{ls_ctl_wen, ls_mem_wen}),
+  .s_sel  (ls_sel),  .m_sel  ('{ls_ctl_sel, ls_mem_sel}),
+  .s_adr  (ls_adr),  .m_adr  ('{ls_ctl_adr, ls_mem_adr}),
+  .s_wdt  (ls_wdt),  .m_wdt  ('{ls_ctl_wdt, ls_mem_wdt}),
+  .s_rdt  (ls_rdt),  .m_rdt  ('{ls_ctl_rdt, ls_mem_rdt}),
+  .s_ack  (ls_ack),  .m_ack  ('{ls_ctl_ack, ls_mem_ack})
+);
+
+////////////////////////////////////////////////////////////////////////////////
 // data memory
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
+  .FN   ("../src/mem_ls.bin"),
   .SZ   (2**DAW),
   .DW   (DDW),
   .DBG  ("DAT"),
@@ -116,13 +142,13 @@ mem #(
   // system signals
   .clk  (clk),
   // data load/store
-  .req  (ls_req),
-  .wen  (ls_wen),
-  .sel  (ls_sel),
-  .adr  (ls_adr),
-  .wdt  (ls_wdt),
-  .rdt  (ls_rdt),
-  .ack  (ls_ack)
+  .req  (ls_mem_req),
+  .wen  (ls_mem_wen),
+  .sel  (ls_mem_sel),
+  .adr  (ls_mem_adr[DAW-1:0]),
+  .wdt  (ls_mem_wdt),
+  .rdt  (ls_mem_rdt),
+  .ack  (ls_mem_ack)
 );
 
 /*
@@ -143,6 +169,32 @@ r5p_bus_mon #(
   .ack  (ls_ack)
 );
 */
+
+////////////////////////////////////////////////////////////////////////////////
+// controller
+////////////////////////////////////////////////////////////////////////////////
+
+logic [DDW-1:0] rvmodel_data_begin;
+logic [DDW-1:0] rvmodel_data_end;
+logic           rvmodel_halt = '0;
+
+always_ff @(posedge clk, posedge rst)
+if (rst) begin
+  rvmodel_data_begin <= 'x;
+  rvmodel_data_end   <= 'x;
+  rvmodel_halt       <= 'x;
+end else if (ls_ctl_req & ls_ctl_ack) begin
+  case (ls_ctl_adr[4-1:0])
+    4'h0:  rvmodel_data_begin <= ls_ctl_wdt;
+    4'h4:  rvmodel_data_end   <= ls_ctl_wdt;
+    4'h8:  rvmodel_halt       <= ls_ctl_wdt[0];
+    default:  ;  // do nothing
+  endcase
+end
+
+// finish simulation
+always @(posedge clk)
+if (rvmodel_halt)  $finish;
 
 ////////////////////////////////////////////////////////////////////////////////
 // waveforms

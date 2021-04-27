@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_bus_mon #(
-  int unsigned AW = 16,    // address width
+  int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data    width
   int unsigned SW = DW/8   // select  width
 )(
