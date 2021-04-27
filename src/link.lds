@@ -1,46 +1,34 @@
-OUTPUT_ARCH( "riscv" )
+OUTPUT_ARCH("riscv")
 
-ENTRY( _start )
+ENTRY(_start)
 
 MEMORY
 {
-  ram   : ORIGIN = 0x80000000, LENGTH = 128M
-}
-
-PHDRS
-{
-  text PT_LOAD;
-  data PT_LOAD;
-  bss PT_LOAD;
+  mem_if (rx)  : ORIGIN = 0x00000000, LENGTH = 64k
+  mem_ls (rwx) : ORIGIN = 0x80000000, LENGTH = 64k
 }
 
 SECTIONS
 {
-  .text : {
-    PROVIDE(_text_start = .);
-    *(.text.init) *(.text .text.*)
-    PROVIDE(_text_end = .);
-  } >ram AT>ram :text
+  .text.init ALIGN((ORIGIN(mem_if) + 0x0), 64) : AT(ALIGN((ORIGIN(mem_if) + 0x0), 64)) {
+    PROVIDE(_ftext = .);
+    *(.text.init)
+    PROVIDE(_etext = .);
+  }
 
-  .rodata : {
-    PROVIDE(_rodata_start = .);
-    *(.rodata .rodata.*)
-    PROVIDE(_rodata_end = .);
-  } >ram AT>ram :text
+  .text ALIGN((ADDR(.text.init) + SIZEOF(.text.init)), 64) : AT(ALIGN((LOADADDR(.text.init) + SIZEOF(.text.init)), 64)) {
+    *(.text)
+  }
 
-  .data : {
-    . = ALIGN(4096);
-    PROVIDE(_data_start = .);
-    *(.sdata .sdata.*) *(.data .data.*)
-    PROVIDE(_data_end = .);
-  } >ram AT>ram :data
+  .tohost ALIGN((ORIGIN(mem_ls)), 64) : AT(ALIGN((ORIGIN(mem_ls)), 64)) {
+    *(.tohost)
+  }
 
-  .bss :{
-    PROVIDE(_bss_start = .);
-    *(.sbss .sbss.*) *(.bss .bss.*)
-    PROVIDE(_bss_end = .);
-  } >ram AT>ram :bss
+  .data ALIGN((ADDR(.tohost) + SIZEOF(.tohost)), 64) : AT(ALIGN((LOADADDR(.tohost) + SIZEOF(.tohost)), 64)) {
+    *(.data)
+  }
 
-  PROVIDE(_memory_start = ORIGIN(ram));
-  PROVIDE(_memory_end = ORIGIN(ram) + LENGTH(ram));
+  PROVIDE(_data = ADDR(.data));
+  PROVIDE(_data_lma = LOADADDR(.data));
+  PROVIDE(_edata = ADDR(.data) + SIZEOF(.data));
 }
