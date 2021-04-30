@@ -239,7 +239,7 @@ assign ls_req = id_ctl.i.ls.en;
 assign ls_wen = id_ctl.i.ls.we;
 
 // address
-assign ls_adr = {ls_adr_t[DAW-1:DWW], DWW'('1)};
+assign ls_adr = {ls_adr_t[DAW-1:DWW], DWW'('0)};
 
 // byte select
 // TODO
