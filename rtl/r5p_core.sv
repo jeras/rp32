@@ -2,30 +2,8 @@ import riscv_isa_pkg::*;
 
 module r5p_core #(
   // RISC-V ISA
-  isa_t ISA = 16'b0100_000000000000,
-//  isa_t ISA = '{
-//	        // ISA base
-//                .e = 1'b0,  // RV32E  - embedded
-//                .w = 1'b1,  // RV32I  - word
-//                .d = 1'b0,  // RV64I  - double
-//                .q = 1'b0,  // RV128I - quad
-//                // extensions
-//                .m = 1'b0,  // integer multiplication and division
-//                .a = 1'b0,  // atomic
-//                .f = 1'b0,  // single-precision floating-point
-//                .d = 1'b0,  // double-precision floating-point
-//                .q = 1'b0,  // quad-precision floating-point
-//                .l = 1'b0,  // decimal precision floating-point
-//              //.c = 1'b0,  // compressed
-//                .b = 1'b0,  // bit manipulation
-//                .j = 1'b0,  // dynamically translated languages
-//                .t = 1'b0,  // transactional memory
-//                .p = 1'b0,  // packed-SIMD
-//                .v = 1'b0,  // vector operations
-//                .n = 1'b0   // user-level interrupts
-//	      },
-  // TODO
-  int unsigned XW  = 32,
+  isa_t        ISA = RV32I,  // see `riscv_isa_pkg` for enumeration definition
+  int unsigned XW  = 32,    // TODO: calculate it from ISA
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
