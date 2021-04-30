@@ -147,7 +147,9 @@ end
 assign id_op = if_rdt;
 
 // 32-bit instruction decoder
-assign id_ctl = dec(ISA, id_op);
+//assign id_ctl = dec(ISA, id_op);
+// TODO: workaround for Verilator bug
+assign id_ctl = dec('1, id_op);
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute

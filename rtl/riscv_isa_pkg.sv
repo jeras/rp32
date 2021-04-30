@@ -6,11 +6,11 @@ package riscv_isa_pkg;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ISA base and extensions
-// 2-level type `bit` is used for parameters
+// 4-level type `logic` is used for parameters, so `?` fields can be ignored
 ///////////////////////////////////////////////////////////////////////////////
 
 typedef struct packed {
-  // ISA base
+  // base
   logic ie;  // RV32E  - embedded
   logic iw;  // RV32I  - word
   logic id;  // RV64I  - double
@@ -111,8 +111,6 @@ typedef struct packed {
     logic [5-1:0] rd ;  // address register destination (write)
   } a;
 } gpr_t;
-
-// GPR 
 
 // ALU argument 1 multiplexer (RS1,...)
 typedef enum logic {
@@ -353,6 +351,8 @@ endfunction: gpr32
 ///////////////////////////////////////////////////////////////////////////////
 
 function ctl_t dec (isa_t isa, op32_t op);
+// TODO: workaround for Verilator bug
+isa = RV32I;
 unique casez ({isa, op})
 //          fedc_ba98_7654_3210_fedc_ba98_7654_3210             gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
 //{RV32I, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX,    'x, '0}; // 32'000000013 - nop (ADDI x0, x0, 0)
