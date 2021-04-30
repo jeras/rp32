@@ -110,9 +110,9 @@ r5p_bus_mon #(
 r5p_bus_dec #(
   .AW  (DAW+1),
   .DW  (DDW),
-  .BN  (2)       // bus number
-//  .AS  ('{DAW'('h0_xxxx),   // 0x0_0000 ~ 0x0_ffff - data memory
-//          DAW'('h1_xxxx)})  // 0x1_0000 ~ 0x1_ffff - controller
+  .BN  (2),       // bus number
+  .AS  ({ {1'b1, {DAW{1'bx}}} ,   // 0x0_0000 ~ 0x0_ffff - data memory
+          {1'b0, {DAW{1'bx}}} })  // 0x1_0000 ~ 0x1_ffff - controller
 ) ls_dec (
   // system signals
   .clk  (clk),
@@ -184,13 +184,19 @@ if (rst) begin
   rvmodel_data_end   <= 'x;
   rvmodel_halt       <= 'x;
 end else if (ls_ctl_req & ls_ctl_ack) begin
-  case (ls_ctl_adr[4-1:0])
-    4'h0:  rvmodel_data_begin <= ls_ctl_wdt;
-    4'h4:  rvmodel_data_end   <= ls_ctl_wdt;
-    4'h8:  rvmodel_halt       <= ls_ctl_wdt[0];
-    default:  ;  // do nothing
-  endcase
+  if (ls_ctl_wen) begin
+    // write access
+    case (ls_ctl_adr[4-1:0])
+      4'h0:  rvmodel_data_begin <= ls_ctl_wdt;
+      4'h4:  rvmodel_data_end   <= ls_ctl_wdt;
+      4'h8:  rvmodel_halt       <= ls_ctl_wdt[0];
+      default:  ;  // do nothing
+    endcase
+  end
 end
+
+// controller response is immediate
+assign ls_ctl_ack = 1'b1;
 
 // finish simulation
 always @(posedge clk)

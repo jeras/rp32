@@ -92,5 +92,10 @@ test_read:
     lw t2, 2(t0)
     lw t2, 3(t0)
 
+halt:
+    li t1, 0x10000;
+    li t0, 1;
+    sw t0, 0x08(t1);
+
 finish:
     beq t1, t1, finish
