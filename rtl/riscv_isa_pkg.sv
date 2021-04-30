@@ -293,7 +293,7 @@ function imm32_t imm32 (op32_t op, op32_sel_t sel);
     T_R4: imm32 = 'x; 
     T_R:  imm32 = 'x;
     T_I:  imm32 = imm32_t'($signed({op.i.imm_11_0})); // s11
-    T_S:  imm32 = imm32_t'($signed({op.s.imm_11_5, op.s.imm_11_5})); // s11
+    T_S:  imm32 = imm32_t'($signed({op.s.imm_11_5, op.s.imm_4_0})); // s11
     T_B:  imm32 = imm32_t'($signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0})); // s12
     T_U:  imm32 = imm32_t'($signed({op.u.imm_31_12, 12'h000})); // s31
     T_J:  imm32 = imm32_t'($signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0})); // s20
