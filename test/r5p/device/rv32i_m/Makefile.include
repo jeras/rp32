@@ -13,6 +13,8 @@ RISCV_GCC_OPTS ?= -static -mcmodel=medany -g -fvisibility=hidden -nostdlib -nost
 
 COMPILE_CMD=\
 	$$(RISCV_GCC) $(1) $$(RISCV_GCC_OPTS) \
+                -I$(ROOTDIR)/riscv-test-env/ \
+                -I$(ROOTDIR)/riscv-test-env/p/ \
 		-I$(ROOTDIR)/riscv-test-suite/env/ \
 		-I$(TARGETDIR)/$(RISCV_TARGET)/ \
 		-T$(TARGETDIR)/$(RISCV_TARGET)/link.ld $$< \
@@ -20,18 +22,18 @@ COMPILE_CMD=\
 	$$(RISCV_OBJCOPY) -O binary $$@ $$@.bin
 
 OBJ_CMD = $$(RISCV_OBJDUMP) $$@ -D > $$@.objdump; \
-		  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug \
-		  $$(RISCV_READELF) -a $$@ > $$@.readelf
+	  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug \
+	  $$(RISCV_READELF) -a $$@ > $$@.readelf
 
 
 COMPILE_TARGET=\
-		$(COMPILE_CMD); \
+        $(COMPILE_CMD); \
         if [ $$$$? -ne 0 ] ; \
             then \
             echo "\e[31m$$(RISCV_GCC) failed for target $$(@) \e[39m" ; \
             exit 1 ; \
         fi ; \
-		$(OBJ_CMD); \
+        $(OBJ_CMD); \
         if [ $$$$? -ne 0 ] ; \
             then \
             echo "\e[31m $$(RISCV_OBJDUMP) failed for target $$(@) \e[39m" ; \
@@ -43,4 +45,3 @@ RUN_CMD=\
 
 RUN_TARGET=\
 	$(RUN_CMD)
-
