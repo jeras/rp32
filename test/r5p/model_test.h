@@ -1,7 +1,7 @@
 #ifndef _COMPLIANCE_MODEL_H
 #define _COMPLIANCE_MODEL_H
 
-#include "riscv_test.h"
+//#include "riscv_test.h"
 
 //-----------------------------------------------------------------------
 // RV Compliance Macros
