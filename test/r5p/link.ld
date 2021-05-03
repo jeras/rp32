@@ -1,6 +1,6 @@
 OUTPUT_ARCH("riscv")
 
-ENTRY(_start)
+ENTRY(rvtest_entry_point)
 
 MEMORY {
   mem_if (rx)   : ORIGIN = 0x00000000, LENGTH = 0x10000
