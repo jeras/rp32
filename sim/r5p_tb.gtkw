@@ -1,0 +1,62 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue May  4 10:29:53 2021
+[*]
+[dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
+[dumpfile_mtime] "Tue May  4 10:23:49 2021"
+[dumpfile_size] 203892
+[savefile] "/home/ijeras/VLSI/rp32/sim/r5p_tb.gtkw"
+[timestart] 32164220
+[size] 1884 2096
+[pos] 1838 -46
+*-14.226055 32205220 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.r5p_tb.
+[sst_width] 233
+[signals_width] 302
+[sst_expanded] 1
+[sst_vpaned_height] 665
+@28
+top.r5p_tb.clk
+top.r5p_tb.rst
+top.r5p_tb.if_req
+@22
+top.r5p_tb.if_adr[15:0]
+top.r5p_tb.if_rdt[31:0]
+@28
+top.r5p_tb.if_ack
+top.r5p_tb.ls_req
+top.r5p_tb.ls_wen
+@22
+top.r5p_tb.ls_adr[16:0]
+top.r5p_tb.ls_sel[3:0]
+top.r5p_tb.ls_wdt[31:0]
+top.r5p_tb.ls_rdt[31:0]
+@28
+top.r5p_tb.ls_ack
+top.r5p_tb.ls_ctl_req
+top.r5p_tb.ls_ctl_wen
+@22
+top.r5p_tb.ls_ctl_adr[16:0]
+top.r5p_tb.ls_ctl_sel[3:0]
+top.r5p_tb.ls_ctl_wdt[31:0]
+top.r5p_tb.ls_ctl_rdt[31:0]
+@28
+top.r5p_tb.ls_ctl_ack
+top.r5p_tb.ls_mem_req
+top.r5p_tb.ls_mem_wen
+@22
+top.r5p_tb.ls_mem_adr[16:0]
+top.r5p_tb.ls_mem_sel[3:0]
+top.r5p_tb.ls_mem_wdt[31:0]
+@23
+top.r5p_tb.ls_mem_rdt[31:0]
+@28
+top.r5p_tb.ls_mem_ack
+@22
+top.r5p_tb.rvmodel_data_begin[31:0]
+top.r5p_tb.rvmodel_data_end[31:0]
+@28
+top.r5p_tb.rvmodel_halt
+[pattern_trace] 1
+[pattern_trace] 0
