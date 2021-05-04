@@ -31,9 +31,9 @@
 //-----------------------------------------------------------------------
 
 #define TESTUTIL_BASE                  0x10000
-#define TESTUTIL_ADDR_HALT             0x0
-#define TESTUTIL_ADDR_BEGIN_SIGNATURE  0x4
-#define TESTUTIL_ADDR_END_SIGNATURE    0x8
+#define TESTUTIL_ADDR_BEGIN_SIGNATURE  0x0
+#define TESTUTIL_ADDR_END_SIGNATURE    0x4
+#define TESTUTIL_ADDR_HALT             0x8
 
 #define RVMODEL_HALT                                                          \
         li t1, TESTUTIL_BASE;                                                 \
