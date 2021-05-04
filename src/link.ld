@@ -20,7 +20,7 @@ SECTIONS
     *(.text)
   } > mem_if
 
-  .tohost ALIGN((ORIGIN(mem_ls)), 64) : AT(ALIGN((ORIGIN(mem_if) + 0x0), 64)) {
+  .tohost ALIGN((ORIGIN(mem_ls) + 0x0), 64) : AT(ALIGN((ORIGIN(mem_ls) + 0x0), 64)) {
     *(.tohost)
   } > mem_ls
 
@@ -28,7 +28,18 @@ SECTIONS
     *(.data)
   } > mem_ls
 
+  .data.string ALIGN((ADDR(.data) + SIZEOF(.data)), 64) : AT(ALIGN((LOADADDR(.data) + SIZEOF(.data)), 64)) {
+    *(.data.string)
+  } > mem_ls
+
   PROVIDE(_data = ADDR(.data));
   PROVIDE(_data_lma = LOADADDR(.data));
   PROVIDE(_edata = ADDR(.data) + SIZEOF(.data));
+
+  .bss ALIGN((ADDR(.data.string) + SIZEOF(.data.string)), 64) : AT(ALIGN((LOADADDR(.data.string) + SIZEOF(.data.string)), 64)) ALIGN(8) {
+    PROVIDE(_fbss = .);
+    *(.bss)
+    PROVIDE(_ebss = .);
+  }
+
 }
