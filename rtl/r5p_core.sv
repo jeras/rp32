@@ -248,7 +248,7 @@ unique case (id_ctl.i.ls.sz)
 endcase
 
 // read data
-always_comb begin
+always_comb begin: blk_rdt
   logic [XW-1:0] tmp;
   tmp = ls_rdt >> (8*ls_adr_t[DWW-1:0]);
   unique case (id_ctl.i.ls.sz)
@@ -259,7 +259,7 @@ always_comb begin
     SZ_Q: ls_rdt_t = id_ctl.i.ls.sg ? DDW'($signed(128'(tmp))) : DDW'($unsigned(128'(tmp)));
     default: ls_rdt_t = 'x;
   endcase
-end
+end: blk_rdt
 
 ///////////////////////////////////////////////////////////////////////////////
 // write back
