@@ -82,9 +82,8 @@ int sc_main(int argc, char **argv) {
     rst = 1;
     sc_start(20, SC_NS);
     rst = 0;
-
-    //while (!Verilated::gotFinish()) { sc_start(30, SC_NS); }
-    sc_start(1000, SC_NS);
+    sc_start(100000, SC_NS);
+    //sc_start();
 
     ////////////////////////////////////////////////////////////////////////////
     // Verilator cleanup
