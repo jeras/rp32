@@ -19,6 +19,7 @@ logic ovf;  // overflow bit
 // adder (summation, subtraction)
 //assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
 assign {ovf, sum} = $signed(rs1) + $signed(rs2);
+assign {ovf, sum} = $signed(rs1) + $signed(rs2);
 
 // TODO:
 // * check comparison
@@ -26,10 +27,10 @@ assign {ovf, sum} = $signed(rs1) + $signed(rs2);
 
 always_comb
 case (ctl) inside
-  AO_ADD,            //   $signed(rs1) +   $signed(rs2)
-  AO_SUB: rd = sum;  //   $signed(rs1) -   $signed(rs2)
-  AO_LTS: rd = {31'b0, (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs2[XW-1]};   //   $signed(rs1) <   $signed(rs2)
-  AO_LTU: rd = {31'b0, (rs1[XW-1] ^ rs2[XW-1]) ? sum[XW-1] : rs1[XW-1]};   // $unsigned(rs1) < $unsigned(rs2)
+  AO_ADD: rd =   $signed(rs1) +   $signed(rs2);
+  AO_SUB: rd =   $signed(rs1) -   $signed(rs2);
+  AO_LTS: rd =   $signed(rs1) <   $signed(rs2) ? XW'(1) : XW'(0);
+  AO_LTU: rd = $unsigned(rs1) < $unsigned(rs2) ? XW'(1) : XW'(0);
   AO_SRA: rd =   $signed(rs1) >>> rs2[$clog2(XW)-1:0];
   AO_SRL: rd = $unsigned(rs1)  >> rs2[$clog2(XW)-1:0];
   AO_SLL: rd = $unsigned(rs1)  << rs2[$clog2(XW)-1:0];
