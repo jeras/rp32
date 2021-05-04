@@ -67,50 +67,16 @@ VFLAGS += --coverage
 #VFLAGS += --gdbbt
 
 ################################################################################
-# OVPsim compiler/linker flags
-################################################################################
-
-# make: Entering directory '$(IMPERAS_HOME)/customProcessorTrace/harness'
-# 
-# # Host Depending obj/Linux32/harness.d
-# mkdir -p obj/Linux32
-# gcc -MM harness.c -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host -Wall -Werror -O0 -g -gdwarf-2 -m32   -MT obj/Linux32/harness.o -MF obj/Linux32/harness.d
-# mkdir -p obj/Linux32
-# 
-# # Host Compiling Harness obj/Linux32/harness.o
-# gcc -c -o obj/Linux32/harness.o harness.c -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host -Wall -Werror -O0 -g -gdwarf-2 -m32 
-# mkdir -p .
-# 
-# # Host Linking Harness harness.Linux32.exe
-# gcc -o harness.Linux32.exe obj/Linux32/harness.o -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader -m32 
-# 
-# # if we are not compiling locally, copy out the .xml files to the destination
-# make: Leaving directory '$(IMPERAS_HOME)/customProcessorTrace/harness'
-
-OPCFLAGS  =
-OPCFLAGS += -I$(IMPERAS_HOME)/ImpPublic/include/host -I$(IMPERAS_HOME)/ImpProprietary/include/host
-#OPCFLAGS += -O0 -g -gdwarf-2 -m32
-
-OPLDFLAGS  =
-#OPLDFLAGS += -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader -lRuntimeLoader++ -lOVPsim
-OPLDFLAGS += -L$(IMPERAS_HOME)/bin/Linux32 -lRuntimeLoader
-#OPLDFLAGS += -m32
-
-OPFLAGS = -CFLAGS "$(OPCFLAGS)" -LDFLAGS "$(OPLDFLAGS)"
-
-################################################################################
 #
 ################################################################################
 
 all: sim
 
 lint: ${HDL}
-#	${VERILATOR_ROOT}/bin/verilator --lint-only ${RTL} --top r5p_core
 	${VERILATOR_ROOT}/bin/verilator --lint-only ${HDL} --top ${TOP}
 
 sim: ${HDL}
 	${VERILATOR_ROOT}/bin/verilator $(VFLAGS) --top ${TOP} ${HDL} ${TSC}
-#	${VERILATOR_ROOT}/bin/verilator $(VFLAGS) $(OPFLAGS) --top ${TOP} ${HDL} ${TSC}
 
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
