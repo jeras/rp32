@@ -65,8 +65,11 @@ r5p_core #(
 // program memory
 ////////////////////////////////////////////////////////////////////////////////
 
+string if_str;
+always if_str = riscv_disasm(if_rdt);
+
 mem #(
-  .FN   ("../src/mem_if.bin"),
+  .FN   ("mem_if.bin"),
   .SZ   (2**IAW),
   .DW   (IDW),
   .DBG  ("INS"),
@@ -133,7 +136,7 @@ r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
-  .FN   ("../src/mem_ls.bin"),
+  .FN   ("mem_ls.bin"),
   .SZ   (2**DAW),
   .DW   (DDW),
   .DBG  ("DAT"),
@@ -200,7 +203,10 @@ assign ls_ctl_ack = 1'b1;
 
 // finish simulation
 always @(posedge clk)
-if (rvmodel_halt)  $finish;
+if (rvmodel_halt) begin
+  void'(mem_ls.write_hex("signature.txt", rvmodel_data_begin, rvmodel_data_end));
+  $finish;
+end
 
 ////////////////////////////////////////////////////////////////////////////////
 // waveforms
