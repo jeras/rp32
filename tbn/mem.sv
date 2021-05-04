@@ -38,12 +38,36 @@ logic [8-1:0] mem [0:SZ-1];
 // initialization
 initial
 if (FN!="") begin
+  void'(read_bin(FN));
+end
+
+// read binary into memory
+function int read_bin (
+  string fn
+);
   int code;  // status code
   int fd;    // file descriptor
-  fd = $fopen(FN, "rb");
+  fd = $fopen(fn, "rb");
   code = $fread(mem, fd);
   $fclose(fd);
-end
+  return code;
+endfunction: read_bin
+
+// dump
+function int write_hex (
+  string fn,
+  int unsigned start_addr = 0,
+  int unsigned finish_addr = SZ-1
+);
+  int code;  // status code
+  int fd;    // file descriptor
+  fd = $fopen(fn, "w");
+  for (int unsigned addr=start_addr; addr<finish_addr; addr+=SW) begin
+    $fwrite(fd, "%h%h%h%h\n", mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
+  end
+  $fclose(fd);
+  return code;
+endfunction: write_hex
 
 ////////////////////////////////////////////////////////////////////////////////
 // write/read access
