@@ -1,9 +1,3 @@
-TARGET_SIM   ?= verilator
-TARGET_FLAGS ?= $(RISCV_TARGET_FLAGS)
-ifeq ($(shell command -v $(TARGET_SIM) 2> /dev/null),)
-    $(error Target simulator executable '$(TARGET_SIM)` not found)
-endif
-
 RISCV_PREFIX   ?= riscv32-unknown-elf-
 RISCV_GCC      ?= $(RISCV_PREFIX)gcc
 RISCV_OBJDUMP  ?= $(RISCV_PREFIX)objdump
@@ -17,7 +11,8 @@ COMPILE_CMD=\
 		-I$(TARGETDIR)/$(RISCV_TARGET)/ \
 		-T$(TARGETDIR)/$(RISCV_TARGET)/link.ld $$< \
 		-o $$@; \
-	$$(RISCV_OBJCOPY) -O binary $$@ $$@.bin
+	$$(RISCV_OBJCOPY) -j .text -O binary $$@ $$@_if.bin; \
+	$$(RISCV_OBJCOPY) -j .data -O binary $$@ $$@_ls.bin
 
 OBJ_CMD = $$(RISCV_OBJDUMP) $$@ -D > $$@.objdump; \
 		  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug; \
@@ -37,8 +32,9 @@ COMPILE_TARGET=\
             exit 1 ; \
         fi ;
 
-RUN_CMD=\
-	$(TARGET_SIM) <sim cmdline args>
-
 RUN_TARGET=\
-	$(RUN_CMD)
+	cp $(*).elf_if.bin $(TARGETDIR)/../sim/mem_if.bin; \
+    cp $(*).elf_ls.bin $(TARGETDIR)/../sim/mem_ls.bin; \
+	cd $(TARGETDIR)/../sim/; \
+	make -f Makefile.verilator; \
+	cp signature.txt $(*).signature.output
