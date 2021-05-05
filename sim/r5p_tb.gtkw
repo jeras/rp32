@@ -1,17 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue May  4 10:29:53 2021
+[*] Tue May  4 17:07:50 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Tue May  4 10:23:49 2021"
-[dumpfile_size] 203892
+[dumpfile_mtime] "Tue May  4 17:05:33 2021"
+[dumpfile_size] 22887
 [savefile] "/home/ijeras/VLSI/rp32/sim/r5p_tb.gtkw"
-[timestart] 32164220
+[timestart] 662470
 [size] 1884 2096
-[pos] 1838 -46
-*-14.226055 32205220 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-14.242303 710000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
+[treeopen] top.r5p_tb.DUT.id_ctl.
+[treeopen] top.r5p_tb.DUT.id_op.
+[treeopen] top.r5p_tb.mem_if.genblk1.
+[treeopen] top.r5p_tb.mem_ls.genblk1.
 [sst_width] 233
 [signals_width] 302
 [sst_expanded] 1
@@ -49,7 +53,6 @@ top.r5p_tb.ls_mem_wen
 top.r5p_tb.ls_mem_adr[16:0]
 top.r5p_tb.ls_mem_sel[3:0]
 top.r5p_tb.ls_mem_wdt[31:0]
-@23
 top.r5p_tb.ls_mem_rdt[31:0]
 @28
 top.r5p_tb.ls_mem_ack
@@ -58,5 +61,53 @@ top.r5p_tb.rvmodel_data_begin[31:0]
 top.r5p_tb.rvmodel_data_end[31:0]
 @28
 top.r5p_tb.rvmodel_halt
+@200
+-GPR
+@28
+top.r5p_tb.DUT.gpr.clk
+top.r5p_tb.DUT.gpr.rst
+top.r5p_tb.DUT.gpr.e_rd
+top.r5p_tb.DUT.gpr.e_rs1
+top.r5p_tb.DUT.gpr.e_rs2
+@22
+top.r5p_tb.DUT.gpr.a_rd[4:0]
+top.r5p_tb.DUT.gpr.a_rs1[4:0]
+top.r5p_tb.DUT.gpr.a_rs2[4:0]
+top.r5p_tb.DUT.gpr.d_rd[31:0]
+top.r5p_tb.DUT.gpr.d_rs1[31:0]
+top.r5p_tb.DUT.gpr.d_rs2[31:0]
+top.r5p_tb.DUT.gpr.gpr(1)[31:0]
+top.r5p_tb.DUT.gpr.gpr(2)[31:0]
+top.r5p_tb.DUT.gpr.gpr(3)[31:0]
+top.r5p_tb.DUT.gpr.gpr(4)[31:0]
+top.r5p_tb.DUT.gpr.gpr(5)[31:0]
+top.r5p_tb.DUT.gpr.gpr(6)[31:0]
+top.r5p_tb.DUT.gpr.gpr(7)[31:0]
+top.r5p_tb.DUT.gpr.gpr(8)[31:0]
+top.r5p_tb.DUT.gpr.gpr(9)[31:0]
+top.r5p_tb.DUT.gpr.gpr(10)[31:0]
+top.r5p_tb.DUT.gpr.gpr(11)[31:0]
+top.r5p_tb.DUT.gpr.gpr(12)[31:0]
+top.r5p_tb.DUT.gpr.gpr(13)[31:0]
+top.r5p_tb.DUT.gpr.gpr(14)[31:0]
+top.r5p_tb.DUT.gpr.gpr(15)[31:0]
+top.r5p_tb.DUT.gpr.gpr(16)[31:0]
+top.r5p_tb.DUT.gpr.gpr(17)[31:0]
+top.r5p_tb.DUT.gpr.gpr(18)[31:0]
+top.r5p_tb.DUT.gpr.gpr(19)[31:0]
+top.r5p_tb.DUT.gpr.gpr(20)[31:0]
+top.r5p_tb.DUT.gpr.gpr(21)[31:0]
+top.r5p_tb.DUT.gpr.gpr(22)[31:0]
+top.r5p_tb.DUT.gpr.gpr(23)[31:0]
+top.r5p_tb.DUT.gpr.gpr(24)[31:0]
+top.r5p_tb.DUT.gpr.gpr(25)[31:0]
+top.r5p_tb.DUT.gpr.gpr(26)[31:0]
+top.r5p_tb.DUT.gpr.gpr(27)[31:0]
+top.r5p_tb.DUT.gpr.gpr(28)[31:0]
+top.r5p_tb.DUT.gpr.gpr(29)[31:0]
+top.r5p_tb.DUT.gpr.gpr(30)[31:0]
+top.r5p_tb.DUT.gpr.gpr(31)[31:0]
+@200
+-CTL
 [pattern_trace] 1
 [pattern_trace] 0
