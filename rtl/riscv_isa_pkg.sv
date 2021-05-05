@@ -187,7 +187,7 @@ typedef enum ls_t {
 typedef enum logic [3-1:0] {
   WB_ALU = 3'b1_00,  // arithmetic logic unit
   WB_MEM = 3'b1_01,  // memory
-  WB_PCN = 3'b1_10,  // program counter next
+  WB_PCI = 3'b1_10,  // program counter next
   WB_CSR = 3'b1_11,  // 
   WB_XXX = 3'b0_xx   // none
 } wb_t;
@@ -362,8 +362,8 @@ unique casez ({isa, op})
 //          fedc_ba98_7654_3210_fedc_ba98_7654_3210             gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
 {RV32I, 32'b????_????_????_????_????_????_?011_0111}: dec.i = '{gpr32(op,T_U), imm32(op,T_U), PC_PCI,     'x, A1_PC , A2_IMM, AO_CP2,   'x, LS_X , WB_ALU, CSR_N, '0};  // lui
 {RV32I, 32'b????_????_????_????_????_????_?001_0111}: dec.i = '{gpr32(op,T_U), imm32(op,T_U), PC_PCI,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // auipc
-{RV32I, 32'b????_????_????_????_????_????_?110_1111}: dec.i = '{gpr32(op,T_J), imm32(op,T_J), PC_JMP,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_PCN, CSR_N, '0};  // jal  TODO: Instruction-address-misaligned exception
-{RV32I, 32'b????_????_????_????_?000_????_?110_0111}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_JMP,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCN, CSR_N, '0};  // jalr TODO: Instruction-address-misaligned exception
+{RV32I, 32'b????_????_????_????_????_????_?110_1111}: dec.i = '{gpr32(op,T_J), imm32(op,T_J), PC_JMP,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_PCI, CSR_N, '0};  // jal  TODO: Instruction-address-misaligned exception
+{RV32I, 32'b????_????_????_????_?000_????_?110_0111}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_JMP,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCI, CSR_N, '0};  // jalr TODO: Instruction-address-misaligned exception
 {RV32I, 32'b????_????_????_????_?000_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_EQ , A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // beq
 {RV32I, 32'b????_????_????_????_?001_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_NE , A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bne
 {RV32I, 32'b????_????_????_????_?100_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_LTS, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // blt
@@ -667,8 +667,8 @@ casez ({isa, op})
 16'b0000_0000_0000_0000: dec16 = '{PC_PC2,      'x,      'x,    'x,      'x,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, '1}; // illegal instruction
 
 32'b????_????_????_????_????_????_?001_0111: dec16 = '{PC_PCI, A1_PC , A2_IMM, IMM_U, AO_ADD,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // auipc
-32'b????_????_????_????_????_????_?110_1111: dec16 = '{PC_ALU, A1_PC , A2_IMM, IMM_J, AO_ADD,     'x,   'x, '0,    'x, '0, WB_PCN, '1, CSR_N, '0};  // jal
-32'b????_????_????_????_?000_????_?110_0111: dec16 = '{PC_ALU, A1_RS1, A2_IMM, IMM_I, AO_ADD,     'x,   'x, '0,    'x, '0, WB_PCN, '1, CSR_N, '0};  // jalr
+32'b????_????_????_????_????_????_?110_1111: dec16 = '{PC_ALU, A1_PC , A2_IMM, IMM_J, AO_ADD,     'x,   'x, '0,    'x, '0, WB_PCI, '1, CSR_N, '0};  // jal
+32'b????_????_????_????_?000_????_?110_0111: dec16 = '{PC_ALU, A1_RS1, A2_IMM, IMM_I, AO_ADD,     'x,   'x, '0,    'x, '0, WB_PCI, '1, CSR_N, '0};  // jalr
 endcase
 endfunction: dec16
 */

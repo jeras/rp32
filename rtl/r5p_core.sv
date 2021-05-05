@@ -289,7 +289,7 @@ always_comb begin
   unique case (id_ctl.i.wb)
     WB_ALU: gpr_rd =     alu_rd ;   // ALU output
     WB_MEM: gpr_rd =     ls_rdt_t;  // memory read data
-    WB_PCN: gpr_rd = XW'(if_pcn);   // PC next
+    WB_PCI: gpr_rd = XW'(if_pci);   // PC next
     WB_CSR: gpr_rd = 'x;            // CSR
     default: gpr_rd = 'x;           // none
   endcase
