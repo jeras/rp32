@@ -8,6 +8,7 @@ main: main.o
 	../../lowrisc-toolchain-rv32imc-20210412-1/bin/llvm-objdump --arch=riscv32 --disassemble main.o > mem_if.asm
 	cat mem_if.bin | hexdump -v -e '"%08X\n"' > mem_if.vmem
 	cat mem_ls.bin | hexdump -v -e '"%08X\n"' > mem_ls.vmem
+	cp *.bin *.vmem ../sim/
 
 clean:
 	$(RM) main *.o
