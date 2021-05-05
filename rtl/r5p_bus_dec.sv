@@ -37,12 +37,12 @@ module r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 // decoder signals
-logic [BN-1:0] s_dec;
-logic [BN-1:0] m_dec;
+logic [BN-1:0]          s_dec;
+logic [BN-1:0]          m_dec;
 
 // temporary signals
-logic [DW-1:0] t_rdt [BN-1:0];  // read data
-logic          t_ack [BN-1:0];  // acknowledge
+logic [BN-1:0] [DW-1:0] t_rdt;  // read data
+logic [BN-1:0]          t_ack;  // acknowledge
 
 generate
 for (genvar i=0; i<BN; i++) begin
@@ -56,7 +56,7 @@ for (genvar i=0; i<BN; i++) begin
   assign m_wdt[i] = s_dec[i] ? s_wdt : 'x;
   // backward path
   assign t_rdt[i] = m_dec[i] ? m_rdt[i] : '0;
-  assign t_ack[i] = m_dec[i] ? m_ack[i] : '0;
+  assign t_ack[i] = s_dec[i] ? m_ack[i] : '0;
 end
 endgenerate
 
@@ -65,8 +65,8 @@ begin
   s_rdt = '0;
   s_ack = '0;
   for (int unsigned i=0; i<BN; i++) begin
-    s_rdt &= t_rdt[i];
-    s_ack &= t_ack[i];
+    s_rdt |= t_rdt[i];
+    s_ack |= t_ack[i];
   end
 end
 

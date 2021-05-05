@@ -79,10 +79,10 @@ typedef enum logic [3-1:0] {
 
 // PC multiplexer
 typedef enum logic [2-1:0] {
-  PC_PCN = 2'b00,  // next instruction address (PC + opsiz)
-  PC_ALU = 2'b01,  // branch address
-  PC_EPC = 2'b10,  // EPC value from CSR
-  PC_XXX           // none
+  PC_PCI = 2'b00,  // PC increnent address (PC + opsiz)
+  PC_BRN = 2'b01,  // branch address (PC + immediate)
+  PC_JMP = 2'b11,  // jump address
+  PC_EPC = 2'b10   // EPC value from CSR
 } pc_t;
 
 // branch type
@@ -355,95 +355,95 @@ function ctl_t dec (isa_t isa, op32_t op);
 isa = RV32I;
 unique casez ({isa, op})
 //          fedc_ba98_7654_3210_fedc_ba98_7654_3210             gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
-//{RV32I, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX,    'x, '0}; // 32'000000013 - nop (ADDI x0, x0, 0)
-{RV32I, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX,    'x, '0}; // 32'h00004033 - machine gen. bubble
+//{RV32I, 32'b0000_0000_0000_0000_0000_0000_0001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX,    'x, '0}; // 32'000000013 - nop (ADDI x0, x0, 0)
+{RV32I, 32'b0000_0000_0000_0000_0100_0000_0011_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX,    'x, '0}; // 32'h00004033 - machine gen. bubble
                                                                                                  
 // RV.I32                                                                                        
 //          fedc_ba98_7654_3210_fedc_ba98_7654_3210             gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
-{RV32I, 32'b????_????_????_????_????_????_?011_0111}: dec.i = '{gpr32(op,T_U), imm32(op,T_U), PC_PCN,     'x, A1_PC , A2_IMM, AO_CP2,   'x, LS_X , WB_ALU, CSR_N, '0};  // lui
-{RV32I, 32'b????_????_????_????_????_????_?001_0111}: dec.i = '{gpr32(op,T_U), imm32(op,T_U), PC_PCN,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // auipc
-{RV32I, 32'b????_????_????_????_????_????_?110_1111}: dec.i = '{gpr32(op,T_J), imm32(op,T_J), PC_ALU,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_PCN, CSR_N, '0};  // jal
-{RV32I, 32'b????_????_????_????_?000_????_?110_0111}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_ALU,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCN, CSR_N, '0};  // jalr
-{RV32I, 32'b????_????_????_????_?000_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_ALU, BR_EQ , A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // beq
-{RV32I, 32'b????_????_????_????_?001_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_ALU, BR_NE , A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bne
-{RV32I, 32'b????_????_????_????_?100_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_ALU, BR_LTS, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // blt
-{RV32I, 32'b????_????_????_????_?101_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_ALU, BR_GES, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bge
-{RV32I, 32'b????_????_????_????_?110_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_ALU, BR_LTU, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bltu
-{RV32I, 32'b????_????_????_????_?111_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_ALU, BR_GEU, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bgeu
-{RV32I, 32'b????_????_????_????_?000_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_BS, WB_MEM, CSR_N, '0};  // lb
-{RV32I, 32'b????_????_????_????_?001_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_HS, WB_MEM, CSR_N, '0};  // lh
-{RV32I, 32'b????_????_????_????_?010_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WS, WB_MEM, CSR_N, '0};  // lw
-{RV32I, 32'b????_????_????_????_?100_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_BU, WB_MEM, CSR_N, '0};  // lbu
-{RV32I, 32'b????_????_????_????_?101_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_HU, WB_MEM, CSR_N, '0};  // lhu
-{RV32I, 32'b????_????_????_????_?000_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_B , WB_XXX, CSR_N, '0};  // sb
-{RV32I, 32'b????_????_????_????_?001_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_H , WB_XXX, CSR_N, '0};  // sh
-{RV32I, 32'b????_????_????_????_?010_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_W , WB_XXX, CSR_N, '0};  // sw
-{RV32I, 32'b????_????_????_????_?000_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // addi
-{RV32I, 32'b????_????_????_????_?010_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_LTS,   'x, LS_X , WB_ALU, CSR_N, '0};  // slti
-{RV32I, 32'b????_????_????_????_?011_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_LTU,   'x, LS_X , WB_ALU, CSR_N, '0};  // sltiu
-{RV32I, 32'b????_????_????_????_?100_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_XOR,   'x, LS_X , WB_ALU, CSR_N, '0};  // xori
-{RV32I, 32'b????_????_????_????_?110_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_OR ,   'x, LS_X , WB_ALU, CSR_N, '0};  // ori
-{RV32I, 32'b????_????_????_????_?111_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_AND,   'x, LS_X , WB_ALU, CSR_N, '0};  // andi
-{RV32I, 32'b0000_000?_????_????_?001_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SLL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // slli TODO: illegal imm mask
-{RV32I, 32'b0000_000?_????_????_?101_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SRL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // srli
-{RV32I, 32'b0100_000?_????_????_?101_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SRA, AR_X, LS_X , WB_ALU, CSR_N, '0};  // srai
-{RV32I, 32'b0000_000?_????_????_?000_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // add
-{RV32I, 32'b0100_000?_????_????_?000_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SUB, AR_X, LS_X , WB_ALU, CSR_N, '0};  // sub
-{RV32I, 32'b0000_000?_????_????_?010_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_LTS,   'x, LS_X , WB_ALU, CSR_N, '0};  // slt
-{RV32I, 32'b0000_000?_????_????_?011_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_LTU,   'x, LS_X , WB_ALU, CSR_N, '0};  // sltu
-{RV32I, 32'b0000_000?_????_????_?100_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_XOR,   'x, LS_X , WB_ALU, CSR_N, '0};  // xor
-{RV32I, 32'b0000_000?_????_????_?001_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SLL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // sll
-{RV32I, 32'b0000_000?_????_????_?101_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SRL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // srl
-{RV32I, 32'b0100_000?_????_????_?101_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SRA, AR_X, LS_X , WB_ALU, CSR_N, '0};  // sra
-{RV32I, 32'b0000_000?_????_????_?110_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_OR ,   'x, LS_X , WB_ALU, CSR_N, '0};  // or
-{RV32I, 32'b0000_000?_????_????_?111_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_AND,   'x, LS_X , WB_ALU, CSR_N, '0};  // and
-{RV32I, 32'b????_????_????_????_?000_????_?000_1111}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '0};  // fence
-{RV32I, 32'b????_????_????_????_?001_????_?000_1111}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '0};  // fence.i
-{RV32I, 32'b????_????_????_????_?001_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1,     'x,     'x,   'x, LS_X , WB_CSR, CSR_W, '0};  // csrrw
-{RV32I, 32'b????_????_????_????_?010_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1,     'x, AO_CP1,   'x, LS_X , WB_CSR, CSR_S, '0};  // csrrs
-{RV32I, 32'b????_????_????_????_?011_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1,     'x, AO_CP1,   'x, LS_X , WB_CSR, CSR_C, '0};  // csrrc
-{RV32I, 32'b????_????_????_????_?101_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_CSR, CSR_W, '0};  // csrrwi
-{RV32I, 32'b????_????_????_????_?110_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_CSR, CSR_S, '0};  // csrrsi
-{RV32I, 32'b????_????_????_????_?111_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_CSR, CSR_C, '0};  // csrrci
-{RV32I, 32'b0000_0000_0000_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_R, '0};  // ecall
-{RV32I, 32'b0000_0000_0001_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_R, '0};  // ebreak
+{RV32I, 32'b????_????_????_????_????_????_?011_0111}: dec.i = '{gpr32(op,T_U), imm32(op,T_U), PC_PCI,     'x, A1_PC , A2_IMM, AO_CP2,   'x, LS_X , WB_ALU, CSR_N, '0};  // lui
+{RV32I, 32'b????_????_????_????_????_????_?001_0111}: dec.i = '{gpr32(op,T_U), imm32(op,T_U), PC_PCI,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // auipc
+{RV32I, 32'b????_????_????_????_????_????_?110_1111}: dec.i = '{gpr32(op,T_J), imm32(op,T_J), PC_JMP,     'x, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_PCN, CSR_N, '0};  // jal  TODO: Instruction-address-misaligned exception
+{RV32I, 32'b????_????_????_????_?000_????_?110_0111}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_JMP,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCN, CSR_N, '0};  // jalr TODO: Instruction-address-misaligned exception
+{RV32I, 32'b????_????_????_????_?000_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_EQ , A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // beq
+{RV32I, 32'b????_????_????_????_?001_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_NE , A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bne
+{RV32I, 32'b????_????_????_????_?100_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_LTS, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // blt
+{RV32I, 32'b????_????_????_????_?101_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_GES, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bge
+{RV32I, 32'b????_????_????_????_?110_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_LTU, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bltu
+{RV32I, 32'b????_????_????_????_?111_????_?110_0011}: dec.i = '{gpr32(op,T_B), imm32(op,T_B), PC_BRN, BR_GEU, A1_PC , A2_IMM, AO_ADD, AR_X, LS_X , WB_XXX, CSR_N, '0};  // bgeu
+{RV32I, 32'b????_????_????_????_?000_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_BS, WB_MEM, CSR_N, '0};  // lb
+{RV32I, 32'b????_????_????_????_?001_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_HS, WB_MEM, CSR_N, '0};  // lh
+{RV32I, 32'b????_????_????_????_?010_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WS, WB_MEM, CSR_N, '0};  // lw
+{RV32I, 32'b????_????_????_????_?100_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_BU, WB_MEM, CSR_N, '0};  // lbu
+{RV32I, 32'b????_????_????_????_?101_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_HU, WB_MEM, CSR_N, '0};  // lhu
+{RV32I, 32'b????_????_????_????_?000_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_B , WB_XXX, CSR_N, '0};  // sb
+{RV32I, 32'b????_????_????_????_?001_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_H , WB_XXX, CSR_N, '0};  // sh
+{RV32I, 32'b????_????_????_????_?010_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_W , WB_XXX, CSR_N, '0};  // sw
+{RV32I, 32'b????_????_????_????_?000_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // addi
+{RV32I, 32'b????_????_????_????_?010_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_LTS,   'x, LS_X , WB_ALU, CSR_N, '0};  // slti
+{RV32I, 32'b????_????_????_????_?011_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_LTU,   'x, LS_X , WB_ALU, CSR_N, '0};  // sltiu
+{RV32I, 32'b????_????_????_????_?100_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_XOR,   'x, LS_X , WB_ALU, CSR_N, '0};  // xori
+{RV32I, 32'b????_????_????_????_?110_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_OR ,   'x, LS_X , WB_ALU, CSR_N, '0};  // ori
+{RV32I, 32'b????_????_????_????_?111_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_AND,   'x, LS_X , WB_ALU, CSR_N, '0};  // andi
+{RV32I, 32'b0000_000?_????_????_?001_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SLL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // slli TODO: illegal imm mask
+{RV32I, 32'b0000_000?_????_????_?101_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SRL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // srli
+{RV32I, 32'b0100_000?_????_????_?101_????_?001_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SRA, AR_X, LS_X , WB_ALU, CSR_N, '0};  // srai
+{RV32I, 32'b0000_000?_????_????_?000_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_ADD, AR_X, LS_X , WB_ALU, CSR_N, '0};  // add
+{RV32I, 32'b0100_000?_????_????_?000_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SUB, AR_X, LS_X , WB_ALU, CSR_N, '0};  // sub
+{RV32I, 32'b0000_000?_????_????_?010_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_LTS,   'x, LS_X , WB_ALU, CSR_N, '0};  // slt
+{RV32I, 32'b0000_000?_????_????_?011_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_LTU,   'x, LS_X , WB_ALU, CSR_N, '0};  // sltu
+{RV32I, 32'b0000_000?_????_????_?100_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_XOR,   'x, LS_X , WB_ALU, CSR_N, '0};  // xor
+{RV32I, 32'b0000_000?_????_????_?001_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SLL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // sll
+{RV32I, 32'b0000_000?_????_????_?101_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SRL, AR_X, LS_X , WB_ALU, CSR_N, '0};  // srl
+{RV32I, 32'b0100_000?_????_????_?101_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SRA, AR_X, LS_X , WB_ALU, CSR_N, '0};  // sra
+{RV32I, 32'b0000_000?_????_????_?110_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_OR ,   'x, LS_X , WB_ALU, CSR_N, '0};  // or
+{RV32I, 32'b0000_000?_????_????_?111_????_?011_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_AND,   'x, LS_X , WB_ALU, CSR_N, '0};  // and
+{RV32I, 32'b????_????_????_????_?000_????_?000_1111}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '0};  // fence
+{RV32I, 32'b????_????_????_????_?001_????_?000_1111}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '0};  // fence.i
+{RV32I, 32'b????_????_????_????_?001_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1,     'x,     'x,   'x, LS_X , WB_CSR, CSR_W, '0};  // csrrw
+{RV32I, 32'b????_????_????_????_?010_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1,     'x, AO_CP1,   'x, LS_X , WB_CSR, CSR_S, '0};  // csrrs
+{RV32I, 32'b????_????_????_????_?011_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1,     'x, AO_CP1,   'x, LS_X , WB_CSR, CSR_C, '0};  // csrrc
+{RV32I, 32'b????_????_????_????_?101_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_CSR, CSR_W, '0};  // csrrwi
+{RV32I, 32'b????_????_????_????_?110_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_CSR, CSR_S, '0};  // csrrsi
+{RV32I, 32'b????_????_????_????_?111_????_?111_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_CSR, CSR_C, '0};  // csrrci
+{RV32I, 32'b0000_0000_0000_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_R, '0};  // ecall
+{RV32I, 32'b0000_0000_0001_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_R, '0};  // ebreak
 {RV32I, 32'b0001_0000_0000_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_EPC,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_R, '0};  // eret
-{RV32I, 32'b0001_0000_0010_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '0};  // wfi
+{RV32I, 32'b0001_0000_0010_0000_0000_0000_0111_0011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '0};  // wfi
                                                                                                  
 // RV.I64                                                                                        
 //          fedc_ba98_7654_3210_fedc_ba98_7654_3210             gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
-{RV64I, 32'b????_????_????_????_?011_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_DS, WB_MEM, CSR_N, '0};  // ld
-{RV64I, 32'b????_????_????_????_?110_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WU, WB_MEM, CSR_N, '0};  // lwu
-{RV64I, 32'b????_????_????_????_?011_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_D , WB_XXX, CSR_N, '0};  // sd
-{RV64I, 32'b????_????_????_????_?000_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addiw
-{RV64I, 32'b0000_000?_????_????_?001_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // slliw
-{RV64I, 32'b0000_000?_????_????_?101_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srliw
-{RV64I, 32'b0100_000?_????_????_?101_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sraiw
-{RV64I, 32'b0000_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addw
-{RV64I, 32'b0100_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SUB, AR_W, LS_X , WB_ALU, CSR_N, '0};  // subw
-{RV64I, 32'b0000_000?_????_????_?001_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sllw
-{RV64I, 32'b0000_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srlw
-{RV64I, 32'b0100_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sraw
+{RV64I, 32'b????_????_????_????_?011_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_DS, WB_MEM, CSR_N, '0};  // ld
+{RV64I, 32'b????_????_????_????_?110_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WU, WB_MEM, CSR_N, '0};  // lwu
+{RV64I, 32'b????_????_????_????_?011_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_D , WB_XXX, CSR_N, '0};  // sd
+{RV64I, 32'b????_????_????_????_?000_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addiw
+{RV64I, 32'b0000_000?_????_????_?001_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // slliw
+{RV64I, 32'b0000_000?_????_????_?101_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srliw
+{RV64I, 32'b0100_000?_????_????_?101_????_?001_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sraiw
+{RV64I, 32'b0000_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addw
+{RV64I, 32'b0100_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SUB, AR_W, LS_X , WB_ALU, CSR_N, '0};  // subw
+{RV64I, 32'b0000_000?_????_????_?001_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sllw
+{RV64I, 32'b0000_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srlw
+{RV64I, 32'b0100_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sraw
                                                                                                  
 // TODO: encoding is not finalized, the only reference I could find was:                         
 // https://github.com/0xDeva/ida-cpu-RISC-V/blob/master/risc-v_opcode_map.txt                    
 // RV.I128                                                                                       
 //           fedc_ba98_7654_3210_fedc_ba98_7654_3210             gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
-{RV128I, 32'b????_????_????_????_?011_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_DS, WB_MEM, CSR_N, '0};  // lq
-{RV128I, 32'b????_????_????_????_?110_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WU, WB_MEM, CSR_N, '0};  // ldu
-{RV128I, 32'b????_????_????_????_?011_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_D , WB_XXX, CSR_N, '0};  // sq
-{RV128I, 32'b????_????_????_????_?000_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addid
-{RV128I, 32'b0000_00??_????_????_?001_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sllid
-{RV128I, 32'b0000_00??_????_????_?101_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srlid
-{RV128I, 32'b0100_00??_????_????_?101_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCN,     'x, A1_RS1, A2_IMM, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sraid
-{RV128I, 32'b0000_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addd
-{RV128I, 32'b0100_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SUB, AR_W, LS_X , WB_ALU, CSR_N, '0};  // subd
-{RV128I, 32'b0000_000?_????_????_?001_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // slld
-{RV128I, 32'b0000_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srld
-{RV128I, 32'b0100_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCN,     'x, A1_RS1, A2_RS2, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srad
+{RV128I, 32'b????_????_????_????_?011_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_DS, WB_MEM, CSR_N, '0};  // lq
+{RV128I, 32'b????_????_????_????_?110_????_?000_0011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WU, WB_MEM, CSR_N, '0};  // ldu
+{RV128I, 32'b????_????_????_????_?011_????_?010_0011}: dec.i = '{gpr32(op,T_S), imm32(op,T_S), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_X, ST_D , WB_XXX, CSR_N, '0};  // sq
+{RV128I, 32'b????_????_????_????_?000_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addid
+{RV128I, 32'b0000_00??_????_????_?001_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sllid
+{RV128I, 32'b0000_00??_????_????_?101_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srlid
+{RV128I, 32'b0100_00??_????_????_?101_????_?101_1011}: dec.i = '{gpr32(op,T_I), imm32(op,T_I), PC_PCI,     'x, A1_RS1, A2_IMM, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // sraid
+{RV128I, 32'b0000_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_ADD, AR_W, LS_X , WB_ALU, CSR_N, '0};  // addd
+{RV128I, 32'b0100_000?_????_????_?000_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SUB, AR_W, LS_X , WB_ALU, CSR_N, '0};  // subd
+{RV128I, 32'b0000_000?_????_????_?001_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SLL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // slld
+{RV128I, 32'b0000_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SRL, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srld
+{RV128I, 32'b0100_000?_????_????_?101_????_?011_1011}: dec.i = '{gpr32(op,T_R), imm32(op,T_R), PC_PCI,     'x, A1_RS1, A2_RS2, AO_SRA, AR_W, LS_X , WB_ALU, CSR_N, '0};  // srad
 
 //                                                               gpr          , imm            pc    , br    , a1    , a2    , alu   , ar  , ls   , wb,     csr  ,ill
-default:                                               dec.i = '{gpr32(op,T_X), imm32(op,T_X), PC_PCN,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '1};  // illegal
+default:                                               dec.i = '{gpr32(op,T_X), imm32(op,T_X), PC_PCI,     'x,     'x,     'x,     'x,   'x, LS_X , WB_XXX, CSR_N, '1};  // illegal
 endcase
 
 //         {op, s1, s2, xw, en}
@@ -650,7 +650,7 @@ endfunction: reg_5
 function ctl_i_t dec16 (isa_t isa, op16_t op);
 // default values
 //              pc,    rs1,    rs2,  imm,     alu,   ar,    br,   st,ste,    ld,lde,     wb,wbe,   csr,ill
-dec16.i = '{PC_PCN, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0};
+dec16.i = '{PC_PCI, A1_RS1, A2_RS2,   'x,      'x,   'x,    'x,   'x, '0,    'x, '0,     'x, '0,    'x, '0};
 //         {op, s1, s2, xw, en}
 dec16.m = '{'x, 'x, 'x, 'x, '0};
 
@@ -666,7 +666,7 @@ casez ({isa, op})
 16'b0000_0000_0000_0000: dec16 = '{PC_PC2,      'x,      'x,    'x,      'x,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, '1}; // illegal instruction
 16'b0000_0000_0000_0000: dec16 = '{PC_PC2,      'x,      'x,    'x,      'x,     'x,   'x, '0,    'x, '0,     'x, '0,    'x, '1}; // illegal instruction
 
-32'b????_????_????_????_????_????_?001_0111: dec16 = '{PC_PCN, A1_PC , A2_IMM, IMM_U, AO_ADD,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // auipc
+32'b????_????_????_????_????_????_?001_0111: dec16 = '{PC_PCI, A1_PC , A2_IMM, IMM_U, AO_ADD,     'x,   'x, '0,    'x, '0, WB_ALU, '1, CSR_N, '0};  // auipc
 32'b????_????_????_????_????_????_?110_1111: dec16 = '{PC_ALU, A1_PC , A2_IMM, IMM_J, AO_ADD,     'x,   'x, '0,    'x, '0, WB_PCN, '1, CSR_N, '0};  // jal
 32'b????_????_????_????_?000_????_?110_0111: dec16 = '{PC_ALU, A1_RS1, A2_IMM, IMM_I, AO_ADD,     'x,   'x, '0,    'x, '0, WB_PCN, '1, CSR_N, '0};  // jalr
 endcase

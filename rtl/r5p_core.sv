@@ -45,9 +45,11 @@ localparam int unsigned DWW = $clog2(DSW);
 ///////////////////////////////////////////////////////////////////////////////
 
 // instruction fetch
+logic           if_run;  // running status
 logic           if_tkn;  // taken
 logic [IAW-1:0] if_pc;   // program counter
-logic [IAW-1:0] if_pca;  // program counter adder
+logic [IAW-1:0] if_pci;  // program counter incrementing adder
+logic [IAW-1:0] if_pcb;  // program counter branch adder
 logic [IAW-1:0] if_pcn;  // program counter next
 logic           stall;
 
@@ -77,15 +79,19 @@ logic [XW-1:0] ls_adr_t;  // address
 logic [XW-1:0] ls_wdt_t;  // write data
 logic [XW-1:0] ls_rdt_t;  // read data
 logic [XW-1:0] ls_mal;    // misaligned
+logic          ls_dly;    // delayed writeback enable
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction fetch
 ///////////////////////////////////////////////////////////////////////////////
 
-// request becomes active after reset
+// start running after reset
 always_ff @ (posedge clk, posedge rst)
-if (rst)  if_req <= 1'b0;
-else      if_req <= 1'b1;
+if (rst)  if_run <= 1'b0;
+else      if_run <= 1'b1;
+
+// request becomes active after reset
+assign if_req = if_run & ~(ls_req & ~ls_wen);
 
 // PC next is used as IF address
 assign if_adr = if_pcn;
@@ -93,14 +99,14 @@ assign if_adr = if_pcn;
 // instruction valid
 always_ff @ (posedge clk, posedge rst)
 if (rst)  id_vld <= 1'b0;
-else      id_vld <= if_req & if_ack;
+else      id_vld <= (if_req & if_ack) | (id_vld & stall);
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = ~if_ack;
+assign stall = (if_req & ~if_ack) | (ls_req & ~ls_ack) | (ls_req & ~ls_wen);
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
@@ -109,7 +115,7 @@ else begin
   if (id_vld & ~stall) if_pc <= if_pcn;
 end
 
-// branch unit
+// branch ALU for checking branch conditions
 r5p_br #(
   .XW  (XW)
 ) br (
@@ -122,17 +128,26 @@ r5p_br #(
   .tkn  (if_tkn)
 );
 
-// program counter adder
-assign if_pca = if_pc + IAW'(opsiz(id_op[16-1:0]));
+// TODO: optimization parameters
+// 1. branch immediate direct branch type decoder (kind of obvious, but see if it beats the tool optimizations)
+// 2. separate adder for PC next and branch address, since mux control signal from ALU is late and is best used just before output
+// 3. a separate branch ALU with explicit [un]signed comparator instead of adder in the main ALU
+
+// program counter incrementing adder
+assign if_pci = if_pc + IAW'(opsiz(id_op[16-1:0]));
+
+// branch address adder
+assign if_pcb = if_pc + IAW'(imm32(id_op, T_B));
 
 // program counter next
 always_comb
 if (csr_expt)  if_pcn = csr_evec;
 else if (if_ack & id_vld) begin
   case (id_ctl.i.pc)
-    PC_PCN: if_pcn = if_pca;
+    PC_PCI: if_pcn = if_pci;
+    PC_BRN: if_pcn = if_tkn ? if_pcb : if_pci;
+    PC_JMP: if_pcn = {alu_sum[IAW-1:1], 1'b0};  // TODO: do not use ALU for branches
     PC_EPC: if_pcn = csr_epc;
-    PC_ALU: if_pcn = if_tkn ? alu_sum[IAW-1:0] : if_pca;
     default: if_pcn = 'x;
   endcase
 end else begin
@@ -166,7 +181,7 @@ r5p_gpr #(
   // read/write enable
   .e_rs1  (id_ctl.i.gpr.e.rs1),
   .e_rs2  (id_ctl.i.gpr.e.rs2),
-  .e_rd   (id_ctl.i.gpr.e.rd ),  // there are additional conditions for load write back
+  .e_rd   (id_ctl.i.gpr.e.rd & (id_ctl.i.wb == WB_MEM ? ls_dly : 1'b1)),
   // read/write address
   .a_rs1  (id_ctl.i.gpr.a.rs1),
   .a_rs2  (id_ctl.i.gpr.a.rs2),
@@ -213,7 +228,7 @@ assign ls_adr_t = alu_sum;
 assign ls_wdt_t = gpr_rs2;
 
 // request
-assign ls_req = id_ctl.i.ls.en;
+assign ls_req = id_ctl.i.ls.en & ~ls_dly;
 
 // write enable
 assign ls_wen = id_ctl.i.ls.we;
@@ -264,6 +279,10 @@ end: blk_rdt
 ///////////////////////////////////////////////////////////////////////////////
 // write back
 ///////////////////////////////////////////////////////////////////////////////
+
+always_ff @ (posedge clk, posedge rst)
+if (rst)  ls_dly <= 1'b0;
+else      ls_dly <= ls_req & ls_ack & ~ls_wen;
 
 // write back multiplexer
 always_comb begin
