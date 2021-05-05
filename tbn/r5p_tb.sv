@@ -2,7 +2,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_tb #(
-  int unsigned IAW = 16,    // instruction address width
+  int unsigned IAW = 21,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
   int unsigned DAW = 16,    // data address width
   int unsigned DDW = 32,    // data data    width
