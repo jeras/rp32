@@ -137,7 +137,7 @@ r5p_br #(
 assign if_pci = if_pc + IAW'(opsiz(id_op[16-1:0]));
 
 // branch address adder
-assign if_pcb = if_pc + IAW'(imm32(id_op, T_B));
+assign if_pcb = if_pc + IAW'(imm32(id_op,T_B));
 
 // program counter next
 always_comb
@@ -179,13 +179,13 @@ r5p_gpr #(
   .clk    (clk),
   .rst    (rst),
   // read/write enable
-  .e_rs1  (id_ctl.i.gpr.e.rs1),
-  .e_rs2  (id_ctl.i.gpr.e.rs2),
-  .e_rd   (id_ctl.i.gpr.e.rd & (id_ctl.i.wb == WB_MEM ? ls_dly : 1'b1)),
+  .e_rs1  (id_ctl.gpr.e.rs1),
+  .e_rs2  (id_ctl.gpr.e.rs2),
+  .e_rd   (id_ctl.gpr.e.rd & (id_ctl.i.wb == WB_MEM ? ls_dly : 1'b1)),
   // read/write address
-  .a_rs1  (id_ctl.i.gpr.a.rs1),
-  .a_rs2  (id_ctl.i.gpr.a.rs2),
-  .a_rd   (id_ctl.i.gpr.a.rd ),
+  .a_rs1  (id_ctl.gpr.a.rs1),
+  .a_rs2  (id_ctl.gpr.a.rs2),
+  .a_rd   (id_ctl.gpr.a.rd ),
   // read/write data
   .d_rs1  (gpr_rs1),
   .d_rs2  (gpr_rs2),
@@ -202,7 +202,7 @@ always_comb begin
   // RS2
   unique case (id_ctl.i.a2)
     A2_RS2: alu_rs2 = gpr_rs2;
-    A2_IMM: alu_rs2 = id_ctl.i.imm;
+    A2_IMM: alu_rs2 = id_ctl.imm;
   endcase
 end
 
@@ -218,6 +218,37 @@ r5p_alu #(
   // dedicated output for branch address
   .sum  (alu_sum)
 );
+
+///////////////////////////////////////////////////////////////////////////////
+// CSR
+///////////////////////////////////////////////////////////////////////////////
+
+logic [2**12-1:0][32-1:0] csr_reg;
+logic    [12-1:0]         csr_adr;
+logic            [32-1:0] csr_msk;  // mask  data
+logic            [32-1:0] csr_wdt;  // write data
+logic            [32-1:0] csr_rdt;  // read  data
+
+assign csr_rdt = csr_reg[csr_adr];
+
+// CSR mask decoder
+always_comb begin
+  unique case (id_ctl.csr.msk)
+    CSR_REG: csr_msk = XW'(gpr_rs1);         // GPR register source 1
+    CSR_IMM: csr_msk = XW'(id_ctl.csr.imm);  // 5-bit zero extended immediate
+    default: csr_msk = 'x;
+  endcase
+end
+
+// CSR operation decoder
+always_comb begin
+  unique casez (id_ctl.csr.op)
+    CSR_RW : csr_wdt =            gpr_rs1;  // read/write
+    CSR_SET: csr_wdt = csr_rdt |  csr_msk;  // set
+    CSR_CLR: csr_wdt = csr_rdt & ~csr_msk;  // clear
+    default: csr_wdt = 'x;
+  endcase
+end
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store
@@ -287,11 +318,12 @@ else      ls_dly <= ls_req & ls_ack & ~ls_wen;
 // write back multiplexer
 always_comb begin
   unique case (id_ctl.i.wb)
-    WB_ALU: gpr_rd =     alu_rd ;   // ALU output
-    WB_MEM: gpr_rd =     ls_rdt_t;  // memory read data
-    WB_PCI: gpr_rd = XW'(if_pci);   // PC next
-    WB_CSR: gpr_rd = 'x;            // CSR
-    default: gpr_rd = 'x;           // none
+    WB_ALU: gpr_rd = alu_rd;            // ALU output
+    WB_MEM: gpr_rd = ls_rdt_t;          // memory read data
+    WB_PCI: gpr_rd = XW'(if_pci);       // PC next
+    WB_IMM: gpr_rd = imm32(id_op,T_U);  // 
+    WB_CSR: gpr_rd = csr_rdt;           // CSR
+    default: gpr_rd = 'x;               // none
   endcase
 end
 
