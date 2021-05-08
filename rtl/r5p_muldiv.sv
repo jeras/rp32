@@ -11,6 +11,11 @@ module r5p_muldiv #(
   output logic [XW-1:0] rd    // destination register
 );
 
+// minux max (most negative value)
+localparam logic [XW-1:0] M8 = {1'b1, {XW-1{1'b0}}};
+// minus 1 (-1)
+localparam logic [XW-1:0] M1 = '1;
+
 logic [2-1:0][XW-1:0] mul;
 logic        [XW-1:0] div;
 logic        [XW-1:0] rem;
@@ -31,16 +36,16 @@ endcase
 // division
 always_comb
 case (ctl.s12) inside
-  2'b00  : div = $unsigned(rs1) / $unsigned(rs2);
-  2'b11  : div =   $signed(rs1) /   $signed(rs2);
+  2'b00  : div = ~|rs2 ? '1 :                            $unsigned(rs1) / $unsigned(rs2);
+  2'b11  : div = ~|rs2 ? '1 : (rs1==M8 & rs2==M1) ? M8 :   $signed(rs1) /   $signed(rs2);
   default: div = 'x;
 endcase
 
 // reminder
 always_comb
 case (ctl.s12) inside
-  2'b00  : rem = $unsigned(rs1) / $unsigned(rs2);
-  2'b11  : rem =   $signed(rs1) /   $signed(rs2);
+  2'b00  : rem = ~|rs2 ? rs1 :                            $unsigned(rs1) / $unsigned(rs2);
+  2'b11  : rem = ~|rs2 ? rs1 : (rs1==M8 & rs2==M1) ? '0 :   $signed(rs1) /   $signed(rs2);
   default: rem = 'x;
 endcase
 

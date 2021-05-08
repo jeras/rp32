@@ -582,9 +582,9 @@ if (isa.Iw & isa.M) begin casez (op)
   32'b0000_001?_????_????_?010_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_MUH, 2'b10, '0, '1}; end  // mulhsu
   32'b0000_001?_????_????_?011_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_MUH, 2'b00, '0, '1}; end  // mulhu
   32'b0000_001?_????_????_?100_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_DIV, 2'b11, '0, '1}; end  // div
-  32'b0000_001?_????_????_?101_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_DIV, 2'b10, '0, '1}; end  // divu
+  32'b0000_001?_????_????_?101_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_DIV, 2'b00, '0, '1}; end  // divu
   32'b0000_001?_????_????_?110_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_REM, 2'b11, '0, '1}; end  // rem
-  32'b0000_001?_????_????_?111_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_REM, 2'b10, '0, '1}; end  // remu
+  32'b0000_001?_????_????_?111_????_?011_0011: begin dec.ill = '0; dec.f32 = T_R; dec.i = '{PC_PCI, 'x, 'x, 'x, 'x, 'x, LS_X, WB_MUL}; dec.m = '{M_REM, 2'b00, '0, '1}; end  // remu
 endcase end
 
 // RV64 M standard extension
