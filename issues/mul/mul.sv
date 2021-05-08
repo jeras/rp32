@@ -40,8 +40,8 @@ module test #(
 
     $display("");
     $display("signed/unsigned multiplication:");
-    r64ws = $signed(m32a) * $unsigned(m32b);
-    r64ds = $signed(m32a) * $unsigned(m32b);
+    r64ws = 64'($signed(m32a)) * $unsigned(m32b);
+    r64ds = 64'($signed(m32a)) * $unsigned(m32b);
     $display("r64ws = 0x%h = %d", $signed(r64ws), $signed(r64ws));
     $display("r64ds = 0x%h = %d", $signed(r64ds), $signed(r64ds));
 
@@ -90,8 +90,8 @@ module test #(
 
     $display("");
     $display("signed/unsigned multiplication:");
-    r24ws = $signed(m12a) * $unsigned(m12b);
-    r24ds = $signed(m12a) * $unsigned(m12b);
+    r24ws = 24'($signed(m12a)) * 24'($unsigned(m12b));
+    r24ds = 24'($signed(m12a)) * 24'($unsigned(m12b));
     $display("r24ws = 0x%h = %d", $signed(r24ws), $signed(r24ws));
     $display("r24ds = 0x%h = %d", $signed(r24ds), $signed(r24ds));
 

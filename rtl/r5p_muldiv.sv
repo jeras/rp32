@@ -15,12 +15,16 @@ logic [2-1:0][XW-1:0] mul;
 logic        [XW-1:0] div;
 logic        [XW-1:0] rem;
 
+// NOTE:
+// for signed*unsigned multiplication to work,
+// the first operand must be sign extended to the LHS (result) width
+
 // multiplication
 always_comb
 case (ctl.s12) inside
-  2'b00  : mul = $unsigned(rs1) * $unsigned(rs2);
-  2'b10  : mul =   $signed(rs1) * $unsigned(rs2);
-  2'b11  : mul =   $signed(rs1) *   $signed(rs2);
+  2'b00  : mul = 64'($unsigned(rs1)) * $unsigned(rs2);
+  2'b10  : mul = 64'(  $signed(rs1)) * $unsigned(rs2);
+  2'b11  : mul = 64'(  $signed(rs1)) *   $signed(rs2);
   default: mul = 'x;
 endcase
 
