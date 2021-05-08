@@ -17,27 +17,27 @@ logic        [XW-1:0] rem;
 
 // multiplication
 always_comb
-case ({ctl.s1, ctl.s2}) inside
-  {1'b0, 1'b0}: mul = $unsigned(rs1) * $unsigned(rs2);
-  {1'b1, 1'b0}: mul =   $signed(rs1) * $unsigned(rs2);
-  {1'b1, 1'b1}: mul =   $signed(rs1) *   $signed(rs2);
-  default     : mul = 'x;
+case (ctl.s12) inside
+  2'b00  : mul = $unsigned(rs1) * $unsigned(rs2);
+  2'b10  : mul =   $signed(rs1) * $unsigned(rs2);
+  2'b11  : mul =   $signed(rs1) *   $signed(rs2);
+  default: mul = 'x;
 endcase
 
 // division
 always_comb
-case ({ctl.s1, ctl.s2}) inside
-  {1'b0, 1'b0}: div = $unsigned(rs1) / $unsigned(rs2);
-  {1'b1, 1'b1}: div =   $signed(rs1) /   $signed(rs2);
-  default     : div = 'x;
+case (ctl.s12) inside
+  2'b00  : div = $unsigned(rs1) / $unsigned(rs2);
+  2'b11  : div =   $signed(rs1) /   $signed(rs2);
+  default: div = 'x;
 endcase
 
 // reminder
 always_comb
-case ({ctl.s1, ctl.s2}) inside
-  {1'b0, 1'b0}: rem = $unsigned(rs1) / $unsigned(rs2);
-  {1'b1, 1'b1}: rem =   $signed(rs1) /   $signed(rs2);
-  default     : rem = 'x;
+case (ctl.s12) inside
+  2'b00  : rem = $unsigned(rs1) / $unsigned(rs2);
+  2'b11  : rem =   $signed(rs1) /   $signed(rs2);
+  default: rem = 'x;
 endcase
 
 always_comb
@@ -47,5 +47,11 @@ case (ctl.op) inside
   M_DIV: rd = div;
   M_REM: rd = rem;
 endcase
+
+logic unsigned [2*XW-1:0] mul64u;
+logic   signed [2*XW-1:0] mul64s;
+
+assign mul64u =   $signed(rs1) * $unsigned(rs2);
+assign mul64s =   $signed(rs1) * $unsigned(rs2);
 
 endmodule: r5p_muldiv

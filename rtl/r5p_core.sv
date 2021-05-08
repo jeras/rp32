@@ -2,7 +2,7 @@ import riscv_isa_pkg::*;
 
 module r5p_core #(
   // RISC-V ISA
-  isa_t        ISA = RV32I,  // see `riscv_isa_pkg` for enumeration definition
+  isa_t        ISA = RV32I | RV_M,  // see `riscv_isa_pkg` for enumeration definition
   int unsigned XW  = 32,    // TODO: calculate it from ISA
   // instruction bus
   int unsigned IAW = 32,    // program address width
@@ -54,9 +54,9 @@ logic [IAW-1:0] if_pcn;  // program counter next
 logic           stall;
 
 // instruction decode
-op32_t id_op;   // operation code
-ctl_t  id_ctl;  // control structure
-logic  id_vld;  // instruction valid
+op32_t          id_op;   // operation code
+ctl_t           id_ctl;  // control structure
+logic           id_vld;  // instruction valid
 
 // CSR
 logic           csr_expt;
@@ -73,6 +73,9 @@ logic [XW-1:0] alu_rs1;  // register source 1
 logic [XW-1:0] alu_rs2;  // register source 2
 logic [XW-1:0] alu_rd ;  // register destination
 logic [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
+
+// MUL/DIV/REM
+logic [XW-1:0] mul_rd;   // multiplier unit output
 
 // load/sore unit temporary signals
 logic [XW-1:0] ls_adr_t;  // address
@@ -164,7 +167,7 @@ assign id_op = if_rdt;
 // 32-bit instruction decoder
 //assign id_ctl = dec(ISA, id_op);
 // TODO: workaround for Verilator bug
-assign id_ctl = dec('1, id_op);
+assign id_ctl = dec(ISA, id_op);
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -172,7 +175,7 @@ assign id_ctl = dec('1, id_op);
 
 // general purpose registers
 r5p_gpr #(
-  .AW  (ISA.ie ? 4 : 5),
+  .AW  (ISA.Ie ? 4 : 5),
   .XW  (XW)
 ) gpr (
   // system signals
@@ -217,6 +220,17 @@ r5p_alu #(
   .rd   (alu_rd ),
   // dedicated output for branch address
   .sum  (alu_sum)
+);
+
+r5p_muldiv #(
+  .XW  (XW)
+) mul (
+  // control
+  .ctl  (id_ctl.m),
+  // data input/output
+  .rs1  (gpr_rs1),
+  .rs2  (gpr_rs2),
+  .rd   (mul_rd )
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -318,12 +332,13 @@ else      ls_dly <= ls_req & ls_ack & ~ls_wen;
 // write back multiplexer
 always_comb begin
   unique case (id_ctl.i.wb)
-    WB_ALU: gpr_rd = alu_rd;            // ALU output
-    WB_MEM: gpr_rd = ls_rdt_t;          // memory read data
-    WB_PCI: gpr_rd = XW'(if_pci);       // PC next
-    WB_IMM: gpr_rd = imm32(id_op,T_U);  // 
-    WB_CSR: gpr_rd = csr_rdt;           // CSR
-    default: gpr_rd = 'x;               // none
+    WB_ALU : gpr_rd = alu_rd;             // ALU output
+    WB_MEM : gpr_rd = ls_rdt_t;           // memory read data
+    WB_PCI : gpr_rd = XW'(if_pci);        // PC next
+    WB_IMM : gpr_rd = imm32(id_op, T_U);  // upper immediate
+    WB_CSR : gpr_rd = csr_rdt;            // CSR
+    WB_MUL : gpr_rd = mul_rd;             // mul/div/rem
+    default: gpr_rd = 'x;                 // none
   endcase
 end
 
