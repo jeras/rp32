@@ -16,12 +16,16 @@ localparam logic [XW-1:0] M8 = {1'b1, {XW-1{1'b0}}};
 // minus 1 (-1)
 localparam logic [XW-1:0] M1 = '1;
 
-logic [2-1:0][XW-1:0] mul;
-logic        [XW-1:0] div;
-logic        [XW-1:0] rem;
+logic          [2-1:0][XW-1:0] mul;
+logic unsigned        [XW-1:0] divu;
+logic   signed        [XW-1:0] divs;
+logic                 [XW-1:0] div;
+logic unsigned        [XW-1:0] remu;
+logic   signed        [XW-1:0] rems;
+logic                 [XW-1:0] rem;
 
 // NOTE:
-// for signed*unsigned multiplication to work,
+// for signed*unsigned multiplication to work in Verilog,
 // the first operand must be sign extended to the LHS (result) width
 
 // multiplication
@@ -33,21 +37,37 @@ case (ctl.s12) inside
   default: mul = 'x;
 endcase
 
+// NOTE:
+// for signed/signed division to work in Verilog,
+// the LHS (result) must also be a signed signal,
+// for the sema reason divide by zero and overflow conditions are in a separete equation
+
 // division
 always_comb
+begin
+divu = $unsigned(rs1) / $unsigned(rs2);
+divs =   $signed(rs1) /   $signed(rs2);
 case (ctl.s12) inside
-  2'b00  : div = ~|rs2 ? '1 :                            $unsigned(rs1) / $unsigned(rs2);
-  2'b11  : div = ~|rs2 ? '1 : (rs1==M8 & rs2==M1) ? M8 :   $signed(rs1) /   $signed(rs2);
+  2'b00  : div = ~|rs2 ?  '1 :                            divu;
+  2'b11  : div = ~|rs2 ?  '1 : (rs1==M8 & rs2==M1) ? M8 : divs;
   default: div = 'x;
 endcase
+end
+
+// NOTE:
+// same as for the divider
 
 // reminder
 always_comb
+begin
+remu = $unsigned(rs1) % $unsigned(rs2);
+rems =   $signed(rs1) %   $signed(rs2);
 case (ctl.s12) inside
-  2'b00  : rem = ~|rs2 ? rs1 :                            $unsigned(rs1) / $unsigned(rs2);
-  2'b11  : rem = ~|rs2 ? rs1 : (rs1==M8 & rs2==M1) ? '0 :   $signed(rs1) /   $signed(rs2);
+  2'b00  : rem = ~|rs2 ? rs1 :                            remu;
+  2'b11  : rem = ~|rs2 ? rs1 : (rs1==M8 & rs2==M1) ? '0 : rems;
   default: rem = 'x;
 endcase
+end
 
 always_comb
 case (ctl.op) inside

@@ -2,20 +2,9 @@
 
 _start:
 
-    li t1, 5
-    li t2, 6
-    mul  t3, t1, t2
-    mulh t4, t1, t2
-
-    li t1, -5
-    li t2, 6
-    mul  t3, t1, t2
-    mulh t4, t1, t2
-
-    li t1, -0x20000001
-    li t2, -0x20000001
-    mul    t3, t1, t2
-    mulhsu t4, t1, t2
+    li x29, 6
+    li x30, 3
+    divu  x31, x29, x30
 
 halt:
     li t1, 0x10000
