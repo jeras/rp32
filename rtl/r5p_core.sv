@@ -2,7 +2,7 @@ import riscv_isa_pkg::*;
 
 module r5p_core #(
   // RISC-V ISA
-  isa_t        ISA = RV32I | RV_M,  // see `riscv_isa_pkg` for enumeration definition
+  isa_t        ISA = '{RV_32I, RV_M},  // see `riscv_isa_pkg` for enumeration definition
   int unsigned XW  = 32,    // TODO: calculate it from ISA
   // instruction bus
   int unsigned IAW = 32,    // program address width
@@ -55,13 +55,8 @@ logic           stall;
 
 // instruction decode
 op32_t          id_op;   // operation code
-ctl_t           id_ctl;  // control structure
+ctl32_t         id_ctl;  // control structure
 logic           id_vld;  // instruction valid
-
-// CSR
-logic           csr_expt;
-logic [IAW-1:0] csr_evec;
-logic [IAW-1:0] csr_epc;
 
 // GPR
 logic [XW-1:0] gpr_rs1;  // register source 1
@@ -76,6 +71,14 @@ logic [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
 
 // MUL/DIV/REM
 logic [XW-1:0] mul_rd;   // multiplier unit output
+
+// CSR
+logic [XW-1:0] csr_rdt;  // read  data
+
+// CSR
+logic           csr_expt = '0;
+logic [IAW-1:0] csr_evec;
+logic [IAW-1:0] csr_epc;
 
 // load/sore unit temporary signals
 logic [XW-1:0] ls_adr_t;  // address
@@ -165,9 +168,7 @@ end
 assign id_op = if_rdt;
 
 // 32-bit instruction decoder
-//assign id_ctl = dec(ISA, id_op);
-// TODO: workaround for Verilator bug
-assign id_ctl = dec(ISA, id_op);
+assign id_ctl = dec32(ISA, id_op);
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -175,24 +176,24 @@ assign id_ctl = dec(ISA, id_op);
 
 // general purpose registers
 r5p_gpr #(
-  .AW  (ISA.Ie ? 4 : 5),
+  .AW  (ISA.base.E ? 4 : 5),
   .XW  (XW)
 ) gpr (
   // system signals
-  .clk    (clk),
-  .rst    (rst),
+  .clk      (clk),
+  .rst      (rst),
   // read/write enable
-  .e_rs1  (id_ctl.gpr.e.rs1),
-  .e_rs2  (id_ctl.gpr.e.rs2),
-  .e_rd   (id_ctl.gpr.e.rd & (id_ctl.i.wb == WB_MEM ? ls_dly : 1'b1)),
+  .e_rs1    (id_ctl.gpr.e.rs1),
+  .e_rs2    (id_ctl.gpr.e.rs2),
+  .e_rd     (id_ctl.gpr.e.rd & (id_ctl.i.wb == WB_MEM ? ls_dly : 1'b1)),
   // read/write address
-  .a_rs1  (id_ctl.gpr.a.rs1),
-  .a_rs2  (id_ctl.gpr.a.rs2),
-  .a_rd   (id_ctl.gpr.a.rd ),
+  .a_rs1    (id_ctl.gpr.a.rs1),
+  .a_rs2    (id_ctl.gpr.a.rs2),
+  .a_rd     (id_ctl.gpr.a.rd ),
   // read/write data
-  .d_rs1  (gpr_rs1),
-  .d_rs2  (gpr_rs2),
-  .d_rd   (gpr_rd )
+  .d_rs1    (gpr_rs1),
+  .d_rs2    (gpr_rs2),
+  .d_rd     (gpr_rd )
 );
 
 // ALU input multiplexer
@@ -209,60 +210,53 @@ always_comb begin
   endcase
 end
 
+// base ALU
 r5p_alu #(
   .XW  (XW)
 ) alu (
+   // system signals
+  .clk      (clk),
+  .rst      (rst),
   // control
-  .ctl  (id_ctl.i.ao),
+  .ctl      (id_ctl.i.ao),
   // data input/output
-  .rs1  (alu_rs1),
-  .rs2  (alu_rs2),
-  .rd   (alu_rd ),
+  .rs1      (alu_rs1),
+  .rs2      (alu_rs2),
+  .rd       (alu_rd ),
   // dedicated output for branch address
-  .sum  (alu_sum)
+  .sum      (alu_sum)
 );
 
+// mul/div/rem
 r5p_muldiv #(
   .XW  (XW)
 ) mul (
+  // system signals
+  .clk      (clk),
+  .rst      (rst),
   // control
-  .ctl  (id_ctl.m),
+  .ctl      (id_ctl.m),
   // data input/output
-  .rs1  (gpr_rs1),
-  .rs2  (gpr_rs2),
-  .rd   (mul_rd )
+  .rs1      (gpr_rs1),
+  .rs2      (gpr_rs2),
+  .rd       (mul_rd )
 );
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR
 ///////////////////////////////////////////////////////////////////////////////
 
-logic [2**12-1:0][32-1:0] csr_reg;
-logic    [12-1:0]         csr_adr;
-logic            [32-1:0] csr_msk;  // mask  data
-logic            [32-1:0] csr_wdt;  // write data
-logic            [32-1:0] csr_rdt;  // read  data
-
-assign csr_rdt = csr_reg[csr_adr];
-
-// CSR mask decoder
-always_comb begin
-  unique case (id_ctl.csr.msk)
-    CSR_REG: csr_msk = XW'(gpr_rs1);         // GPR register source 1
-    CSR_IMM: csr_msk = XW'(id_ctl.csr.imm);  // 5-bit zero extended immediate
-    default: csr_msk = 'x;
-  endcase
-end
-
-// CSR operation decoder
-always_comb begin
-  unique casez (id_ctl.csr.op)
-    CSR_RW : csr_wdt =            gpr_rs1;  // read/write
-    CSR_SET: csr_wdt = csr_rdt |  csr_msk;  // set
-    CSR_CLR: csr_wdt = csr_rdt & ~csr_msk;  // clear
-    default: csr_wdt = 'x;
-  endcase
-end
+r5p_csr #(
+) csr (
+  // system signals
+  .clk      (clk),
+  .rst      (rst),
+  // control
+  .ctl      (id_ctl.csr),
+  // data input/output
+  .wdt      (gpr_rs1),
+  .rdt      (csr_rdt)
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store

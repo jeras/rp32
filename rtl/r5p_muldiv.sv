@@ -3,6 +3,9 @@ import riscv_isa_pkg::*;
 module r5p_muldiv #(
   int unsigned XW = 32
 )(
+  // system signals
+  input  logic          clk,  // clock
+  input  logic          rst,  // reset
   // control
   input  ctl_m_t        ctl,
   // data input/output

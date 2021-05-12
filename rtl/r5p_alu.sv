@@ -3,6 +3,9 @@ import riscv_isa_pkg::*;
 module r5p_alu #(
   int unsigned XW = 32
 )(
+  // system signals
+  input  logic          clk,  // clock
+  input  logic          rst,  // reset
   // control
   input  ao_t           ctl,
   // data input/output
