@@ -36,12 +36,11 @@ localparam int unsigned WW = $clog2(SW);
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-logic [SW-1:0][8-1:0] mem [0:SZ/SW-1];
+logic [8-1:0] mem [0:SZ-1];
 
 // initialization
 initial
 if (FN!="") begin
-//  if FN[] == ".bin" begin
   void'(read_bin(FN));
 end
 
@@ -49,20 +48,11 @@ end
 function int read_bin (
   string fn
 );
-  bit [8-1:0] tmp [0:SZ-1];
   int code;  // status code
   int fd;    // file descriptor
   fd = $fopen(fn, "rb");
-  code = $fread(tmp, fd);
+  code = $fread(mem, fd);
   $fclose(fd);
-  // SystemVerilog LRM 1800-2017 section 21.3.4.4
-  // defines $fread as loading data in a *big endian* manner
-  // a byte swap is needed to achieve the desired little endian order
-  for (int unsigned a=0; a<SZ; a+=SW) begin
-    for (int unsigned i=0; i<SW; i++) begin
-      mem[a/SW][i] = tmp[a+i];
-    end
-  end
   return code;
 endfunction: read_bin
 
@@ -76,7 +66,7 @@ function int write_hex (
   int fd;    // file descriptor
   fd = $fopen(fn, "w");
   for (int unsigned addr=start_addr; addr<finish_addr; addr+=SW) begin
-    $fwrite(fd, "%h\n", mem[addr/SW]);
+    $fwrite(fd, "%h%h%h%h\n", mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
   end
   $fclose(fd);
   return code;
@@ -91,12 +81,12 @@ if (req) begin
   if (wen) begin
     // write access
     for (int unsigned i=0; i<SW; i++) begin
-      if (sel[i])  mem[int'(adr)/SW][i] <= wdt[i];
+      if (sel[i])  mem[int'(adr)+i] <= wdt[i];
     end
   end else begin
     // read access
     for (int unsigned i=0; i<SW; i++) begin
-      if (sel[i])  rdt[i] <= mem[int'(adr)/SW][i];
+      if (sel[i])  rdt[i] <= mem[int'(adr)+i];
       else         rdt[i] <= 'x;
     end
   end
@@ -131,8 +121,8 @@ if (req) begin
   end else begin
     // read access
     for (int unsigned i=0; i<SW; i++) begin
-      if (sel[i])  dat[i] = mem[int'(adr)/SW][i];
-      else         dat[i] = mem[int'(adr)/SW][i];
+      if (sel[i])  dat[i] = mem[int'(adr)+i];
+      else         dat[i] = mem[int'(adr)+i];
     end
   end
   $write("%s %s: adr=0x%h dat=0x%h sel=0b%b", DBG, wen ? "W" : "R", adr, dat, sel);
