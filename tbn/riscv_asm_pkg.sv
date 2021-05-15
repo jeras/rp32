@@ -187,7 +187,7 @@ if (|(isa.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1001_11??_?01?_??01: disasm16 = $sformatf("ILLEGAL    RES");  // RES
   16'b1001_11??_?10?_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
   16'b1001_11??_?11?_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
-  16'b101?_????_????_??01: disasm16 = $sformatf("ILLEGAL");  // C.J, NOTE: there are no restriction on immediate value
+  16'b101?_????_????_??01: disasm16 = $sformatf("c.j        0x%x"                                                             , t.imm);
   16'b110?_????_????_??01: disasm16 = $sformatf("c.beqz     %s, %s, 0x%04x" , reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi), t.imm);
   16'b111?_????_????_??01: disasm16 = $sformatf("c.bnez     %s, %s, 0x%04x" , reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi), t.imm);
   16'b0001_????_????_??10: disasm16 = $sformatf("ILLEGAL    NSE");  // C.SLLI, only RV32, nzuimm[5]=1, NSE
@@ -197,11 +197,11 @@ if (|(isa.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b000?_????_????_??10: disasm16 = $sformatf("c.slli     %s, %s, 0x%02x" , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), t.imm);
   16'b010?_0000_0???_??10: disasm16 = $sformatf("ILLEGAL    RES");  // C.LWSP, rd=0, RES
   16'b010?_????_????_??10: disasm16 = $sformatf("c.lwsp     %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
-  16'b1000_0000_0000_0010: disasm16 = $sformatf("ILLEGAL");  // C.JR, rs1+0, RES
-  16'b1000_????_?000_0010: disasm16 = $sformatf("ILLEGAL");  // C.JR  // TODO
+  16'b1000_0000_0000_0010: disasm16 = $sformatf("ILLEGAL    RES");  // C.JR, rs1=0, RES
+  16'b1000_????_?000_0010: disasm16 = $sformatf("c.jr       %s", reg_x(t.gpr.a.rs1, abi));
   16'b1000_????_????_??10: disasm16 = $sformatf("c.mv       %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
   16'b1001_0000_0000_0010: disasm16 = $sformatf("ILLEGAL");  // C.EBREAK // TODO
-  16'b1001_????_?000_0010: disasm16 = $sformatf("ILLEGAL");  // C.JALR
+  16'b1001_????_?000_0010: disasm16 = $sformatf("c.jalr     %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
   16'b1001_????_????_??10: disasm16 = $sformatf("c.add      %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
   16'b110?_????_????_??10: disasm16 = $sformatf("c.sw       %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
   default                : disasm16 = $sformatf("NOT DECODED");

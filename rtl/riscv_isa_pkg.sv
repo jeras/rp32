@@ -258,6 +258,8 @@ typedef union packed {
 typedef enum logic [4-1:0] {
   T_CR ,  // Register
   T_CR0,  // Register + rs1=x0 (zero)
+  T_CRJ,  // Register + rs1=x0 (zero)
+  T_CRL,  // Register + rs1=x0 (zero)
   T_CI ,  // Immediate
   T_CIS,  // Immediate + rs1=x2 (sp)
   T_CSS,  // Stack-relative Store
@@ -290,7 +292,9 @@ function imm_t imm16 (op16_t i, op16_frm_t sel, op16_wdh_t wdh);
   imm16 = '0;
   unique case (sel)
     T_CR,
-    T_CR0:
+    T_CR0,
+    T_CRJ,
+    T_CRL:
       imm16 = IMM_ILL;
     T_CI,
     T_CIS:
@@ -302,7 +306,7 @@ function imm_t imm16 (op16_t i, op16_frm_t sel, op16_wdh_t wdh);
         T16_S:  imm16                   = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
       //T16_0:  imm16                 = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
         T16_0:  imm16[5:0]              =             {i.ci.imm_12_12, i.ci.imm_06_02};    // unsigned immediate
-        T16_F: {imm16[31:10], imm16[9], imm16[4], imm16[6], imm16[8:7], imm16[5], imm16[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
+        T16_F: {imm16[31:10], {imm16[9], imm16[4], imm16[6], imm16[8:7], imm16[5]}, imm16[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
         default: imm16 = IMM_ILL;
       endcase
     T_CSS:
@@ -325,11 +329,11 @@ function imm_t imm16 (op16_t i, op16_frm_t sel, op16_wdh_t wdh);
     T_CA:
       imm16 = IMM_ILL;
     T_CB:
-      {imm16[8], imm16[4:3], imm16[7:6], imm16[2:1], imm16[5]} = {i.cb.off_12_10, i.cb.off_06_02};
+      {imm16[31:9], {imm16[8], imm16[4:3], imm16[7:6], imm16[2:1], imm16[5]}, imm16[0]} = 32'($signed({i.cb.off_12_10, i.cb.off_06_02, 1'b0}));
     T_CBD:
       imm16 = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-    T_CJ:
-      {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]} = i.cj.target;
+    T_CJ: 
+      {imm16[31:12], {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]}, imm16[0]} = 32'($signed({i.cj.target, 1'b0}));
     default: imm16 = IMM_ILL;
   endcase
 endfunction: imm16
@@ -341,7 +345,9 @@ endfunction: imm16
 function gpr_t gpr16 (op16_t op, op16_frm_t frm);
   unique case (frm)   // rs1,rs2,rd                        rs1  ,                rs2  ,                rd
     T_CR   :  gpr16 = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CR0  :  gpr16 = '{'{'1, '1, '1}, '{5'h00                  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
+    T_CR0  :  gpr16 = '{'{'0, '1, '1}, '{5'h00                  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
+    T_CRJ  :  gpr16 = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,                  'x ,                      'x }};
+    T_CRL  :  gpr16 = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,                  'x , 5'h01                   }};
     T_CI   :  gpr16 = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,                  'x ,         op.ci .rd_rs1   }};
     T_CIS  :  gpr16 = '{'{'1, '0, '1}, '{5'h02                  ,                  'x ,         op.ci .rd_rs1   }};
     T_CSS  :  gpr16 = '{'{'1, '1, '0}, '{5'h02                  ,         op.css.rs2  ,                      'x }};
@@ -349,7 +355,7 @@ function gpr_t gpr16 (op16_t op, op16_frm_t frm);
     T_CL   :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },                  'x , {2'b01, op.cl .rd_     }}};
     T_CS   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},                      'x }};
     T_CA   :  gpr16 = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
-    T_CB   :  gpr16 = '{'{'1, '0, '0}, '{{2'b01, op.cb .rs1_   },                  'x ,                      'x }};
+    T_CB   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   }, 5'h00               ,                      'x }};
     T_CBD  :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },                  'x , {2'b01, op.cb .rs1_    }}};  // Branch + destination register
     T_CJ   :  gpr16 = '{'{'0, '0, '1}, '{                   'x  ,                  'x , {4'd0, ~op.cj.funct3[2]}}};  // C.JAL using x1, C.J using x0
     default:  gpr16 = '{'{'0, '0, '0}, '{                   'x  ,                  'x ,                      'x }};
@@ -796,11 +802,11 @@ if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b000?_????_????_??10: begin f = T_CI ; w = T16_0; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x    , A1_RS1, A2_IMM, AO_SLL, AR_X, LS_X , WB_ALU}; end  // C.SLLI
   16'b010?_0000_0???_??10: begin f = 'x   ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_ILL, 'x    , 'x    , 'x    , 'x    , 'x  , LS_X , 'x    }; end  // C.LWSP, rd=0, RES
   16'b010?_????_????_??10: begin f = T_CIS; w = T16_W; r = 5'h02; t.ill = '0; t.i = '{PC_PCI, 'x    , A1_RS1, A2_IMM, AO_ADD, AR_X, LD_WS, WB_MEM}; end  // C.LWSP
-  16'b1000_0000_0000_0010: begin f = 'x   ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_ILL, 'x    , 'x    , 'x    , 'x    , 'x  , LS_X , 'x    }; end  // C.JR, rs1+0, RES
-  16'b1000_????_?000_0010: begin f = T_CR ; w = 'x   ; r = 5'h00; t.ill = '0; t.i = '{PC_JMP, 'x    , A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCI}; end  // C.JR  // TODO
+  16'b1000_0000_0000_0010: begin f = 'x   ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_ILL, 'x    , 'x    , 'x    , 'x    , 'x  , LS_X , 'x    }; end  // C.JR, rs1=0, RES
+  16'b1000_????_?000_0010: begin f = T_CRJ; w = 'x   ; r = 5'h00; t.ill = '0; t.i = '{PC_JMP, 'x    , A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCI}; end  // C.JR  // TODO
   16'b1000_????_????_??10: begin f = T_CR0; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x    , A1_RS1, A2_RS2, AO_ADD, AR_X, LS_X , WB_ALU}; end  // C.MV
   16'b1001_0000_0000_0010: begin f = T_CR ; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x    , A1_RS1, A2_RS2, AO_ADD, AR_X, LS_X , WB_ALU}; end  // C.EBREAK // TODO
-  16'b1001_????_?000_0010: begin f = T_CR ; w = 'x   ; r = 5'h01; t.ill = '0; t.i = '{PC_JMP, 'x    , A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCI}; end  // C.JALR
+  16'b1001_????_?000_0010: begin f = T_CRL; w = 'x   ; r = 5'h01; t.ill = '0; t.i = '{PC_JMP, 'x    , A1_RS1, A2_IMM, AO_ADD, AR_X, LS_X , WB_PCI}; end  // C.JALR
   16'b1001_????_????_??10: begin f = T_CR ; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x    , A1_RS1, A2_RS2, AO_ADD, AR_X, LS_X , WB_ALU}; end  // C.ADD
   16'b110?_????_????_??10: begin f = T_CSS; w = T16_W; r = 5'h02; t.ill = '0; t.i = '{PC_PCI, 'x    , A1_RS1, A2_IMM, AO_ADD, AR_X, ST_W , 'x    }; end  // C.SWSP
   default                : begin                                                                                                                    end
