@@ -2,8 +2,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_tb #(
+  // RISC-V ISA
+  isa_t        ISA = '{RV_32I, RV_M},  // see `riscv_isa_pkg` for enumeration definition
+  int unsigned XW  = 32,    // TODO: calculate it from ISA
+  // instruction bus
   int unsigned IAW = 21,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
+  // data bus
   int unsigned DAW = 16,    // data address width
   int unsigned DDW = 32,    // data data    width
   int unsigned DSW = DDW/8  // data select  width
@@ -14,6 +19,9 @@ module r5p_tb #(
 );
 
 import riscv_asm_pkg::*;
+
+// clock period counter
+int unsigned cnt;
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -38,8 +46,12 @@ logic           ls_ack, ls_mem_ack, ls_ctl_ack;
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_core #(
+  // RISC-V ISA
+  .ISA  (ISA),
+  // instruction bus
   .IDW  (IDW),
   .IAW  (IAW),
+  // data bus
   .DAW  (DAW+1),
   .DDW  (DDW)
 ) DUT (
@@ -66,7 +78,7 @@ r5p_core #(
 ////////////////////////////////////////////////////////////////////////////////
 
 string if_str;
-always if_str = riscv_disasm(if_rdt);
+always if_str = disasm(ISA, if_rdt);
 
 mem #(
   .FN   ("mem_if.bin"),
@@ -206,6 +218,27 @@ always @(posedge clk)
 if (rvmodel_halt) begin
   void'(mem_ls.write_hex("signature.txt", rvmodel_data_begin, rvmodel_data_end));
   $finish;
+end
+
+// at the end dump the test signature
+// TODO: not working in Verilator, at least if the C code ends the simulation.
+final begin
+  void'(mem_ls.write_hex("signature.txt", rvmodel_data_begin, rvmodel_data_end));
+  $display("TIME: cnt = %d", cnt);
+end
+
+////////////////////////////////////////////////////////////////////////////////
+// timeout
+////////////////////////////////////////////////////////////////////////////////
+
+always_ff @(posedge clk, posedge rst)
+if (rst) begin
+  cnt <= 0;
+end else begin
+  cnt <= cnt+1;
+  if (cnt > 5000) begin
+    $finish;
+  end
 end
 
 ////////////////////////////////////////////////////////////////////////////////

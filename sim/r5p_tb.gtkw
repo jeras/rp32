@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun May  9 07:36:26 2021
+[*] Fri May 14 18:35:35 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Sun May  9 07:36:19 2021"
-[dumpfile_size] 248411
+[dumpfile_mtime] "Fri May 14 18:15:53 2021"
+[dumpfile_size] 321068
 [savefile] "/home/ijeras/VLSI/rp32/sim/r5p_tb.gtkw"
-[timestart] 743540
-[size] 1848 1016
+[timestart] 31809400
+[size] 1848 2096
 [pos] -1 -1
-*-14.242303 795000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.917912 31880000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
@@ -21,11 +21,13 @@
 [sst_width] 233
 [signals_width] 302
 [sst_expanded] 1
-[sst_vpaned_height] 442
+[sst_vpaned_height] 1017
 @28
 top.r5p_tb.clk
 top.r5p_tb.rst
 top.r5p_tb.if_req
+@23
+top.r5p_tb.if_adr[20:0]
 @22
 top.r5p_tb.if_rdt[31:0]
 @28

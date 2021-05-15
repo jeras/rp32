@@ -24,6 +24,7 @@ module mem #(
   output logic                 ack   // write or read acknowledge
 );
 
+import riscv_isa_pkg::*;
 import riscv_asm_pkg::*;
 
 // word address width
@@ -127,7 +128,7 @@ if (req) begin
   end
   $write("%s %s: adr=0x%h dat=0x%h sel=0b%b", DBG, wen ? "W" : "R", adr, dat, sel);
   if (TXT) $write(" txt='%s'", dat);
-  if (OPC) $write(" opc='%s'", riscv_disasm(dat));
+  if (OPC) $write(" opc='%s'", disasm('{RV_32I, RV_M | RV_C}, dat));
   $write("\n");
 end
 

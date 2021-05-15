@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export PATH=/home/ijeras/VLSI/lowrisc-toolchain-gcc-rv32imc-20210412-1/bin/:$PATH
 

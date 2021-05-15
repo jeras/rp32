@@ -54,26 +54,27 @@ logic [IAW-1:0] if_pcn;  // program counter next
 logic           stall;
 
 // instruction decode
-op32_t          id_op;   // operation code
-ctl32_t         id_ctl;  // control structure
+op32_t          id_op32; // 32-bit operation code
+op16_t          id_op16; // 16-bit operation code
+ctl_t           id_ctl;  // control structure
 logic           id_vld;  // instruction valid
 
 // GPR
-logic [XW-1:0] gpr_rs1;  // register source 1
-logic [XW-1:0] gpr_rs2;  // register source 2
-logic [XW-1:0] gpr_rd ;  // register destination
+logic  [XW-1:0] gpr_rs1;  // register source 1
+logic  [XW-1:0] gpr_rs2;  // register source 2
+logic  [XW-1:0] gpr_rd ;  // register destination
 
 // ALU
-logic [XW-1:0] alu_rs1;  // register source 1
-logic [XW-1:0] alu_rs2;  // register source 2
-logic [XW-1:0] alu_rd ;  // register destination
-logic [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
+logic  [XW-1:0] alu_rs1;  // register source 1
+logic  [XW-1:0] alu_rs2;  // register source 2
+logic  [XW-1:0] alu_rd ;  // register destination
+logic  [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
 
 // MUL/DIV/REM
-logic [XW-1:0] mul_rd;   // multiplier unit output
+logic  [XW-1:0] mul_rd;   // multiplier unit output
 
 // CSR
-logic [XW-1:0] csr_rdt;  // read  data
+logic  [XW-1:0] csr_rdt;  // read  data
 
 // CSR
 logic           csr_expt = '0;
@@ -140,10 +141,11 @@ r5p_br #(
 // 3. a separate branch ALU with explicit [un]signed comparator instead of adder in the main ALU
 
 // program counter incrementing adder
-assign if_pci = if_pc + IAW'(opsiz(id_op[16-1:0]));
+assign if_pci = if_pc + IAW'(opsiz(id_op16[16-1:0]));
 
 // branch address adder
-assign if_pcb = if_pc + IAW'(imm32(id_op,T_B));
+//assign if_pcb = if_pc + IAW'(imm32(id_op32,T_B));
+assign if_pcb = if_pc + IAW'(id_ctl.imm);
 
 // program counter next
 always_comb
@@ -165,10 +167,11 @@ end
 ///////////////////////////////////////////////////////////////////////////////
 
 // opcode from instruction fetch
-assign id_op = if_rdt;
+assign id_op32 = if_rdt[4-1:0];
+assign id_op16 = if_rdt[2-1:0];
 
 // 32-bit instruction decoder
-assign id_ctl = dec32(ISA, id_op);
+assign id_ctl = dec(ISA, id_op32);
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -329,7 +332,7 @@ always_comb begin
     WB_ALU : gpr_rd = alu_rd;             // ALU output
     WB_MEM : gpr_rd = ls_rdt_t;           // memory read data
     WB_PCI : gpr_rd = XW'(if_pci);        // PC next
-    WB_IMM : gpr_rd = imm32(id_op, T_U);  // upper immediate
+    WB_IMM : gpr_rd = id_ctl.imm;         // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
     WB_CSR : gpr_rd = csr_rdt;            // CSR
     WB_MUL : gpr_rd = mul_rd;             // mul/div/rem
     default: gpr_rd = 'x;                 // none
