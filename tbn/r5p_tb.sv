@@ -231,15 +231,17 @@ end
 // timeout
 ////////////////////////////////////////////////////////////////////////////////
 
+// time counter
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
   cnt <= 0;
 end else begin
   cnt <= cnt+1;
-  if (cnt > 5000) begin
-    $finish;
-  end
 end
+
+// timeout
+//always @(posedge clk)
+//if (cnt > 5000)  $finish;
 
 ////////////////////////////////////////////////////////////////////////////////
 // waveforms
