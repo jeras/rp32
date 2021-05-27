@@ -47,22 +47,20 @@ always_comb
 //  ls_sel[i] = (2**id_ctl.i.st) &
 //end
 unique case (ctl.sz)
-  SZ_B: ls_sel = SW'(16'b0000_0000_0000_0001 << adr[WW-1:0]);
-  SZ_H: ls_sel = SW'(16'b0000_0000_0000_0011 << adr[WW-1:0]);
-  SZ_W: ls_sel = SW'(16'b0000_0000_0000_1111 << adr[WW-1:0]);
-  SZ_D: ls_sel = SW'(16'b0000_0000_1111_1111 << adr[WW-1:0]);
-  SZ_Q: ls_sel = SW'(16'b1111_1111_1111_1111 << adr[WW-1:0]);
+  SZ_B: ls_sel = SW'(8'b0000_0001 << adr[WW-1:0]);
+  SZ_H: ls_sel = SW'(8'b0000_0011 << adr[WW-1:0]);
+  SZ_W: ls_sel = SW'(8'b0000_1111 << adr[WW-1:0]);
+  SZ_D: ls_sel = SW'(8'b1111_1111 << adr[WW-1:0]);
   default: ls_sel = '0;
 endcase
 
 // write data
 always_comb
 unique case (ctl.sz)
-  SZ_B: ls_wdt = (wdt & DW'(128'h00000000_00000000_00000000_000000ff)) << (8*adr[WW-1:0]);
-  SZ_H: ls_wdt = (wdt & DW'(128'h00000000_00000000_00000000_0000ffff)) << (8*adr[WW-1:0]);
-  SZ_W: ls_wdt = (wdt & DW'(128'h00000000_00000000_00000000_ffffffff)) << (8*adr[WW-1:0]);
-  SZ_D: ls_wdt = (wdt & DW'(128'h00000000_00000000_ffffffff_ffffffff)) << (8*adr[WW-1:0]);
-  SZ_Q: ls_wdt = (wdt & DW'(128'hffffffff_ffffffff_ffffffff_ffffffff)) << (8*adr[WW-1:0]);
+  SZ_B: ls_wdt = (wdt & DW'(64'h00000000_000000ff)) << (8*adr[WW-1:0]);
+  SZ_H: ls_wdt = (wdt & DW'(64'h00000000_0000ffff)) << (8*adr[WW-1:0]);
+  SZ_W: ls_wdt = (wdt & DW'(64'h00000000_ffffffff)) << (8*adr[WW-1:0]);
+  SZ_D: ls_wdt = (wdt & DW'(64'hffffffff_ffffffff)) << (8*adr[WW-1:0]);
   default: ls_wdt = 'x;
 endcase
 
@@ -71,11 +69,10 @@ always_comb begin: blk_rdt
   logic [XW-1:0] tmp;
   tmp = ls_rdt >> (8*adr[WW-1:0]);
   unique case (ctl.sz)
-    SZ_B: rdt = ctl.sg ? DW'($signed(  8'(tmp))) : DW'($unsigned(  8'(tmp)));
-    SZ_H: rdt = ctl.sg ? DW'($signed( 16'(tmp))) : DW'($unsigned( 16'(tmp)));
-    SZ_W: rdt = ctl.sg ? DW'($signed( 32'(tmp))) : DW'($unsigned( 32'(tmp)));
-    SZ_D: rdt = ctl.sg ? DW'($signed( 64'(tmp))) : DW'($unsigned( 64'(tmp)));
-    SZ_Q: rdt = ctl.sg ? DW'($signed(128'(tmp))) : DW'($unsigned(128'(tmp)));
+    SZ_B: rdt = ctl.sg ? DW'($signed( 8'(tmp))) : DW'($unsigned( 8'(tmp)));
+    SZ_H: rdt = ctl.sg ? DW'($signed(16'(tmp))) : DW'($unsigned(16'(tmp)));
+    SZ_W: rdt = ctl.sg ? DW'($signed(32'(tmp))) : DW'($unsigned(32'(tmp)));
+    SZ_D: rdt = ctl.sg ? DW'($signed(64'(tmp))) : DW'($unsigned(64'(tmp)));
     default: rdt = 'x;
   endcase
 end: blk_rdt
