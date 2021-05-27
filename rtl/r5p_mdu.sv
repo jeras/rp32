@@ -1,6 +1,10 @@
+///////////////////////////////////////////////////////////////////////////////
+// multiply/divide unit
+///////////////////////////////////////////////////////////////////////////////
+
 import riscv_isa_pkg::*;
 
-module r5p_muldiv #(
+module r5p_mdu #(
   int unsigned XW = 32
 )(
   // system signals
@@ -86,4 +90,4 @@ logic   signed [2*XW-1:0] mul64s;
 assign mul64u =   $signed(rs1) * $unsigned(rs2);
 assign mul64s =   $signed(rs1) * $unsigned(rs2);
 
-endmodule: r5p_muldiv
+endmodule: r5p_mdu

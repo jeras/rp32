@@ -1,4 +1,8 @@
-import riscv_isa_pkg::*;
+///////////////////////////////////////////////////////////////////////////////
+// arithmetic/logic unit (ALU)
+///////////////////////////////////////////////////////////////////////////////
+
+import riscv_isa_pkg::alu_t;
 
 module r5p_alu #(
   int unsigned XW = 32
@@ -38,7 +42,7 @@ end
 // TODO: construct proper subtraction condition
 // adder (summation, subtraction)
 //assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
-assign {ovf, sum} = $signed(rs1) + $signed(rs2);
+assign {ovf, sum} = $signed(in1) + $signed(in2);
 
 // TODO:
 // * see if overflow can be used

@@ -11,12 +11,13 @@ localparam int unsigned UXLEN = XLEN;
 
 // access permissions
 typedef enum bit [2-1:0] {
-  ACCESS_RW = 2'b00,  // read/write
-  ACCESS_RW = 2'b01,  // read/write
-  ACCESS_RW = 2'b10,  // read/write
-  ACCESS_RO = 2'b01   // read-only
+  ACCESS_RW0 = 2'b00,  // read/write
+  ACCESS_RW1 = 2'b01,  // read/write
+  ACCESS_RW2 = 2'b10,  // read/write
+  ACCESS_RO3 = 2'b11   // read-only
 } csr_permission_t;
 
+/* verilator lint_off LITENDIAN */
 typedef struct packed {
   // User Trap Setup
   logic                   [XLEN-1:0] ustatus      ;  // 0x000       // User status register.
@@ -130,7 +131,7 @@ typedef struct packed {
   logic [12'h681:12'h6a7] [XLEN-1:0] res_681_6a7  ;
   // Debug/Trace Registers
   logic                   [XLEN-1:0] hcontext     ;  // 0x6A8       // Hypervisor-mode context register.
-  logic [12'h64b:12'h67f] [XLEN-1:0] res_64b_67f  ;
+  logic [12'h6a9:12'h79f] [XLEN-1:0] res_6a9_79f  ;
 
   // Debug/Trace Registers (shared with Debug Mode)
   logic                   [XLEN-1:0] tselect      ;  // 0x7A0       // Debug/Trace trigger register select.
@@ -153,7 +154,7 @@ typedef struct packed {
   logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounter  ;  // 0xB03       // Machine performance-monitoring counter.
   logic [12'hb20:12'hb7f] [XLEN-1:0] res_b20_b7f  ;
   logic                   [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
-  logic [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
+  logic [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
   logic                   [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
   logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB84       // Upper 32 bits of mhpmcounter*, RV32 only.
   // User Counter/Timers
@@ -161,7 +162,7 @@ typedef struct packed {
   logic                   [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
   logic                   [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
   logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03~0xC1F // Performance-monitoring counter. (3~31)
-  logic [12'hc20:12'hc7f] [XLEN-1:0] res_006_03f  ;
+  logic [12'hc04:12'hc7f] [XLEN-1:0] res_c04_c3f  ;
   logic                   [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
   logic                   [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
   logic                   [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
@@ -174,6 +175,7 @@ typedef struct packed {
   logic                   [XLEN-1:0] mimpid       ;  // 0xF13       // Implementation ID.
   logic                   [XLEN-1:0] mhartid      ;  // 0xF14       // Hardware thread ID.
 } csr_map_t;
+/* verilator lint_on LITENDIAN */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Machine-Level CSRs
@@ -400,7 +402,7 @@ typedef struct packed {
 
 // Hardware Performance Monitor
 typedef logic    [64-1:0] csr_mhpmcounter_t;
-typedef logic [XMLEN-1:0] csr_mhpmevent_t;
+typedef logic [MXLEN-1:0] csr_mhpmevent_t;
 
 // Machine Counter-Enable Register
 typedef struct packed {
@@ -439,53 +441,52 @@ typedef struct packed {
 // Machine cause register (mcause) values after trap
 typedef enum csr_mcause_t {
   // Interrupts
-  CAUSE_RESERVED_0  = '{1'b1, 'd00},  // Reserved
-  CAUSE_IRQ_SW_S    = '{1'b1, 'd01},  // Supervisor software interrupt
-  CAUSE_RESERVED_2  = '{1'b1, 'd02},  // Reserved
-  CAUSE_IRQ_SW_M    = '{1'b1, 'd03},  // Machine software interrupt
-  CAUSE_RESERVED_4  = '{1'b1, 'd04},  // Reserved
-  CAUSE_IRQ_TM_S    = '{1'b1, 'd05},  // Supervisor timer interrupt
-  CAUSE_RESERVED_6  = '{1'b1, 'd06},  // Reserved
-  CAUSE_IRQ_TM_M    = '{1'b1, 'd07},  // Machine timer interrupt
-  CAUSE_RESERVED_8  = '{1'b1, 'd08},  // Reserved
-  CAUSE_IRQ_EXT_M   = '{1'b1, 'd09},  // Supervisor external interrupt
-  CAUSE_RESERVED_10 = '{1'b1, 'd10},  // Reserved
-  CAUSE_IRQ_EXT_M   = '{1'b1, 'd11},  // Machine external interrupt
-  CAUSE_RESERVED_12 = '{1'b1, 'd12},  // Reserved
-  CAUSE_RESERVED_13 = '{1'b1, 'd13},  // Reserved
-  CAUSE_RESERVED_14 = '{1'b1, 'd14},  // Reserved
-  CAUSE_RESERVED_15 = '{1'b1, 'd15},  // Reserved
-//                    '{1'b1, >=16},  // Designated for platform use
+
+  CAUSE_RESERVED_0  = {1'b1, (MXLEN-1-6)'(0), 6'd00},  // Reserved
+  CAUSE_IRQ_SW_S    = {1'b1, (MXLEN-1-6)'(0), 6'd01},  // Supervisor software interrupt
+  CAUSE_RESERVED_2  = {1'b1, (MXLEN-1-6)'(0), 6'd02},  // Reserved
+  CAUSE_IRQ_SW_M    = {1'b1, (MXLEN-1-6)'(0), 6'd03},  // Machine software interrupt
+  CAUSE_RESERVED_4  = {1'b1, (MXLEN-1-6)'(0), 6'd04},  // Reserved
+  CAUSE_IRQ_TM_S    = {1'b1, (MXLEN-1-6)'(0), 6'd05},  // Supervisor timer interrupt
+  CAUSE_RESERVED_6  = {1'b1, (MXLEN-1-6)'(0), 6'd06},  // Reserved
+  CAUSE_IRQ_TM_M    = {1'b1, (MXLEN-1-6)'(0), 6'd07},  // Machine timer interrupt
+  CAUSE_RESERVED_8  = {1'b1, (MXLEN-1-6)'(0), 6'd08},  // Reserved
+  CAUSE_IRQ_EXT_S   = {1'b1, (MXLEN-1-6)'(0), 6'd09},  // Supervisor external interrupt
+  CAUSE_RESERVED_10 = {1'b1, (MXLEN-1-6)'(0), 6'd10},  // Reserved
+  CAUSE_IRQ_EXT_M   = {1'b1, (MXLEN-1-6)'(0), 6'd11},  // Machine external interrupt
+  CAUSE_RESERVED_12 = {1'b1, (MXLEN-1-6)'(0), 6'd12},  // Reserved
+  CAUSE_RESERVED_13 = {1'b1, (MXLEN-1-6)'(0), 6'd13},  // Reserved
+  CAUSE_RESERVED_14 = {1'b1, (MXLEN-1-6)'(0), 6'd14},  // Reserved
+  CAUSE_RESERVED_15 = {1'b1, (MXLEN-1-6)'(0), 6'd15},  // Reserved
+//                    {1'b1, (MXLEN-1-6)'(0),  >=16},  // Designated for platform use
   // Exceptions
-  CAUSE_EXC_0       = '{1'b0, 'd00},  // Instruction address misaligned
-  CAUSE_EXC_1       = '{1'b1, 'd01},  // Instruction access fault
-  CAUSE_EXC_2       = '{1'b1, 'd02},  // Illegal instruction
-  CAUSE_EXC_3       = '{1'b1, 'd03},  // Breakpoint
-  CAUSE_EXC_4       = '{1'b1, 'd04},  // Load address misaligned
-  CAUSE_EXC_5       = '{1'b1, 'd05},  // Load access fault
-  CAUSE_EXC_6       = '{1'b1, 'd06},  // Store/AMO address misaligned
-  CAUSE_EXC_7       = '{1'b1, 'd07},  // Store/AMO access fault
-  CAUSE_EXC_8       = '{1'b1, 'd08},  // Environment call from U-mode
-  CAUSE_EXC_9       = '{1'b1, 'd09},  // Environment call from S-mode
-  CAUSE_EXC_10      = '{1'b1, 'd10},  // Reserved
-  CAUSE_EXC_11      = '{1'b1, 'd11},  // Environment call from M-mode
-  CAUSE_EXC_12      = '{1'b1, 'd12},  // Instruction page fault
-  CAUSE_EXC_13      = '{1'b1, 'd13},  // Load page fault
-  CAUSE_EXC_14      = '{1'b1, 'd14},  // Reserved
-  CAUSE_EXC_15      = '{1'b1, 'd15}   // Store/AMO page fault
-//CAUSE_EXC_16_23   = '{1'b1, 'd??},  // Reserved
-//CAUSE_EXC_24_31   = '{1'b1, 'd??},  // Designated for custom use
-//CAUSE_EXC_32_47   = '{1'b1, 'd??},  // Reserved
-//CAUSE_EXC_48_63   = '{1'b1, 'd??},  // Designated for custom use
-//CAUSE_EXC_**_64   = '{1'b1, 'd??},  // Reserved
+  CAUSE_EXC_0       = {1'b0, (MXLEN-1-6)'(0), 6'd00},  // Instruction address misaligned
+  CAUSE_EXC_1       = {1'b0, (MXLEN-1-6)'(0), 6'd01},  // Instruction access fault
+  CAUSE_EXC_2       = {1'b0, (MXLEN-1-6)'(0), 6'd02},  // Illegal instruction
+  CAUSE_EXC_3       = {1'b0, (MXLEN-1-6)'(0), 6'd03},  // Breakpoint
+  CAUSE_EXC_4       = {1'b0, (MXLEN-1-6)'(0), 6'd04},  // Load address misaligned
+  CAUSE_EXC_5       = {1'b0, (MXLEN-1-6)'(0), 6'd05},  // Load access fault
+  CAUSE_EXC_6       = {1'b0, (MXLEN-1-6)'(0), 6'd06},  // Store/AMO address misaligned
+  CAUSE_EXC_7       = {1'b0, (MXLEN-1-6)'(0), 6'd07},  // Store/AMO access fault
+  CAUSE_EXC_8       = {1'b0, (MXLEN-1-6)'(0), 6'd08},  // Environment call from U-mode
+  CAUSE_EXC_9       = {1'b0, (MXLEN-1-6)'(0), 6'd09},  // Environment call from S-mode
+  CAUSE_EXC_10      = {1'b0, (MXLEN-1-6)'(0), 6'd10},  // Reserved
+  CAUSE_EXC_11      = {1'b0, (MXLEN-1-6)'(0), 6'd11},  // Environment call from M-mode
+  CAUSE_EXC_12      = {1'b0, (MXLEN-1-6)'(0), 6'd12},  // Instruction page fault
+  CAUSE_EXC_13      = {1'b0, (MXLEN-1-6)'(0), 6'd13},  // Load page fault
+  CAUSE_EXC_14      = {1'b0, (MXLEN-1-6)'(0), 6'd14},  // Reserved
+  CAUSE_EXC_15      = {1'b0, (MXLEN-1-6)'(0), 6'd15}   // Store/AMO page fault
+//CAUSE_EXC_16_23   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
+//CAUSE_EXC_24_31   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Designated for custom use
+//CAUSE_EXC_32_47   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
+//CAUSE_EXC_48_63   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Designated for custom use
+//CAUSE_EXC_**_64   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
 } csr_cause_t;
 
 // Machine Trap Value Register
 typedef struct packed {
   logic [MXLEN-1:0] mtval;  //
 } csr_mtval_t;
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

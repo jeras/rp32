@@ -82,6 +82,7 @@ typedef struct packed {
 } isa_t;
 
 // enumerations for common and individual configurations
+// TODO: verilator does not support struct literals inside enumeration definition
 typedef enum isa_t {
   RV32E   = {RV_32E , RV_NONE},
   RV32I   = {RV_32I , RV_NONE},
@@ -504,6 +505,7 @@ typedef struct packed {
 } lsu_t;
 
 // load/store enumeration type
+// TODO: verilator does not support struct literals inside enumeration definition
 typedef enum lsu_t {
   //        en,   we, f3
   L_BS = {1'b1, 1'b0, LB },  // load signed byte

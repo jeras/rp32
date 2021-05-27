@@ -8,14 +8,15 @@ PATH_SRC=../src
 
 # SystemVerilog RTL
 RTL =${PATH_RTL}/riscv_isa_pkg.sv
-#RTL =${PATH_RTL}/riscv_csr_pkg.sv
+RTL+=${PATH_RTL}/riscv_csr_pkg.sv
 #RTL+=${PATH_RTL}/r5p_pkg.sv
 RTL+=${PATH_RTL}/r5p_br.sv
 RTL+=${PATH_RTL}/r5p_gpr.sv
 RTL+=${PATH_RTL}/r5p_alu.sv
-RTL+=${PATH_RTL}/r5p_csr.sv
-RTL+=${PATH_RTL}/r5p_muldiv.sv
+RTL+=${PATH_RTL}/r5p_mdu.sv
+#RTL+=${PATH_RTL}/r5p_fpu.sv
 RTL+=${PATH_RTL}/r5p_lsu.sv
+RTL+=${PATH_RTL}/r5p_csr.sv
 RTL+=${PATH_RTL}/r5p_core.sv
 RTL+=${PATH_RTL}/r5p_bus_arb.sv
 RTL+=${PATH_RTL}/r5p_bus_dec.sv

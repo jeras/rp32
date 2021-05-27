@@ -58,8 +58,6 @@ logic  [XW-1:0] gpr_rs2;  // register source 2
 logic  [XW-1:0] gpr_rd ;  // register destination
 
 // ALU
-logic  [XW-1:0] alu_rs1;  // register source 1
-logic  [XW-1:0] alu_rs2;  // register source 2
 logic  [XW-1:0] alu_rd ;  // register destination
 logic  [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
 
@@ -204,17 +202,17 @@ r5p_alu #(
   // data input/output
   .imm     (id_ctl.imm),
   .pc      (XW'(if_pc)),
-  .rs1     (alu_rs1),
-  .rs2     (alu_rs2),
+  .rs1     (gpr_rs1),
+  .rs2     (gpr_rs2),
   .rd      (alu_rd ),
   // dedicated output for branch address
   .sum     (alu_sum)
 );
 
-// mul/div/rem
-r5p_muldiv #(
+// mul/div/rem unit
+r5p_mdu #(
   .XW      (XW)
-) mul (
+) mdu (
   // system signals
   .clk     (clk),
   .rst     (rst),
