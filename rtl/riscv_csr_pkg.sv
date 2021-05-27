@@ -206,7 +206,7 @@ typedef enum logic [1:0] { // FS meaning // XS Meaning
   CONTEXT_OFF     = 2'b00,  // Off       // All off
   CONTEXT_INITIAL = 2'b01,  // Initial   // None dirty or clean, some on
   CONTEXT_CLEAN   = 2'b10,  // Clean     // None dirty, some clean
-  CONTEXT_DIRTY   = 2'b11,  // Dirty     // Some dirty
+  CONTEXT_DIRTY   = 2'b11   // Dirty     // Some dirty
 } csr_context_t;
 
 // Machine ISA Register
@@ -432,7 +432,7 @@ typedef struct packed {
 
 // Machine Cause Register
 typedef struct packed {
-  logic [MXLEN-1  ] Interrupt;       // set if the trap was caused by an interrupt
+  logic             Interrupt;       // set if the trap was caused by an interrupt
   logic [MXLEN-2:0] Exception_Code;  // code identifying the last exception or interrupt
 } csr_mcause_t;
 
@@ -472,7 +472,7 @@ typedef enum csr_mcause_t {
   CAUSE_EXC_12      = '{1'b1, 'd12},  // Instruction page fault
   CAUSE_EXC_13      = '{1'b1, 'd13},  // Load page fault
   CAUSE_EXC_14      = '{1'b1, 'd14},  // Reserved
-  CAUSE_EXC_15      = '{1'b1, 'd15},  // Store/AMO page fault
+  CAUSE_EXC_15      = '{1'b1, 'd15}   // Store/AMO page fault
 //CAUSE_EXC_16_23   = '{1'b1, 'd??},  // Reserved
 //CAUSE_EXC_24_31   = '{1'b1, 'd??},  // Designated for custom use
 //CAUSE_EXC_32_47   = '{1'b1, 'd??},  // Reserved
@@ -490,9 +490,11 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
 // 
 typedef struct packed {
   logic [] ;  //
 } csr__t;
+*/
 
 endpackage: riscv_csr_pkg
