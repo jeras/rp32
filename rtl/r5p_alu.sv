@@ -31,11 +31,11 @@ logic ovf;  // overflow bit
 // ALU input multiplexer
 always_comb begin
   // RS1
-  unique case (ctl.ai)
+  unique casez (ctl.ai)
     AI_R1_R2: begin in1 = rs1; in2 = rs2; end
     AI_R1_IM: begin in1 = rs1; in2 = imm; end
-    AI_PC_R2: begin in1 = pc ; in2 = rs2; end
     AI_PC_IM: begin in1 = pc ; in2 = imm; end
+    default : begin in1 = 'x ; in2 = 'x ; end
   endcase
 end
 

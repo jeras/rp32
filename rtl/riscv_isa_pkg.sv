@@ -452,13 +452,12 @@ localparam logic [2-1:0] PC_ILL = PC_PCI;
 // branch type
 typedef op32_b_func3_t br_t;
 
-// TODO: optimize enumeration against opcode
 // ALU input operand multiplexer
+// the encoding is not directly derived from opcode
 typedef enum logic [2-1:0] {
-  AI_R1_R2 = 2'b00,  // GPR rs1 | GPR rs2
-  AI_R1_IM = 2'b01,  // GPR rs1 | immediate
-  AI_PC_R2 = 2'b10,  // PC      | GPR rs2
-  AI_PC_IM = 2'b11   // PC      | immediate
+  AI_R1_IM = 2'b00,  // GPR rs1 | immediate //   I-type {opcode[6], opcode[5]}
+  AI_R1_R2 = 2'b01,  // GPR rs1 | GPR rs2   //   R-type {opcode[6], opcode[5]}
+  AI_PC_IM = 2'b1?   // PC      | immediate // BUJ-type {opcode[6], ?}
 } ai_t;
 
 // ALU operation {func7[5], func3}
@@ -500,7 +499,7 @@ typedef union packed {
 // load/store type
 typedef struct packed {
   logic    en;  // transfer enable
-  logic    we;  // write enable
+  logic    we;  // write enable (opcode[5])
   lsu_f3_t f3;  // transfer sign/size
 } lsu_t;
 
@@ -526,6 +525,7 @@ typedef enum lsu_t {
   LS_X = {1'b0, 1'b?, 3'b???}   // none
 } lse_t;
 
+// TODO: try to optimize against opcode
 // write back multiplexer
 typedef enum logic [3-1:0] {
   WB_ALU = 3'b000,  // arithmetic logic unit
