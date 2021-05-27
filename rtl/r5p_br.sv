@@ -22,8 +22,8 @@ assign ltu = $unsigned(rs1) < $unsigned(rs2);  // less then unsigned
 
 always_comb
 case (ctl) inside
-  BEQ    : tkn =  eq;
-  BNE    : tkn = ~eq;
+  BEQ    : tkn =  eq ;
+  BNE    : tkn = ~eq ;
   BLT    : tkn =  lts;
   BGE    : tkn = ~lts;
   BLTU   : tkn =  ltu;
