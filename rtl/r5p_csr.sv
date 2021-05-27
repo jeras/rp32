@@ -1,6 +1,7 @@
 import riscv_isa_pkg::*;
 
 module r5p_csr #(
+  isa_t        ISA = RV32I,
   int unsigned XW = 32
 )(
   // system signals

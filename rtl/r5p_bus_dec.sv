@@ -6,7 +6,7 @@ module r5p_bus_dec #(
   // bus parameters
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data    width
-  int unsigned SW = DW/8,  // select  width
+  int unsigned BW = DW/8,  // byte en width
   // interconnect parameters
   int unsigned BN = 2,     // bus number
   logic [BN-1:0] [AW-1:0] AS = '{BN{'x}}
@@ -18,7 +18,7 @@ module r5p_bus_dec #(
   input  logic                   s_req,  // request
   input  logic                   s_wen,  // write enable
   input  logic          [AW-1:0] s_adr,  // address
-  input  logic          [SW-1:0] s_sel,  // byte select
+  input  logic          [BW-1:0] s_ben,  // byte enable
   input  logic          [DW-1:0] s_wdt,  // write data
   output logic          [DW-1:0] s_rdt,  // read data
   output logic                   s_ack,  // acknowledge
@@ -26,7 +26,7 @@ module r5p_bus_dec #(
   output logic [BN-1:0]          m_req,  // request
   output logic [BN-1:0]          m_wen,  // write enable
   output logic [BN-1:0] [AW-1:0] m_adr,  // address
-  output logic [BN-1:0] [SW-1:0] m_sel,  // byte select
+  output logic [BN-1:0] [BW-1:0] m_ben,  // byte enable
   output logic [BN-1:0] [DW-1:0] m_wdt,  // write data
   input  logic [BN-1:0] [DW-1:0] m_rdt,  // read data
   input  logic [BN-1:0]          m_ack   // acknowledge
@@ -51,7 +51,7 @@ for (genvar i=0; i<BN; i++) begin
   // forward path
   assign m_req[i] = s_dec[i] ? s_req : '0;
   assign m_wen[i] = s_dec[i] ? s_wen : 'x;
-  assign m_sel[i] = s_dec[i] ? s_sel : 'x;
+  assign m_ben[i] = s_dec[i] ? s_ben : 'x;
   assign m_adr[i] = s_dec[i] ? s_adr : 'x;
   assign m_wdt[i] = s_dec[i] ? s_wdt : 'x;
   // backward path

@@ -11,7 +11,7 @@ module r5p_tb #(
   // data bus
   int unsigned DAW = 16,    // data address width
   int unsigned DDW = 32,    // data data    width
-  int unsigned DSW = DDW/8  // data select  width
+  int unsigned DBW = DDW/8  // data byte en width
 )(
   // system signals
   input  logic clk,  // clock
@@ -36,7 +36,7 @@ logic           if_ack;
 logic           ls_req, ls_mem_req, ls_ctl_req;
 logic           ls_wen, ls_mem_wen, ls_ctl_wen;
 logic [DAW-0:0] ls_adr, ls_mem_adr, ls_ctl_adr;  // +1 bits for decoder
-logic [DSW-1:0] ls_sel, ls_mem_sel, ls_ctl_sel;
+logic [DBW-1:0] ls_ben, ls_mem_ben, ls_ctl_ben;
 logic [DDW-1:0] ls_wdt, ls_mem_wdt, ls_ctl_wdt;
 logic [DDW-1:0] ls_rdt, ls_mem_rdt, ls_ctl_rdt;
 logic           ls_ack, ls_mem_ack, ls_ctl_ack;
@@ -67,7 +67,7 @@ r5p_core #(
   .ls_req  (ls_req),
   .ls_wen  (ls_wen),
   .ls_adr  (ls_adr),
-  .ls_sel  (ls_sel),
+  .ls_ben  (ls_ben),
   .ls_wdt  (ls_wdt),
   .ls_rdt  (ls_rdt),
   .ls_ack  (ls_ack)
@@ -92,7 +92,7 @@ mem #(
   // instruction fetch
   .req  (if_req),
   .wen  (1'b0),
-  .sel  ('1),
+  .ben  ('1),
   .adr  (if_adr),
   .wdt  ('x),
   .rdt  (if_rdt),
@@ -111,7 +111,7 @@ r5p_bus_mon #(
   .req  (if_req),
   .wen  (1'b0),
   .adr  (if_adr),
-  .sel  ('1),
+  .ben  ('1),
   .wdt  ('x),
   .rdt  (if_rdt),
   .ack  (if_ack)
@@ -136,7 +136,7 @@ r5p_bus_dec #(
   // slave port and master ports
   .s_req  (ls_req),  .m_req  ('{ls_ctl_req, ls_mem_req}),
   .s_wen  (ls_wen),  .m_wen  ('{ls_ctl_wen, ls_mem_wen}),
-  .s_sel  (ls_sel),  .m_sel  ('{ls_ctl_sel, ls_mem_sel}),
+  .s_ben  (ls_ben),  .m_ben  ('{ls_ctl_ben, ls_mem_ben}),
   .s_adr  (ls_adr),  .m_adr  ('{ls_ctl_adr, ls_mem_adr}),
   .s_wdt  (ls_wdt),  .m_wdt  ('{ls_ctl_wdt, ls_mem_wdt}),
   .s_rdt  (ls_rdt),  .m_rdt  ('{ls_ctl_rdt, ls_mem_rdt}),
@@ -159,7 +159,7 @@ mem #(
   // data load/store
   .req  (ls_mem_req),
   .wen  (ls_mem_wen),
-  .sel  (ls_mem_sel),
+  .ben  (ls_mem_ben),
   .adr  (ls_mem_adr[DAW-1:0]),
   .wdt  (ls_mem_wdt),
   .rdt  (ls_mem_rdt),
@@ -178,7 +178,7 @@ r5p_bus_mon #(
   .req  (ls_req),
   .wen  (ls_wen),
   .adr  (ls_adr),
-  .sel  (ls_sel),
+  .ben  (ls_ben),
   .wdt  (ls_wdt),
   .rdt  (ls_rdt),
   .ack  (ls_ack)

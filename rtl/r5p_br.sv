@@ -22,12 +22,12 @@ assign ltu = $unsigned(rs1) < $unsigned(rs2);  // less then unsigned
 
 always_comb
 case (ctl) inside
-  BR_EQ :  tkn =  eq;
-  BR_NE :  tkn = ~eq;
-  BR_LTS:  tkn =  lts;
-  BR_GES:  tkn = ~lts;
-  BR_LTU:  tkn =  ltu;
-  BR_GEU:  tkn = ~ltu;
+  BEQ    : tkn =  eq;
+  BNE    : tkn = ~eq;
+  BLT    : tkn =  lts;
+  BGE    : tkn = ~lts;
+  BLTU   : tkn =  ltu;
+  BGEU   : tkn = ~ltu;
   default: tkn = 'x;
 endcase
 
