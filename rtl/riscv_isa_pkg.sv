@@ -528,12 +528,12 @@ typedef enum lsu_t {
 // TODO: try to optimize against opcode
 // write back multiplexer
 typedef enum logic [3-1:0] {
-  WB_ALU = 3'b000,  // arithmetic logic unit
-  WB_MEM = 3'b001,  // memory
-  WB_PCI = 3'b010,  // program counter increment
-  WB_IMM = 3'b011,  // immediate ()
-  WB_CSR = 3'b100,  // CSR value
-  WB_MUL = 3'b101   // MUL/DIV/REM
+  WB_ALU = 3'b000,  // RI-type OP, OP-IMM 5'b0?100  // arithmetic logic unit
+  WB_MEM = 3'b001,  //  I-type LOAD       5'b00000  // memory
+  WB_PCI = 3'b010,  //  J-type JAL        5'b11011 // program counter increment
+  WB_IMM = 3'b011,  //   // immediate ()
+  WB_CSR = 3'b100,  //   // CSR value
+  WB_MUL = 3'b101   //   // MUL/DIV/REM
 } wb_t;
 
 // control structure
