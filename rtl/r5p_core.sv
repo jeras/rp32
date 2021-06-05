@@ -13,7 +13,8 @@ module r5p_core #(
   int unsigned DDW = 32,    // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
   // constants ???
-  logic [IAW-1:0] PC0 = '0
+  logic [IAW-1:0] TRP = 'h0000_0000,
+  logic [IAW-1:0] PC0 = 'h0000_0080
 )(
   // system signals
   input  logic                  clk,

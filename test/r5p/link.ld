@@ -6,6 +6,8 @@ SECTIONS
   . = 0x00000000;
   .text :
   {
+    *(.text.trap)
+    . = 0x00000080;
     *(.text.init)
     . = ALIGN(0x1000);
     *(.text)
@@ -17,6 +19,7 @@ SECTIONS
   .data :
   {
     . = ALIGN(0x1000);
+    *(.write_tohost)
     *(.tohost)
     *(.data)
     *(.data.string)
