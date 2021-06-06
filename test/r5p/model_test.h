@@ -1,7 +1,7 @@
 #ifndef _COMPLIANCE_MODEL_H
 #define _COMPLIANCE_MODEL_H
 
-//#include "riscv_test.h"
+#include "riscv_test.h"
 
 //-----------------------------------------------------------------------
 // RV Compliance Macros
@@ -45,7 +45,10 @@
         sw t0, TESTUTIL_ADDR_END_SIGNATURE(t1);                               \
         /* dump signature and terminate simulation */                         \
         li t0, 1;                                                             \
+        write_tohost:
         sw t0, TESTUTIL_ADDR_HALT(t1);                                        \
+
+//RVTEST_PASS
 
 
 #define RVMODEL_BOOT                                                          \
