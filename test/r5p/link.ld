@@ -19,7 +19,6 @@ SECTIONS
   .data :
   {
     . = ALIGN(0x1000);
-    *(.write_tohost)
     *(.tohost)
     *(.data)
     *(.data.string)
