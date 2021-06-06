@@ -461,7 +461,14 @@ typedef enum logic [2-1:0] {
 } ai_t;
 
 // ALU operation {func7[5], func3}
-typedef enum logic [4-1:0] {
+typedef struct packed {
+  logic          f7_5;
+  op32_r_func3_t f3;
+} ao_t;
+
+// ALU operation {func7[5], func3}
+// TODO: verilator does not support struct literals inside enumeration definition
+typedef enum ao_t {
   AO_ADD  = {1'b0, ADD },  // addition
   AO_SUB  = {1'b1, ADD },  // subtraction
   AO_SLL  = {1'b?, SL  },  // shift left logical
@@ -472,7 +479,7 @@ typedef enum logic [4-1:0] {
   AO_SRA  = {1'b1, SR  },  // shift right arithmetic
   AO_OR   = {1'b?, OR  },  // logic OR
   AO_AND  = {1'b?, AND }   // logic AND
-} ao_t;
+} ao_et;
 
 // TODO: optimize enumeration against opcode
 // ALU result width
