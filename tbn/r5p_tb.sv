@@ -3,14 +3,19 @@
 
 module r5p_tb #(
   // RISC-V ISA
-  isa_t        ISA = '{RV_32I, RV_M},  // see `riscv_isa_pkg` for enumeration definition
-  int unsigned XW  = 32,    // TODO: calculate it from ISA
+  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+  // see `riscv_isa_pkg` for enumeration definition
+//isa_t        ISA = XLEN==32 ? '{RV_32I, RV_M}
+//                   XLEN==64 ? '{RV_64I, RV_M}
+//                            : '{RV_128I, RV_M},
+//isa_t        ISA = '{RV_32I, RV_M},
+  isa_t        ISA = '{RV_64I, RV_M},
   // instruction bus
   int unsigned IAW = 21,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
   // data bus
   int unsigned DAW = 16,    // data address width
-  int unsigned DDW = 32,    // data data    width
+  int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8  // data byte en width
 )(
   // system signals
@@ -48,6 +53,7 @@ logic           ls_ack, ls_mem_ack, ls_ctl_ack;
 r5p_core #(
   // RISC-V ISA
   .ISA  (ISA),
+  .XLEN (XLEN),
   // instruction bus
   .IDW  (IDW),
   .IAW  (IAW),
@@ -81,6 +87,7 @@ string if_str;
 always if_str = disasm(ISA, if_rdt);
 
 mem #(
+  .ISA  (ISA),
   .FN   ("mem_if.bin"),
   .SZ   (2**IAW),
   .DW   (IDW),
@@ -148,6 +155,7 @@ r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
+  .ISA  (ISA),
   .FN   ("mem_ls.bin"),
   .SZ   (2**DAW),
   .DW   (DDW),
@@ -201,10 +209,10 @@ if (rst) begin
 end else if (ls_ctl_req & ls_ctl_ack) begin
   if (ls_ctl_wen) begin
     // write access
-    case (ls_ctl_adr[4-1:0])
-      4'h0:  rvmodel_data_begin <= ls_ctl_wdt;
-      4'h4:  rvmodel_data_end   <= ls_ctl_wdt;
-      4'h8:  rvmodel_halt       <= ls_ctl_wdt[0];
+    case (ls_ctl_adr[5-1:0])
+      5'h00:  rvmodel_data_begin <= ls_ctl_wdt;
+      5'h08:  rvmodel_data_end   <= ls_ctl_wdt;
+      5'h10:  rvmodel_halt       <= ls_ctl_wdt[0];
       default:  ;  // do nothing
     endcase
   end
@@ -216,14 +224,14 @@ assign ls_ctl_ack = 1'b1;
 // finish simulation
 always @(posedge clk)
 if (rvmodel_halt) begin
-  void'(mem_ls.write_hex("signature.txt", rvmodel_data_begin, rvmodel_data_end));
+  void'(mem_ls.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
   $finish;
 end
 
 // at the end dump the test signature
 // TODO: not working in Verilator, at least if the C code ends the simulation.
 final begin
-  void'(mem_ls.write_hex("signature.txt", rvmodel_data_begin, rvmodel_data_end));
+  void'(mem_ls.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
   $display("TIME: cnt = %d", cnt);
 end
 

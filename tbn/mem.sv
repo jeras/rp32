@@ -3,12 +3,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module mem #(
+  isa_t        ISA = '{RV_64I, RV_M},
   // 1kB by default
-  string       FN = "",          // binary initialization file name
-  int unsigned DW = 32,          // data    width
-  int unsigned BW = DW/8,        // byte en width
-  int unsigned SZ = 2**12,       // memory size in bytes
-  int unsigned AW = $clog2(SZ),  // address width
+  string       FN  = "",          // binary initialization file name
+  int unsigned DW  = 32,          // data    width
+  int unsigned BW  = DW/8,        // byte en width
+  int unsigned SZ  = 2**12,       // memory size in bytes
+  int unsigned AW  = $clog2(SZ),  // address width
   // debug functionality
   string       DBG = "",         // module name to be printed in messages, if empty debug is disabled
   bit          TXT = 1'b0,       // print out ASCII text
@@ -66,8 +67,12 @@ function int write_hex (
   int code;  // status code
   int fd;    // file descriptor
   fd = $fopen(fn, "w");
-  for (int unsigned addr=start_addr; addr<finish_addr; addr+=BW) begin
-    $fwrite(fd, "%h%h%h%h\n", mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
+  for (int unsigned addr=start_addr; addr<finish_addr; addr+=4) begin
+//    if (DW == 32) begin
+      $fwrite(fd, "%h%h%h%h\n", mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
+//    end else begin
+//      $fwrite(fd, "%h%h%h%h%h%h%h%h\n", mem[addr+7], mem[addr+6], mem[addr+5], mem[addr+4], mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
+//    end
   end
   $fclose(fd);
   return code;
@@ -109,26 +114,26 @@ assign ack = 1'b1;
 generate
 if (DBG != "") begin
 
-logic [BW-1:0][8-1:0] dat;
+logic [DW-1:0] dat;
 
 always @(posedge clk)
 if (req) begin
   if (wen) begin
     // write access
     for (int unsigned i=0; i<BW; i++) begin
-      if (ben[i])  dat[i] = wdt[i];
-      else         dat[i] = wdt[i];
+      if (ben[i])  dat[8*i+:8] = wdt[i];
+      else         dat[8*i+:8] = wdt[i];
     end
   end else begin
     // read access
     for (int unsigned i=0; i<BW; i++) begin
-      if (ben[i])  dat[i] = mem[int'(adr)+i];
-      else         dat[i] = mem[int'(adr)+i];
+      if (ben[i])  dat[8*i+:8] = mem[int'(adr)+i];
+      else         dat[8*i+:8] = mem[int'(adr)+i];
     end
   end
   $write("%s %s: adr=0x%h dat=0x%h ben=0b%b", DBG, wen ? "W" : "R", adr, dat, ben);
   if (TXT) $write(" txt='%s'", dat);
-  if (OPC) $write(" opc='%s'", disasm('{RV_32I, RV_M | RV_C}, dat));
+  if (OPC) $write(" opc='%s'", disasm(ISA, dat[32-1:0]));
   $write("\n");
 end
 

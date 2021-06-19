@@ -5,26 +5,26 @@
 import riscv_isa_pkg::alu_t;
 
 module r5p_alu #(
-  int unsigned XW = 32
+  int unsigned XLEN = 32
 )(
   // system signals
-  input  logic          clk,  // clock
-  input  logic          rst,  // reset
+  input  logic            clk,  // clock
+  input  logic            rst,  // reset
   // control
-  input  alu_t          ctl,
+  input  alu_t            ctl,
   // data input/output
-  input  logic [XW-1:0] imm,  // immediate
-  input  logic [XW-1:0] pc ,  // PC
-  input  logic [XW-1:0] rs1,  // source register 1
-  input  logic [XW-1:0] rs2,  // source register 2
-  output logic [XW-1:0] rd,   // destination register
+  input  logic [XLEN-1:0] imm,  // immediate
+  input  logic [XLEN-1:0] pc ,  // PC
+  input  logic [XLEN-1:0] rs1,  // source register 1
+  input  logic [XLEN-1:0] rs2,  // source register 2
+  output logic [XLEN-1:0] rd,   // destination register
   // dedicated output for branch address
-  output logic [XW-1:0] sum   // equal
+  output logic [XLEN-1:0] sum   // equal
 );
 
 // multiplexed inputs
-logic [XW-1:0] in1;  // input 1
-logic [XW-1:0] in2;  // input 2
+logic [XLEN-1:0] in1;  // input 1
+logic [XLEN-1:0] in2;  // input 2
 
 logic ovf;  // overflow bit
 
@@ -52,16 +52,16 @@ unique casez (ctl.ao)
   // adder based instructions
   AO_ADD : rd =   $signed(in1) +   $signed(in2);
   AO_SUB : rd =   $signed(in1) -   $signed(in2);
-  AO_SLT : rd =   $signed(in1) <   $signed(in2) ? XW'(1) : XW'(0);
-  AO_SLTU: rd = $unsigned(in1) < $unsigned(in2) ? XW'(1) : XW'(0);
+  AO_SLT : rd =   $signed(in1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
+  AO_SLTU: rd = $unsigned(in1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
   // bitwise logical operations
   AO_AND : rd = in1 & in2;
   AO_OR  : rd = in1 | in2;
   AO_XOR : rd = in1 ^ in2;
   // barrel shifter
-  AO_SRA : rd =   $signed(in1) >>> in2[$clog2(XW)-1:0];
-  AO_SRL : rd = $unsigned(in1)  >> in2[$clog2(XW)-1:0];
-  AO_SLL : rd = $unsigned(in1)  << in2[$clog2(XW)-1:0];
+  AO_SRA : rd =   $signed(in1) >>> in2[$clog2(XLEN)-1:0];
+  AO_SRL : rd = $unsigned(in1)  >> in2[$clog2(XLEN)-1:0];
+  AO_SLL : rd = $unsigned(in1)  << in2[$clog2(XLEN)-1:0];
   default: rd = 'x;
 endcase
 

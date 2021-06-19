@@ -5,15 +5,15 @@
 import riscv_isa_pkg::br_t;
 
 module r5p_br #(
-  int unsigned XW = 32
+  int unsigned XLEN = 32
 )(
   // control
-  input  br_t           ctl,
+  input  br_t             ctl,
   // data input/output
-  input  logic [XW-1:0] rs1,  // source register 1 / immediate
-  input  logic [XW-1:0] rs2,  // source register 2 / PC
+  input  logic [XLEN-1:0] rs1,  // source register 1 / immediate
+  input  logic [XLEN-1:0] rs2,  // source register 2 / PC
   // status
-  output logic          tkn   // taken
+  output logic            tkn   // taken
 );
 
 logic eq ;  // equal

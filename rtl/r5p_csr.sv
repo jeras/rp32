@@ -7,24 +7,24 @@ import riscv_csr_pkg::*;
 
 module r5p_csr #(
   isa_t        ISA = RV32I,
-  int unsigned XW = 32
+  int unsigned XLEN = 32
 )(
   // system signals
-  input  logic          clk,  // clock
-  input  logic          rst,  // reset
+  input  logic            clk,  // clock
+  input  logic            rst,  // reset
   // control structure
-  input  ctl_csr_t      ctl,
+  input  ctl_csr_t        ctl,
   // data input/output
-  input  logic [XW-1:0] wdt,  // write data
-  output logic [XW-1:0] rdt   // read data
+  input  logic [XLEN-1:0] wdt,  // write data
+  output logic [XLEN-1:0] rdt   // read data
 );
 
-// logic          csr_expt;
-// logic [XW-1:0] csr_evec;
-// logic [XW-1:0] csr_epc;
+// logic            csr_expt;
+// logic [XLEN-1:0] csr_evec;
+// logic [XLEN-1:0] csr_epc;
 
-logic [2**12-1:0][XW-1:0] csr;
-logic            [XW-1:0] msk;  // mask  data
+logic [2**12-1:0][XLEN-1:0] csr;
+logic            [XLEN-1:0] msk;  // mask  data
 
 // read access
 assign rdt = csr[ctl.adr];
@@ -33,7 +33,7 @@ assign rdt = csr[ctl.adr];
 always_comb begin
   unique case (ctl.msk)
     CSR_REG: msk = wdt;           // GPR register source 1
-    CSR_IMM: msk = XW'(ctl.imm);  // 5-bit zero extended immediate
+    CSR_IMM: msk = XLEN'(ctl.imm);  // 5-bit zero extended immediate
     default: msk = 'x;
   endcase
 end

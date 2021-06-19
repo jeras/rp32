@@ -5,31 +5,31 @@
 import riscv_isa_pkg::*;
 
 module r5p_mdu #(
-  int unsigned XW = 32
+  int unsigned XLEN = 32
 )(
   // system signals
-  input  logic          clk,  // clock
-  input  logic          rst,  // reset
+  input  logic            clk,  // clock
+  input  logic            rst,  // reset
   // control
-  input  ctl_m_t        ctl,
+  input  ctl_m_t          ctl,
   // data input/output
-  input  logic [XW-1:0] rs1,  // source register 1
-  input  logic [XW-1:0] rs2,  // source register 2
-  output logic [XW-1:0] rd    // destination register
+  input  logic [XLEN-1:0] rs1,  // source register 1
+  input  logic [XLEN-1:0] rs2,  // source register 2
+  output logic [XLEN-1:0] rd    // destination register
 );
 
 // minux max (most negative value)
-localparam logic [XW-1:0] M8 = {1'b1, {XW-1{1'b0}}};
+localparam logic [XLEN-1:0] M8 = {1'b1, {XLEN-1{1'b0}}};
 // minus 1 (-1)
-localparam logic [XW-1:0] M1 = '1;
+localparam logic [XLEN-1:0] M1 = '1;
 
-logic          [2-1:0][XW-1:0] mul;
-logic unsigned        [XW-1:0] divu;
-logic   signed        [XW-1:0] divs;
-logic                 [XW-1:0] div;
-logic unsigned        [XW-1:0] remu;
-logic   signed        [XW-1:0] rems;
-logic                 [XW-1:0] rem;
+logic          [2-1:0][XLEN-1:0] mul;
+logic unsigned        [XLEN-1:0] divu;
+logic   signed        [XLEN-1:0] divs;
+logic                 [XLEN-1:0] div;
+logic unsigned        [XLEN-1:0] remu;
+logic   signed        [XLEN-1:0] rems;
+logic                 [XLEN-1:0] rem;
 
 // NOTE:
 // for signed*unsigned multiplication to work in Verilog,
@@ -84,8 +84,8 @@ case (ctl.op) inside
   M_REM: rd = rem;
 endcase
 
-logic unsigned [2*XW-1:0] mul64u;
-logic   signed [2*XW-1:0] mul64s;
+logic unsigned [2*XLEN-1:0] mul64u;
+logic   signed [2*XLEN-1:0] mul64s;
 
 assign mul64u =   $signed(rs1) * $unsigned(rs2);
 assign mul64s =   $signed(rs1) * $unsigned(rs2);

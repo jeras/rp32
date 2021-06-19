@@ -5,11 +5,11 @@
 import riscv_isa_pkg::*;
 
 module r5p_lsu #(
-  int unsigned XW = 32,   // XLEN
+  int unsigned XLEN = 32,  // XLEN
     // data bus
-  int unsigned AW = 32,   // address width
-  int unsigned DW = 32,   // data    width
-  int unsigned BW = DW/8  // byte en width
+  int unsigned AW = 32,    // address width
+  int unsigned DW = XLEN,  // data    width
+  int unsigned BW = DW/8   // byte en width
 )(
   // system signals
   input  logic                 clk,  // clock
@@ -17,10 +17,10 @@ module r5p_lsu #(
   // control
   input  lsu_t                 ctl,
   // data input/output
-  input  logic        [XW-1:0] adr,  // address
-  input  logic        [XW-1:0] wdt,  // write data
-  output logic        [XW-1:0] rdt,  // read data
-  output logic        [XW-1:0] mal,  // misaligned
+  input  logic      [XLEN-1:0] adr,  // address
+  input  logic      [XLEN-1:0] wdt,  // write data
+  output logic      [XLEN-1:0] rdt,  // read data
+  output logic      [XLEN-1:0] mal,  // misaligned
   output logic                 dly,  // delayed writeback enable
   // data bus (load/store)
   output logic                 ls_req,  // write or read request
@@ -77,7 +77,7 @@ endcase
 
 // read data (sign extend)
 always_comb begin: blk_rdt
-  logic [XW-1:0] tmp;
+  logic [XLEN-1:0] tmp;
   tmp = ls_rdt >> (8*adr[WW-1:0]);
   unique case (ctl.f3)
     LB     : rdt = DW'(  $signed( 8'(tmp)));

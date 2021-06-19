@@ -67,13 +67,13 @@ end
 // write access
 always @(posedge clk)
 if (req & ack & wen) begin
-  $display("W: adr=0x%h dat=0x%h ben=0b%b, txt=%s", adr, wdt, ben, wdt, riscv_disasm(wdt));
+  $display("W: adr=0x%h dat=0x%h ben=0b%b, txt=%s", adr, wdt, ben, wdt, disasm(wdt));
 end
 
 // read access
 always @(posedge clk)
 if (req_r & ack_r & ~wen_r) begin
-  $display("R: adr=0x%h dat=0x%h ben=0b%b, txt=%s", adr_r, rdt, ben_r, rdt, riscv_disasm(rdt));
+  $display("R: adr=0x%h dat=0x%h ben=0b%b, txt=%s", adr_r, rdt, ben_r, rdt, disasm(rdt));
 end
 
 ////////////////////////////////////////////////////////////////////////////////

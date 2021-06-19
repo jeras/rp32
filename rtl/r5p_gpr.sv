@@ -4,32 +4,35 @@
 
 module r5p_gpr #(
   int unsigned AW = 5,  // can be 4 for RV32E base ISA
-  int unsigned XW = 32  // XLEN width
+  int unsigned XLEN = 32  // XLEN width
 )(
   // system signals
-  input  logic          clk,  // clock
-  input  logic          rst,  // reset
+  input  logic            clk,  // clock
+  input  logic            rst,  // reset
   // read/write enable
-  input  logic          e_rs1,
-  input  logic          e_rs2,
-  input  logic          e_rd,
+  input  logic            e_rs1,
+  input  logic            e_rs2,
+  input  logic            e_rd,
   // read/write address
-  input  logic [AW-1:0] a_rs1,
-  input  logic [AW-1:0] a_rs2,
-  input  logic [AW-1:0] a_rd,
+  input  logic   [AW-1:0] a_rs1,
+  input  logic   [AW-1:0] a_rs2,
+  input  logic   [AW-1:0] a_rd,
   // read/write data
-  output logic [XW-1:0] d_rs1,
-  output logic [XW-1:0] d_rs2,
-  input  logic [XW-1:0] d_rd
+  output logic [XLEN-1:0] d_rs1,
+  output logic [XLEN-1:0] d_rs2,
+  input  logic [XLEN-1:0] d_rd
 );
 
 // register file
-logic [2**AW-1:1] [XW-1:0] gpr;
+logic [XLEN-1:0] gpr [1:2**AW-1];
 
 // write access
 always_ff @(posedge clk, posedge rst)
-if (rst)  gpr <= '0;
-else if (e_rd & |a_rd) begin
+if (rst) begin
+  for (int unsigned i=1; i<2**AW; i++) begin
+    gpr[i] <= '0;
+  end
+end else if (e_rd & |a_rd) begin
   gpr[a_rd] <= d_rd;
 end
 

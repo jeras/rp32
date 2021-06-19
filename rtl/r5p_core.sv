@@ -3,14 +3,14 @@ import riscv_isa_pkg::*;
 module r5p_core #(
   // RISC-V ISA
   isa_t        ISA = '{RV_32I, RV_M},  // see `riscv_isa_pkg` for enumeration definition
-  int unsigned XW  = 32,    // TODO: calculate it from ISA
+  int unsigned XLEN = 32,    // TODO: calculate it from ISA
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
   int unsigned IBW = IDW/8, // program byte en width
   // data bus
   int unsigned DAW = 32,    // data    address width
-  int unsigned DDW = 32,    // data    data    width
+  int unsigned DDW = XLEN,  // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
   // constants ???
   logic [IAW-1:0] TRP = 'h0000_0000,
@@ -39,46 +39,46 @@ module r5p_core #(
 ///////////////////////////////////////////////////////////////////////////////
 
 // instruction fetch
-logic           if_run;  // running status
-logic           if_tkn;  // taken
-logic [IAW-1:0] if_pc;   // program counter
-logic [IAW-1:0] if_pci;  // program counter incrementing adder
-logic [IAW-1:0] if_pcb;  // program counter branch adder
-logic [IAW-1:0] if_pcn;  // program counter next
-logic           stall;
+logic            if_run;  // running status
+logic            if_tkn;  // taken
+logic  [IAW-1:0] if_pc;   // program counter
+logic  [IAW-1:0] if_pci;  // program counter incrementing adder
+logic  [IAW-1:0] if_pcb;  // program counter branch adder
+logic  [IAW-1:0] if_pcn;  // program counter next
+logic            stall;
 
 // instruction decode
-op32_t          id_op32; // 32-bit operation code
-op16_t          id_op16; // 16-bit operation code
-ctl_t           id_ctl;  // control structure
-logic           id_vld;  // instruction valid
+op32_t           id_op32; // 32-bit operation code
+op16_t           id_op16; // 16-bit operation code
+ctl_t            id_ctl;  // control structure
+logic            id_vld;  // instruction valid
 
 // GPR
-logic  [XW-1:0] gpr_rs1;  // register source 1
-logic  [XW-1:0] gpr_rs2;  // register source 2
-logic  [XW-1:0] gpr_rd ;  // register destination
+logic [XLEN-1:0] gpr_rs1;  // register source 1
+logic [XLEN-1:0] gpr_rs2;  // register source 2
+logic [XLEN-1:0] gpr_rd ;  // register destination
 
 // ALU
-logic  [XW-1:0] alu_rd ;  // register destination
-logic  [XW-1:0] alu_sum;  // sum (can be used regardless of ALU command
+logic [XLEN-1:0] alu_rd ;  // register destination
+logic [XLEN-1:0] alu_sum;  // sum (can be used regardless of ALU commaLENd
 
 // MUL/DIV/REM
-logic  [XW-1:0] mul_rd;   // multiplier unit output
+logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
 
 // CSR
-logic  [XW-1:0] csr_rdt;  // read  data
+logic [XLEN-1:0] csr_rdt;  // read  data
 
 // CSR
-logic           csr_expt = '0;
-logic [IAW-1:0] csr_evec;
-logic [IAW-1:0] csr_epc;
+logic            csr_expt = '0;
+logic  [IAW-1:0] csr_evec;
+logic  [IAW-1:0] csr_epc;
 
 // load/sore unit temporary signals
-logic [XW-1:0] lsu_adr;  // address
-logic [XW-1:0] lsu_wdt;  // write data
-logic [XW-1:0] lsu_rdt;  // read data
-logic [XW-1:0] lsu_mal;  // MisALigned
-logic          lsu_dly;  // DeLaYed writeback enable
+logic [XLEN-1:0] lsu_adr;  // address
+logic [XLEN-1:0] lsu_wdt;  // write data
+logic [XLEN-1:0] lsu_rdt;  // read data
+logic [XLEN-1:0] lsu_mal;  // MisALigned
+logic            lsu_dly;  // DeLaYed writeback enable
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction fetch
@@ -116,7 +116,7 @@ end
 
 // branch ALU for checking branch conditions
 r5p_br #(
-  .XW      (XW)
+  .XLEN    (XLEN)
 ) br (
   // control
   .ctl     (id_ctl.i.br),
@@ -172,7 +172,7 @@ assign id_ctl = dec(ISA, id_op32);
 // general purpose registers
 r5p_gpr #(
   .AW      (ISA.base.E ? 4 : 5),
-  .XW      (XW)
+  .XLEN    (XLEN)
 ) gpr (
   // system signals
   .clk     (clk),
@@ -193,7 +193,7 @@ r5p_gpr #(
 
 // base ALU
 r5p_alu #(
-  .XW      (XW)
+  .XLEN    (XLEN)
 ) alu (
    // system signals
   .clk     (clk),
@@ -201,8 +201,8 @@ r5p_alu #(
   // control
   .ctl     (id_ctl.i.alu),
   // data input/output
-  .imm     (id_ctl.imm),
-  .pc      (XW'(if_pc)),
+  .imm     (XLEN'(id_ctl.imm)),
+  .pc      (XLEN'(if_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
   .rd      (alu_rd ),
@@ -212,7 +212,7 @@ r5p_alu #(
 
 // mul/div/rem unit
 r5p_mdu #(
-  .XW      (XW)
+  .XLEN    (XLEN)
 ) mdu (
   // system signals
   .clk     (clk),
@@ -230,7 +230,8 @@ r5p_mdu #(
 ///////////////////////////////////////////////////////////////////////////////
 
 r5p_csr #(
-  .ISA     (ISA)
+  .ISA     (ISA),
+  .XLEN    (XLEN)
 ) csr (
   // system signals
   .clk     (clk),
@@ -252,7 +253,7 @@ assign lsu_wdt = gpr_rs2;
 
 // load/store unit
 r5p_lsu #(
-  .XW      (XW),
+  .XLEN    (XLEN),
   // data bus
   .AW      (DAW),
   .DW      (DDW),
@@ -286,13 +287,13 @@ r5p_lsu #(
 // write back multiplexer
 always_comb begin
   unique case (id_ctl.i.wb)
-    WB_ALU : gpr_rd = alu_rd;       // ALU output
-    WB_MEM : gpr_rd = lsu_rdt;      // memory read data
-    WB_PCI : gpr_rd = XW'(if_pci);  // PC next
-    WB_IMM : gpr_rd = id_ctl.imm;   // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
-    WB_CSR : gpr_rd = csr_rdt;      // CSR
-    WB_MUL : gpr_rd = mul_rd;       // mul/div/rem
-    default: gpr_rd = 'x;           // none
+    WB_ALU : gpr_rd = alu_rd;             // ALU output
+    WB_MEM : gpr_rd = lsu_rdt;            // memory read data
+    WB_PCI : gpr_rd = XLEN'(if_pci);      // PC next
+    WB_IMM : gpr_rd = XLEN'(id_ctl.imm);  // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
+    WB_CSR : gpr_rd = csr_rdt;            // CSR
+    WB_MUL : gpr_rd = mul_rd;             // mul/div/rem
+    default: gpr_rd = 'x;                 // none
   endcase
 end
 
