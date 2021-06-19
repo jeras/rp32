@@ -40,5 +40,5 @@ RUN_TARGET=\
 	cp $(*).elf_if.bin $(TARGETDIR)/../sim/mem_if.bin; \
 	cp $(*).elf_ls.bin $(TARGETDIR)/../sim/mem_ls.bin; \
 	cd $(TARGETDIR)/../sim/; \
-	make -f Makefile.verilator; \
+	make -f Makefile.verilator XLEN=32; \
 	cp signature.txt $(*).signature.output

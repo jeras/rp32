@@ -48,7 +48,9 @@ TOP = r5p_tb
 # Verilator compiler/linker flags
 ################################################################################
 
-VFLAGS =
+# set XLEN parameter
+XLEN ?= 32
+VFLAGS  = -GXLEN=${XLEN}
 # specify SystemVerilog LRM version
 #VFLAGS += +1800-2012ext+sv
 # Generate SystemC in executable form
