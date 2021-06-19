@@ -88,16 +88,16 @@ typedef enum isa_t {
   RV32I   = {RV_32I , RV_NONE},
   RV64I   = {RV_64I , RV_NONE},
   RV128I  = {RV_128I, RV_NONE},
-  RV32EC  = {RV_32E , RV_C},
-  RV32IC  = {RV_32I , RV_C},
-  RV64IC  = {RV_64I , RV_C},
-  RV128IC = {RV_128I, RV_C},
+  RV32EC  = {RV_32E ,        RV_C},
+  RV32IC  = {RV_32I ,        RV_C},
+  RV64IC  = {RV_64I ,        RV_C},
+  RV128IC = {RV_128I,        RV_C},
   RV32EMC = {RV_32E , RV_M | RV_C},
   RV32IMC = {RV_32I , RV_M | RV_C},
   RV64IMC = {RV_64I , RV_M | RV_C},
-  RV32G   = {RV_32I , RV_G},
-  RV64G   = {RV_64I , RV_G},
-  RV128G  = {RV_128I, RV_G},
+  RV32G   = {RV_32I , RV_G       },
+  RV64G   = {RV_64I , RV_G       },
+  RV128G  = {RV_128I, RV_G       },
   RV32GC  = {RV_32I , RV_G | RV_C},
   RV64GC  = {RV_64I , RV_G | RV_C},
   RV128GC = {RV_128I, RV_G | RV_C}
@@ -484,7 +484,7 @@ typedef enum ao_t {
 // TODO: optimize enumeration against opcode
 // ALU result width
 typedef enum logic [2-1:0] {
-  AR_X = 2'b00,  // XWIDTH
+  AR_X = 2'b00,  // XLEN
   AR_W = 2'b01,  // word
   AR_D = 2'b10,  // double
   AR_Q = 2'b11   // quad
@@ -571,7 +571,7 @@ typedef enum logic [2-1:0] {
 typedef struct packed {
   muldiv_t      op;   // operation
   logic [2-1:0] s12;  // sign operand 1/2 (0 - unsigned, 1 - signed)
-  logic         xw;   // XWIDTH (0 - full width, 1 - word width (M64 additional opcodes))
+  logic         xw;   // result xidth (0 - full width, 1 - word width (M64 additional opcodes))
   logic         en;   // enable
 } ctl_m_t;
 
@@ -681,7 +681,7 @@ if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   32'b????_????_????_????_?100_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_XOR , 'x  }, LS_X, WB_ALU}; end  // XORI
   32'b????_????_????_????_?110_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_OR  , 'x  }, LS_X, WB_ALU}; end  // ORI
   32'b????_????_????_????_?111_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_AND , 'x  }, LS_X, WB_ALU}; end  // ANDI
-  32'b0000_000?_????_????_?001_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , AR_X}, LS_X, WB_ALU}; end  // SLLI TODO: illegal imm mask
+  32'b0000_000?_????_????_?001_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , AR_X}, LS_X, WB_ALU}; end  // SLLI
   32'b0000_000?_????_????_?101_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_X}, LS_X, WB_ALU}; end  // SRLI
   32'b0100_000?_????_????_?101_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , AR_X}, LS_X, WB_ALU}; end  // SRAI
   32'b0000_000?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , AR_X}, LS_X, WB_ALU}; end  // ADD
@@ -705,6 +705,9 @@ if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
   32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_WU, WB_MEM}; end  // LWU
   32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, S_D , 'x    }; end  // SD
   32'b????_????_????_????_?000_????_?001_1011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_W}, LS_X, WB_ALU}; end  // ADDIW
+  32'b0000_00??_????_????_?001_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , AR_X}, LS_X, WB_ALU}; end  // SLLI
+  32'b0000_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_X}, LS_X, WB_ALU}; end  // SRLI
+  32'b0100_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , AR_X}, LS_X, WB_ALU}; end  // SRAI
   32'b0000_000?_????_????_?001_????_?001_1011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , AR_W}, LS_X, WB_ALU}; end  // SLLIW
   32'b0000_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_W}, LS_X, WB_ALU}; end  // SRLIW
   32'b0100_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , AR_W}, LS_X, WB_ALU}; end  // SRAIW
@@ -780,7 +783,7 @@ if (isa.ext.Zicsr) begin priority casez (op)
   default                                    : begin                                                                                                                                      end
 endcase end
 
-//// ??? standard extension
+//// privileged standard extension
 //if (???) begin casez (op)
 //  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                frm,   pc    , br  , {ai      , ao     , ar  }, lsu , wb
 //  32'b0000_0000_0000_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // ecall
@@ -789,6 +792,27 @@ endcase end
 //  32'b0001_0000_0010_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // wfi
 // 32'b1000_0000_0000_0000_0000_0000_0111_0011: dec = '{"sret              ", TYPE_32_0};
 //endcase end
+
+//// RV32/RV64 Zba standard extension
+//if (|(isa.base & (RV_32I | RV_64I)) & isa.ext.Zba) begin casez (op)
+//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{bi      , bo          , br  }, lsu , wb    }
+//  32'b0010_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD   , AR_X}, LS_X, WB_BLU}; end  // SH1ADD
+//  32'b0010_000?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD   , AR_X}, LS_X, WB_BLU}; end  // SH2ADD
+//  32'b0010_000?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH3ADD   , AR_X}, LS_X, WB_BLU}; end  // SH3ADD
+//  default                                    : begin                                                                                            end
+//endcase end
+//
+//// RV32 Zba standard extension
+//if (|(isa.base & (RV_64I)) & isa.ext.Zba) begin casez (op)
+//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{bi      , bo          , br  }, lsu , wb    }
+//  32'b0000_100?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_ADD.UW   , AR_X}, LS_X, WB_BLU}; end  // ADD.SW
+//  32'b0010_000?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD.UW, AR_X}, LS_X, WB_BLU}; end  // SH1ADD.UW
+//  32'b0010_000?_????_????_?100_????_?011_1011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD.UW, AR_X}, LS_X, WB_BLU}; end  // SH2ADD.UW
+//  32'b0010_000?_????_????_?110_????_?011_1011: begin f = T_R; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH3ADD.UW, AR_X}, LS_X, WB_BLU}; end  // SH3ADD.UW
+//  32'b0000_10??_????_????_?001_????_?001_1011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLLI.UW  , AR_X}, LS_X, WB_ALU}; end  // SLLI.UW
+//  default                                    : begin                                                                                            end
+//endcase end
+
 
 // GPR and immediate decoders are based on instruction formats
 if (~t.ill) begin
