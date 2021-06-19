@@ -655,7 +655,7 @@ t = CTL_ILL;
 
 // RV32 I base extension
 if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{ai      , ao     , ar  }, lsu , wb    }
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{ai      , ao     , aw  }, lsu , wb    }
   32'b????_????_????_????_????_????_?011_0111: begin f = T_U; t.ill = '0; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, WB_IMM}; end  // LUI
   32'b????_????_????_????_????_????_?001_0111: begin f = T_U; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_PC_IM, AO_ADD , AR_X}, LS_X, WB_ALU}; end  // AUIPC
   32'b????_????_????_????_????_????_?110_1111: begin f = T_J; t.ill = '0; t.i = '{PC_JMP, 'x  , '{AI_PC_IM, AO_ADD , AR_X}, LS_X, WB_PCI}; end  // JAL  TODO: Instruction-address-misaligned exception
@@ -700,7 +700,7 @@ endcase end
 
 // RV64 I base extension
 if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{ai      , ao     , ar  }, ls   , wb    }
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{ai      , ao     , aw  }, ls   , wb    }
   32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_DS, WB_MEM}; end  // LD
   32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_WU, WB_MEM}; end  // LWU
   32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, S_D , 'x    }; end  // SD
@@ -723,7 +723,7 @@ endcase end
 // https://github.com/0xDeva/ida-cpu-RISC-V/blob/master/risc-v_opcode_map.txt
 // RV128 I base extension
 if (|(isa.base & (RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{ai      , ao     , ar  }, ls   , wb    }
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;        ill;        {pc    , br  , '{ai      , ao     , aw  }, ls   , wb    }
   32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_DS, WB_MEM}; end  // LQ
   32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_WU, WB_MEM}; end  // LDU
   32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, S_D , 'x    }; end  // SQ
@@ -785,7 +785,7 @@ endcase end
 
 //// privileged standard extension
 //if (???) begin casez (op)
-//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                frm,   pc    , br  , {ai      , ao     , ar  }, lsu , wb
+//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                frm,   pc    , br  , {ai      , ao     , aw  }, lsu , wb
 //  32'b0000_0000_0000_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // ecall
 //  32'b0000_0000_0001_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // ebreak
 //  32'b0001_0000_0000_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_EPC, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // eret
@@ -854,7 +854,7 @@ t = CTL_ILL;
 
 // RV32 I base extension
 if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , ar  }, lsu , wb    }
+  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , aw  }, lsu , wb    }
   16'b0000_0000_0000_0000: begin f = T_CIW; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_ILL, 'x  , '{'x      , 'x     , 'x  }, LS_X, 'x    }; end  // illegal instruction
   16'b0000_0000_000?_??00: begin f = T_CIW; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, LS_X, WB_ALU}; end  // C.ADDI4SPN, nzuimm=0, RES
   16'b000?_????_????_??00: begin f = T_CIW; w = 'x   ; r = 5'h02; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, LS_X, WB_ALU}; end  // C.ADDI4SPN
@@ -928,7 +928,7 @@ endcase end
 
 // RV64 I base extension
 if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , ar  }, lsu , wb    }
+  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , aw  }, lsu , wb    }
   16'b011?_????_????_??00: begin f = T_CL ; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_DS, WB_MEM}; end  // C.LD
   16'b111?_????_????_??00: begin f = T_CS ; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, S_D , 'x    }; end  // C.SD
   16'b100?_00??_????_??01: begin f = T_CBD; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_X}, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
@@ -946,7 +946,7 @@ endcase end
 
 // RV128 I base extension
 if (|(isa.base & (RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , ar  }, lsu , wb    }
+  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , aw  }, lsu , wb    }
 //16'b001?_????_????_??00: begin f = T_CL ; w = T16_Q; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, L_QS, WB_MEM}; end  // C.LQ  // TODO: load quad encoding not supported yet
   16'b101?_????_????_??00: begin f = T_CS ; w = T16_Q; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X}, S_Q , 'x    }; end  // C.SQ
   16'b1000_00??_?000_0001: begin f = T_CBD; w = T16_Q; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_X}, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
