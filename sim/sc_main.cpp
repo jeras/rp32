@@ -82,7 +82,7 @@ int sc_main(int argc, char **argv) {
     rst = 1;
     sc_start(20, SC_NS);
     rst = 0;
-    sc_start(100000, SC_NS);
+    sc_start(200000, SC_NS);
     //sc_start();
 
     ////////////////////////////////////////////////////////////////////////////

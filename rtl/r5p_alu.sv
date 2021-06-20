@@ -44,17 +44,12 @@ always_comb begin
     default : begin in1 = 'x ; in2 = 'x ; end
   endcase
 
-unique casez (ctl.aw)
-  AR_X   : in1 =                        in1         ;  // XLEN
-  AR_W   : in1 = {{XLEN-32{in2[32-1]}}, in1[32-1:0]};  // word
-  default: in1 =                        in1         ;  // XLEN
-endcase
-unique casez (ctl.aw)
-  AR_X   : in2 =                        in2         ;  // XLEN
-  AR_W   : in2 = {{XLEN-32{in2[32-1]}}, in2[32-1:0]};  // word
-  default: in2 =                        in2         ;  // XLEN
-endcase
-
+  unique casez (ctl.aw)
+    AR_X   : in1 =                        in1         ;  // XLEN
+    AR_SW  : in1 = {{XLEN-32{in1[32-1]}}, in1[32-1:0]};  //   signed word
+    AR_UW  : in1 = {{XLEN-32{1'b0     }}, in1[32-1:0]};  // unsigned word
+    default: in1 =                        in1         ;  // XLEN
+  endcase
 
 end
 
@@ -69,9 +64,10 @@ assign {ovf, sum} = $signed(in1) + $signed(in2);
 // shift length
 always_comb
 unique casez (ctl.aw)
-  AR_X   : sa =                          in2[$clog2(XLEN)-1:0] ;  // XLEN
-  AR_W   : sa = {{$clog2(XLEN)-5{1'b0}}, in2[$clog2(32  )-1:0]};  // word
-  default: sa =                          in2[$clog2(XLEN)-1:0] ;  // XLEN
+  AR_X   : sa =                                   in2[$clog2(XLEN)-1:0] ;  // XLEN
+  AR_SW,
+  AR_UW  : sa = {{$clog2(XLEN)-$clog2(32){1'b0}}, in2[$clog2(32  )-1:0]};  // word
+  default: sa =                                   in2[$clog2(XLEN)-1:0] ;  // XLEN
 endcase
 
 // operations
@@ -97,7 +93,8 @@ endcase
 always_comb
 unique casez (ctl.aw)
   AR_X   : rd =                        val         ;  // XLEN
-  AR_W   : rd = {{XLEN-32{val[32-1]}}, val[32-1:0]};  // word
+  AR_SW,
+  AR_UW  : rd = {{XLEN-32{val[32-1]}}, val[32-1:0]};  // sign extended word
   default: rd =                        val         ;  // XLEN
 endcase
 
