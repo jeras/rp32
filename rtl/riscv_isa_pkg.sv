@@ -936,12 +936,9 @@ if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
   16'b111?_????_????_??00: begin f = T_CS ; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, S_D , 'x    }; end  // C.SD
   16'b100?_00??_????_??01: begin f = T_CBD; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
   16'b100?_01??_????_??01: begin f = T_CBD; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , AR_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
-
-  16'b1000_11??_?00?_??01: begin f = T_CA ; w = T16_W; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_SUB , AR_X }, LS_X, WB_ALU}; end  // C.SUB
-
-  16'b1001_11??_?00?_??01: begin f = T_CA ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_SUB , AR_SW}, LS_X, WB_ALU}; end  // C.SUBW
-  16'b1001_11??_?01?_??01: begin f = T_CA ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , AR_SW}, LS_X, WB_ALU}; end  // C.ADDW
-  16'b001?_0000_0???_??01: begin f = T_CI ; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_SW}, LS_X, WB_ALU}; end  // C.ADDIW, rd=0, RES
+  16'b1001_11??_?00?_??01: begin f = T_CA ; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_SUB , AR_SW}, LS_X, WB_ALU}; end  // C.SUBW
+  16'b1001_11??_?01?_??01: begin f = T_CA ; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , AR_SW}, LS_X, WB_ALU}; end  // C.ADDW
+  16'b001?_0000_0???_??01: begin f = T_CI ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_SW}, LS_X, WB_ALU}; end  // C.ADDIW, rd=0, RES
   16'b001?_????_????_??01: begin f = T_CI ; w = 'x   ; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_SW}, LS_X, WB_ALU}; end  // C.ADDIW
   16'b000?_????_????_??10: begin f = T_CI ; w = T16_0; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , AR_X }, LS_X, WB_ALU}; end  // C.SLLI
   16'b011?_0000_0???_??10: begin f = 'x   ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_ILL, 'x  , '{'x      , 'x     , 'x   }, LS_X, 'x    }; end  // C.LWSP, rd=0, RES
