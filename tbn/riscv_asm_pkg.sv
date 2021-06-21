@@ -203,26 +203,26 @@ if (|(isa.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1001_0000_0000_0010: disasm16 = $sformatf("ILLEGAL");  // C.EBREAK // TODO
   16'b1001_????_?000_0010: disasm16 = $sformatf("c.jalr     %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
   16'b1001_????_????_??10: disasm16 = $sformatf("c.add      %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
-  16'b110?_????_????_??10: disasm16 = $sformatf("c.sw       %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
-  default                : disasm16 = $sformatf("NOT DECODED");
+  16'b110?_????_????_??10: disasm16 = $sformatf("c.swsp     %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
+  default: begin end
 endcase end
 
 // RV64 I base extension
 if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
-  //  fedc_ba98_7654_3210              frm;     wdh  ;     reg  ;        ill;        {pc    , br  , '{ai      , ao     , aw   }, lsu , wb    }
-//  16'b011?_????_????_??00: begin f = T_CL ; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, L_DS, WB_MEM}; end  // C.LD
-//  16'b111?_????_????_??00: begin f = T_CS ; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, S_D , 'x    }; end  // C.SD
-//  16'b100?_00??_????_??01: begin f = T_CBD; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , AR_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
-//  16'b100?_01??_????_??01: begin f = T_CBD; w = T16_D; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , AR_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
+  //  fedc_ba98_7654_3210
+  16'b011?_????_????_??00: disasm16 = $sformatf("c.ld       %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
+  16'b111?_????_????_??00: disasm16 = $sformatf("c.sd       %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
+  16'b100?_00??_????_??01: disasm16 = $sformatf("c.srli     %s, %s, 0x%02x" , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), t.imm);
+  16'b100?_01??_????_??01: disasm16 = $sformatf("c.srai     %s, %s, 0x%02x" , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), t.imm);
   16'b1001_11??_?00?_??01: disasm16 = $sformatf("c.subw     %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
   16'b1001_11??_?01?_??01: disasm16 = $sformatf("c.addw     %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
   16'b001?_0000_0???_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // C.ADDIW, rd=0, RES
   16'b001?_????_????_??01: disasm16 = $sformatf("c.addiw    %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
-//  16'b000?_????_????_??10: begin f = T_CI ; w = T16_0; r = 'x   ; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , AR_X }, LS_X, WB_ALU}; end  // C.SLLI
-//  16'b011?_0000_0???_??10: begin f = 'x   ; w = 'x   ; r = 'x   ; t.ill = '1; t.i = '{PC_ILL, 'x  , '{'x      , 'x     , 'x   }, LS_X, 'x    }; end  // C.LWSP, rd=0, RES
-//  16'b011?_????_????_??10: begin f = T_CI ; w = T16_D; r = 5'h02; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, L_DS, WB_MEM}; end  // C.LWSP
-//  16'b111?_????_????_??10: begin f = T_CSS; w = T16_W; r = 5'h02; t.ill = '0; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, S_W , 'x    }; end  // C.SDSP
-  default                : begin                                                                                                               end
+  16'b000?_????_????_??10: disasm16 = $sformatf("c.slli     %s, %s, 0x%02x" , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), t.imm);
+  16'b011?_0000_0???_??10: disasm16 = $sformatf("ILLEGAL    RES");  // C.LDSP, rd=0, RES
+  16'b011?_????_????_??10: disasm16 = $sformatf("c.ldsp     %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
+  16'b111?_????_????_??10: disasm16 = $sformatf("c.sdsp     %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
+  default: begin end
 endcase end
 
 //$sformatf("c.jal    %s, 0x%06x"     , reg_x(t.gpr.a.rd , abi), t.imm);
