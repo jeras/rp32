@@ -205,7 +205,7 @@ always_ff @(posedge clk, posedge rst)
 if (rst) begin
   rvmodel_data_begin <= 'x;
   rvmodel_data_end   <= 'x;
-  rvmodel_halt       <= 'x;
+  rvmodel_halt       <= '0;
 end else if (ls_ctl_req & ls_ctl_ack) begin
   if (ls_ctl_wen) begin
     // write access
