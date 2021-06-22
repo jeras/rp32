@@ -362,10 +362,11 @@ function imm_t imm16 (op16_t i, op16_frm_t sel, op16_wdh_t wdh);
   imm16 = '0;
   unique case (sel)
     T_CR,
-    T_CR0,
+    T_CR0:
+      imm16 = IMM_ILL;
     T_CRJ,
     T_CRL:
-      imm16 = IMM_ILL;
+      imm16 = '0;
     T_CI,
     T_CIS:
       case (wdh)
