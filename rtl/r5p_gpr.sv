@@ -29,9 +29,9 @@ logic [XLEN-1:0] gpr [1:2**AW-1];
 // write access
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
-  for (int unsigned i=1; i<2**AW; i++) begin
+  for (int unsigned i=1; i<2**AW; i++) begin: reset
     gpr[i] <= '0;
-  end
+  end: reset
 end else if (e_rd & |a_rd) begin
   gpr[a_rd] <= d_rd;
 end
