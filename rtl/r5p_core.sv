@@ -2,8 +2,12 @@ import riscv_isa_pkg::*;
 
 module r5p_core #(
   // RISC-V ISA
-  isa_t        ISA = '{RV_32I, RV_M},  // see `riscv_isa_pkg` for enumeration definition
-  int unsigned XLEN = 32,    // TODO: calculate it from ISA
+  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+  // extensions  (see `riscv_isa_pkg` for enumeration definition)
+  isa_ext_t    XTEN = RV_M | RV_C,
+  isa_t        ISA = XLEN==32 ? '{RV_32I , XTEN}
+                   : XLEN==64 ? '{RV_64I , XTEN}
+                              : '{RV_128I, XTEN},
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
@@ -77,7 +81,7 @@ logic  [IAW-1:0] csr_epc;
 logic [XLEN-1:0] lsu_adr;  // address
 logic [XLEN-1:0] lsu_wdt;  // write data
 logic [XLEN-1:0] lsu_rdt;  // read data
-logic [XLEN-1:0] lsu_mal;  // MisALigned
+logic            lsu_mal;  // MisALigned
 logic            lsu_dly;  // DeLaYed writeback enable
 
 ///////////////////////////////////////////////////////////////////////////////

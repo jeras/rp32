@@ -3,13 +3,12 @@
 
 module r5p_tb #(
   // RISC-V ISA
-  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
-  // see `riscv_isa_pkg` for enumeration definition
-//isa_t        ISA = XLEN==32 ? '{RV_32I, RV_M}
-//                   XLEN==64 ? '{RV_64I, RV_M}
-//                            : '{RV_128I, RV_M},
-//isa_t        ISA = '{RV_32I, RV_M},
-  isa_t        ISA = '{RV_64I, RV_M},
+  int unsigned XLEN = 32,
+  // extensions  (see `riscv_isa_pkg` for enumeration definition)
+  isa_ext_t    XTEN = RV_M | RV_C,
+  isa_t        ISA = XLEN==32 ? '{RV_32I , XTEN}
+                   : XLEN==64 ? '{RV_64I , XTEN}
+                              : '{RV_128I, XTEN},
   // instruction bus
   int unsigned IAW = 21,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
