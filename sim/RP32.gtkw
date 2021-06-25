@@ -1,19 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Jun 25 09:19:28 2021
+[*] Fri Jun 25 14:54:29 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Fri Jun 25 09:02:17 2021"
-[dumpfile_size] 54880
+[dumpfile_mtime] "Fri Jun 25 10:36:01 2021"
+[dumpfile_size] 68465
 [savefile] "/home/ijeras/VLSI/rp32/sim/RP32.gtkw"
 [timestart] 594300
 [size] 1884 2096
 [pos] -1 -1
-*-14.480528 685000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.480528 695000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
 [treeopen] top.r5p_tb.DUT.gpr.
+[treeopen] top.r5p_tb.DUT.id_ctl.
+[treeopen] top.r5p_tb.DUT.id_ctl.i.
 [sst_width] 233
 [signals_width] 281
 [sst_expanded] 1
@@ -30,7 +32,9 @@ top.r5p_tb.DUT.if_req
 @22
 top.r5p_tb.DUT.if_adr[20:0]
 top.r5p_tb.DUT.if_rdt(0)[7:0]
+@23
 top.r5p_tb.DUT.if_rdt(1)[7:0]
+@22
 top.r5p_tb.DUT.if_rdt(2)[7:0]
 top.r5p_tb.DUT.if_rdt(3)[7:0]
 @28
@@ -130,7 +134,11 @@ top.r5p_tb.DUT.ls_ack
 @22
 top.r5p_tb.DUT.lsu_rdt[31:0]
 top.r5p_tb.DUT.lsu_wdt[31:0]
-@201
+@200
 -UNSORTED
+@28
+top.r5p_tb.DUT.id_ctl.ill
+@22
+top.r5p_tb.DUT.id_ctl.imm[31:0]
 [pattern_trace] 1
 [pattern_trace] 0
