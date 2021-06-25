@@ -340,6 +340,7 @@ typedef enum logic [4-1:0] {
   T_CB ,  // Branch
   T_CBD,  // Branch + destination register
   T_CJ ,  // Jump
+  T_CJL,  // Jump and Link
   T_X
 } op16_frm_t;
 
@@ -403,7 +404,8 @@ function imm_t imm16 (op16_t i, op16_frm_t sel, op16_wdh_t wdh);
       {imm16[31:9], {imm16[8], imm16[4:3], imm16[7:6], imm16[2:1], imm16[5]}, imm16[0]} = 32'($signed({i.cb.off_12_10, i.cb.off_06_02, 1'b0}));
     T_CBD:
       imm16 = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-    T_CJ:
+    T_CJ,
+    T_CJL:
       {imm16[31:12], {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]}, imm16[0]} = 32'($signed({i.cj.target, 1'b0}));
     default: imm16 = IMM_ILL;
   endcase
@@ -417,19 +419,20 @@ function gpr_t gpr16 (op16_t op, op16_frm_t frm);
   unique case (frm)   // rs1,rs2,rd                        rs1  ,                rs2  ,                rd
     T_CR   :  gpr16 = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
     T_CR0  :  gpr16 = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CRJ  :  gpr16 = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,                  'x ,                      'x }};
-    T_CRL  :  gpr16 = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,                  'x , 5'h01                   }};
-    T_CI   :  gpr16 = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,                  'x ,         op.ci .rd_rs1   }};
-    T_CIS  :  gpr16 = '{'{'1, '0, '1}, '{ 5'h02                 ,                  'x ,         op.ci .rd_rs1   }};
-    T_CSS  :  gpr16 = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,                      'x }};
-    T_CIW  :  gpr16 = '{'{'0, '0, '1}, '{ 5'h02                 ,                  'x , {2'b01, op.ciw.rd_     }}};
-    T_CL   :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },                  'x , {2'b01, op.cl .rd_     }}};
-    T_CS   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},                      'x }};
+    T_CRJ  :  gpr16 = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,     'x              ,     'x                  }};
+    T_CRL  :  gpr16 = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
+    T_CI   :  gpr16 = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
+    T_CIS  :  gpr16 = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CSS  :  gpr16 = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,     'x                  }};
+    T_CIW  :  gpr16 = '{'{'0, '0, '1}, '{ 5'h02                 ,     'x              , {2'b01, op.ciw.rd_     }}};
+    T_CL   :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },     'x              , {2'b01, op.cl .rd_     }}};
+    T_CS   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},     'x                  }};
     T_CA   :  gpr16 = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
-    T_CB   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   }, 5'h00               ,                      'x }};
-    T_CBD  :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },                  'x , {2'b01, op.cb .rs1_    }}};  // Branch + destination register
-    T_CJ   :  gpr16 = '{'{'0, '0, '1}, '{                   'x  ,                  'x , {4'd0, ~op.cj.funct3[2]}}};  // C.JAL using x1, C.J using x0
-    default:  gpr16 = '{'{'0, '0, '0}, '{                   'x  ,                  'x ,                      'x }};
+    T_CB   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};
+    T_CBD  :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch + destination register
+    T_CJ   :  gpr16 = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'd00                  }};  // C.J   using x0, NOTE: write could be disabled
+    T_CJL  :  gpr16 = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'h01                  }};  // C.JAL using x1
+    default:  gpr16 = '{'{'0, '0, '0}, '{    'x                 ,     'x              ,     'x                  }};
   endcase
 endfunction: gpr16
 
@@ -868,7 +871,7 @@ if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b000?_0000_0???_??01: begin t.ill = '0; f = T_CI ; w = T16_S; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, LS_X, WB_ALU}; end  // C.NOP, nzimm!=0, HINT
   16'b0000_????_?000_0001: begin t.ill = '0; f = T_CI ; w = T16_S; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, LS_X, WB_ALU}; end  // C.ADDI, nzimm=0, HINT // TODO prevent WB
   16'b000?_????_????_??01: begin t.ill = '0; f = T_CI ; w = T16_S; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, LS_X, WB_ALU}; end  // C.ADDI
-  16'b001?_????_????_??01: begin t.ill = '0; f = T_CJ ; w = 'x   ; t.i = '{PC_JMP, 'x  , '{AI_PC_IM, AO_ADD , AR_X }, LS_X, WB_PCI}; end  // C.JAL, only RV32, NOTE: there are no restriction on immediate value
+  16'b001?_????_????_??01: begin t.ill = '0; f = T_CJL; w = 'x   ; t.i = '{PC_JMP, 'x  , '{AI_PC_IM, AO_ADD , AR_X }, LS_X, WB_PCI}; end  // C.JAL, only RV32, NOTE: there are no restriction on immediate value
   16'b010?_0000_0???_??01: begin t.ill = '0; f = T_CI ; w = T16_S; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x   }, LS_X, WB_IMM}; end  // C.LI, rd=0, HINT
   16'b010?_????_????_??01: begin t.ill = '0; f = T_CI ; w = T16_S; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x   }, LS_X, WB_IMM}; end  // C.LI
   16'b0110_0001_0000_0001: begin t.ill = '1; f = 'x   ; w = 'x   ; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , AR_X }, LS_X, WB_ALU}; end  // C.ADDI16SP, nzimm=0, RES
