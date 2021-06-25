@@ -1,0 +1,136 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Fri Jun 25 09:19:28 2021
+[*]
+[dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
+[dumpfile_mtime] "Fri Jun 25 09:02:17 2021"
+[dumpfile_size] 54880
+[savefile] "/home/ijeras/VLSI/rp32/sim/RP32.gtkw"
+[timestart] 594300
+[size] 1884 2096
+[pos] -1 -1
+*-14.480528 685000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.r5p_tb.
+[treeopen] top.r5p_tb.DUT.
+[treeopen] top.r5p_tb.DUT.gpr.
+[sst_width] 233
+[signals_width] 281
+[sst_expanded] 1
+[sst_vpaned_height] 665
+@420
+top.r5p_tb.DUT.XLEN
+@28
+top.r5p_tb.DUT.clk
+top.r5p_tb.DUT.rst
+@200
+-IF bus
+@28
+top.r5p_tb.DUT.if_req
+@22
+top.r5p_tb.DUT.if_adr[20:0]
+top.r5p_tb.DUT.if_rdt(0)[7:0]
+top.r5p_tb.DUT.if_rdt(1)[7:0]
+top.r5p_tb.DUT.if_rdt(2)[7:0]
+top.r5p_tb.DUT.if_rdt(3)[7:0]
+@28
+top.r5p_tb.DUT.if_ack
+@200
+-IF logic
+@28
+top.r5p_tb.DUT.if_run
+@22
+top.r5p_tb.DUT.if_pc[20:0]
+top.r5p_tb.DUT.if_pci[20:0]
+top.r5p_tb.DUT.if_pcb[20:0]
+top.r5p_tb.DUT.if_pcn[20:0]
+@28
+top.r5p_tb.DUT.if_tkn
+@200
+-ID
+@28
+top.r5p_tb.DUT.id_vld
+top.r5p_tb.DUT.stall
+@200
+-GPR
+@22
+top.r5p_tb.DUT.gpr_rd[31:0]
+top.r5p_tb.DUT.gpr_rs1[31:0]
+top.r5p_tb.DUT.gpr_rs2[31:0]
+top.r5p_tb.DUT.gpr.gpr(1)[31:0]
+top.r5p_tb.DUT.gpr.gpr(2)[31:0]
+top.r5p_tb.DUT.gpr.gpr(3)[31:0]
+top.r5p_tb.DUT.gpr.gpr(4)[31:0]
+top.r5p_tb.DUT.gpr.gpr(5)[31:0]
+top.r5p_tb.DUT.gpr.gpr(6)[31:0]
+top.r5p_tb.DUT.gpr.gpr(7)[31:0]
+top.r5p_tb.DUT.gpr.gpr(8)[31:0]
+top.r5p_tb.DUT.gpr.gpr(9)[31:0]
+top.r5p_tb.DUT.gpr.gpr(10)[31:0]
+top.r5p_tb.DUT.gpr.gpr(11)[31:0]
+top.r5p_tb.DUT.gpr.gpr(12)[31:0]
+top.r5p_tb.DUT.gpr.gpr(13)[31:0]
+top.r5p_tb.DUT.gpr.gpr(14)[31:0]
+top.r5p_tb.DUT.gpr.gpr(15)[31:0]
+top.r5p_tb.DUT.gpr.gpr(16)[31:0]
+top.r5p_tb.DUT.gpr.gpr(17)[31:0]
+top.r5p_tb.DUT.gpr.gpr(18)[31:0]
+top.r5p_tb.DUT.gpr.gpr(19)[31:0]
+top.r5p_tb.DUT.gpr.gpr(20)[31:0]
+top.r5p_tb.DUT.gpr.gpr(21)[31:0]
+top.r5p_tb.DUT.gpr.gpr(22)[31:0]
+top.r5p_tb.DUT.gpr.gpr(23)[31:0]
+top.r5p_tb.DUT.gpr.gpr(24)[31:0]
+top.r5p_tb.DUT.gpr.gpr(25)[31:0]
+top.r5p_tb.DUT.gpr.gpr(26)[31:0]
+top.r5p_tb.DUT.gpr.gpr(27)[31:0]
+top.r5p_tb.DUT.gpr.gpr(28)[31:0]
+top.r5p_tb.DUT.gpr.gpr(29)[31:0]
+top.r5p_tb.DUT.gpr.gpr(30)[31:0]
+top.r5p_tb.DUT.gpr.gpr(31)[31:0]
+@200
+-CSR
+@22
+top.r5p_tb.DUT.csr_epc[20:0]
+top.r5p_tb.DUT.csr_evec[20:0]
+@28
+top.r5p_tb.DUT.csr_expt
+@22
+top.r5p_tb.DUT.csr_rdt[31:0]
+@200
+-ALU
+@22
+top.r5p_tb.DUT.alu_rd[31:0]
+top.r5p_tb.DUT.alu_sum[31:0]
+@200
+-LSU
+@28
+top.r5p_tb.DUT.lsu_dly
+@22
+top.r5p_tb.DUT.lsu_adr[31:0]
+@200
+-LS
+@28
+top.r5p_tb.DUT.ls_req
+top.r5p_tb.DUT.ls_wen
+@22
+top.r5p_tb.DUT.ls_adr[16:0]
+top.r5p_tb.DUT.ls_ben[3:0]
+top.r5p_tb.DUT.ls_wdt(0)[7:0]
+top.r5p_tb.DUT.ls_wdt(1)[7:0]
+top.r5p_tb.DUT.ls_wdt(2)[7:0]
+top.r5p_tb.DUT.ls_wdt(3)[7:0]
+top.r5p_tb.DUT.ls_rdt(0)[7:0]
+top.r5p_tb.DUT.ls_rdt(1)[7:0]
+top.r5p_tb.DUT.ls_rdt(2)[7:0]
+top.r5p_tb.DUT.ls_rdt(3)[7:0]
+@28
+top.r5p_tb.DUT.lsu_mal
+top.r5p_tb.DUT.ls_ack
+@22
+top.r5p_tb.DUT.lsu_rdt[31:0]
+top.r5p_tb.DUT.lsu_wdt[31:0]
+@201
+-UNSORTED
+[pattern_trace] 1
+[pattern_trace] 0
