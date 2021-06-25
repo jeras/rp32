@@ -20,7 +20,7 @@ module r5p_lsu #(
   input  logic      [XLEN-1:0] adr,  // address
   input  logic      [XLEN-1:0] wdt,  // write data
   output logic      [XLEN-1:0] rdt,  // read data
-  output logic      [XLEN-1:0] mal,  // misaligned
+  output logic                 mal,  // misaligned
   output logic                 dly,  // delayed writeback enable
   // data bus (load/store)
   output logic                 ls_req,  // write or read request
@@ -43,6 +43,29 @@ assign ls_wen = ctl.we;
 
 // address
 assign ls_adr = {adr[AW-1:WW], WW'('0)};
+
+// misalignment
+// decodings for read and write access are identical
+always_comb
+if (ctl.we) begin
+  // write access
+  unique case (ctl.f3)
+    SB     : mal = 1'b0;
+    SH     : mal = |adr[0:0];
+    SW     : mal = |adr[1:0];
+    SD     : mal = |adr[2:0];
+    default: mal = 1'b1;
+  endcase
+end else begin
+  // read access
+  unique case (ctl.f3)
+    LB, LBU: mal = 1'b0;
+    LH, LHU: mal = |adr[0:0];
+    LW, LWU: mal = |adr[1:0];
+    LD, LDU: mal = |adr[2:0];
+    default: mal = 1'b1;
+  endcase
+end
 
 // byte select
 // TODO
