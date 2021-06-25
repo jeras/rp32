@@ -60,10 +60,10 @@ VFLAGS += -sc --exe
 # Optimize
 VFLAGS += -O2
 # optimize for speed or maximize finding X assign issues
-#VFLAGS += --x-assign fast
+VFLAGS += --x-assign fast
 #VFLAGS += --x-assign 0
 #VFLAGS += --x-assign 1
-VFLAGS += --x-assign unique
+#VFLAGS += --x-assign unique
 # Warn abount lint issues; may not want this on less solid designs
 #VFLAGS += -Wall
 # Make waveforms
