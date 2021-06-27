@@ -15,6 +15,14 @@ make -f Makefile.verilator
 
 The default script is using ModelSim (version from Altera/Intel) for simulation.
 
+## Verilator
+
+```Bash
+export SYSTEMC_INCLUDE=/opt/systemc-2.3.2/include/
+export SYSTEMC_LIBDIR=/opt/systemc-2.3.2/lib-linux64/
+```
+
+
 ## Ubuntu 18.04, `Quartus-lite-18.0.0.614-linux.tar`
 
 I had some problems with the installer crashing at the end of the install process,
