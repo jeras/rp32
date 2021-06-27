@@ -256,7 +256,7 @@ typedef union packed {
 } op32_t;
 
 // enumeration of 32-bit instruction formats
-typedef enum logic [4-1:0] {
+typedef enum {
   T_R4,  // Register 4
   T_R ,  // Register
   T_I ,  // Immediate
@@ -331,7 +331,7 @@ typedef union packed {
 
 // enumeration of 16-bit instruction formats
 // appendix defines GPR access special cases
-typedef enum logic [4-1:0] {
+typedef enum {
   T_CR  ,  // Register
   T_CR_0,  // Register + rs1=x0 (zero)
   T_CR_J,  // Register + rd=x1 (link)
@@ -350,7 +350,7 @@ typedef enum logic [4-1:0] {
 } op16_frm_t;
 
 // immediate decoder qualifiers
-typedef enum int {
+typedef enum {
   T_C_W,  // word   sized load/store
   T_C_D,  // double sized load/store
   T_C_Q,  // quad   sized load/store
@@ -634,7 +634,7 @@ localparam ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: 'x, imm: 'x, msk
 // illegal instruction
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef enum int {
+typedef enum {
   STD,  // standard
   RES,  // REServed for future standard extensions
   NSE,  // reserved for custom extensions (Non Standard Extension)
