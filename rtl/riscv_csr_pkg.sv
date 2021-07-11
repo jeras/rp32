@@ -4,178 +4,185 @@
 
 package riscv_csr_pkg;
 
-localparam int unsigned  XLEN = 32;
+localparam int unsigned  XLEN = 64;
 localparam int unsigned MXLEN = XLEN;
 localparam int unsigned SXLEN = XLEN;
 localparam int unsigned UXLEN = XLEN;
 
+///////////////////////////////////////////////////////////////////////////////
+// CSR address
+///////////////////////////////////////////////////////////////////////////////
+
 // access permissions
-typedef enum bit [2-1:0] {
+typedef enum logic [2-1:0] {
   ACCESS_RW0 = 2'b00,  // read/write
   ACCESS_RW1 = 2'b01,  // read/write
   ACCESS_RW2 = 2'b10,  // read/write
   ACCESS_RO3 = 2'b11   // read-only
-} csr_permission_t;
+} csr_perm_t;
 
-/* verilator lint_off LITENDIAN */
+// privilege level
+typedef enum logic [1:0] {
+  LVL_U = 2'b00,  // User/Application
+  LVL_S = 2'b01,  // Supervisor
+  LVL_R = 2'b10,  // Reserved
+  LVL_M = 2'b11   // Machine
+} csr_priv_t;
+
+// CSR address structure
 typedef struct packed {
-  // User Trap Setup
-  logic                   [XLEN-1:0] ustatus      ;  // 0x000       // User status register.
-  // User Floating-Point CSRs
-  logic                   [XLEN-1:0] fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
-  logic                   [XLEN-1:0] frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
-  logic                   [XLEN-1:0] fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
-  // User Trap Setup (continued)
-  logic                   [XLEN-1:0] uie          ;  // 0x004       // User interrupt-enable register.
-  logic                   [XLEN-1:0] utvec        ;  // 0x005       // User trap handler base address.
-  logic [12'h006:12'h03f] [XLEN-1:0] res_006_03f  ;
-  // User Trap Handling
-  logic                   [XLEN-1:0] uscratch     ;  // 0x040       // Scratch register for user trap handlers.
-  logic                   [XLEN-1:0] uepc         ;  // 0x041       // User exception program counter.
-  logic                   [XLEN-1:0] ucause       ;  // 0x042       // User trap cause.
-  logic                   [XLEN-1:0] utval        ;  // 0x043       // User bad address or instruction.
-  logic                   [XLEN-1:0] uip          ;  // 0x044       // User interrupt pending.
-  logic [12'h045:12'h0ff] [XLEN-1:0] res_045_0ff  ;
+   csr_perm_t  perm;
+   csr_priv_t  priv;
+   logic [7:0] addr;
+} csr_addr_t;
 
-  // Supervisor Trap Setup
-  logic                   [XLEN-1:0] sstatus      ;  // 0x100       // Supervisor status register.
-  logic [12'h101:12'h101] [XLEN-1:0] res_101_101  ;
-  logic                   [XLEN-1:0] sedeleg      ;  // 0x102       // Supervisor exception delegation register.
-  logic                   [XLEN-1:0] sideleg      ;  // 0x103       // Supervisor interrupt delegation register.
-  logic                   [XLEN-1:0] sie          ;  // 0x104       // Supervisor interrupt-enable register.
-  logic                   [XLEN-1:0] stvec        ;  // 0x105       // Supervisor trap handler base address.
-  logic                   [XLEN-1:0] scounteren   ;  // 0x106       // Supervisor counter enable.
-  logic [12'h107:12'h13f] [XLEN-1:0] res_107_13f  ;
-  // Supervisor Trap Handling
-  logic                   [XLEN-1:0] sscratch     ;  // 0x140       // Scratch register for supervisor trap handlers.
-  logic                   [XLEN-1:0] sepc         ;  // 0x141       // Supervisor exception program counter.
-  logic                   [XLEN-1:0] scause       ;  // 0x142       // Supervisor trap cause.
-  logic                   [XLEN-1:0] stval        ;  // 0x143       // Supervisor bad address or instruction.
-  logic                   [XLEN-1:0] sip          ;  // 0x144       // Supervisor interrupt pending.
-  logic [12'h145:12'h17f] [XLEN-1:0] res_145_17f  ;
-  // Supervisor Protection and Translation
-  logic                   [XLEN-1:0] satp         ;  // 0x180       // Supervisor address translation and protection.
+///////////////////////////////////////////////////////////////////////////////
+// Access types
+///////////////////////////////////////////////////////////////////////////////
 
-  // Virtual Supervisor Registers
-  logic                   [XLEN-1:0] vsstatus     ;  // 0x200       // Virtual supervisor status register.
-  logic [12'h201:12'h203] [XLEN-1:0] res_201_203  ;
-  logic                   [XLEN-1:0] vsie         ;  // 0x204       // Virtual supervisor interrupt-enable register.
-  logic                   [XLEN-1:0] vstvec       ;  // 0x205       // Virtual supervisor trap handler base address.
-  logic [12'h205:12'h23f] [XLEN-1:0] res_205_23f  ;
-  logic                   [XLEN-1:0] vsscratch    ;  // 0x240       // Virtual supervisor scratch register.
-  logic                   [XLEN-1:0] vsepc        ;  // 0x241       // Virtual supervisor exception program counter.
-  logic                   [XLEN-1:0] vscause      ;  // 0x242       // Virtual supervisor trap cause.
-  logic                   [XLEN-1:0] vstval       ;  // 0x243       // Virtual supervisor bad address or instruction.
-  logic                   [XLEN-1:0] vsip         ;  // 0x244       // Virtual supervisor interrupt pending.
-  logic [12'h245:12'h27f] [XLEN-1:0] res_245_27f  ;
-  logic                   [XLEN-1:0] vsatp        ;  // 0x280       // Virtual supervisor address translation and protection.
-  logic [12'h281:12'h2ff] [XLEN-1:0] res_281_2ff  ;
+// 4-state data type is used to encode access types
+//-----------------------------------------------------------------------------
+// x - (WPRI) Reserved Writes Preserve Values, Reads Ignore Values (should be wired to 0)
+// 1 - (WLRL) Write/Read Only Legal Values
+// ? - (WARL) Write Any Values, Reads Legal Values
+// 0 - non-existent CSR, access shall raise an illegal instruction exception
 
-  // Machine Trap Setup
-  logic                   [XLEN-1:0] mstatus      ;  // 0x300       // Machine status register.
-  logic                   [XLEN-1:0] misa         ;  // 0x301       // ISA and extensions
-  logic                   [XLEN-1:0] medeleg      ;  // 0x302       // Machine exception delegation register.
-  logic                   [XLEN-1:0] mideleg      ;  // 0x303       // Machine interrupt delegation register.
-  logic                   [XLEN-1:0] mie          ;  // 0x304       // Machine interrupt-enable register.
-  logic                   [XLEN-1:0] mtvec        ;  // 0x305       // Machine trap-handler base address.
-  logic                   [XLEN-1:0] mcounteren   ;  // 0x306       // Machine counter enable.
-  logic [12'h307:12'h30f] [XLEN-1:0] res_307_30f  ;
-  logic                   [XLEN-1:0] mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
-  logic [12'h311:12'h33f] [XLEN-1:0] res_311_33f  ;
-  // Machine Counter Setup
-  logic                   [XLEN-1:0] mcountinhibit; // 0x320       // Machine counter-inhibit register.
-  logic [12'h321:12'h322] [XLEN-1:0] res_321_322  ;
-  logic [12'h003:12'h03f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
-  // Machine Trap Handling
-  logic                   [XLEN-1:0] mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
-  logic                   [XLEN-1:0] mepc         ;  // 0x341       // Machine exception program counter.
-  logic                   [XLEN-1:0] mcause       ;  // 0x342       // Machine trap cause.
-  logic                   [XLEN-1:0] mtval        ;  // 0x343       // Machine bad address or instruction.
-  logic                   [XLEN-1:0] mip          ;  // 0x344       // Machine interrupt pending.
-  logic [12'h345:12'h339] [XLEN-1:0] res_345_339  ;
-  logic                   [XLEN-1:0] mtinst       ;  // 0x34A       // Machine trap instruction (transformed).
-  logic                   [XLEN-1:0] mtval2       ;  // 0x34B       // Machine bad guest physical address.
-  logic [12'h34c:12'h39f] [XLEN-1:0] res_34c_39f  ;
-  // Machine Memory Protection
-  logic [12'h000:12'h00f] [XLEN-1:0] pmpcfg       ;  // 0x3A0~0x3AF // Physical memory protection configuration. (the odd ones are RV32 only)
-  logic [12'h000:12'h03f] [XLEN-1:0] pmpaddr      ;  // 0x3B0~0x3EF // Physical memory protection address register.
-
-  // Debug/Trace Registers
-  logic                   [XLEN-1:0] scontext     ;  // 0x5A8       // Supervisor-mode context register.
-
-  // Hypervisor Trap Setup
-  logic                   [XLEN-1:0] hstatus      ;  // 0x600       // Hypervisor status register.
-  logic [12'h601:12'h601] [XLEN-1:0] res_601_601  ;
-  logic                   [XLEN-1:0] hedeleg      ;  // 0x602       // Hypervisor exception delegation register.
-  logic                   [XLEN-1:0] hideleg      ;  // 0x603       // Hypervisor interrupt delegation register.
-  logic                   [XLEN-1:0] hie          ;  // 0x604       // Hypervisor interrupt-enable register.
-  // Hypervisor Counter/Timer Virtualization Registers
-  logic                   [XLEN-1:0] htimedelta   ;  // 0x605       // Delta for VS/VU-mode timer.
-  // Hypervisor Trap Setup (continued)
-  logic                   [XLEN-1:0] hcounteren   ;  // 0x606       // Hypervisor counter enable.
-  logic                   [XLEN-1:0] htvec        ;  // 0x607       // Hypervisor guest external interrupt-enable register.
-  logic [12'h608:12'h13f] [XLEN-1:0] res_608_614  ;
-  // Hypervisor Counter/Timer Virtualization Registers (continued)
-  logic                   [XLEN-1:0] htimedeltah  ;  // 0x615       // Upper 32 bits of htimedelta, RV32 only.
-  logic [12'h616:12'h642] [XLEN-1:0] res_616_642  ;
-
-  // Hypervisor Trap Handling
-  logic                   [XLEN-1:0] htval        ;  // 0x643       // Hypervisor bad guest physical address.
-  logic                   [XLEN-1:0] hip          ;  // 0x644       // Hypervisor interrupt pending.
-  logic                   [XLEN-1:0] hvip         ;  // 0x645       // Hypervisor virtual interrupt pending.
-  logic [12'h646:12'h649] [XLEN-1:0] res_646_649  ;
-  logic                   [XLEN-1:0] htinst       ;  // 0x64A       // Hypervisor trap instruction (transformed).
-  logic [12'h64b:12'h67f] [XLEN-1:0] res_64b_67f  ;
-  // Hypervisor Protection and Translation
-  logic                   [XLEN-1:0] hgatp        ;  // 0x680       // Hypervisor guest address translation and protection.
-  logic [12'h681:12'h6a7] [XLEN-1:0] res_681_6a7  ;
-  // Debug/Trace Registers
-  logic                   [XLEN-1:0] hcontext     ;  // 0x6A8       // Hypervisor-mode context register.
-  logic [12'h6a9:12'h79f] [XLEN-1:0] res_6a9_79f  ;
-
-  // Debug/Trace Registers (shared with Debug Mode)
-  logic                   [XLEN-1:0] tselect      ;  // 0x7A0       // Debug/Trace trigger register select.
-  logic                   [XLEN-1:0] tdata1       ;  // 0x7A1       // First Debug/Trace trigger data register.
-  logic                   [XLEN-1:0] tdata2       ;  // 0x7A2       // Second Debug/Trace trigger data register.
-  logic                   [XLEN-1:0] tdata3       ;  // 0x7A3       // Third Debug/Trace trigger data register.
-  logic [12'h7a4:12'h7a7] [XLEN-1:0] res_7a4_7a7  ;
-  logic                   [XLEN-1:0] mcontext     ;  // 0x7A8       // Machine-mode context register.
-  logic [12'h7a9:12'h7af] [XLEN-1:0] res_7a9_7af  ;
-  // Debug Mode Registers
-  logic                   [XLEN-1:0] dcsr         ;  // 0x7B0       // Debug control and status register.
-  logic                   [XLEN-1:0] dpc          ;  // 0x7B1       // Debug PC.
-  logic                   [XLEN-1:0] dscratch0    ;  // 0x7B2       // Debug scratch register 0.
-  logic                   [XLEN-1:0] dscratch1    ;  // 0x7B3       // Debug scratch register 1.
-  logic [12'h7b4:12'h7ff] [XLEN-1:0] res_7b4_7ff  ;
-  // Machine Counter/Timers
-  logic                   [XLEN-1:0] mcycle       ;  // 0xB00       // Machine cycle counter.
-  logic [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
-  logic                   [XLEN-1:0] minstret     ;  // 0xB02       // Machine instructions-retired counter.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounter  ;  // 0xB03       // Machine performance-monitoring counter.
-  logic [12'hb20:12'hb7f] [XLEN-1:0] res_b20_b7f  ;
-  logic                   [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
-  logic [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
-  logic                   [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB84       // Upper 32 bits of mhpmcounter*, RV32 only.
-  // User Counter/Timers
-  logic                   [XLEN-1:0] cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
-  logic                   [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
-  logic                   [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
-  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03~0xC1F // Performance-monitoring counter. (3~31)
-  logic [12'hc04:12'hc7f] [XLEN-1:0] res_c04_c3f  ;
-  logic                   [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
-  logic                   [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
-  logic                   [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83~0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
-  // Hypervisor Trap Handling (continued)
-  logic                   [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
-  // Machine Information Registers
-  logic                   [XLEN-1:0] mvendorid    ;  // 0xF11       // Vendor ID.
-  logic                   [XLEN-1:0] marchid      ;  // 0xF12       // Architecture ID.
-  logic                   [XLEN-1:0] mimpid       ;  // 0xF13       // Implementation ID.
-  logic                   [XLEN-1:0] mhartid      ;  // 0xF14       // Hardware thread ID.
-} csr_map_t;
-/* verilator lint_on LITENDIAN */
+parameter csr_map_st CSR_MAP_WR = '{
+  // 0x300       // Machine status register.
+  mstatus    : '{
+    SD         = '1,  // 63    // SD=((FS==11) OR (XS==11)))
+    wpri_62_38 = '0,  // 62:38 //
+  // Endianness Control
+    MBE        = '1,  // 37    // M-mode endianness
+    SBE        = '1,  // 36    // S-mode endianness
+  // Base ISA Control
+    SXL        : '1,  // 35:34 // S-mode XLEN
+    UXL        : '1,  // 33:32 // U-mode XLEN
+    wpri_31_23 : '0,  // 31:23 //
+  // Virtualization Support
+    TSR        : '1,  // 22    // Trap SRET
+    TW         : '1,  // 21    // Timeout Wait
+    TVM        : '1,  // 20    // Trap Virtual Memory
+  // Memory Privilige
+    MXR        : '1,  // 19    // Make eXecutable Readable
+    SUM        : '1,  // 18    // permit Supervisor User Memory access
+    MPRV       : '1,  // 17    // Modify PRiVilege
+  // Extension Context Status
+    XS         : '1,  // 16:15 // user-mode extensions context status
+    FS         : '1,  // 14:13 // floating-point context status
+  // Privilege and Global Interrupt-Enable Stack
+    MPP        : '1,  // 12:11 // machine previous privilege mode
+    wpri_10_09 : '0,  // 10: 9 //
+    SPP        : '1,  //  8    // supervisor previous privilege mode
+    MPIE       : '1,  //  7    // machine interrupt-enable active prior to the trap
+    UBE        : '1,  //  6    // U-mode endianness
+    SPIE       : '1,  //  5    // supervisor interrupt-enable active prior to the trap
+    wpri_04_04 : '0,  //  4    //
+    MIE        : '1,  //  3    // machine global interrupt-enable
+    wpri_02_02 : '0,  //  2    //
+    SIE        : '1,  //  1    // supervisor global interrupt-enable
+    wpri_00_00 : '0   //  0    //
+  },
+  // 0x301       // ISA and extensions
+  misa       : '{
+    MXL        : '?,  // Machine XLEN
+    warl_xx_26 : '?,  // Reserved
+    Extensions : {
+      Z : '?,  // 25 // Reserved
+      Y : '?,  // 24 // Reserved
+      X : '?,  // 23 // Non-standard extensions present
+      W : '?,  // 22 // Reserved
+      V : '?,  // 21 // Tentatively reserved for Vector extension
+      U : '?,  // 20 // User mode implemented
+      T : '?,  // 19 // Tentatively reserved for Transactional Memory extension
+      S : '?,  // 18 // Supervisor mode implemented
+      R : '?,  // 17 // Reserved
+      Q : '?,  // 16 // Quad-precision floating-point extension
+      P : '?,  // 15 // Tentatively reserved for Packed-SIMD extension
+      O : '?,  // 14 // Reserved
+      N : '?,  // 13 // User-level interrupts supported
+      M : '?,  // 12 // Integer Multiply/Divide extension
+      L : '?,  // 11 // Tentatively reserved for Decimal Floating-Point extension
+      K : '?,  // 10 // Reserved
+      J : '?,  //  9 // Tentatively reserved for Dynamically Translated Languages extension
+      I : '?,  //  8 // RV32I/64I/128I base ISA
+      H : '?,  //  7 // Hypervisor extension
+      G : '?,  //  6 // Reserved
+      F : '?,  //  5 // Single-precision floating-point extension
+      E : '?,  //  4 // RV32E base ISA
+      D : '?,  //  3 // Double-precision floating-point extension
+      C : '?,  //  2 // Compressed extension
+      B : '?,  //  1 // Tentatively reserved for Bit-Manipulation extension
+      A : '?,  //  0 // Atomic extension
+    }
+  },
+  // 0x304       // Machine interrupt-enable register.
+  mie        : '{
+    Interrupts : '1,  // **:16 //
+    zero_15_12 : '0,  // 15:12 //
+    MEIE       : '1,  // 11    // machine-level external interrupt
+    zero_10_10 : '0,  // 10    //
+    SEIE       : '1,  //  9    // supervisor-level external interrupt
+    zero_08_08 : '0,  //  8    //
+    MTIE       : '1,  //  7    // machine-level timer interrupt
+    zero_06_06 : '0,  //  6    //
+    STIE       : '1,  //  5    // supervisor-level timer interrupt
+    zero_04_04 : '0,  //  4    //
+    MSIE       : '1,  //  3    // machine-level software interrupt
+    zero_02_02 : '0,  //  2    //
+    SSIE       : '1,  //  1    // supervisor-level software interrupt
+    zero_00_00 : '0   //  0    //
+  },
+  // 0x305       // Machine trap-handler base address.
+  mtvec      : '{
+    BASE : '1,  // **: 2 // vector base address
+    MODE : '1   //  1: 0 // vector mode
+  },
+    // 0x306       // Machine counter enable.
+  mcounteren : '{
+    zero : '0,  // **:32 //
+    HPM  : '1,  // 31:03 // hpmcounter[*]
+    IR   : '1,  //  2    // instret
+    TM   : '1,  //  1    // time
+    CY   : '1   //  0    // cycle
+  },
+  // 0x340       // Scratch register for machine trap handlers.
+  mscratch   : '{
+    scratch : '1   //
+  },
+  // 0x341       // Machine exception program counter.
+  mepc       : '{
+    epc  : '1;  // exception program counter
+    zero : '0;  // always '0
+  },
+  // 0x342       // Machine trap cause.
+  mcause     : '{
+    Interrupt      : '1,  // set if the trap was caused by an interrupt
+    Exception_Code : '1   // code identifying the last exception or interrupt
+  },
+  // 0x343       // Machine bad address or instruction.
+  mtval      : '{
+    mtval : '1
+  },
+  // 0x344       // Machine interrupt pending.
+  mip        : '{
+    Interrupts : '1,  // **:16 //
+    zero_15_12 : '0,  // 15:12 //
+    MEIP       : '1,  // 11    // machine-level external interrupt
+    zero_10_10 : '0,  // 10    //
+    SEIP       : '1,  //  9    // supervisor-level external interrupt
+    zero_08_08 : '0,  //  8    //
+    MTIP       : '1,  //  7    // machine-level timer interrupt
+    zero_06_06 : '0,  //  6    //
+    STIP       : '1,  //  5    // supervisor-level timer interrupt
+    zero_04_04 : '0,  //  4    //
+    MSIP       : '1,  //  3    // machine-level software interrupt
+    zero_02_02 : '0,  //  2    //
+    SSIP       : '1,  //  1    // supervisor-level software interrupt
+    zero_00_00 : '0   //  0    //
+  },
+  default    : '0;  
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Machine-Level CSRs
@@ -188,14 +195,6 @@ typedef enum logic [1:0] {
   XLEN_64  = 2'd2,  // XLEN = 64
   XLEN_128 = 2'd3   // XLEN = 128
 } csr_xlen_t;
-
-// privilege level
-typedef enum logic [1:0] {
-  PRIV_U = 2'b00,  // User/Application
-  PRIV_S = 2'b01,  // Supervisor
-  PRIV_R = 2'b10,  // Reserved
-  PRIV_M = 2'b11   // Machine
-} csr_priv_t;
 
 // endian mode
 typedef enum logic {
@@ -213,8 +212,8 @@ typedef enum logic [1:0] { // FS meaning // XS Meaning
 
 // Machine ISA Register
 typedef struct packed {
-  csr_xlen_t         MXL;  // Machine XLEN
-  logic [MXLEN-3:26] res;  // Reserved
+  csr_xlen_t         MXL       ;  // Machine XLEN
+  logic [MXLEN-3:26] warl_xx_26;  // Reserved
   struct packed {
     logic Z;  // 25 // Reserved
     logic Y;  // 24 // Reserved
@@ -247,13 +246,14 @@ typedef struct packed {
 
 // Machine Vendor ID Register
 typedef struct packed {
-  logic [32-1:7] Bank;    //
-  logic [   6:0] Offset;  //
+  logic [MXLEN-1:32] zero;    // **:32 //
+  logic    [32-1:07] Bank;    // 31:07 // 
+  logic    [   6:00] Offset;  //
 } csr_mvendorid_t;
 
 // Machine Architecture ID Register
 typedef struct packed {
-  logic [MXLEN-1-1:0] Architecture_ID;  // MSB is '0 for open source projects
+  logic [MXLEN-1-1:0] Architecture_ID;  // MSB is 1'b0 for open source projects
 } csr_marchid_t;
 
 // Machine Implementation ID Register
@@ -406,18 +406,20 @@ typedef logic [MXLEN-1:0] csr_mhpmevent_t;
 
 // Machine Counter-Enable Register
 typedef struct packed {
-  logic [31:03] HPM;  // 31:03 // hpmcounter[*]
-  logic         IR ;  //  2    // instret
-  logic         TM ;  //  1    // time
-  logic         CY ;  //  0    // cycle
+  logic [MXLEN-1:32] zero;  // **:32 //
+  logic      [31:03] HPM ;  // 31:03 // hpmcounter[*]
+  logic              IR  ;  //  2    // instret
+  logic              TM  ;  //  1    // time
+  logic              CY  ;  //  0    // cycle
 } csr_mcounteren_t;
 
 // Machine Counter-Inhibit Register
 typedef struct packed {
-  logic [31:03] HPM;  // 31:03 // hpmcounter[*]
-  logic         IR ;  //  2    // instret
-  logic         zero; //  1    // time (always '0)
-  logic         CY ;  //  0    // cycle
+  logic [MXLEN-1:32] zero;  // **:32 //
+  logic      [31:03] HPM ;  // 31:03 // hpmcounter[*]
+  logic              IR  ;  //  2    // instret
+  logic              zero;  //  1    // time (always 1'b0)
+  logic              CY  ;  //  0    // cycle
 } csr_mcountinhibit_t;
 
 // Machine Scratch Register
@@ -428,20 +430,19 @@ typedef struct packed {
 // Machine Exception Program Counter
 typedef struct packed {
   logic [MXLEN-1:1] epc ;  //
-  logic             zero;  // always '0
+  logic             zero;  // always 1'b0
 } csr_mepc_t;
-// NOTE: if IALIGN=32, then 2 LSB bits are '0
+// NOTE: if IALIGN=32, then 2 LSB bits are 1'b0
 
 // Machine Cause Register
 typedef struct packed {
-  logic             Interrupt;       // set if the trap was caused by an interrupt
+  logic             Interrupt     ;  // set if the trap was caused by an interrupt
   logic [MXLEN-2:0] Exception_Code;  // code identifying the last exception or interrupt
 } csr_mcause_t;
 
 // Machine cause register (mcause) values after trap
 typedef enum csr_mcause_t {
   // Interrupts
-
   CAUSE_RESERVED_0  = {1'b1, (MXLEN-1-6)'(0), 6'd00},  // Reserved
   CAUSE_IRQ_SW_S    = {1'b1, (MXLEN-1-6)'(0), 6'd01},  // Supervisor software interrupt
   CAUSE_RESERVED_2  = {1'b1, (MXLEN-1-6)'(0), 6'd02},  // Reserved
@@ -497,5 +498,178 @@ typedef struct packed {
   logic [] ;  //
 } csr__t;
 */
+///////////////////////////////////////////////////////////////////////////////
+// address map
+///////////////////////////////////////////////////////////////////////////////
+
+/* verilator lint_off LITENDIAN */
+// SCR address map structure
+typedef struct packed {
+  // User Trap Setup
+  logic                   [XLEN-1:0] ustatus      ;  // 0x000       // User status register.
+  // User Floating-Point CSRs
+  logic                   [XLEN-1:0] fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
+  logic                   [XLEN-1:0] frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
+  logic                   [XLEN-1:0] fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
+  // User Trap Setup (continued)
+  logic                   [XLEN-1:0] uie          ;  // 0x004       // User interrupt-enable register.
+  logic                   [XLEN-1:0] utvec        ;  // 0x005       // User trap handler base address.
+  logic [12'h006:12'h03f] [XLEN-1:0] res_006_03f  ;
+  // User Trap Handling
+  logic                   [XLEN-1:0] uscratch     ;  // 0x040       // Scratch register for user trap handlers.
+  logic                   [XLEN-1:0] uepc         ;  // 0x041       // User exception program counter.
+  logic                   [XLEN-1:0] ucause       ;  // 0x042       // User trap cause.
+  logic                   [XLEN-1:0] utval        ;  // 0x043       // User bad address or instruction.
+  logic                   [XLEN-1:0] uip          ;  // 0x044       // User interrupt pending.
+  logic [12'h045:12'h0ff] [XLEN-1:0] res_045_0ff  ;
+
+  // Supervisor Trap Setup
+  logic                   [XLEN-1:0] sstatus      ;  // 0x100       // Supervisor status register.
+  logic [12'h101:12'h101] [XLEN-1:0] res_101_101  ;
+  logic                   [XLEN-1:0] sedeleg      ;  // 0x102       // Supervisor exception delegation register.
+  logic                   [XLEN-1:0] sideleg      ;  // 0x103       // Supervisor interrupt delegation register.
+  logic                   [XLEN-1:0] sie          ;  // 0x104       // Supervisor interrupt-enable register.
+  logic                   [XLEN-1:0] stvec        ;  // 0x105       // Supervisor trap handler base address.
+  logic                   [XLEN-1:0] scounteren   ;  // 0x106       // Supervisor counter enable.
+  logic [12'h107:12'h13f] [XLEN-1:0] res_107_13f  ;
+  // Supervisor Trap Handling
+  logic                   [XLEN-1:0] sscratch     ;  // 0x140       // Scratch register for supervisor trap handlers.
+  logic                   [XLEN-1:0] sepc         ;  // 0x141       // Supervisor exception program counter.
+  logic                   [XLEN-1:0] scause       ;  // 0x142       // Supervisor trap cause.
+  logic                   [XLEN-1:0] stval        ;  // 0x143       // Supervisor bad address or instruction.
+  logic                   [XLEN-1:0] sip          ;  // 0x144       // Supervisor interrupt pending.
+  logic [12'h145:12'h17f] [XLEN-1:0] res_145_17f  ;
+  // Supervisor Protection and Translation
+  logic                   [XLEN-1:0] satp         ;  // 0x180       // Supervisor address translation and protection.
+
+  // Virtual Supervisor Registers
+  logic                   [XLEN-1:0] vsstatus     ;  // 0x200       // Virtual supervisor status register.
+  logic [12'h201:12'h203] [XLEN-1:0] res_201_203  ;
+  logic                   [XLEN-1:0] vsie         ;  // 0x204       // Virtual supervisor interrupt-enable register.
+  logic                   [XLEN-1:0] vstvec       ;  // 0x205       // Virtual supervisor trap handler base address.
+  logic [12'h205:12'h23f] [XLEN-1:0] res_205_23f  ;
+  logic                   [XLEN-1:0] vsscratch    ;  // 0x240       // Virtual supervisor scratch register.
+  logic                   [XLEN-1:0] vsepc        ;  // 0x241       // Virtual supervisor exception program counter.
+  logic                   [XLEN-1:0] vscause      ;  // 0x242       // Virtual supervisor trap cause.
+  logic                   [XLEN-1:0] vstval       ;  // 0x243       // Virtual supervisor bad address or instruction.
+  logic                   [XLEN-1:0] vsip         ;  // 0x244       // Virtual supervisor interrupt pending.
+  logic [12'h245:12'h27f] [XLEN-1:0] res_245_27f  ;
+  logic                   [XLEN-1:0] vsatp        ;  // 0x280       // Virtual supervisor address translation and protection.
+  logic [12'h281:12'h2ff] [XLEN-1:0] res_281_2ff  ;
+
+  // Machine Trap Setup
+  logic csr_mstatus_rv64_t           mstatus      ;  // 0x300       // Machine status register.
+  logic csr_misa_t                   misa         ;  // 0x301       // ISA and extensions
+  logic                   [XLEN-1:0] medeleg      ;  // 0x302       // Machine exception delegation register.
+  logic                   [XLEN-1:0] mideleg      ;  // 0x303       // Machine interrupt delegation register.
+  logic csr_mie_t                    mie          ;  // 0x304       // Machine interrupt-enable register.
+  logic csr_mtvec_t                  mtvec        ;  // 0x305       // Machine trap-handler base address.
+  logic csr_mcounteren_t             mcounteren   ;  // 0x306       // Machine counter enable.
+  logic [12'h307:12'h30f] [XLEN-1:0] res_307_30f  ;
+  logic                   [XLEN-1:0] mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
+  logic [12'h311:12'h33f] [XLEN-1:0] res_311_33f  ;
+  // Machine Counter Setup
+  logic                   [XLEN-1:0] mcountinhibit; // 0x320       // Machine counter-inhibit register.
+  logic [12'h321:12'h322] [XLEN-1:0] res_321_322  ;
+  logic [12'h003:12'h03f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
+  // Machine Trap Handling
+  logic csr_mscratch_t               mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
+  logic csr_mepc_t                   mepc         ;  // 0x341       // Machine exception program counter.
+  logic csr_mcause_t                 mcause       ;  // 0x342       // Machine trap cause.
+  logic csr_mtval_t                  mtval        ;  // 0x343       // Machine bad address or instruction.
+  logic csr_mip_t                    mip          ;  // 0x344       // Machine interrupt pending.
+  logic [12'h345:12'h339] [XLEN-1:0] res_345_339  ;
+  logic                   [XLEN-1:0] mtinst       ;  // 0x34A       // Machine trap instruction (transformed).
+  logic                   [XLEN-1:0] mtval2       ;  // 0x34B       // Machine bad guest physical address.
+  logic [12'h34c:12'h39f] [XLEN-1:0] res_34c_39f  ;
+  // Machine Memory Protection
+  logic [12'h000:12'h00f] [XLEN-1:0] pmpcfg       ;  // 0x3A0~0x3AF // Physical memory protection configuration. (the odd ones are RV32 only)
+  logic [12'h000:12'h03f] [XLEN-1:0] pmpaddr      ;  // 0x3B0~0x3EF // Physical memory protection address register.
+
+  // Debug/Trace Registers
+  logic                   [XLEN-1:0] scontext     ;  // 0x5A8       // Supervisor-mode context register.
+
+  // Hypervisor Trap Setup
+  logic                   [XLEN-1:0] hstatus      ;  // 0x600       // Hypervisor status register.
+  logic [12'h601:12'h601] [XLEN-1:0] res_601_601  ;
+  logic                   [XLEN-1:0] hedeleg      ;  // 0x602       // Hypervisor exception delegation register.
+  logic                   [XLEN-1:0] hideleg      ;  // 0x603       // Hypervisor interrupt delegation register.
+  logic                   [XLEN-1:0] hie          ;  // 0x604       // Hypervisor interrupt-enable register.
+  // Hypervisor Counter/Timer Virtualization Registers
+  logic                   [XLEN-1:0] htimedelta   ;  // 0x605       // Delta for VS/VU-mode timer.
+  // Hypervisor Trap Setup (continued)
+  logic                   [XLEN-1:0] hcounteren   ;  // 0x606       // Hypervisor counter enable.
+  logic                   [XLEN-1:0] htvec        ;  // 0x607       // Hypervisor guest external interrupt-enable register.
+  logic [12'h608:12'h13f] [XLEN-1:0] res_608_614  ;
+  // Hypervisor Counter/Timer Virtualization Registers (continued)
+  logic                   [XLEN-1:0] htimedeltah  ;  // 0x615       // Upper 32 bits of htimedelta, RV32 only.
+  logic [12'h616:12'h642] [XLEN-1:0] res_616_642  ;
+
+  // Hypervisor Trap Handling
+  logic                   [XLEN-1:0] htval        ;  // 0x643       // Hypervisor bad guest physical address.
+  logic                   [XLEN-1:0] hip          ;  // 0x644       // Hypervisor interrupt pending.
+  logic                   [XLEN-1:0] hvip         ;  // 0x645       // Hypervisor virtual interrupt pending.
+  logic [12'h646:12'h649] [XLEN-1:0] res_646_649  ;
+  logic                   [XLEN-1:0] htinst       ;  // 0x64A       // Hypervisor trap instruction (transformed).
+  logic [12'h64b:12'h67f] [XLEN-1:0] res_64b_67f  ;
+  // Hypervisor Protection and Translation
+  logic                   [XLEN-1:0] hgatp        ;  // 0x680       // Hypervisor guest address translation and protection.
+  logic [12'h681:12'h6a7] [XLEN-1:0] res_681_6a7  ;
+  // Debug/Trace Registers
+  logic                   [XLEN-1:0] hcontext     ;  // 0x6A8       // Hypervisor-mode context register.
+  logic [12'h6a9:12'h79f] [XLEN-1:0] res_6a9_79f  ;
+
+  // Debug/Trace Registers (shared with Debug Mode)
+  logic                   [XLEN-1:0] tselect      ;  // 0x7A0       // Debug/Trace trigger register select.
+  logic                   [XLEN-1:0] tdata1       ;  // 0x7A1       // First Debug/Trace trigger data register.
+  logic                   [XLEN-1:0] tdata2       ;  // 0x7A2       // Second Debug/Trace trigger data register.
+  logic                   [XLEN-1:0] tdata3       ;  // 0x7A3       // Third Debug/Trace trigger data register.
+  logic [12'h7a4:12'h7a7] [XLEN-1:0] res_7a4_7a7  ;
+  logic                   [XLEN-1:0] mcontext     ;  // 0x7A8       // Machine-mode context register.
+  logic [12'h7a9:12'h7af] [XLEN-1:0] res_7a9_7af  ;
+  // Debug Mode Registers
+  logic                   [XLEN-1:0] dcsr         ;  // 0x7B0       // Debug control and status register.
+  logic                   [XLEN-1:0] dpc          ;  // 0x7B1       // Debug PC.
+  logic                   [XLEN-1:0] dscratch0    ;  // 0x7B2       // Debug scratch register 0.
+  logic                   [XLEN-1:0] dscratch1    ;  // 0x7B3       // Debug scratch register 1.
+  logic [12'h7b4:12'h7ff] [XLEN-1:0] res_7b4_7ff  ;
+  // Machine Counter/Timers
+  logic                   [XLEN-1:0] mcycle       ;  // 0xB00       // Machine cycle counter.
+  logic [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
+  logic                   [XLEN-1:0] minstret     ;  // 0xB02       // Machine instructions-retired counter.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounter  ;  // 0xB03       // Machine performance-monitoring counter.
+  logic [12'hb20:12'hb7f] [XLEN-1:0] res_b20_b7f  ;
+  logic                   [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
+  logic [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
+  logic                   [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB84       // Upper 32 bits of mhpmcounter*, RV32 only.
+  // User Counter/Timers
+  logic                   [XLEN-1:0] cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
+  logic                   [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
+  logic                   [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
+  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03~0xC1F // Performance-monitoring counter. (3~31)
+  logic [12'hc04:12'hc7f] [XLEN-1:0] res_c04_c3f  ;
+  logic                   [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
+  logic                   [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
+  logic                   [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
+  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83~0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
+  // Hypervisor Trap Handling (continued)
+  logic                   [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
+  // Machine Information Registers
+  logic                   [XLEN-1:0] mvendorid    ;  // 0xF11       // Vendor ID.
+  logic                   [XLEN-1:0] marchid      ;  // 0xF12       // Architecture ID.
+  logic                   [XLEN-1:0] mimpid       ;  // 0xF13       // Implementation ID.
+  logic                   [XLEN-1:0] mhartid      ;  // 0xF14       // Hardware thread ID.
+} csr_map_st;
+/* verilator lint_on LITENDIAN */
+
+// SCR address map array
+typedef logic [2**12-1:0][XLEN-1:0] csr_map_at;
+
+// SCR address map union
+typedef union packed {
+  csr_map_st s;  // structure
+  csr_map_at a;  // array
+} csr_map_ut;
 
 endpackage: riscv_csr_pkg

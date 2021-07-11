@@ -1,0 +1,2 @@
+Distinction between ILL/Reserved/RES/Custom/HINT
+

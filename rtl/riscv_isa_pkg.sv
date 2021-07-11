@@ -18,6 +18,7 @@ typedef struct packed {
 } isa_base_t;
 
 // base enumerations
+// TODO: verilator does not support struct literals inside enumeration definition
 typedef enum isa_base_t {
   //           EWDQ
   RV_32E  = 4'b1100,
@@ -26,7 +27,23 @@ typedef enum isa_base_t {
   RV_128I = 4'b0001
 } isa_base_et;
 
-// standard extensions
+// privilege mode support (onehot)
+typedef struct packed {
+  bit M;  // Machine
+  bit R;  // Reserved
+  bit S;  // Supervisor
+  bit U;  // User/Application
+} isa_priv_t;
+
+// privilege mode support
+typedef enum isa_priv_t {
+  MODES_NONE = 4'b0000, // no privileged modes are supported
+  MODES_M    = 4'b1000,  // Simple embedded systems
+  MODES_MU   = 4'b1001,  // Secure embedded systems
+  MODES_MSU  = 4'b1011   // Systems running Unix-like operating systems
+} isa_priv_et;
+
+// standard extensions (onehot)
 typedef struct packed {
   bit M       ;  // integer multiplication and division
   bit A       ;  // atomic instructions
@@ -76,18 +93,20 @@ typedef enum isa_ext_t {
   RV_NONE     = 19'b0000_00_00000000000_00   // no standard extensions
 } isa_ext_et;
 
+// ISA specification configuration
+// TODO: change when Verilator supports unpacked structures
 typedef struct packed {
   isa_base_t base;
   isa_ext_t  ext;
-} isa_t;
+} isa_spec_t;
 
 // enumerations for common and individual configurations
 // TODO: verilator does not support struct literals inside enumeration definition
-typedef enum isa_t {
-  RV32E   = {RV_32E , RV_NONE},
-  RV32I   = {RV_32I , RV_NONE},
-  RV64I   = {RV_64I , RV_NONE},
-  RV128I  = {RV_128I, RV_NONE},
+typedef enum isa_spec_t {
+  RV32E   = {RV_32E , RV_NONE    },
+  RV32I   = {RV_32I , RV_NONE    },
+  RV64I   = {RV_64I , RV_NONE    },
+  RV128I  = {RV_128I, RV_NONE    },
   RV32EC  = {RV_32E ,        RV_C},
   RV32IC  = {RV_32I ,        RV_C},
   RV64IC  = {RV_64I ,        RV_C},
@@ -101,7 +120,14 @@ typedef enum isa_t {
   RV32GC  = {RV_32I , RV_G | RV_C},
   RV64GC  = {RV_64I , RV_G | RV_C},
   RV128GC = {RV_128I, RV_G | RV_C}
-} isa_et;
+} isa_spec_et;
+
+// ISA configuration
+// TODO: change when Verilator supports unpacked structures
+typedef struct packed {
+  isa_spec_t spec;
+  isa_priv_t priv;
+} isa_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // generic size type (based on AMBA statndard encoding)
@@ -448,15 +474,16 @@ endfunction: gpr16
 ///////////////////////////////////////////////////////////////////////////////
 
 // PC multiplexer
-typedef enum logic [2-1:0] {
-  PC_PCI = 2'b00,  // PC increnent address (PC + opsiz)
-  PC_BRN = 2'b01,  // branch address (PC + immediate)
-  PC_JMP = 2'b11,  // jump address
-  PC_EPC = 2'b10   // EPC value from CSR
+typedef enum logic [3-1:0] {
+  PC_PCI = 3'b000,  // PC increnent address (PC + opsiz)
+  PC_BRN = 3'b001,  // branch address (PC + immediate)
+  PC_JMP = 3'b010,  // jump address
+  PC_TRP = 3'b100,  // trap address
+  PC_EPC = 3'b101   // EPC value from CSR
 } pc_t;
 
 // TODO: do this properly
-localparam logic [2-1:0] PC_ILL = PC_PCI;
+localparam logic [3-1:0] PC_ILL = PC_PCI;
 
 // branch type
 typedef op32_b_func3_t br_t;
@@ -687,7 +714,7 @@ op32_frm_t f;  // instruction format
 t = CTL_ILL;
 
 // RV32 I base extension
-if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{ai      , ao     , rt  }, lsu , wb    }
   32'b????_????_????_????_????_????_?011_0111: begin f = T_U; t.ill = STD; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, WB_IMM}; end  // LUI
   32'b????_????_????_????_????_????_?001_0111: begin f = T_U; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_PC_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // AUIPC
@@ -732,7 +759,7 @@ if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
 endcase end
 
 // RV64 I base extension
-if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{ai      , ao     , rt  }, ls   , wb    }
   32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // LD
   32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_WU, WB_MEM}; end  // LWU
@@ -755,7 +782,7 @@ endcase end
 // TODO: encoding is not finalized, the only reference I could find was:
 // https://github.com/0xDeva/ida-cpu-RISC-V/blob/master/risc-v_opcode_map.txt
 // RV128 I base extension
-if (|(isa.base & (RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{ai      , ao     , rt  }, ls   , wb    }
 //32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // LQ
   32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DU, WB_MEM}; end  // LDU
@@ -773,7 +800,7 @@ if (|(isa.base & (RV_128I))) begin priority casez (op)
 endcase end
 
 // RV32 M standard extension
-if (|(isa.base & (RV_32I | RV_64I | RV_128I)) & isa.ext.M) begin priority casez (op)
+if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I)) & isa.spec.ext.M) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br,alu, lsu , wb    }         {   op,   s12, rt   , en}
   32'b0000_001?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, WB_MUL}; t.m = '{M_MUL, 2'b11, R_X , '1}; end  // MUL
   32'b0000_001?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b11, R_X , '1}; end  // MULH
@@ -787,7 +814,7 @@ if (|(isa.base & (RV_32I | RV_64I | RV_128I)) & isa.ext.M) begin priority casez 
 endcase end
 
 // RV64 M standard extension
-if (|(isa.base & (RV_64I | RV_128I)) & isa.ext.M) begin priority casez (op)
+if (|(isa.spec.base & (RV_64I | RV_128I)) & isa.spec.ext.M) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br,alu, lsu , wb    }         {   op,   s12, rt   , en}
   32'b0000_001?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, WB_MUL}; t.m = '{M_MUL, 2'b11, R_SW, '1}; end  // MULW
   32'b0000_001?_????_????_?100_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, WB_MUL}; t.m = '{M_DIV, 2'b11, R_SW, '1}; end  // DIVW
@@ -798,14 +825,15 @@ if (|(isa.base & (RV_64I | RV_128I)) & isa.ext.M) begin priority casez (op)
 endcase end
 
 // Zifencei standard extension
-if (isa.ext.Zifencei) begin priority casez (op)
+// TODO: this does nothing
+if (isa.spec.ext.Zifencei) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                ill;     frm;        {pc    , br,alu, lsu , wb    }
   32'b????_????_????_????_?001_????_?000_1111: begin t.ill = STD; f = T_I; t.i = '{PC_PCI, 'x, 'x, LS_X, 'x    }; end  // fence.i
   default                                    : begin                                                              end
 endcase end
 
 // Zicsr standard extension
-if (isa.ext.Zicsr) begin priority casez (op)
+if (isa.spec.ext.Zicsr) begin priority casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb                       ren,       wem,       adr,      imm,     msk,     op
   32'b????_????_????_????_?001_????_?111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, WB_CSR}; t.csr = '{|op.r.rs1,        '1, op[31:20],       'x, CSR_REG, CSR_RW }; end  // CSRRW
   32'b????_????_????_????_?010_????_?111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, WB_CSR}; t.csr = '{       '1, |op.r.rs1, op[31:20],       'x, CSR_REG, CSR_SET}; end  // CSRRS
@@ -816,18 +844,31 @@ if (isa.ext.Zicsr) begin priority casez (op)
   default                                    : begin                                                                                                                                      end
 endcase end
 
-//// privileged standard extension
-//if (???) begin casez (op)
-//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                frm,   pc    , br  , {ai      , ao     , rt  }, lsu , wb
-//  32'b0000_0000_0000_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // ecall
-//  32'b0000_0000_0001_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // ebreak
-//  32'b0001_0000_0000_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_EPC, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // eret
-//  32'b0001_0000_0010_0000_0000_0000_0111_0011: {frm, t.i} = {T_R, '{PC_PCI, 'x  , {'x      , 'x     , 'x  }, LS_X, 'x    }};  // wfi
-// 32'b1000_0000_0000_0000_0000_0000_0111_0011: dec = '{"sret              ", TYPE_32_0};
-//endcase end
+// privileged mode
+if (isa.priv.M) begin casez (op)
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
+  32'b0000_0000_0000_0000_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_TRP, 'x, 'x, LS_X, 'x}; end  // ecall
+  32'b0000_0000_0001_0000_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_TRP, 'x, 'x, LS_X, 'x}; end  // ebreak
+  32'b0001_0000_0010_0101_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, 'x}; end  // wfi
+  default                                    : begin                                                          end
+endcase end
+
+// Trap-Return Instructions
+if (isa.priv.M) begin casez (op)
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
+  32'b0011_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // mret
+endcase end
+if (isa.priv.S) begin casez (op)
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
+  32'b0001_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // sret
+endcase end
+if (isa.priv.U) begin casez (op)
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
+  32'b0000_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // uret
+endcase end
 
 //// RV32/RV64 Zba standard extension
-//if (|(isa.base & (RV_32I | RV_64I)) & isa.ext.Zba) begin casez (op)
+//if (|(isa.spec.base & (RV_32I | RV_64I)) & isa.spec.ext.Zba) begin casez (op)
 //  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{bi      , bo          , br }, lsu , wb    }
 //  32'b0010_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD   , R_X}, LS_X, WB_BLU}; end  // SH1ADD
 //  32'b0010_000?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD   , R_X}, LS_X, WB_BLU}; end  // SH2ADD
@@ -836,7 +877,7 @@ endcase end
 //endcase end
 //
 //// RV32 Zba standard extension
-//if (|(isa.base & (RV_64I)) & isa.ext.Zba) begin casez (op)
+//if (|(isa.spec.base & (RV_64I)) & isa.spec.ext.Zba) begin casez (op)
 //  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{bi      , bo          , br }, lsu , wb    }
 //  32'b0000_100?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_ADD.UW   , R_X}, LS_X, WB_BLU}; end  // ADD.SW
 //  32'b0010_000?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD.UW, R_X}, LS_X, WB_BLU}; end  // SH1ADD.UW
@@ -884,7 +925,7 @@ struct packed {
 t = CTL_ILL;
 
 // RV32 I base extension
-if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
   16'b0000_0000_0000_0000: begin fi = '{'x    , 'x   }; t.ill = ILL; t.i = '{PC_ILL, 'x  , '{'x      , 'x     , 'x  }, LS_X, 'x    }; end  // illegal instruction
   16'b0000_0000_000?_??00: begin fi = '{T_CIW , 'x   }; t.ill = RES; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI4SPN, nzuimm = 0
@@ -932,7 +973,7 @@ if (|(isa.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1000_0000_0000_0010: begin fi = '{T_CI_J, 'x   }; t.ill = RES; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR, rs1 = 0
   16'b1000_????_?000_0010: begin fi = '{T_CI_J, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR
   16'b1000_????_????_??10: begin fi = '{T_CR_0, 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.MV
-  16'b1001_0000_0000_0010: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.EBREAK // TODO
+  16'b1001_0000_0000_0010: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, 'x    }; end  // C.EBREAK // TODO
   16'b1001_????_?000_0010: begin fi = '{T_CR_J, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JALR
   16'b1001_????_????_??10: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADD
   16'b110?_????_????_??10: begin fi = '{T_CSS , T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_W , 'x    }; end  // C.SWSP
@@ -941,14 +982,14 @@ endcase end
 
 // TODO
 // RV32 F standard extension
-if (|(isa.base & (RV_32I | RV_64I | RV_128I)) & isa.ext.F) begin priority casez (op)
+if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I)) & isa.spec.ext.F) begin priority casez (op)
   16'b011?_????_????_??10: begin fi = '{T_CI, T_C_W}; t.ill = STD; end  // C.FLWSP
   default                : begin                                   end
 endcase end
 
 // TODO
 // RV32 F standard extension
-if (|(isa.base & (RV_64I | RV_128I)) & isa.ext.F) begin priority casez (op)
+if (|(isa.spec.base & (RV_64I | RV_128I)) & isa.spec.ext.F) begin priority casez (op)
   16'b001?_????_????_??00: begin fi = '{T_CL, T_C_D}; ; t.ill = STD; end  // C.FLD
   16'b011?_????_????_??00: begin fi = '{T_CL, T_C_W}; ; t.ill = STD; end  // C.FLW
   16'b101?_????_????_??00: begin fi = '{T_CS, T_C_D}; ; t.ill = STD; end  // C.FSD
@@ -961,7 +1002,7 @@ endcase end
 
 // TODO: all RESERVERD values should be repeated here, since they are overwritten by the RV64 decoder
 // RV64 I base extension
-if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
   16'b011?_????_????_??00: begin fi = '{T_CL  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // C.LD
   16'b111?_????_????_??00: begin fi = '{T_CS  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_D , 'x    }; end  // C.SD
@@ -979,7 +1020,7 @@ if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
 endcase end
 
 // RV128 I base extension
-if (|(isa.base & (RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
 //16'b001?_????_????_??00: begin fi = '{T_CL  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // C.LQ  // TODO: load quad encoding not supported yet
   16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_Q , 'x    }; end  // C.SQ

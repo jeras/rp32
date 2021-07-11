@@ -1,13 +1,19 @@
 import riscv_isa_pkg::*;
+import riscv_csr_pkg::*;
 
 module r5p_core #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C,
-  isa_t        ISA = XLEN==32 ? '{RV_32I , XTEN}
-                   : XLEN==64 ? '{RV_64I , XTEN}
-                              : '{RV_128I, XTEN},
+  // privilige modes
+  isa_priv_t   MODES = MODES_M,
+  // ISA
+  isa_t        ISA = XLEN==32 ? '{'{RV_32I , XTEN}, MODES}
+                   : XLEN==64 ? '{'{RV_64I , XTEN}, MODES}
+                              : '{'{RV_128I, XTEN}, MODES},
+  // privilege implementation details
+  csr_vector_t VEC = MODE_DIRECT,  // mtvec MODE
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
@@ -151,6 +157,7 @@ else if (if_ack & id_vld) begin
     PC_PCI: if_pcn = if_pci;
     PC_BRN: if_pcn = if_tkn ? if_pcb : if_pci;
     PC_JMP: if_pcn = {alu_sum[IAW-1:1], 1'b0};  // TODO: do not use ALU for branches
+    PC_TRP: if_pcn = TRP;
     PC_EPC: if_pcn = csr_epc;
     default: if_pcn = 'x;
   endcase
@@ -175,7 +182,7 @@ assign id_ctl = dec(ISA, id_op32);
 
 // general purpose registers
 r5p_gpr #(
-  .AW      (ISA.base.E ? 4 : 5),
+  .AW      (ISA.spec.base.E ? 4 : 5),
   .XLEN    (XLEN)
 ) gpr (
   // system signals

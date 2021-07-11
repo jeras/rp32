@@ -152,7 +152,7 @@ ctl_t t;
 t = dec16(isa, op);
 
 // RV32 I base extension
-if (|(isa.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
+if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
   16'b0000_0000_0000_0000: disasm16 = $sformatf("ILLEGAL");
   16'b0000_0000_000?_??00: disasm16 = $sformatf("ILLEGAL    RES");  // C.ADDI4SP, nzuimm=0, RES
@@ -200,7 +200,7 @@ if (|(isa.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1000_0000_0000_0010: disasm16 = $sformatf("ILLEGAL    RES");  // C.JR, rs1=0, RES
   16'b1000_????_?000_0010: disasm16 = $sformatf("c.jr       %s", reg_x(t.gpr.a.rs1, abi));
   16'b1000_????_????_??10: disasm16 = $sformatf("c.mv       %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
-  16'b1001_0000_0000_0010: disasm16 = $sformatf("ILLEGAL");  // C.EBREAK // TODO
+  16'b1001_0000_0000_0010: disasm16 = $sformatf("c.break");
   16'b1001_????_?000_0010: disasm16 = $sformatf("c.jalr     %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
   16'b1001_????_????_??10: disasm16 = $sformatf("c.add      %s, %s, %s"     , reg_x(t.gpr.a.rd , abi), reg_x(t.gpr.a.rs1, abi), reg_x(t.gpr.a.rs2, abi));
   16'b110?_????_????_??10: disasm16 = $sformatf("c.swsp     %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
@@ -208,7 +208,7 @@ if (|(isa.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
 endcase end
 
 // RV64 I base extension
-if (|(isa.base & (RV_64I | RV_128I))) begin priority casez (op)
+if (|(isa.spec.base & (RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
   16'b011?_????_????_??00: disasm16 = $sformatf("c.ld       %s, 0x%03x (%s)", reg_x(t.gpr.a.rd , abi), t.imm, reg_x(t.gpr.a.rs1, abi));
   16'b111?_????_????_??00: disasm16 = $sformatf("c.sd       %s, 0x%03x (%s)", reg_x(t.gpr.a.rs2, abi), t.imm, reg_x(t.gpr.a.rs1, abi));
