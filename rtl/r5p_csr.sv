@@ -23,17 +23,18 @@ module r5p_csr #(
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-  mstatus      ;  // 0x300       // Machine status register.
-  misa         ;  // 0x301       // ISA and extensions
-  mie          ;  // 0x304       // Machine interrupt-enable register.
-  mtvec        ;  // 0x305       // Machine trap-handler base address.
-  mcounteren   ;  // 0x306       // Machine counter enable.
-  mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
-  mepc         ;  // 0x341       // Machine exception program counter.
-  mcause       ;  // 0x342       // Machine trap cause.
-  mtval        ;  // 0x343       // Machine bad address or instruction.
-  mip          ;  // 0x344       // Machine interrupt pending.
+//  mstatus      ;  // 0x300       // Machine status register.
+//  misa         ;  // 0x301       // ISA and extensions
+//  mie          ;  // 0x304       // Machine interrupt-enable register.
+//  mtvec        ;  // 0x305       // Machine trap-handler base address.
+//  mcounteren   ;  // 0x306       // Machine counter enable.
+//  mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
+//  mepc         ;  // 0x341       // Machine exception program counter.
+//  mcause       ;  // 0x342       // Machine trap cause.
+//  mtval        ;  // 0x343       // Machine bad address or instruction.
+//  mip          ;  // 0x344       // Machine interrupt pending.
 
+/*
 // reset value
 
 // enable read access
@@ -160,6 +161,8 @@ parameter csr_map_ut CSR_REN_S = '{
 parameter csr_map_ut CSR_WEN = '{
 
 };
+
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // read write access

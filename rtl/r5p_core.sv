@@ -217,6 +217,7 @@ r5p_alu #(
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
   .rd      (alu_rd ),
+  // TODO: fix the following nonsense
   // dedicated output for branch address
   .sum     (alu_sum)
 );
@@ -259,7 +260,7 @@ r5p_csr #(
 ///////////////////////////////////////////////////////////////////////////////
 
 // temprary values
-assign lsu_adr = alu_sum;
+assign lsu_adr = alu_sum;  // TODO: use ALU destination RPG data output
 assign lsu_wdt = gpr_rs2;
 
 // load/store unit

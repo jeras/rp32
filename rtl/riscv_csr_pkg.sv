@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // RISC-V CSR package
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 package riscv_csr_pkg;
 
@@ -36,157 +36,9 @@ typedef struct packed {
    logic [7:0] addr;
 } csr_addr_t;
 
-///////////////////////////////////////////////////////////////////////////////
-// Access types
-///////////////////////////////////////////////////////////////////////////////
-
-// 4-state data type is used to encode access types
-//-----------------------------------------------------------------------------
-// x - (WPRI) Reserved Writes Preserve Values, Reads Ignore Values (should be wired to 0)
-// 1 - (WLRL) Write/Read Only Legal Values
-// ? - (WARL) Write Any Values, Reads Legal Values
-// 0 - non-existent CSR, access shall raise an illegal instruction exception
-
-parameter csr_map_st CSR_MAP_WR = '{
-  // 0x300       // Machine status register.
-  mstatus    : '{
-    SD         = '1,  // 63    // SD=((FS==11) OR (XS==11)))
-    wpri_62_38 = '0,  // 62:38 //
-  // Endianness Control
-    MBE        = '1,  // 37    // M-mode endianness
-    SBE        = '1,  // 36    // S-mode endianness
-  // Base ISA Control
-    SXL        : '1,  // 35:34 // S-mode XLEN
-    UXL        : '1,  // 33:32 // U-mode XLEN
-    wpri_31_23 : '0,  // 31:23 //
-  // Virtualization Support
-    TSR        : '1,  // 22    // Trap SRET
-    TW         : '1,  // 21    // Timeout Wait
-    TVM        : '1,  // 20    // Trap Virtual Memory
-  // Memory Privilige
-    MXR        : '1,  // 19    // Make eXecutable Readable
-    SUM        : '1,  // 18    // permit Supervisor User Memory access
-    MPRV       : '1,  // 17    // Modify PRiVilege
-  // Extension Context Status
-    XS         : '1,  // 16:15 // user-mode extensions context status
-    FS         : '1,  // 14:13 // floating-point context status
-  // Privilege and Global Interrupt-Enable Stack
-    MPP        : '1,  // 12:11 // machine previous privilege mode
-    wpri_10_09 : '0,  // 10: 9 //
-    SPP        : '1,  //  8    // supervisor previous privilege mode
-    MPIE       : '1,  //  7    // machine interrupt-enable active prior to the trap
-    UBE        : '1,  //  6    // U-mode endianness
-    SPIE       : '1,  //  5    // supervisor interrupt-enable active prior to the trap
-    wpri_04_04 : '0,  //  4    //
-    MIE        : '1,  //  3    // machine global interrupt-enable
-    wpri_02_02 : '0,  //  2    //
-    SIE        : '1,  //  1    // supervisor global interrupt-enable
-    wpri_00_00 : '0   //  0    //
-  },
-  // 0x301       // ISA and extensions
-  misa       : '{
-    MXL        : '?,  // Machine XLEN
-    warl_xx_26 : '?,  // Reserved
-    Extensions : {
-      Z : '?,  // 25 // Reserved
-      Y : '?,  // 24 // Reserved
-      X : '?,  // 23 // Non-standard extensions present
-      W : '?,  // 22 // Reserved
-      V : '?,  // 21 // Tentatively reserved for Vector extension
-      U : '?,  // 20 // User mode implemented
-      T : '?,  // 19 // Tentatively reserved for Transactional Memory extension
-      S : '?,  // 18 // Supervisor mode implemented
-      R : '?,  // 17 // Reserved
-      Q : '?,  // 16 // Quad-precision floating-point extension
-      P : '?,  // 15 // Tentatively reserved for Packed-SIMD extension
-      O : '?,  // 14 // Reserved
-      N : '?,  // 13 // User-level interrupts supported
-      M : '?,  // 12 // Integer Multiply/Divide extension
-      L : '?,  // 11 // Tentatively reserved for Decimal Floating-Point extension
-      K : '?,  // 10 // Reserved
-      J : '?,  //  9 // Tentatively reserved for Dynamically Translated Languages extension
-      I : '?,  //  8 // RV32I/64I/128I base ISA
-      H : '?,  //  7 // Hypervisor extension
-      G : '?,  //  6 // Reserved
-      F : '?,  //  5 // Single-precision floating-point extension
-      E : '?,  //  4 // RV32E base ISA
-      D : '?,  //  3 // Double-precision floating-point extension
-      C : '?,  //  2 // Compressed extension
-      B : '?,  //  1 // Tentatively reserved for Bit-Manipulation extension
-      A : '?,  //  0 // Atomic extension
-    }
-  },
-  // 0x304       // Machine interrupt-enable register.
-  mie        : '{
-    Interrupts : '1,  // **:16 //
-    zero_15_12 : '0,  // 15:12 //
-    MEIE       : '1,  // 11    // machine-level external interrupt
-    zero_10_10 : '0,  // 10    //
-    SEIE       : '1,  //  9    // supervisor-level external interrupt
-    zero_08_08 : '0,  //  8    //
-    MTIE       : '1,  //  7    // machine-level timer interrupt
-    zero_06_06 : '0,  //  6    //
-    STIE       : '1,  //  5    // supervisor-level timer interrupt
-    zero_04_04 : '0,  //  4    //
-    MSIE       : '1,  //  3    // machine-level software interrupt
-    zero_02_02 : '0,  //  2    //
-    SSIE       : '1,  //  1    // supervisor-level software interrupt
-    zero_00_00 : '0   //  0    //
-  },
-  // 0x305       // Machine trap-handler base address.
-  mtvec      : '{
-    BASE : '1,  // **: 2 // vector base address
-    MODE : '1   //  1: 0 // vector mode
-  },
-    // 0x306       // Machine counter enable.
-  mcounteren : '{
-    zero : '0,  // **:32 //
-    HPM  : '1,  // 31:03 // hpmcounter[*]
-    IR   : '1,  //  2    // instret
-    TM   : '1,  //  1    // time
-    CY   : '1   //  0    // cycle
-  },
-  // 0x340       // Scratch register for machine trap handlers.
-  mscratch   : '{
-    scratch : '1   //
-  },
-  // 0x341       // Machine exception program counter.
-  mepc       : '{
-    epc  : '1;  // exception program counter
-    zero : '0;  // always '0
-  },
-  // 0x342       // Machine trap cause.
-  mcause     : '{
-    Interrupt      : '1,  // set if the trap was caused by an interrupt
-    Exception_Code : '1   // code identifying the last exception or interrupt
-  },
-  // 0x343       // Machine bad address or instruction.
-  mtval      : '{
-    mtval : '1
-  },
-  // 0x344       // Machine interrupt pending.
-  mip        : '{
-    Interrupts : '1,  // **:16 //
-    zero_15_12 : '0,  // 15:12 //
-    MEIP       : '1,  // 11    // machine-level external interrupt
-    zero_10_10 : '0,  // 10    //
-    SEIP       : '1,  //  9    // supervisor-level external interrupt
-    zero_08_08 : '0,  //  8    //
-    MTIP       : '1,  //  7    // machine-level timer interrupt
-    zero_06_06 : '0,  //  6    //
-    STIP       : '1,  //  5    // supervisor-level timer interrupt
-    zero_04_04 : '0,  //  4    //
-    MSIP       : '1,  //  3    // machine-level software interrupt
-    zero_02_02 : '0,  //  2    //
-    SSIP       : '1,  //  1    // supervisor-level software interrupt
-    zero_00_00 : '0   //  0    //
-  },
-  default    : '0;  
-};
-
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Machine-Level CSRs
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 // XLEN enumeration
 typedef enum logic [1:0] {
@@ -244,10 +96,12 @@ typedef struct packed {
   } Extensions;
 } csr_misa_t;
 
+//function csr_misa_t csr_misa_f isa_t isa
+
 // Machine Vendor ID Register
 typedef struct packed {
   logic [MXLEN-1:32] zero;    // **:32 //
-  logic    [32-1:07] Bank;    // 31:07 // 
+  logic    [32-1:07] Bank;    // 31:07 //
   logic    [   6:00] Offset;  //
 } csr_mvendorid_t;
 
@@ -406,20 +260,20 @@ typedef logic [MXLEN-1:0] csr_mhpmevent_t;
 
 // Machine Counter-Enable Register
 typedef struct packed {
-  logic [MXLEN-1:32] zero;  // **:32 //
-  logic      [31:03] HPM ;  // 31:03 // hpmcounter[*]
-  logic              IR  ;  //  2    // instret
-  logic              TM  ;  //  1    // time
-  logic              CY  ;  //  0    // cycle
+  logic [MXLEN-1:32] zero_63_32;  // **:32 //
+  logic      [31:03] HPM       ;  // 31:03 // hpmcounter[*]
+  logic              IR        ;  //  2    // instret
+  logic              TM        ;  //  1    // time
+  logic              CY        ;  //  0    // cycle
 } csr_mcounteren_t;
 
 // Machine Counter-Inhibit Register
 typedef struct packed {
-  logic [MXLEN-1:32] zero;  // **:32 //
-  logic      [31:03] HPM ;  // 31:03 // hpmcounter[*]
-  logic              IR  ;  //  2    // instret
-  logic              zero;  //  1    // time (always 1'b0)
-  logic              CY  ;  //  0    // cycle
+  logic [MXLEN-1:32] zero_63_32;  // **:32 //
+  logic      [31:03] HPM       ;  // 31:03 // hpmcounter[*]
+  logic              IR        ;  //  2    // instret
+  logic              zero_01_01;  //  1    // time (always 1'b0)
+  logic              CY        ;  //  0    // cycle
 } csr_mcountinhibit_t;
 
 // Machine Scratch Register
@@ -429,8 +283,8 @@ typedef struct packed {
 
 // Machine Exception Program Counter
 typedef struct packed {
-  logic [MXLEN-1:1] epc ;  //
-  logic             zero;  // always 1'b0
+  logic [MXLEN-1:1] epc       ;  //
+  logic             zero_00_00;  // always 1'b0
 } csr_mepc_t;
 // NOTE: if IALIGN=32, then 2 LSB bits are 1'b0
 
@@ -489,15 +343,16 @@ typedef struct packed {
   logic [MXLEN-1:0] mtval;  //
 } csr_mtval_t;
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 /*
-// 
+//
 typedef struct packed {
   logic [] ;  //
 } csr__t;
 */
+
 ///////////////////////////////////////////////////////////////////////////////
 // address map
 ///////////////////////////////////////////////////////////////////////////////
@@ -558,26 +413,26 @@ typedef struct packed {
   logic [12'h281:12'h2ff] [XLEN-1:0] res_281_2ff  ;
 
   // Machine Trap Setup
-  logic csr_mstatus_rv64_t           mstatus      ;  // 0x300       // Machine status register.
-  logic csr_misa_t                   misa         ;  // 0x301       // ISA and extensions
+  csr_mstatus_rv64_t                 mstatus      ;  // 0x300       // Machine status register.
+  csr_misa_t                         misa         ;  // 0x301       // ISA and extensions
   logic                   [XLEN-1:0] medeleg      ;  // 0x302       // Machine exception delegation register.
   logic                   [XLEN-1:0] mideleg      ;  // 0x303       // Machine interrupt delegation register.
-  logic csr_mie_t                    mie          ;  // 0x304       // Machine interrupt-enable register.
-  logic csr_mtvec_t                  mtvec        ;  // 0x305       // Machine trap-handler base address.
-  logic csr_mcounteren_t             mcounteren   ;  // 0x306       // Machine counter enable.
+  csr_mie_t                          mie          ;  // 0x304       // Machine interrupt-enable register.
+  csr_mtvec_t                        mtvec        ;  // 0x305       // Machine trap-handler base address.
+  csr_mcounteren_t                   mcounteren   ;  // 0x306       // Machine counter enable.
   logic [12'h307:12'h30f] [XLEN-1:0] res_307_30f  ;
   logic                   [XLEN-1:0] mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
   logic [12'h311:12'h33f] [XLEN-1:0] res_311_33f  ;
   // Machine Counter Setup
-  logic                   [XLEN-1:0] mcountinhibit; // 0x320       // Machine counter-inhibit register.
+  csr_mcountinhibit_t                mcountinhibit; // 0x320       // Machine counter-inhibit register.
   logic [12'h321:12'h322] [XLEN-1:0] res_321_322  ;
   logic [12'h003:12'h03f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
   // Machine Trap Handling
-  logic csr_mscratch_t               mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
-  logic csr_mepc_t                   mepc         ;  // 0x341       // Machine exception program counter.
-  logic csr_mcause_t                 mcause       ;  // 0x342       // Machine trap cause.
-  logic csr_mtval_t                  mtval        ;  // 0x343       // Machine bad address or instruction.
-  logic csr_mip_t                    mip          ;  // 0x344       // Machine interrupt pending.
+  csr_mscratch_t                     mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
+  csr_mepc_t                         mepc         ;  // 0x341       // Machine exception program counter.
+  csr_mcause_t                       mcause       ;  // 0x342       // Machine trap cause.
+  csr_mtval_t                        mtval        ;  // 0x343       // Machine bad address or instruction.
+  csr_mip_t                          mip          ;  // 0x344       // Machine interrupt pending.
   logic [12'h345:12'h339] [XLEN-1:0] res_345_339  ;
   logic                   [XLEN-1:0] mtinst       ;  // 0x34A       // Machine trap instruction (transformed).
   logic                   [XLEN-1:0] mtval2       ;  // 0x34B       // Machine bad guest physical address.
@@ -671,5 +526,163 @@ typedef union packed {
   csr_map_st s;  // structure
   csr_map_at a;  // array
 } csr_map_ut;
+
+///////////////////////////////////////////////////////////////////////////////
+// Access types
+///////////////////////////////////////////////////////////////////////////////
+
+// 4-state data type is used to encode access types
+`define WPRI 'x  // x - (WPRI) Reserved Writes Preserve Values, Reads Ignore Values (should be wired to 0)
+`define WLRL '1  // 1 - (WLRL) Write/Read Only Legal Values
+`define WARL 'z  // z - (WARL) Write Any Values, Reads Legal Values (?)
+`define WERE '0  // 0 - (WERE) Write Error, Read Error (NOTE: not a neme from the specification)
+                 //            non-existent CSR, access shall raise an illegal instruction exception
+
+parameter csr_map_st CSR_MAP_WR = '{
+  // 0x300       // Machine status register.
+  mstatus    : '{
+    SD         : `WARL,  // 63    // SD=((FS==11) OR (XS==11)))
+    wpri_62_38 : `WPRI,  // 62:38 //
+    // Endianness Control
+    MBE        : `WLRL,  // 37    // M-mode endianness
+    SBE        : `WLRL,  // 36    // S-mode endianness
+    // Base ISA Control
+    SXL        : `WLRL,  // 35:34 // S-mode XLEN
+    UXL        : `WLRL,  // 33:32 // U-mode XLEN
+    wpri_31_23 : `WPRI,  // 31:23 //
+    // Virtualization Support
+    TSR        : `WLRL,  // 22    // Trap SRET
+    TW         : `WLRL,  // 21    // Timeout Wait
+    TVM        : `WLRL,  // 20    // Trap Virtual Memory
+    // Memory Privilige
+    MXR        : `WLRL,  // 19    // Make eXecutable Readable
+    SUM        : `WLRL,  // 18    // permit Supervisor User Memory access
+    MPRV       : `WLRL,  // 17    // Modify PRiVilege
+    // Extension Context Status
+    XS         : `WLRL,  // 16:15 // user-mode extensions context status
+    FS         : `WLRL,  // 14:13 // floating-point context status
+    // Privilege and Global Interrupt-Enable Stack
+    MPP        : `WLRL,  // 12:11 // machine previous privilege mode
+    wpri_10_09 : `WPRI,  // 10: 9 //
+    SPP        : `WLRL,  //  8    // supervisor previous privilege mode
+    MPIE       : `WLRL,  //  7    // machine interrupt-enable active prior to the trap
+    UBE        : `WLRL,  //  6    // U-mode endianness
+    SPIE       : `WLRL,  //  5    // supervisor interrupt-enable active prior to the trap
+    wpri_04_04 : `WPRI,  //  4    //
+    MIE        : `WLRL,  //  3    // machine global interrupt-enable
+    wpri_02_02 : `WPRI,  //  2    //
+    SIE        : `WLRL,  //  1    // supervisor global interrupt-enable
+    wpri_00_00 : `WPRI   //  0    //
+  },
+  // 0x301       // ISA and extensions
+  misa       : '{
+    MXL        : `WARL,  // Machine XLEN
+    warl_xx_26 : `WARL,  // Reserved
+    Extensions : '{
+      Z : `WARL,  // 25 // Reserved
+      Y : `WARL,  // 24 // Reserved
+      X : `WARL,  // 23 // Non-standard extensions present
+      W : `WARL,  // 22 // Reserved
+      V : `WARL,  // 21 // Tentatively reserved for Vector extension
+      U : `WARL,  // 20 // User mode implemented
+      T : `WARL,  // 19 // Tentatively reserved for Transactional Memory extension
+      S : `WARL,  // 18 // Supervisor mode implemented
+      R : `WARL,  // 17 // Reserved
+      Q : `WARL,  // 16 // Quad-precision floating-point extension
+      P : `WARL,  // 15 // Tentatively reserved for Packed-SIMD extension
+      O : `WARL,  // 14 // Reserved
+      N : `WARL,  // 13 // User-level interrupts supported
+      M : `WARL,  // 12 // Integer Multiply/Divide extension
+      L : `WARL,  // 11 // Tentatively reserved for Decimal Floating-Point extension
+      K : `WARL,  // 10 // Reserved
+      J : `WARL,  //  9 // Tentatively reserved for Dynamically Translated Languages extension
+      I : `WARL,  //  8 // RV32I/64I/128I base ISA
+      H : `WARL,  //  7 // Hypervisor extension
+      G : `WARL,  //  6 // Reserved
+      F : `WARL,  //  5 // Single-precision floating-point extension
+      E : `WARL,  //  4 // RV32E base ISA
+      D : `WARL,  //  3 // Double-precision floating-point extension
+      C : `WARL,  //  2 // Compressed extension
+      B : `WARL,  //  1 // Tentatively reserved for Bit-Manipulation extension
+      A : `WARL   //  0 // Atomic extension
+    }
+  },
+  // 0x304       // Machine interrupt-enable register.
+  mie        : '{
+    Interrupts : `WARL,  // **:16 //
+    zero_15_12 : `WARL,  // 15:12 //
+    MEIE       : `WARL,  // 11    // machine-level external interrupt
+    zero_10_10 : `WARL,  // 10    //
+    SEIE       : `WARL,  //  9    // supervisor-level external interrupt
+    zero_08_08 : `WARL,  //  8    //
+    MTIE       : `WARL,  //  7    // machine-level timer interrupt
+    zero_06_06 : `WARL,  //  6    //
+    STIE       : `WARL,  //  5    // supervisor-level timer interrupt
+    zero_04_04 : `WARL,  //  4    //
+    MSIE       : `WARL,  //  3    // machine-level software interrupt
+    zero_02_02 : `WARL,  //  2    //
+    SSIE       : `WARL,  //  1    // supervisor-level software interrupt
+    zero_00_00 : `WARL   //  0    //
+  },
+  // 0x305       // Machine trap-handler base address.
+  mtvec      : '{
+    BASE : `WARL,  // **: 2 // vector base address
+    MODE : `WARL   //  1: 0 // vector mode
+  },
+  // 0x306       // Machine counter enable.
+  mcounteren : '{
+    zero_63_32 : `WPRI,  // **:32 //
+    HPM        : `WARL,  // 31:03 // hpmcounter[*]
+    IR         : `WARL,  //  2    // instret
+    TM         : `WARL,  //  1    // time
+    CY         : `WARL   //  0    // cycle
+  },
+  // 0x320       // Machine counter-inhibit register.
+  mcountinhibit : '{
+    zero_63_32 : `WPRI,  // **:32 //
+    HPM        : `WARL,  // 31:03 // hpmcounter[*]
+    IR         : `WARL,  //  2    // instret
+    zero_01_01 : `WARL,  //  1    // time (always 1'b0)
+    CY         : `WARL   //  0    // cycle
+  },
+  // 0x340       // Scratch register for machine trap handlers.
+  mscratch   : '{
+    scratch : `WLRL   //
+  },
+  // 0x341       // Machine exception program counter.
+  mepc       : '{
+    epc        : `WARL,  // exception program counter
+    zero_00_00 : `WARL   // always '0
+  },
+  // 0x342       // Machine trap cause.
+  mcause     : '{
+    Interrupt      : `WLRL,  // set if the trap was caused by an interrupt
+    Exception_Code : `WLRL   // code identifying the last exception or interrupt
+  },
+  // 0x343       // Machine bad address or instruction.
+  mtval      : '{
+    mtval : `WARL
+  },
+  // 0x344       // Machine interrupt pending.
+  mip        : '{
+    Interrupts : `WARL,  // **:16 //
+    zero_15_12 : `WARL,  // 15:12 //
+    MEIP       : `WARL,  // 11    // machine-level external interrupt
+    zero_10_10 : `WARL,  // 10    //
+    SEIP       : `WARL,  //  9    // supervisor-level external interrupt
+    zero_08_08 : `WARL,  //  8    //
+    MTIP       : `WARL,  //  7    // machine-level timer interrupt
+    zero_06_06 : `WARL,  //  6    //
+    STIP       : `WARL,  //  5    // supervisor-level timer interrupt
+    zero_04_04 : `WARL,  //  4    //
+    MSIP       : `WARL,  //  3    // machine-level software interrupt
+    zero_02_02 : `WARL,  //  2    //
+    SSIP       : `WARL,  //  1    // supervisor-level software interrupt
+    zero_00_00 : `WARL   //  0    //
+  },
+  /* verilator lint_off WIDTHCONCAT */
+  default    : '0
+  /* verilator lint_on WIDTHCONCAT */
+};
 
 endpackage: riscv_csr_pkg
