@@ -4,6 +4,8 @@
 
 package riscv_csr_pkg;
 
+import riscv_isa_pkg::*;
+
 localparam int unsigned  XLEN = 64;
 localparam int unsigned MXLEN = XLEN;
 localparam int unsigned SXLEN = XLEN;
@@ -96,7 +98,45 @@ typedef struct packed {
   } Extensions;
 } csr_misa_t;
 
-//function csr_misa_t csr_misa_f isa_t isa
+function csr_misa_t csr_misa_f (isa_t isa);
+  // base ISA
+  case (isa.spec.base)
+    RV_32E : csr_misa_f.MXL = XLEN_32;
+    RV_32I : csr_misa_f.MXL = XLEN_32;
+    RV_64I : csr_misa_f.MXL = XLEN_64;
+    RV_128I: csr_misa_f.MXL = XLEN_128;
+    default: csr_misa_f.MXL = XLEN_RES;
+  endcase
+  // extensions
+  begin
+  //csr_misa_f.Extensions.Z = isa.spec.ext.Z;
+  //csr_misa_f.Extensions.Y = isa.spec.ext.Y;
+  //csr_misa_f.Extensions.X = isa.spec.ext.X;
+  //csr_misa_f.Extensions.W = isa.spec.ext.W;
+    csr_misa_f.Extensions.V = isa.spec.ext.V;
+    csr_misa_f.Extensions.U = isa.priv.U;
+    csr_misa_f.Extensions.T = isa.spec.ext.T;
+    csr_misa_f.Extensions.S = isa.spec.ext.S;
+  //csr_misa_f.Extensions.R = isa.spec.ext.R;
+    csr_misa_f.Extensions.Q = isa.spec.ext.Q;
+    csr_misa_f.Extensions.P = isa.spec.ext.P;
+  //csr_misa_f.Extensions.O = isa.spec.ext.O;
+    csr_misa_f.Extensions.N = isa.spec.ext.N;
+    csr_misa_f.Extensions.M = isa.spec.ext.M;
+    csr_misa_f.Extensions.L = isa.spec.ext.L;
+  //csr_misa_f.Extensions.K = isa.spec.ext.K;
+    csr_misa_f.Extensions.J = isa.spec.ext.J;
+    csr_misa_f.Extensions.I = '1;
+    csr_misa_f.Extensions.H = isa.spec.ext.H;
+  //csr_misa_f.Extensions.G = isa.spec.ext.G;
+    csr_misa_f.Extensions.F = isa.spec.ext.F;
+    csr_misa_f.Extensions.E = isa.spec.base.E;
+    csr_misa_f.Extensions.D = isa.spec.ext.D;
+    csr_misa_f.Extensions.C = isa.spec.ext.C;
+    csr_misa_f.Extensions.B = isa.spec.ext.B;
+    csr_misa_f.Extensions.A = isa.spec.ext.A;
+  end
+endfunction: csr_misa_f
 
 // Machine Vendor ID Register
 typedef struct packed {
