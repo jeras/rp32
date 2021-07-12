@@ -52,9 +52,11 @@ module r5p_core #(
 logic            if_run;  // running status
 logic            if_tkn;  // taken
 logic  [IAW-1:0] if_pc;   // program counter
-logic  [IAW-1:0] if_pci;  // program counter incrementing adder
-logic  [IAW-1:0] if_pcb;  // program counter branch adder
 logic  [IAW-1:0] if_pcn;  // program counter next
+logic  [IAW-1:0] if_pca;  // program counter addend
+logic  [IAW-1:0] if_pcs;  // program counter sum
+//logic  [IAW-1:0] if_pci;  // program counter incrementing adder
+//logic  [IAW-1:0] if_pcb;  // program counter branch adder
 logic            stall;
 
 // instruction decode
@@ -70,7 +72,6 @@ logic [XLEN-1:0] gpr_rd ;  // register destination
 
 // ALU
 logic [XLEN-1:0] alu_rd ;  // register destination
-logic [XLEN-1:0] alu_sum;  // sum (can be used regardless of ALU commaLENd
 
 // MUL/DIV/REM
 logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
@@ -143,22 +144,29 @@ r5p_br #(
 // 3. a separate branch ALU with explicit [un]signed comparator instead of adder in the main ALU
 
 // program counter incrementing adder
-assign if_pci = if_pc + IAW'(opsiz(id_op16[16-1:0]));
+//assign if_pci = if_pc + IAW'(opsiz(id_op16[16-1:0]));
 
 // branch address adder
 //assign if_pcb = if_pc + IAW'(imm32(id_op32,T_B));
-assign if_pcb = if_pc + IAW'(id_ctl.imm);
+//assign if_pcb = if_pc + IAW'(id_ctl.imm);
+
+// PC addend
+assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm)
+                                                 : IAW'(opsiz(id_op16[16-1:0]));
+
+// PC sum
+assign if_pcs = if_pc + if_pca;
 
 // program counter next
 always_comb
 if (csr_expt)  if_pcn = csr_evec;
 else if (if_ack & id_vld) begin
   case (id_ctl.i.pc)
-    PC_PCI: if_pcn = if_pci;
-    PC_BRN: if_pcn = if_tkn ? if_pcb : if_pci;
-    PC_JMP: if_pcn = {alu_sum[IAW-1:1], 1'b0};  // TODO: do not use ALU for branches
-    PC_TRP: if_pcn = TRP;
-    PC_EPC: if_pcn = csr_epc;
+    PC_PCI,
+    PC_BRN : if_pcn = if_pcs;
+    PC_JMP : if_pcn = {alu_rd[IAW-1:1], 1'b0};
+    PC_TRP : if_pcn = TRP;
+    PC_EPC : if_pcn = csr_epc;
     default: if_pcn = 'x;
   endcase
 end else begin
@@ -216,10 +224,7 @@ r5p_alu #(
   .pc      (XLEN'(if_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
-  .rd      (alu_rd ),
-  // TODO: fix the following nonsense
-  // dedicated output for branch address
-  .sum     (alu_sum)
+  .rd      (alu_rd )
 );
 
 // mul/div/rem unit
@@ -259,8 +264,8 @@ r5p_csr #(
 // load/store
 ///////////////////////////////////////////////////////////////////////////////
 
-// temprary values
-assign lsu_adr = alu_sum;  // TODO: use ALU destination RPG data output
+// intermediate signals
+assign lsu_adr = alu_rd;  // TODO: use ALU destination RPG data output
 assign lsu_wdt = gpr_rs2;
 
 // load/store unit
@@ -301,7 +306,7 @@ always_comb begin
   unique case (id_ctl.i.wb)
     WB_ALU : gpr_rd = alu_rd;             // ALU output
     WB_MEM : gpr_rd = lsu_rdt;            // memory read data
-    WB_PCI : gpr_rd = XLEN'(if_pci);      // PC next
+    WB_PCI : gpr_rd = XLEN'(if_pcs);      // PC increment
     WB_IMM : gpr_rd = XLEN'(id_ctl.imm);  // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
     WB_CSR : gpr_rd = csr_rdt;            // CSR
     WB_MUL : gpr_rd = mul_rd;             // mul/div/rem

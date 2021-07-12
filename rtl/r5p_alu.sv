@@ -17,9 +17,7 @@ module r5p_alu #(
   input  logic [XLEN-1:0] pc ,  // PC
   input  logic [XLEN-1:0] rs1,  // source register 1
   input  logic [XLEN-1:0] rs2,  // source register 2
-  output logic [XLEN-1:0] rd,   // destination register
-  // dedicated output for branch address
-  output logic [XLEN-1:0] sum   // equal
+  output logic [XLEN-1:0] rd    // destination register
 );
 
 // multiplexed inputs
@@ -29,30 +27,32 @@ logic [XLEN-1:0] in2;  // input 2
 // shift ammount
 logic [$clog2(XLEN)-1:0] sa;
 
+// summation
+logic ovf;  // overflow bit
+logic [XLEN-1:0] sum;
+
 // operation result
 logic [XLEN-1:0] val;
 
-logic ovf;  // overflow bit
-
-// ALU input multiplexer
+// ALU inputs
 always_comb begin
-  // RS1
+  // ALU input multiplexer
   unique casez (ctl.ai)
     AI_R1_R2: begin in1 = rs1; in2 = rs2; end
     AI_R1_IM: begin in1 = rs1; in2 = imm; end
     AI_PC_IM: begin in1 = pc ; in2 = imm; end
     default : begin in1 = 'x ; in2 = 'x ; end
   endcase
-
+  // handle inputs for operations with less than XLEN width
   unique casez (ctl.rt)
     R_X    : in1 =                        in1         ;  // XLEN
     R_SW   : in1 = {{XLEN-32{in1[32-1]}}, in1[32-1:0]};  //   signed word
     R_UW   : in1 = {{XLEN-32{1'b0     }}, in1[32-1:0]};  // unsigned word
     default: in1 =                        in1         ;  // XLEN
   endcase
-
 end
 
+// TODO: sum is not primarily for output, use it for adder based instructions
 // TODO: construct proper subtraction condition
 // adder (summation, subtraction)
 //assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
