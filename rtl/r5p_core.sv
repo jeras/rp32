@@ -125,23 +125,44 @@ else begin
   if (id_vld & ~stall) if_pc <= if_pcn;
 end
 
-// branch ALU for checking branch conditions
-r5p_br #(
-  .XLEN    (XLEN)
-) br (
-  // control
-  .ctl     (id_ctl.i.br),
-  // data
-  .rs1     (gpr_rs1),
-  .rs2     (gpr_rs2),
-  // status
-  .tkn     (if_tkn)
-);
+generate
+//if (CFG_BRU) begin
+if (0) begin
+
+  // branch ALU for checking branch conditions
+  r5p_br #(
+    .XLEN    (XLEN)
+  ) br (
+    // control
+    .ctl     (id_ctl.i.br),
+    // data
+    .rs1     (gpr_rs1),
+    .rs2     (gpr_rs2),
+    // status
+    .tkn     (if_tkn)
+  );
+
+end else begin
+
+  always_comb
+  case (id_ctl.i.br) inside
+    BEQ    : if_tkn = ~(|alu_rd);
+    BNE    : if_tkn =  (|alu_rd);
+    BLT    : if_tkn =    alu_rd[0];
+    BGE    : if_tkn = ~  alu_rd[0];
+    BLTU   : if_tkn =    alu_rd[0];
+    BGEU   : if_tkn = ~  alu_rd[0];
+    default: if_tkn = 'x;
+  endcase
+
+end
+endgenerate
 
 // TODO: optimization parameters
 // 1. branch immediate direct branch type decoder (kind of obvious, but see if it beats the tool optimizations)
 // 2. separate adder for PC next and branch address, since mux control signal from ALU is late and is best used just before output
 // 3. a separate branch ALU with explicit [un]signed comparator instead of adder in the main ALU
+// 4. split PC adder into 12-bit immediate adder and the rest is an incrementer/decrementer, calculate both increment and decrement in advance.
 
 // program counter incrementing adder
 //assign if_pci = if_pc + IAW'(opsiz(id_op16[16-1:0]));
