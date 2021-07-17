@@ -296,15 +296,42 @@ typedef enum {
 // 32-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
+// ALU/load immediate (I-type)
+function logic signed [12-1:0] imm_i (op32_t op);
+  imm_i = $signed({op.i.imm_11_0});
+endfunction: imm_i
+
+// store immediate (S-type)
+function logic signed [12-1:0] imm_s (op32_t op);
+  imm_s = $signed({op.s.imm_11_5, op.s.imm_4_0});
+endfunction: imm_s
+
+// branch immediate (B-type)
+function logic signed [12+1-1:0] imm_b (op32_t op);
+  imm_b = $signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0});
+endfunction: imm_b
+
+// ALU upper immediate (must be signed for RV64)
+function logic signed [32-1:0] imm_u (op32_t op);
+  imm_u = $signed({op.u.imm_31_12, 12'h000});
+endfunction: imm_u
+
+// ALU jump immediate
+function logic signed [20:0] imm_j (op32_t op);
+  imm_j = $signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0});
+endfunction: imm_j
+// jump addition is done in ALU while the PC adder is used to calculate the link address
+
+// full immediate decoder
 function imm_t imm32 (op32_t op, op32_frm_t frm);
   unique case (frm)
     T_R4   : imm32 = IMM_ILL;
     T_R    : imm32 = IMM_ILL;
-    T_I    : imm32 = imm_t'($signed({op.i.imm_11_0}));                                                  // s11
-    T_S    : imm32 = imm_t'($signed({op.s.imm_11_5, op.s.imm_4_0}));                                    // s11
-    T_B    : imm32 = imm_t'($signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0}));    // s12
-    T_U    : imm32 = imm_t'($signed({op.u.imm_31_12, 12'h000}));                                        // s31
-    T_J    : imm32 = imm_t'($signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0}));  // s20
+    T_I    : imm32 = imm_t'(imm_i(op));  // s11
+    T_S    : imm32 = imm_t'(imm_s(op));  // s11
+    T_B    : imm32 = imm_t'(imm_b(op));  // s12
+    T_U    : imm32 = imm_t'(imm_u(op));  // s31
+    T_J    : imm32 = imm_t'(imm_j(op));  // s20
     default: imm32 = IMM_ILL;
   endcase
 endfunction: imm32
@@ -360,17 +387,18 @@ typedef union packed {
 typedef enum {
   T_CR  ,  // Register
   T_CR_0,  // Register + rs1=x0 (zero)
-  T_CR_J,  // Register + rd=x1 (link)
+  T_CR_L,  // Register + rd=x1 (link)
   T_CI  ,  // Immediate
   T_CI_J,  // Immediate + jump
   T_CI_S,  // Immediate + rs1=x2 (sp)
+  T_CI_L,  // Immediate + rs1=x2 (sp) Load
   T_CSS ,  // Stack-relative Store
   T_CIW ,  // Wide Immediate
   T_CL  ,  // Load
   T_CS  ,  // Store
   T_CA  ,  // Arithmetic
-  T_CB  ,  // Branch
-  T_CB_D,  // Branch + destination register
+  T_CB  ,  // Branch (branches)
+  T_CB_A,  // Branch/Arithmetic (shifts and c.addi)
   T_CJ  ,  // Jump + rd=x0 (zero)
   T_CJ_L   // Jump + rd=x1 (link)
 } op16_frm_t;
@@ -390,54 +418,82 @@ typedef enum {
 // 16-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
+// branch immediate (CB-type)
+function logic signed [8:0] imm_cb (op16_t op);
+  {imm_cb[8], imm_cb[4:3], imm_cb[7:6], imm_cb[2:1], imm_cb[5], imm_cb[0]} = {op.cb.off_12_10, op.cb.off_06_02, 1'b0};
+endfunction: imm_cb
+
+
+// load immediate (I-type)
+//function logic signed [12-1:0] imm_i (op16_t op);
+//  imm_i = $signed({op.i.imm_11_0});
+//endfunction: imm_i
+
+// {zero extended (unsigned), 6-bit, scaled by 4/8/16} load immediate (CI_L-type)
+function logic unsigned [12-1:0] imm_ci_l (op16_t op, op16_imm_t imm);
+  imm_ci_l = '0;
+  case (imm)
+    T_C_W: {imm_ci_l[5], {imm_ci_l[4:2], imm_ci_l[7:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LWSP, C.FLWSP
+    T_C_D: {imm_ci_l[5], {imm_ci_l[4:3], imm_ci_l[8:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LDSP, C.FLDSP
+    T_C_Q: {imm_ci_l[5], {imm_ci_l[4:4], imm_ci_l[9:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LQSP
+    default: imm_ci_l = 'x;
+  endcase
+endfunction: imm_ci_l
+
+// {zero extended (unsigned), 6-bit, scaled by 4/8/16} store immediate (CSS-type)
+function logic unsigned [12-1:0] imm_css (op16_t op, op16_imm_t imm);
+  imm_css = '0;
+  case (imm)
+    T_C_W: {imm_css[5:2], imm_css[7:6]} = op.css.imm_12_07;  // C.SWSP, C.FSWSP
+    T_C_D: {imm_css[5:3], imm_css[8:6]} = op.css.imm_12_07;  // C.SDSP, C.FSDSP
+    T_C_Q: {imm_css[5:4], imm_css[9:6]} = op.css.imm_12_07;  // C.SQSP
+    default: imm_css = 'x;
+  endcase
+endfunction: imm_css
+
+// {zero extended (unsigned), 5-bit, scaled by 4/8/16} store immediate (C[LS]-type)
+function logic unsigned [12-1:0] imm_cls (op16_t op, op16_imm_t imm);
+  imm_cls = '0;
+  case (imm)
+        T_C_W: {imm_cls[5:3], imm_cls[2], imm_cls[  6]} = {op.cl.imm_12_10, op.cl.imm_06_05};
+        T_C_D: {imm_cls[5:3],             imm_cls[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};
+        T_C_Q: {imm_cls[5:4], imm_cls[8], imm_cls[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};
+    default: imm_cls = 'x;
+  endcase
+endfunction: imm_cls
+
+
+// full immediate decoder
 function imm_t imm16 (op16_t i, op16_frm_t sel, op16_imm_t imm);
   imm16 = '0;
   unique case (sel)
-    T_CR,
-    T_CR_0:
-      imm16 = IMM_ILL;
-    T_CR_J:
-      imm16 = '0;
-    T_CI,
-    T_CI_J,
+    T_CR  ,
+    T_CR_0:  imm16 = IMM_ILL;
+    T_CR_L:  imm16 = '0;
+    T_CI  :
+      case (imm)
+        T_C_P:  imm16      = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+        T_C_S:  imm16      = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+      //T_C_U:  imm16      = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
+        T_C_U:  imm16[5:0] =               {i.ci.imm_12_12, i.ci.imm_06_02};    // unsigned immediate
+        default: imm16 = IMM_ILL;
+      endcase
     T_CI_S:
       case (imm)
-        T_C_W: {imm16[5], {imm16[4:2], imm16[7:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
-        T_C_D: {imm16[5], {imm16[4:3], imm16[8:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
-        T_C_Q: {imm16[5], {imm16[4:4], imm16[9:6]}} = {i.ci.imm_12_12, i.ci.imm_06_02};
-        T_C_P:  imm16                   = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
-        T_C_S:  imm16                   = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-      //T_C_U:  imm16                 = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
-        T_C_U:  imm16[5:0]              =             {i.ci.imm_12_12, i.ci.imm_06_02};    // unsigned immediate
         T_C_F: {imm16[31:10], {imm16[9], imm16[4], imm16[6], imm16[8:7], imm16[5]}, imm16[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
         default: imm16 = IMM_ILL;
       endcase
-    T_CSS:
-      case (imm)
-        T_C_W: {imm16[5:2], imm16[7:6]} = i.css.imm_12_07;
-        T_C_D: {imm16[5:3], imm16[8:6]} = i.css.imm_12_07;
-        T_C_Q: {imm16[5:4], imm16[9:6]} = i.css.imm_12_07;
-        default: imm16 = IMM_ILL;
-      endcase
-    T_CIW:
-      {imm16[5:4], imm16[9:6], imm16[2], imm16[3]} = i.ciw.imm_12_05;
-    T_CL,
-    T_CS:
-      case (imm)
-        T_C_W: {imm16[5:3], imm16[2], imm16[  6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
-        T_C_D: {imm16[5:3],           imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
-        T_C_Q: {imm16[5:4], imm16[8], imm16[7:6]} = {i.cl.imm_12_10, i.cl.imm_06_05};
-        default: imm16 = IMM_ILL;
-      endcase
-    T_CA:
-      imm16 = IMM_ILL;
-    T_CB:
-      {imm16[31:9], {imm16[8], imm16[4:3], imm16[7:6], imm16[2:1], imm16[5]}, imm16[0]} = 32'($signed({i.cb.off_12_10, i.cb.off_06_02, 1'b0}));
-    T_CB_D:
-      imm16 = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-    T_CJ,
-    T_CJ_L:
-      {imm16[31:12], {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]}, imm16[0]} = 32'($signed({i.cj.target, 1'b0}));
+    T_CI_J:  imm16 = '0;
+    T_CI_L:  imm16 = imm_t'(imm_ci_l(i, imm));
+    T_CSS :  imm16 = imm_t'(imm_css (i, imm));
+    T_CIW : {imm16[5:4], imm16[9:6], imm16[2], imm16[3]} = i.ciw.imm_12_05;
+    T_CL  ,
+    T_CS  :  imm16 = imm_t'(imm_cls (i, imm));
+    T_CA  :  imm16 = IMM_ILL;
+    T_CB  :  imm16 = imm_t'(imm_cb  (i));
+    T_CB_A:  imm16 = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+    T_CJ  ,
+    T_CJ_L: {imm16[31:12], {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]}, imm16[0]} = 32'($signed({i.cj.target, 1'b0}));
     default: imm16 = IMM_ILL;
   endcase
 endfunction: imm16
@@ -450,17 +506,18 @@ function gpr_t gpr16 (op16_t op, op16_frm_t frm);
   unique case (frm)   // rs1,rs2,rd                        rs1  ,                rs2  ,                rd
     T_CR   :  gpr16 = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
     T_CR_0 :  gpr16 = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CR_J :  gpr16 = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
+    T_CR_L :  gpr16 = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
     T_CI   :  gpr16 = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
     T_CI_J :  gpr16 = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,     'x              ,     'x                  }};
     T_CI_S :  gpr16 = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_L :  gpr16 = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
     T_CSS  :  gpr16 = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,     'x                  }};
     T_CIW  :  gpr16 = '{'{'0, '0, '1}, '{ 5'h02                 ,     'x              , {2'b01, op.ciw.rd_     }}};
     T_CL   :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },     'x              , {2'b01, op.cl .rd_     }}};
     T_CS   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},     'x                  }};
     T_CA   :  gpr16 = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
-    T_CB   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};
-    T_CB_D :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch + destination register
+    T_CB   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};  // Branch
+    T_CB_A :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch/Arithmetic
     T_CJ   :  gpr16 = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'd00                  }};  // C.J   using x0, NOTE: writeback could be disabled
     T_CJ_L :  gpr16 = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'h01                  }};  // C.JAL using x1
     default:  gpr16 = '{'{'0, '0, '0}, '{    'x                 ,     'x              ,     'x                  }};
@@ -487,6 +544,9 @@ localparam logic [3-1:0] PC_ILL = PC_PCI;
 
 // branch type
 typedef op32_b_func3_t br_t;
+
+// branch immediate type {12-bit, 1'b0}
+typedef logic signed [12+1-1:0] br_imm_t;
 
 // ALU input operand multiplexer
 // the encoding is not directly derived from opcode
@@ -676,24 +736,25 @@ typedef enum {
 // control structure
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
-  ill_t      ill;  // illegal
-  gpr_t      gpr;  // GPR control signals
-  imm_t      imm;  // immediate select
-  ctl_i_t    i;    // integer
-  ctl_m_t    m;    // integer multiplication and division
-//ctl_a_t    a;    // atomic
-//ctl_f_t    f;    // single-precision floating-point
-//ctl_d_t    d;    // double-precision floating-point
-//ctl_fnc_t  fnc;  // instruction fence
-  ctl_csr_t  csr;  // CSR operation
-//ctl_q_t    q;    // quad-precision floating-point
-//ctl_l_t    l;    // decimal precision floating-point
-//ctl_b_t    b;    // bit manipulation
-//ctl_j_t    j;    // dynamically translated languages
-//ctl_t_t    t;    // transactional memory
-//ctl_p_t    p;    // packed-SIMD
-//ctl_v_t    v;    // vector operations
-//ctl_n_t    n;    // user-level interrupts
+  ill_t      ill;     // illegal
+  gpr_t      gpr;     // GPR control signals
+  imm_t      imm;     // immediate value
+//  br_imm_t   br_imm;  // branch immediate
+  ctl_i_t    i;       // integer
+  ctl_m_t    m;       // integer multiplication and division
+//ctl_a_t    a;       // atomic
+//ctl_f_t    f;       // single-precision floating-point
+//ctl_d_t    d;       // double-precision floating-point
+//ctl_fnc_t  fnc;     // instruction fence
+  ctl_csr_t  csr;     // CSR operation
+//ctl_q_t    q;       // quad-precision floating-point
+//ctl_l_t    l;       // decimal precision floating-point
+//ctl_b_t    b;       // bit manipulation
+//ctl_j_t    j;       // dynamically translated languages
+//ctl_t_t    t;       // transactional memory
+//ctl_p_t    p;       // packed-SIMD
+//ctl_v_t    v;       // vector operations
+//ctl_n_t    n;       // user-level interrupts
 } ctl_t;
 
 // illegal (idle) value
@@ -894,6 +955,9 @@ if (t.ill != ILL) begin
   t.imm = imm32(op, f);
 end
 
+// immediate values for each unit
+//t.br_imm = 
+
 // assign temporary variable to return value
 dec32 = t;
 
@@ -945,13 +1009,13 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b0110_????_?000_0001: begin fi = '{T_CI  , T_C_P}; t.ill = RES; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, WB_IMM}; end  // C.LUI, nzimm = 0
   16'b011?_0000_0???_??01: begin fi = '{T_CI  , T_C_P}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, WB_IMM}; end  // C.LUI, rd = 0
   16'b011?_????_????_??01: begin fi = '{T_CI  , T_C_P}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, WB_IMM}; end  // C.LUI
-  16'b1001_00??_????_??01: begin fi = '{T_CB_D, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32,    nzuimm[5] = 1
-  16'b1000_00??_?000_0001: begin fi = '{T_CB_D, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64, nzuimm    = 0
-  16'b100?_00??_????_??01: begin fi = '{T_CB_D, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
-  16'b1001_01??_?000_0001: begin fi = '{T_CB_D, 'x   }; t.ill = NSE; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32   , nzuimm[5] = 1
-  16'b1000_01??_?000_0001: begin fi = '{T_CB_D, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64, nzuimm    = 0
-  16'b100?_01??_????_??01: begin fi = '{T_CB_D, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
-  16'b100?_10??_????_??01: begin fi = '{T_CB_D, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_AND , R_X }, LS_X, WB_ALU}; end  // C.ANDI
+  16'b1001_00??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32,    nzuimm[5] = 1
+  16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64, nzuimm    = 0
+  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
+  16'b1001_01??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32   , nzuimm[5] = 1
+  16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64, nzuimm    = 0
+  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
+  16'b100?_10??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_AND , R_X }, LS_X, WB_ALU}; end  // C.ANDI
   16'b1000_11??_?00?_??01: begin fi = '{T_CA  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_ALU}; end  // C.SUB
   16'b1000_11??_?01?_??01: begin fi = '{T_CA  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_XOR , R_X }, LS_X, WB_ALU}; end  // C.XOR
   16'b1000_11??_?10?_??01: begin fi = '{T_CA  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_OR  , R_X }, LS_X, WB_ALU}; end  // C.OR
@@ -968,13 +1032,13 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b0000_????_?000_0010: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI, nzuimm = 0
   16'b000?_0000_0???_??10: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI,             rd = 0
   16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI
-  16'b010?_0000_0???_??10: begin fi = '{T_CI_S, T_C_W}; t.ill = RES; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_MEM}; end  // C.LWSP, rd = 0
-  16'b010?_????_????_??10: begin fi = '{T_CI_S, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_MEM}; end  // C.LWSP
+  16'b010?_0000_0???_??10: begin fi = '{T_CI_L, T_C_W}; t.ill = RES; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_MEM}; end  // C.LWSP, rd = 0
+  16'b010?_????_????_??10: begin fi = '{T_CI_L, T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_MEM}; end  // C.LWSP
   16'b1000_0000_0000_0010: begin fi = '{T_CI_J, 'x   }; t.ill = RES; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR, rs1 = 0
   16'b1000_????_?000_0010: begin fi = '{T_CI_J, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR
   16'b1000_????_????_??10: begin fi = '{T_CR_0, 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.MV
   16'b1001_0000_0000_0010: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, 'x    }; end  // C.EBREAK // TODO
-  16'b1001_????_?000_0010: begin fi = '{T_CR_J, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JALR
+  16'b1001_????_?000_0010: begin fi = '{T_CR_L, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JALR
   16'b1001_????_????_??10: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADD
   16'b110?_????_????_??10: begin fi = '{T_CSS , T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_W , 'x    }; end  // C.SWSP
   default                : begin                                                                                                      end
@@ -1006,15 +1070,15 @@ if (|(isa.spec.base & (RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
   16'b011?_????_????_??00: begin fi = '{T_CL  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // C.LD
   16'b111?_????_????_??00: begin fi = '{T_CS  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_D , 'x    }; end  // C.SD
-  16'b100?_00??_????_??01: begin fi = '{T_CB_D, T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
-  16'b100?_01??_????_??01: begin fi = '{T_CB_D, T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
+  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
+  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
   16'b1001_11??_?00?_??01: begin fi = '{T_CA  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_SUB , R_SW}, LS_X, WB_ALU}; end  // C.SUBW
   16'b1001_11??_?01?_??01: begin fi = '{T_CA  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // C.ADDW
   16'b001?_0000_0???_??01: begin fi = '{T_CI  , T_C_S}; t.ill = RES; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // C.ADDIW, rd = 0
   16'b001?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // C.ADDIW
   16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI
-  16'b011?_0000_0???_??10: begin fi = '{T_CI_S, T_C_D}; t.ill = RES; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // C.LDSP, rd = 0
-  16'b011?_????_????_??10: begin fi = '{T_CI_S, T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // C.LDSP
+  16'b011?_0000_0???_??10: begin fi = '{T_CI_L, T_C_D}; t.ill = RES; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // C.LDSP, rd = 0
+  16'b011?_????_????_??10: begin fi = '{T_CI_L, T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_MEM}; end  // C.LDSP
   16'b111?_????_????_??10: begin fi = '{T_CSS , T_C_D}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_D , 'x    }; end  // C.SDSP
   default                : begin                                                                                                      end
 endcase end
@@ -1024,14 +1088,14 @@ if (|(isa.spec.base & (RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
 //16'b001?_????_????_??00: begin fi = '{T_CL  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // C.LQ  // TODO: load quad encoding not supported yet
   16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_Q , 'x    }; end  // C.SQ
-  16'b1000_00??_?000_0001: begin fi = '{T_CB_D, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
-  16'b100?_00??_????_??01: begin fi = '{T_CB_D, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI
-  16'b1000_01??_?000_0001: begin fi = '{T_CB_D, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI64  // TODO: decode immediate as signed
-  16'b100?_01??_????_??01: begin fi = '{T_CB_D, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI
+  16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
+  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI
+  16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI64  // TODO: decode immediate as signed
+  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI
   16'b0000_????_?000_0010: begin fi = '{T_CI  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI64
   16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI
-//16'b001?_0000_0???_??10: begin fi = '{T_CI_S, T_C_Q}; t.ill = RES; t.i = '{PC_ILL, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // C.LQSP, rd = 0
-//16'b001?_????_????_??10: begin fi = '{T_CI_S, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // C.LQSP  // TODO: load quad encoding not supported yet
+//16'b001?_0000_0???_??10: begin fi = '{T_CI_L, T_C_Q}; t.ill = RES; t.i = '{PC_ILL, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // C.LQSP, rd = 0
+//16'b001?_????_????_??10: begin fi = '{T_CI_L, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_MEM}; end  // C.LQSP  // TODO: load quad encoding not supported yet
   16'b101?_????_????_??10: begin fi = '{T_CSS , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_Q , 'x    }; end  // C.SQSP
   default                : begin                                                                                                      end
 endcase end
