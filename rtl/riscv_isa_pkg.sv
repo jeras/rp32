@@ -455,13 +455,12 @@ endfunction: imm_css
 function logic unsigned [12-1:0] imm_cls (op16_t op, op16_imm_t imm);
   imm_cls = '0;
   case (imm)
-        T_C_W: {imm_cls[5:3], imm_cls[2], imm_cls[  6]} = {op.cl.imm_12_10, op.cl.imm_06_05};
-        T_C_D: {imm_cls[5:3],             imm_cls[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};
-        T_C_Q: {imm_cls[5:4], imm_cls[8], imm_cls[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};
+        T_C_W: {imm_cls[5:3], imm_cls[2], imm_cls[  6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LW, C.FLW
+        T_C_D: {imm_cls[5:3],             imm_cls[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LD, C.FLD
+        T_C_Q: {imm_cls[5:4], imm_cls[8], imm_cls[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LQ
     default: imm_cls = 'x;
   endcase
 endfunction: imm_cls
-
 
 // full immediate decoder
 function imm_t imm16 (op16_t i, op16_frm_t sel, op16_imm_t imm);
@@ -472,18 +471,17 @@ function imm_t imm16 (op16_t i, op16_frm_t sel, op16_imm_t imm);
     T_CR_L:  imm16 = '0;
     T_CI  :
       case (imm)
-        T_C_P:  imm16      = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
-        T_C_S:  imm16      = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-      //T_C_U:  imm16      = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
-        T_C_U:  imm16[5:0] =               {i.ci.imm_12_12, i.ci.imm_06_02};    // unsigned immediate
+        T_C_P:  imm16 = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+        T_C_S:  imm16 = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+        T_C_U:  imm16 = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
         default: imm16 = IMM_ILL;
       endcase
+    T_CI_J:  imm16 = '0;
     T_CI_S:
       case (imm)
         T_C_F: {imm16[31:10], {imm16[9], imm16[4], imm16[6], imm16[8:7], imm16[5]}, imm16[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
         default: imm16 = IMM_ILL;
       endcase
-    T_CI_J:  imm16 = '0;
     T_CI_L:  imm16 = imm_t'(imm_ci_l(i, imm));
     T_CSS :  imm16 = imm_t'(imm_css (i, imm));
     T_CIW : {imm16[5:4], imm16[9:6], imm16[2], imm16[3]} = i.ciw.imm_12_05;
