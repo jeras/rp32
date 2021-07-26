@@ -18,8 +18,8 @@ The default script is using ModelSim (version from Altera/Intel) for simulation.
 ## Verilator
 
 ```Bash
-export SYSTEMC_INCLUDE=/opt/systemc-2.3.2/include/
-export SYSTEMC_LIBDIR=/opt/systemc-2.3.2/lib-linux64/
+export SYSTEMC_INCLUDE=/opt/systemc-2.3.3/include/
+export SYSTEMC_LIBDIR=/opt/systemc-2.3.3/lib-linux64/
 ```
 
 
