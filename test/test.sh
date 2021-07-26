@@ -30,3 +30,4 @@ TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=C make -C 
 TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=M make -C ../submodules/riscv-arch-test verify
 
 #TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=I RISCV_TEST=addi-01 make -C ../submodules/riscv-arch-test verify
+

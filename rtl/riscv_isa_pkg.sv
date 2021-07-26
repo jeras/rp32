@@ -716,6 +716,39 @@ typedef struct packed {
 localparam ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: 'x, imm: 'x, msk: 'x, op: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
+// privileged instructions
+///////////////////////////////////////////////////////////////////////////////
+
+// privilege level
+typedef enum logic [1:0] {
+  LVL_U = 2'b00,  // User/Application
+  LVL_S = 2'b01,  // Supervisor
+  LVL_R = 2'b10,  // Reserved
+  LVL_M = 2'b11   // Machine
+} isa_level_t;
+
+// NOTE: only the *RET privilege level is optimally encoded
+//       the rest tries to allign with *CAUSE register encoding
+typedef enum logic [4-1:0] {
+  PRIV_EBREAK = {2'b00, 2'b11},
+  PRIV_ECALL  = {2'b10, 2'bxx},
+  PRIV_WFI    = {2'b11, 2'bxx},
+  PRIV_URET   = {2'b01, LVL_U},
+  PRIV_SRET   = {2'b01, LVL_S},
+  PRIV_MRET   = {2'b01, LVL_M}
+} isa_priv_typ_t;
+
+// control structure
+// TODO: change when Verilator supports unpacked structures
+typedef struct packed {
+  logic          ena;  // enable
+  isa_priv_typ_t typ;  // type
+} ctl_priv_t;
+
+// illegal (idle) value
+localparam ctl_priv_t CTL_PRIV_ILL = '{ena: 1'b0, typ: 'x};
+
+///////////////////////////////////////////////////////////////////////////////
 // illegal instruction
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -753,10 +786,19 @@ typedef struct packed {
 //ctl_p_t    p;       // packed-SIMD
 //ctl_v_t    v;       // vector operations
 //ctl_n_t    n;       // user-level interrupts
+  ctl_priv_t priv;    // priviliged spec instructions
 } ctl_t;
 
 // illegal (idle) value
-localparam ctl_t CTL_ILL = '{ill: ILL, gpr: GPR_ILL, imm: IMM_ILL, i: CTL_I_ILL, m: CTL_M_ILL, csr: CTL_CSR_ILL};
+localparam ctl_t CTL_ILL = '{
+  ill : ILL,
+  gpr : GPR_ILL,
+  imm : IMM_ILL,
+  i   : CTL_I_ILL,
+  m   : CTL_M_ILL,
+  csr : CTL_CSR_ILL,
+  priv: CTL_PRIV_ILL
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction decoder
@@ -905,25 +947,25 @@ endcase end
 
 // privileged mode
 if (isa.priv.M) begin casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
-  32'b0000_0000_0000_0000_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_TRP, 'x, 'x, LS_X, 'x}; end  // ecall
-  32'b0000_0000_0001_0000_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_TRP, 'x, 'x, LS_X, 'x}; end  // ebreak
-  32'b0001_0000_0010_0101_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x, 'x, LS_X, 'x}; end  // wfi
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;            ena , typ                   pc    , br,alu, lsu , wb   
+  32'b0000_0000_0000_0000_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.priv = '{1'b1, PRIV_ECALL }; t.i = '{PC_TRP, 'x, 'x, LS_X, 'x}; end  // ecall
+  32'b0000_0000_0001_0000_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.priv = '{1'b1, PRIV_EBREAK}; t.i = '{PC_TRP, 'x, 'x, LS_X, 'x}; end  // ebreak
+  32'b0001_0000_0010_0101_0000_0000_0111_0011: begin f = T_R; t.ill = STD; t.priv = '{1'b1, PRIV_WFI   }; t.i = '{PC_PCI, 'x, 'x, LS_X, 'x}; end  // wfi
   default                                    : begin                                                          end
 endcase end
 
 // Trap-Return Instructions
-if (isa.priv.M) begin casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
-  32'b0011_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // mret
+if (isa.priv.U) begin casez (op)
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;            ena , typ                   pc    , br,alu, lsu , wb   
+  32'b0000_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.priv = '{1'b1, PRIV_URET  }; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // uret
 endcase end
 if (isa.priv.S) begin casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
-  32'b0001_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // sret
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;            ena , typ                   pc    , br,alu, lsu , wb   
+  32'b0001_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.priv = '{1'b1, PRIV_SRET  }; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // sret
 endcase end
-if (isa.priv.U) begin casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;         pc    , br,alu, lsu , wb   
-  32'b0000_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // uret
+if (isa.priv.M) begin casez (op)
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;            ena , typ                   pc    , br,alu, lsu , wb   
+  32'b0011_0000_0010_0000_0000_0000_0111_0011: begin f = T_I; t.ill = STD; t.priv = '{1'b1, PRIV_MRET  }; t.i = '{PC_EPC, 'x, 'x, LS_X, 'x}; end  // mret
 endcase end
 
 //// RV32/RV64 Zba standard extension
@@ -1035,10 +1077,16 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1000_0000_0000_0010: begin fi = '{T_CI_J, 'x   }; t.ill = RES; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR, rs1 = 0
   16'b1000_????_?000_0010: begin fi = '{T_CI_J, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR
   16'b1000_????_????_??10: begin fi = '{T_CR_0, 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.MV
-  16'b1001_0000_0000_0010: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{'x      , 'x     , 'x  }, LS_X, 'x    }; end  // C.EBREAK // TODO
   16'b1001_????_?000_0010: begin fi = '{T_CR_L, 'x   }; t.ill = STD; t.i = '{PC_JMP, 'x  , '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JALR
   16'b1001_????_????_??10: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADD
   16'b110?_????_????_??10: begin fi = '{T_CSS , T_C_W}; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_ADD , R_X }, S_W , 'x    }; end  // C.SWSP
+  default                : begin                                                                                                      end
+endcase end
+
+// privileged mode
+if (isa.priv.M) begin casez (op)
+  //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
+  16'b1001_0000_0000_0010: begin fi = '{T_CR  , 'x   }; t.ill = STD; t.i = '{PC_TRP, 'x  , '{'x      , 'x     , 'x  }, LS_X, 'x    }; end  // C.EBREAK // TODO
   default                : begin                                                                                                      end
 endcase end
 

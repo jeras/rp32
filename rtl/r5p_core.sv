@@ -23,8 +23,8 @@ module r5p_core #(
   int unsigned DDW = XLEN,  // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
   // constants ???
-  logic [IAW-1:0] TRP = 'h0000_0000,
-  logic [IAW-1:0] PC0 = 'h0000_0080
+  logic [XLEN-1:0] MTVEC = 'h0000_0000,  // machine trap vector
+  logic [XLEN-1:0] PC0   = 'h0000_0080   // reset vector
 )(
   // system signals
   input  logic                  clk,
@@ -79,10 +79,11 @@ logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
 // CSR
 logic [XLEN-1:0] csr_rdt;  // read  data
 
-// CSR
-logic            csr_expt = '0;
-logic  [IAW-1:0] csr_evec;
-logic  [IAW-1:0] csr_epc;
+// CSR address map union
+csr_map_ut       csr_csr;
+
+logic [XLEN-1:0] csr_tvec;
+logic [XLEN-1:0] csr_epc ;
 
 // load/sore unit temporary signals
 logic [XLEN-1:0] lsu_adr;  // address
@@ -120,7 +121,7 @@ assign stall = (if_req & ~if_ack) | (ls_req & ~ls_ack) | (ls_req & ~ls_wen);
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
-if (rst)  if_pc <= PC0;
+if (rst)  if_pc <= IAW'(PC0);
 else begin
   if (id_vld & ~stall) if_pc <= if_pcn;
 end
@@ -180,14 +181,13 @@ assign if_pcs = if_pc + if_pca;
 
 // program counter next
 always_comb
-if (csr_expt)  if_pcn = csr_evec;
-else if (if_ack & id_vld) begin
+if (if_ack & id_vld) begin
   case (id_ctl.i.pc)
     PC_PCI,
     PC_BRN : if_pcn = if_pcs;
     PC_JMP : if_pcn = {alu_rd[IAW-1:1], 1'b0};
-    PC_TRP : if_pcn = TRP;
-    PC_EPC : if_pcn = csr_epc;
+    PC_TRP : if_pcn = IAW'(csr_tvec);
+    PC_EPC : if_pcn = IAW'(csr_epc);
     default: if_pcn = 'x;
   endcase
 end else begin
@@ -269,7 +269,8 @@ r5p_mdu #(
 
 r5p_csr #(
   .ISA     (ISA),
-  .XLEN    (XLEN)
+  .XLEN    (XLEN),
+  .MTVEC   (MTVEC)
 ) csr (
   // system signals
   .clk     (clk),
@@ -278,7 +279,16 @@ r5p_csr #(
   .ctl     (id_ctl.csr),
   // data input/output
   .wdt     (gpr_rs1),
-  .rdt     (csr_rdt)
+  .rdt     (csr_rdt),
+  // CSR address map union
+  .csr     (csr_csr),
+  // TODO
+  .priv_i  (id_ctl.priv),
+  .trap_i  (id_ctl.i.pc == PC_TRP),
+  .cause_i (CAUSE_EXC_OP_EBREAK),
+  .epc_i   (XLEN'(if_pcs  )),
+  .tvec    (csr_tvec),
+  .epc_o   (csr_epc )
 );
 
 ///////////////////////////////////////////////////////////////////////////////

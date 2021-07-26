@@ -23,18 +23,10 @@ typedef enum logic [2-1:0] {
   ACCESS_RO3 = 2'b11   // read-only
 } csr_perm_t;
 
-// privilege level
-typedef enum logic [1:0] {
-  LVL_U = 2'b00,  // User/Application
-  LVL_S = 2'b01,  // Supervisor
-  LVL_R = 2'b10,  // Reserved
-  LVL_M = 2'b11   // Machine
-} csr_priv_t;
-
 // CSR address structure
 typedef struct packed {
    csr_perm_t  perm;
-   csr_priv_t  priv;
+   isa_level_t level;
    logic [7:0] addr;
 } csr_addr_t;
 
@@ -183,7 +175,7 @@ typedef struct packed {
   csr_context_t XS        ;  // 16:15 // user-mode extensions context status
   csr_context_t FS        ;  // 14:13 // floating-point context status
   // Privilege and Global Interrupt-Enable Stack
-  csr_priv_t    MPP       ;  // 12:11 // machine previous privilege mode
+  isa_level_t   MPP       ;  // 12:11 // machine previous privilege mode
   logic [10:09] wpri_10_09;  // 10: 9 //
   logic         SPP       ;  //  8    // supervisor previous privilege mode
   logic         MPIE      ;  //  7    // machine interrupt-enable active prior to the trap
@@ -212,7 +204,7 @@ typedef struct packed {
   csr_context_t XS        ;  // 16:15 // user-mode extensions context status
   csr_context_t FS        ;  // 14:13 // floating-point context status
   // Privilege and Global Interrupt-Enable Stack
-  csr_priv_t    MPP       ;  // 12:11 // machine previous privilege mode
+  isa_level_t   MPP       ;  // 12:11 // machine previous privilege mode
   logic [10:09] wpri_10_09;  // 10: 9 //
   logic         SPP       ;  //  8    // supervisor previous privilege mode
   logic         MPIE      ;  //  7    // machine interrupt-enable active prior to the trap
@@ -337,45 +329,45 @@ typedef struct packed {
 // Machine cause register (mcause) values after trap
 typedef enum csr_mcause_t {
   // Interrupts
-  CAUSE_RESERVED_0  = {1'b1, (MXLEN-1-6)'(0), 6'd00},  // Reserved
-  CAUSE_IRQ_SW_S    = {1'b1, (MXLEN-1-6)'(0), 6'd01},  // Supervisor software interrupt
-  CAUSE_RESERVED_2  = {1'b1, (MXLEN-1-6)'(0), 6'd02},  // Reserved
-  CAUSE_IRQ_SW_M    = {1'b1, (MXLEN-1-6)'(0), 6'd03},  // Machine software interrupt
-  CAUSE_RESERVED_4  = {1'b1, (MXLEN-1-6)'(0), 6'd04},  // Reserved
-  CAUSE_IRQ_TM_S    = {1'b1, (MXLEN-1-6)'(0), 6'd05},  // Supervisor timer interrupt
-  CAUSE_RESERVED_6  = {1'b1, (MXLEN-1-6)'(0), 6'd06},  // Reserved
-  CAUSE_IRQ_TM_M    = {1'b1, (MXLEN-1-6)'(0), 6'd07},  // Machine timer interrupt
-  CAUSE_RESERVED_8  = {1'b1, (MXLEN-1-6)'(0), 6'd08},  // Reserved
-  CAUSE_IRQ_EXT_S   = {1'b1, (MXLEN-1-6)'(0), 6'd09},  // Supervisor external interrupt
-  CAUSE_RESERVED_10 = {1'b1, (MXLEN-1-6)'(0), 6'd10},  // Reserved
-  CAUSE_IRQ_EXT_M   = {1'b1, (MXLEN-1-6)'(0), 6'd11},  // Machine external interrupt
-  CAUSE_RESERVED_12 = {1'b1, (MXLEN-1-6)'(0), 6'd12},  // Reserved
-  CAUSE_RESERVED_13 = {1'b1, (MXLEN-1-6)'(0), 6'd13},  // Reserved
-  CAUSE_RESERVED_14 = {1'b1, (MXLEN-1-6)'(0), 6'd14},  // Reserved
-  CAUSE_RESERVED_15 = {1'b1, (MXLEN-1-6)'(0), 6'd15},  // Reserved
-//                    {1'b1, (MXLEN-1-6)'(0),  >=16},  // Designated for platform use
+  CAUSE_IRQ_RSV_0            = {1'b1, (MXLEN-1-6)'(0), 6'd00},  // Reserved
+  CAUSE_IRQ_SW_S             = {1'b1, (MXLEN-1-6)'(0), 6'd01},  // Supervisor software interrupt
+  CAUSE_IRQ_RSV_2            = {1'b1, (MXLEN-1-6)'(0), 6'd02},  // Reserved
+  CAUSE_IRQ_SW_M             = {1'b1, (MXLEN-1-6)'(0), 6'd03},  // Machine software interrupt
+  CAUSE_IRQ_RSV_4            = {1'b1, (MXLEN-1-6)'(0), 6'd04},  // Reserved
+  CAUSE_IRQ_TM_S             = {1'b1, (MXLEN-1-6)'(0), 6'd05},  // Supervisor timer interrupt
+  CAUSE_IRQ_RSV_6            = {1'b1, (MXLEN-1-6)'(0), 6'd06},  // Reserved
+  CAUSE_IRQ_TM_M             = {1'b1, (MXLEN-1-6)'(0), 6'd07},  // Machine timer interrupt
+  CAUSE_IRQ_RSV_8            = {1'b1, (MXLEN-1-6)'(0), 6'd08},  // Reserved
+  CAUSE_IRQ_EXT_S            = {1'b1, (MXLEN-1-6)'(0), 6'd09},  // Supervisor external interrupt
+  CAUSE_IRQ_RSV_10           = {1'b1, (MXLEN-1-6)'(0), 6'd10},  // Reserved
+  CAUSE_IRQ_EXT_M            = {1'b1, (MXLEN-1-6)'(0), 6'd11},  // Machine external interrupt
+  CAUSE_IRQ_RSV_12           = {1'b1, (MXLEN-1-6)'(0), 6'd12},  // Reserved
+  CAUSE_IRQ_RSV_13           = {1'b1, (MXLEN-1-6)'(0), 6'd13},  // Reserved
+  CAUSE_IRQ_RSV_14           = {1'b1, (MXLEN-1-6)'(0), 6'd14},  // Reserved
+  CAUSE_IRQ_RSV_15           = {1'b1, (MXLEN-1-6)'(0), 6'd15},  // Reserved
+//                             {1'b1, (MXLEN-1-6)'(0),  >=16},  // Designated for platform use
   // Exceptions
-  CAUSE_EXC_0       = {1'b0, (MXLEN-1-6)'(0), 6'd00},  // Instruction address misaligned
-  CAUSE_EXC_1       = {1'b0, (MXLEN-1-6)'(0), 6'd01},  // Instruction access fault
-  CAUSE_EXC_2       = {1'b0, (MXLEN-1-6)'(0), 6'd02},  // Illegal instruction
-  CAUSE_EXC_3       = {1'b0, (MXLEN-1-6)'(0), 6'd03},  // Breakpoint
-  CAUSE_EXC_4       = {1'b0, (MXLEN-1-6)'(0), 6'd04},  // Load address misaligned
-  CAUSE_EXC_5       = {1'b0, (MXLEN-1-6)'(0), 6'd05},  // Load access fault
-  CAUSE_EXC_6       = {1'b0, (MXLEN-1-6)'(0), 6'd06},  // Store/AMO address misaligned
-  CAUSE_EXC_7       = {1'b0, (MXLEN-1-6)'(0), 6'd07},  // Store/AMO access fault
-  CAUSE_EXC_8       = {1'b0, (MXLEN-1-6)'(0), 6'd08},  // Environment call from U-mode
-  CAUSE_EXC_9       = {1'b0, (MXLEN-1-6)'(0), 6'd09},  // Environment call from S-mode
-  CAUSE_EXC_10      = {1'b0, (MXLEN-1-6)'(0), 6'd10},  // Reserved
-  CAUSE_EXC_11      = {1'b0, (MXLEN-1-6)'(0), 6'd11},  // Environment call from M-mode
-  CAUSE_EXC_12      = {1'b0, (MXLEN-1-6)'(0), 6'd12},  // Instruction page fault
-  CAUSE_EXC_13      = {1'b0, (MXLEN-1-6)'(0), 6'd13},  // Load page fault
-  CAUSE_EXC_14      = {1'b0, (MXLEN-1-6)'(0), 6'd14},  // Reserved
-  CAUSE_EXC_15      = {1'b0, (MXLEN-1-6)'(0), 6'd15}   // Store/AMO page fault
-//CAUSE_EXC_16_23   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
-//CAUSE_EXC_24_31   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Designated for custom use
-//CAUSE_EXC_32_47   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
-//CAUSE_EXC_48_63   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Designated for custom use
-//CAUSE_EXC_**_64   = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
+  CAUSE_EXC_IFU_MISALIGNED   = {1'b0, (MXLEN-1-6)'(0), 6'd00},  // Instruction address misaligned
+  CAUSE_EXC_IFU_FAULT        = {1'b0, (MXLEN-1-6)'(0), 6'd01},  // Instruction access fault
+  CAUSE_EXC_IFU_ILLEGAL      = {1'b0, (MXLEN-1-6)'(0), 6'd02},  // Illegal instruction
+  CAUSE_EXC_OP_EBREAK        = {1'b0, (MXLEN-1-6)'(0), 6'd03},  // Breakpoint
+  CAUSE_EXC_LOAD_MISALIGNED  = {1'b0, (MXLEN-1-6)'(0), 6'd04},  // Load address misaligned
+  CAUSE_EXC_LOAD_FAULT       = {1'b0, (MXLEN-1-6)'(0), 6'd05},  // Load access fault
+  CAUSE_EXC_STORE_MISALIGNED = {1'b0, (MXLEN-1-6)'(0), 6'd06},  // Store/AMO address misaligned
+  CAUSE_EXC_STORE_FAULT      = {1'b0, (MXLEN-1-6)'(0), 6'd07},  // Store/AMO access fault
+  CAUSE_EXC_OP_UCALL         = {1'b0, (MXLEN-1-6)'(0), 6'd08},  // Environment call from U-mode
+  CAUSE_EXC_OP_SCALL         = {1'b0, (MXLEN-1-6)'(0), 6'd09},  // Environment call from S-mode
+  CAUSE_EXC_OP_RSV           = {1'b0, (MXLEN-1-6)'(0), 6'd10},  // Reserved
+  CAUSE_EXC_OP_MCALL         = {1'b0, (MXLEN-1-6)'(0), 6'd11},  // Environment call from M-mode
+  CAUSE_EXC_MMU_INST_FAULT   = {1'b0, (MXLEN-1-6)'(0), 6'd12},  // Instruction page fault
+  CAUSE_EXC_MMU_LOAD_FAULT   = {1'b0, (MXLEN-1-6)'(0), 6'd13},  // Load page fault
+  CAUSE_EXC_MMU_RSV          = {1'b0, (MXLEN-1-6)'(0), 6'd14},  // Reserved
+  CAUSE_EXC_MMU_STORE_FAULT  = {1'b0, (MXLEN-1-6)'(0), 6'd15}   // Store/AMO page fault
+//CAUSE_EXC_16_23            = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
+//CAUSE_EXC_24_31            = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Designated for custom use
+//CAUSE_EXC_32_47            = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
+//CAUSE_EXC_48_63            = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Designated for custom use
+//CAUSE_EXC_**_64            = {1'b0, (MXLEN-1-6)'(0), 6'd??},  // Reserved
 } csr_cause_t;
 
 // Machine Trap Value Register

@@ -6,17 +6,28 @@ import riscv_isa_pkg::ctl_csr_t;
 import riscv_csr_pkg::*;
 
 module r5p_csr #(
-  isa_t        ISA = RV32I,
-  int unsigned XLEN = 32
+  isa_t            ISA = RV32I,
+  int unsigned     XLEN = 32,
+  // constants ???
+  logic [XLEN-1:0] MTVEC = '0  // machine trap vector
 )(
   // system signals
   input  logic            clk,  // clock
   input  logic            rst,  // reset
-  // control structure
+  // CSR control structure
   input  ctl_csr_t        ctl,
-  // data input/output
+  // CSR data input/output
   input  logic [XLEN-1:0] wdt,  // write data
-  output logic [XLEN-1:0] rdt   // read data
+  output logic [XLEN-1:0] rdt,  // read data
+  // CSR address map union
+  output csr_map_ut       csr,
+  // TODO
+  input  ctl_priv_t       priv_i,
+  input  logic            trap_i,
+  input  logic [XLEN-1:0] cause_i,
+  input  logic [XLEN-1:0] epc_i,  // PC increment
+  output logic [XLEN-1:0] epc_o,  // exception program counter
+  output logic [XLEN-1:0] tvec    // trap vector
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,7 +39,7 @@ module r5p_csr #(
 //  mie          ;  // 0x304       // Machine interrupt-enable register.
 //  mtvec        ;  // 0x305       // Machine trap-handler base address.
 //  mcounteren   ;  // 0x306       // Machine counter enable.
-//  mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
+//  mcsratch     ;  // 0x340       // Csratch register for machine trap handlers.
 //  mepc         ;  // 0x341       // Machine exception program counter.
 //  mcause       ;  // 0x342       // Machine trap cause.
 //  mtval        ;  // 0x343       // Machine bad address or instruction.
@@ -133,7 +144,7 @@ parameter csr_map_ut CSR_REN_S = '{
   mcounteren : '{
 
   },
-  mscratch   : '{},  // 0x340       // Scratch register for machine trap handlers.
+  mcsratch   : '{},  // 0x340       // Csratch register for machine trap handlers.
   mepc       : '{},  // 0x341       // Machine exception program counter.
   mcause     : '{},  // 0x342       // Machine trap cause.
   mtval      : '{},  // 0x343       // Machine bad address or instruction.
@@ -172,7 +183,6 @@ parameter csr_map_ut CSR_WEN = '{
 // logic [XLEN-1:0] csr_evec;
 // logic [XLEN-1:0] csr_epc;
 
-csr_map_ut       csr;  // CSR address map union
 logic [XLEN-1:0] msk;  // mask data
 
 // read access
@@ -194,15 +204,42 @@ if (rst) begin
   for (int unsigned i=1; i<2**12; i++) begin: reset
     csr.a[i] <= '{default: '0};
   end: reset
+  // individual registers
+  csr.s.misa  <= csr_misa_f(ISA);
+  csr.s.mtvec <= MTVEC;
 end else begin
-  if (ctl.wen) begin
-    unique casez (ctl.op)
-      CSR_RW : csr.a[ctl.adr] <=        wdt;  // read/write
-      CSR_SET: csr.a[ctl.adr] <= rdt |  msk;  // set   masked bits
-      CSR_CLR: csr.a[ctl.adr] <= rdt & ~msk;  // clear masked bits
-      default: csr.a[ctl.adr] <= 'x;
+  if (trap_i) begin
+    // trap handler
+    unique case (level)
+      LVL_U:  begin  csr.s.uepc <= epc_i;  csr.s.ucause <= cause_i;  end  // User/Application
+      LVL_S:  begin  csr.s.sepc <= epc_i;  csr.s.scause <= cause_i;  end  // Supervisor
+      LVL_R:  begin                                                  end  // Reserved
+      LVL_M:  begin  csr.s.mepc <= epc_i;  csr.s.mcause <= cause_i;  end  // Machine
     endcase
+  end else begin
+    // Zicsr access
+    if (ctl.wen) begin
+      unique casez (ctl.op)
+        CSR_RW : csr.a[ctl.adr] <=        wdt;  // read/write
+        CSR_SET: csr.a[ctl.adr] <= rdt |  msk;  // set   masked bits
+        CSR_CLR: csr.a[ctl.adr] <= rdt & ~msk;  // clear masked bits
+        default: csr.a[ctl.adr] <= 'x;
+      endcase
+    end
   end
+end
+
+// TODO
+isa_level_t level = LVL_M;
+
+always_comb begin
+  unique case (level)
+    LVL_U:  begin  tvec = csr.s.utvec;  epc_o = csr.s.uepc;  end  // User/Application
+    LVL_S:  begin  tvec = csr.s.stvec;  epc_o = csr.s.sepc;  end  // Supervisor
+    LVL_R:  begin  tvec = 'x         ;  epc_o = 'x        ;  end  // Reserved
+    LVL_M:  begin  tvec = csr.s.mtvec;  epc_o = csr.s.mepc;  end  // Machine
+  //default:begin  tvec = 'x         ;  epc_o = 'x        ;  end  // Reserved
+  endcase
 end
 
 endmodule: r5p_csr
