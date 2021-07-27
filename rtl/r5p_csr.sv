@@ -179,10 +179,6 @@ parameter csr_map_ut CSR_WEN = '{
 // read write access
 ///////////////////////////////////////////////////////////////////////////////
 
-// logic            csr_expt;
-// logic [XLEN-1:0] csr_evec;
-// logic [XLEN-1:0] csr_epc;
-
 logic [XLEN-1:0] msk;  // mask data
 
 // read access
