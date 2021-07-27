@@ -72,7 +72,7 @@ typedef enum isa_ext_t {
   RV_M        = 19'b1000_00_00000000000_00,  // integer multiplication and division
   RV_A        = 19'b0100_00_00000000000_00,  // atomic instructions
   RV_F        = 19'b0010_00_00000000000_00,  // single-precision floating-point
-  RV_D        = 19'b0001_00_00000000000_00,  // double-precision floating-point
+  RV_D        = 19'b0011_00_00000000000_00,  // double-precision floating-point (NOTE: also enables F)
   RV_Zicsr    = 19'b0000_10_00000000000_00,  // Control and Status Register (CSR)
   RV_Zifencei = 19'b0000_01_00000000000_00,  // Instruction-Fetch Fence
   RV_Q        = 19'b0000_00_10000000000_00,  // quad-precision floating-point
@@ -89,7 +89,7 @@ typedef enum isa_ext_t {
   RV_Zam      = 19'b0000_00_00000000000_10,  // Misaligned Atomics
   RV_Ztso     = 19'b0000_00_00000000000_01,  // Total Store Ordering
   //                MAFD_ZZ_QLCBJTPVNHS_ZZ
-  RV_G        = 19'b1111_11_00000000000_01,  // general-purpose standard extenssion combination (G = IMAFDZicsrZifencei)
+  RV_G        = 19'b1111_11_00000000000_00,  // general-purpose standard extenssion combination (G = IMAFDZicsrZifencei)
   RV_NONE     = 19'b0000_00_00000000000_00   // no standard extensions
 } isa_ext_et;
 
@@ -684,7 +684,7 @@ localparam ctl_m_t CTL_M_ILL = '{op: 'x, s12: 2'bxx, rt: 'x, en: '0};
 
 // CSR operation type
 typedef enum logic [2-1:0] {
-  CSR_RW  = 2'b0?,  // read/write
+  CSR_RW  = 2'b01,  // read/write
   CSR_SET = 2'b10,  // set
   CSR_CLR = 2'b11   // clear
 } csr_op_t;
