@@ -428,13 +428,14 @@ typedef struct packed {
   logic [12'h145:12'h17f] [XLEN-1:0] res_145_17f  ;
   // Supervisor Protection and Translation
   logic                   [XLEN-1:0] satp         ;  // 0x180       // Supervisor address translation and protection.
+  logic [12'h181:12'h1ff] [XLEN-1:0] res_181_1ff  ;
 
   // Virtual Supervisor Registers
   logic                   [XLEN-1:0] vsstatus     ;  // 0x200       // Virtual supervisor status register.
   logic [12'h201:12'h203] [XLEN-1:0] res_201_203  ;
   logic                   [XLEN-1:0] vsie         ;  // 0x204       // Virtual supervisor interrupt-enable register.
   logic                   [XLEN-1:0] vstvec       ;  // 0x205       // Virtual supervisor trap handler base address.
-  logic [12'h205:12'h23f] [XLEN-1:0] res_205_23f  ;
+  logic [12'h206:12'h23f] [XLEN-1:0] res_206_23f  ;
   logic                   [XLEN-1:0] vsscratch    ;  // 0x240       // Virtual supervisor scratch register.
   logic                   [XLEN-1:0] vsepc        ;  // 0x241       // Virtual supervisor exception program counter.
   logic                   [XLEN-1:0] vscause      ;  // 0x242       // Virtual supervisor trap cause.
@@ -454,27 +455,29 @@ typedef struct packed {
   csr_mcounteren_t                   mcounteren   ;  // 0x306       // Machine counter enable.
   logic [12'h307:12'h30f] [XLEN-1:0] res_307_30f  ;
   logic                   [XLEN-1:0] mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
-  logic [12'h311:12'h33f] [XLEN-1:0] res_311_33f  ;
+  logic [12'h311:12'h31f] [XLEN-1:0] res_311_31f  ;
   // Machine Counter Setup
   csr_mcountinhibit_t                mcountinhibit; // 0x320       // Machine counter-inhibit register.
   logic [12'h321:12'h322] [XLEN-1:0] res_321_322  ;
-  logic [12'h003:12'h03f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
   // Machine Trap Handling
   csr_mscratch_t                     mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
   csr_mepc_t                         mepc         ;  // 0x341       // Machine exception program counter.
   csr_mcause_t                       mcause       ;  // 0x342       // Machine trap cause.
   csr_mtval_t                        mtval        ;  // 0x343       // Machine bad address or instruction.
   csr_mip_t                          mip          ;  // 0x344       // Machine interrupt pending.
-  logic [12'h345:12'h339] [XLEN-1:0] res_345_339  ;
+  logic [12'h345:12'h349] [XLEN-1:0] res_345_349  ;
   logic                   [XLEN-1:0] mtinst       ;  // 0x34A       // Machine trap instruction (transformed).
   logic                   [XLEN-1:0] mtval2       ;  // 0x34B       // Machine bad guest physical address.
   logic [12'h34c:12'h39f] [XLEN-1:0] res_34c_39f  ;
   // Machine Memory Protection
   logic [12'h000:12'h00f] [XLEN-1:0] pmpcfg       ;  // 0x3A0~0x3AF // Physical memory protection configuration. (the odd ones are RV32 only)
   logic [12'h000:12'h03f] [XLEN-1:0] pmpaddr      ;  // 0x3B0~0x3EF // Physical memory protection address register.
+  logic [12'h3f0:12'h5a7] [XLEN-1:0] res_3f0_5a7  ;
 
   // Debug/Trace Registers
   logic                   [XLEN-1:0] scontext     ;  // 0x5A8       // Supervisor-mode context register.
+  logic [12'h5a9:12'h5ff] [XLEN-1:0] res_5a9_5ff  ;
 
   // Hypervisor Trap Setup
   logic                   [XLEN-1:0] hstatus      ;  // 0x600       // Hypervisor status register.
@@ -487,7 +490,7 @@ typedef struct packed {
   // Hypervisor Trap Setup (continued)
   logic                   [XLEN-1:0] hcounteren   ;  // 0x606       // Hypervisor counter enable.
   logic                   [XLEN-1:0] htvec        ;  // 0x607       // Hypervisor guest external interrupt-enable register.
-  logic [12'h608:12'h13f] [XLEN-1:0] res_608_614  ;
+  logic [12'h608:12'h614] [XLEN-1:0] res_608_614  ;
   // Hypervisor Counter/Timer Virtualization Registers (continued)
   logic                   [XLEN-1:0] htimedeltah  ;  // 0x615       // Upper 32 bits of htimedelta, RV32 only.
   logic [12'h616:12'h642] [XLEN-1:0] res_616_642  ;
@@ -519,7 +522,7 @@ typedef struct packed {
   logic                   [XLEN-1:0] dpc          ;  // 0x7B1       // Debug PC.
   logic                   [XLEN-1:0] dscratch0    ;  // 0x7B2       // Debug scratch register 0.
   logic                   [XLEN-1:0] dscratch1    ;  // 0x7B3       // Debug scratch register 1.
-  logic [12'h7b4:12'h7ff] [XLEN-1:0] res_7b4_7ff  ;
+  logic [12'h7b4:12'haff] [XLEN-1:0] res_7b4_aff  ;
   // Machine Counter/Timers
   logic                   [XLEN-1:0] mcycle       ;  // 0xB00       // Machine cycle counter.
   logic [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
@@ -529,29 +532,35 @@ typedef struct packed {
   logic                   [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
   logic [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
   logic                   [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB84       // Upper 32 bits of mhpmcounter*, RV32 only.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB83-0xB9F // Upper 32 bits of mhpmcounter*, RV32 only.
+  logic [12'hba0:12'hbff] [XLEN-1:0] res_ba0_bff  ;
   // User Counter/Timers
   logic                   [XLEN-1:0] cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
   logic                   [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
   logic                   [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
   logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03~0xC1F // Performance-monitoring counter. (3~31)
-  logic [12'hc04:12'hc7f] [XLEN-1:0] res_c04_c3f  ;
+  logic [12'hc20:12'hc7f] [XLEN-1:0] res_c20_c7f  ;
   logic                   [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
   logic                   [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
   logic                   [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
   logic [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83~0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
+  logic [12'hca0:12'he11] [XLEN-1:0] res_ca0_e11  ;
   // Hypervisor Trap Handling (continued)
   logic                   [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
+  logic [12'he13:12'hf10] [XLEN-1:0] res_e13_f10  ;
   // Machine Information Registers
   logic                   [XLEN-1:0] mvendorid    ;  // 0xF11       // Vendor ID.
   logic                   [XLEN-1:0] marchid      ;  // 0xF12       // Architecture ID.
   logic                   [XLEN-1:0] mimpid       ;  // 0xF13       // Implementation ID.
   logic                   [XLEN-1:0] mhartid      ;  // 0xF14       // Hardware thread ID.
+  logic [12'hf15:12'hfff] [XLEN-1:0] res_f15_fff  ;
 } csr_map_st;
 /* verilator lint_on LITENDIAN */
 
 // SCR address map array
-typedef logic [2**12-1:0][XLEN-1:0] csr_map_at;
+/* verilator lint_off LITENDIAN */
+typedef logic [0:2**12-1][XLEN-1:0] csr_map_at;
+/* verilator lint_on LITENDIAN */
 
 // SCR address map union
 typedef union packed {
