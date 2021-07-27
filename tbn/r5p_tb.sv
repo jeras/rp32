@@ -16,7 +16,7 @@ module r5p_tb #(
   int unsigned IAW = 21,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
   // data bus
-  int unsigned DAW = 16,    // data address width
+  int unsigned DAW = 17,    // data address width
   int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8  // data byte en width
 )(
@@ -29,6 +29,7 @@ import riscv_asm_pkg::*;
 
 // clock period counter
 int unsigned cnt;
+bit timeout = 1'b0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // DEBUG
@@ -67,6 +68,9 @@ end
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
+r5p_bus_if #(.AW (IAW), .DW (IDW)) bus_if (.clk (clk), .rst (rst));
+r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_ls (.clk (clk), .rst (rst));
+
 // instruction fetch bus
 logic           if_req;
 logic [IAW-1:0] if_adr;
@@ -75,7 +79,7 @@ logic           if_ack;
 // load/store bus, LS memory bus, controller bus
 logic           ls_req, ls_mem_req, ls_ctl_req;
 logic           ls_wen, ls_mem_wen, ls_ctl_wen;
-logic [DAW-0:0] ls_adr, ls_mem_adr, ls_ctl_adr;  // +1 bits for decoder
+logic [DAW-1:0] ls_adr, ls_mem_adr, ls_ctl_adr;  // +1 bits for decoder
 logic [DBW-1:0] ls_ben, ls_mem_ben, ls_ctl_ben;
 logic [DDW-1:0] ls_wdt, ls_mem_wdt, ls_ctl_wdt;
 logic [DDW-1:0] ls_rdt, ls_mem_rdt, ls_ctl_rdt;
@@ -93,26 +97,30 @@ r5p_core #(
   .IDW  (IDW),
   .IAW  (IAW),
   // data bus
-  .DAW  (DAW+1),
+  .DAW  (DAW),
   .DDW  (DDW)
 ) DUT (
   // system signals
   .clk     (clk),
   .rst     (rst),
   // instruction fetch
-  .if_req  (if_req),
-  .if_adr  (if_adr),
-  .if_rdt  (if_rdt),
-  .if_ack  (if_ack),
+  .if_req  (bus_if.vld),
+  .if_adr  (bus_if.adr),
+  .if_rdt  (bus_if.rdt),
+  .if_ack  (bus_if.rdy),
   // data load/store
-  .ls_req  (ls_req),
-  .ls_wen  (ls_wen),
-  .ls_adr  (ls_adr),
-  .ls_ben  (ls_ben),
-  .ls_wdt  (ls_wdt),
-  .ls_rdt  (ls_rdt),
-  .ls_ack  (ls_ack)
+  .ls_req  (bus_ls.vld),
+  .ls_wen  (bus_ls.wen),
+  .ls_adr  (bus_ls.adr),
+  .ls_ben  (bus_ls.ben),
+  .ls_wdt  (bus_ls.wdt),
+  .ls_rdt  (bus_ls.rdt),
+  .ls_ack  (bus_ls.rdy)
 );
+
+assign bus_if.wen = 1'b0;
+assign bus_if.ben = '1;
+assign bus_if.wen = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
 // program memory
@@ -132,13 +140,13 @@ mem #(
   // system signals
   .clk  (clk),
   // instruction fetch
-  .req  (if_req),
-  .wen  (1'b0),
-  .ben  ('1),
-  .adr  (if_adr),
-  .wdt  ('x),
-  .rdt  (if_rdt),
-  .ack  (if_ack)
+  .req  (bus_if.vld),
+  .wen  (bus_if.wen),
+  .adr  (bus_if.adr),
+  .ben  (bus_if.ben),
+  .wdt  (bus_if.wdt),
+  .rdt  (bus_if.rdt),
+  .ack  (bus_if.rdy)
 );
 
 /*
@@ -165,24 +173,24 @@ r5p_bus_mon #(
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_bus_dec #(
-  .AW  (DAW+1),
+  .AW  (DAW),
   .DW  (DDW),
   .BN  (2),       // bus number
-  .AS  ({ {1'b1, {DAW{1'bx}}} ,   // 0x0_0000 ~ 0x0_ffff - data memory
-          {1'b0, {DAW{1'bx}}} })  // 0x1_0000 ~ 0x1_ffff - controller
+  .AS  ({ {1'b1, {(DAW-1){1'bx}}} ,   // 0x0_0000 ~ 0x0_ffff - data memory
+          {1'b0, {(DAW-1){1'bx}}} })  // 0x1_0000 ~ 0x1_ffff - controller
 ) ls_dec (
   // system signals
   .clk  (clk),
   .rst  (rst),
   // data load/store
   // slave port and master ports
-  .s_req  (ls_req),  .m_req  ('{ls_ctl_req, ls_mem_req}),
-  .s_wen  (ls_wen),  .m_wen  ('{ls_ctl_wen, ls_mem_wen}),
-  .s_ben  (ls_ben),  .m_ben  ('{ls_ctl_ben, ls_mem_ben}),
-  .s_adr  (ls_adr),  .m_adr  ('{ls_ctl_adr, ls_mem_adr}),
-  .s_wdt  (ls_wdt),  .m_wdt  ('{ls_ctl_wdt, ls_mem_wdt}),
-  .s_rdt  (ls_rdt),  .m_rdt  ('{ls_ctl_rdt, ls_mem_rdt}),
-  .s_ack  (ls_ack),  .m_ack  ('{ls_ctl_ack, ls_mem_ack})
+  .s_req  (bus_ls.vld),  .m_req  ('{ls_ctl_req, ls_mem_req}),
+  .s_wen  (bus_ls.wen),  .m_wen  ('{ls_ctl_wen, ls_mem_wen}),
+  .s_ben  (bus_ls.ben),  .m_ben  ('{ls_ctl_ben, ls_mem_ben}),
+  .s_adr  (bus_ls.adr),  .m_adr  ('{ls_ctl_adr, ls_mem_adr}),
+  .s_wdt  (bus_ls.wdt),  .m_wdt  ('{ls_ctl_wdt, ls_mem_wdt}),
+  .s_rdt  (bus_ls.rdt),  .m_rdt  ('{ls_ctl_rdt, ls_mem_rdt}),
+  .s_ack  (bus_ls.rdy),  .m_ack  ('{ls_ctl_ack, ls_mem_ack})
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -192,7 +200,7 @@ r5p_bus_dec #(
 mem #(
   .ISA  (ISA),
   .FN   ("mem_ls.bin"),
-  .SZ   (2**DAW),
+  .SZ   (2**(DAW-1)),
   .DW   (DDW),
   .DBG  ("DAT"),
   .TXT  (1'b1)
@@ -203,7 +211,7 @@ mem #(
   .req  (ls_mem_req),
   .wen  (ls_mem_wen),
   .ben  (ls_mem_ben),
-  .adr  (ls_mem_adr[DAW-1:0]),
+  .adr  (ls_mem_adr[DAW-2:0]),
   .wdt  (ls_mem_wdt),
   .rdt  (ls_mem_rdt),
   .ack  (ls_mem_ack)
@@ -258,7 +266,10 @@ assign ls_ctl_ack = 1'b1;
 
 // finish simulation
 always @(posedge clk)
-if (rvmodel_halt) begin
+if (rvmodel_halt | timeout) begin
+  if (rvmodel_halt)  $display("HALT");
+  if (timeout     )  $display("TIMEOUT");
+  void'(mem_ls.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
   void'(mem_ls.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
   $finish;
 end
@@ -266,6 +277,7 @@ end
 // at the end dump the test signature
 // TODO: not working in Verilator, at least if the C code ends the simulation.
 final begin
+  $display("FINAL");
   void'(mem_ls.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
   $display("TIME: cnt = %d", cnt);
 end
@@ -284,7 +296,7 @@ end
 
 // timeout
 //always @(posedge clk)
-//if (cnt > 5000)  $finish;
+//if (cnt > 5000)  timeout <= 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // waveforms
