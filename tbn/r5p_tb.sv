@@ -5,13 +5,13 @@ module r5p_tb #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-  isa_ext_t    XTEN = RV_M | RV_C,
+  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
-  isa_t        ISA = XLEN==32 ? '{'{RV_32I , XTEN}, MODES}
-                   : XLEN==64 ? '{'{RV_64I , XTEN}, MODES}
-                              : '{'{RV_128I, XTEN}, MODES},
+  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
+                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   // instruction bus
   int unsigned IAW = 21,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
@@ -29,6 +29,39 @@ import riscv_asm_pkg::*;
 
 // clock period counter
 int unsigned cnt;
+
+////////////////////////////////////////////////////////////////////////////////
+// DEBUG
+////////////////////////////////////////////////////////////////////////////////
+
+initial begin
+  $display("==========================================");
+  $display("ISA                  : %p", ISA                  );
+  $display("ISA.spec             : %b", ISA.spec             );
+  $display("ISA.spec.base        : %b", ISA.spec.base        );
+  $display("ISA.spec.ext         : %b", ISA.spec.ext         );
+  $display("ISA.spec.ext.M       : %b", ISA.spec.ext.M       );
+  $display("ISA.spec.ext.A       : %b", ISA.spec.ext.A       );
+  $display("ISA.spec.ext.F       : %b", ISA.spec.ext.F       );
+  $display("ISA.spec.ext.D       : %b", ISA.spec.ext.D       );
+  $display("ISA.spec.ext.Zicsr   : %b", ISA.spec.ext.Zicsr   );
+  $display("ISA.spec.ext.Zifencei: %b", ISA.spec.ext.Zifencei);
+  $display("ISA.spec.ext.Q       : %b", ISA.spec.ext.Q       );
+  $display("ISA.spec.ext.L       : %b", ISA.spec.ext.L       );
+  $display("ISA.spec.ext.C       : %b", ISA.spec.ext.C       );
+  $display("ISA.spec.ext.B       : %b", ISA.spec.ext.B       );
+  $display("ISA.spec.ext.J       : %b", ISA.spec.ext.J       );
+  $display("ISA.spec.ext.T       : %b", ISA.spec.ext.T       );
+  $display("ISA.spec.ext.P       : %b", ISA.spec.ext.P       );
+  $display("ISA.spec.ext.V       : %b", ISA.spec.ext.V       );
+  $display("ISA.spec.ext.N       : %b", ISA.spec.ext.N       );
+  $display("ISA.spec.ext.H       : %b", ISA.spec.ext.H       );
+  $display("ISA.spec.ext.S       : %b", ISA.spec.ext.S       );
+  $display("ISA.spec.ext.Zam     : %b", ISA.spec.ext.Zam     );
+  $display("ISA.spec.ext.Ztso    : %b", ISA.spec.ext.Ztso    );
+  $display("ISA.priv             : %b", ISA.priv             );
+  $display("==========================================");
+end
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
