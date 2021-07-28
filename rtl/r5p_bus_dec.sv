@@ -5,31 +5,12 @@
 module r5p_bus_dec #(
   // bus parameters
   int unsigned AW = 32,    // address width
-  int unsigned DW = 32,    // data    width
-  int unsigned BW = DW/8,  // byte en width
   // interconnect parameters
   int unsigned BN = 2,     // bus number
   logic [BN-1:0] [AW-1:0] AS = '{BN{'x}}
 )(
-  // system signals
-  input  logic                   clk,  // clock
-  input  logic                   rst,  // reset
-  // system bus slave port (master device connects here)
-  input  logic                   s_req,  // request
-  input  logic                   s_wen,  // write enable
-  input  logic          [AW-1:0] s_adr,  // address
-  input  logic          [BW-1:0] s_ben,  // byte enable
-  input  logic          [DW-1:0] s_wdt,  // write data
-  output logic          [DW-1:0] s_rdt,  // read data
-  output logic                   s_ack,  // acknowledge
-  // system bus master ports (slave devices connect here)
-  output logic [BN-1:0]          m_req,  // request
-  output logic [BN-1:0]          m_wen,  // write enable
-  output logic [BN-1:0] [AW-1:0] m_adr,  // address
-  output logic [BN-1:0] [BW-1:0] m_ben,  // byte enable
-  output logic [BN-1:0] [DW-1:0] m_wdt,  // write data
-  input  logic [BN-1:0] [DW-1:0] m_rdt,  // read data
-  input  logic [BN-1:0]          m_ack   // acknowledge
+  r5p_bus_if.sub s        ,  // system bus subordinate port  (master device connects here)
+  r5p_bus_if.man m[BN-1:0]   // system bus manager     ports (slave  devices connect here)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,48 +18,48 @@ module r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 // decoder signals
-logic [BN-1:0]          s_dec;
-logic [BN-1:0]          m_dec;
+logic [BN-1:0]            s_dec;
+logic [BN-1:0]            m_dec;
 
 // temporary signals
-logic [BN-1:0] [DW-1:0] t_rdt;  // read data
-logic [BN-1:0]          t_ack;  // acknowledge
+logic [BN-1:0] [s.DW-1:0] t_rdt;  // read data
+logic [BN-1:0]            t_rdy;  // acknowledge
 
 generate
 for (genvar i=0; i<BN; i++) begin
   // decoder
-  assign s_dec[i] = s_adr ==? AS[i];
+  assign s_dec[i] = s.adr ==? AS[i];
   // forward path
-  assign m_req[i] = s_dec[i] ? s_req : '0;
-  assign m_wen[i] = s_dec[i] ? s_wen : 'x;
-  assign m_ben[i] = s_dec[i] ? s_ben : 'x;
-  assign m_adr[i] = s_dec[i] ? s_adr : 'x;
-  assign m_wdt[i] = s_dec[i] ? s_wdt : 'x;
+  assign m[i].vld = s_dec[i] ? s.vld : '0;
+  assign m[i].wen = s_dec[i] ? s.wen : 'x;
+  assign m[i].ben = s_dec[i] ? s.ben : 'x;
+  assign m[i].adr = s_dec[i] ? s.adr : 'x;
+  assign m[i].wdt = s_dec[i] ? s.wdt : 'x;
   // backward path
-  assign t_rdt[i] = m_dec[i] ? m_rdt[i] : '0;
-  assign t_ack[i] = s_dec[i] ? m_ack[i] : '0;
+  assign t_rdt[i] = m_dec[i] ? m[i].rdt : '0;
+  assign t_rdy[i] = s_dec[i] ? m[i].rdy : '0;
 end
 endgenerate
 
 always_comb
 begin
-  s_rdt = '0;
-  s_ack = '0;
+  s.rdt = '0;
+  s.rdy = '0;
   for (int unsigned i=0; i<BN; i++) begin
-    s_rdt |= t_rdt[i];
-    s_ack |= t_ack[i];
+    s.rdt |= t_rdt[i];
+    s.rdy |= t_rdy[i];
   end
 end
 
 // TODO: 
-//assign s_rdt = m_rdt.and;
-//assign s_ack = m_ack.and;
+//assign s.rdt = m.rdt.and;
+//assign s.rdy = m.rdy.and;
 
 // copy of decoder at a bus transfer
-always_ff @(posedge clk, posedge rst)
-if (rst) begin
+always_ff @(posedge s.clk, posedge s.rst)
+if (s.rst) begin
   m_dec <= '0;
-end else if (s_req & s_ack) begin
+end else if (s.vld & s.rdy) begin
   m_dec <= s_dec;
 end
 

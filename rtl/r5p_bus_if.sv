@@ -21,4 +21,34 @@ logic [DW-1:0] wdt;  // write data
 logic [DW-1:0] rdt;  // read data
 logic          rdy;  // ready
 
+// manager
+modport  man (
+  // system signals
+  input  clk,
+  input  rst,
+  // system bus
+  output vld,
+  output wen,
+  output adr,
+  output ben,
+  output wdt,
+  input  rdt,
+  input  rdy
+);
+
+// subordinate
+modport  sub (
+  // system signals
+  input  clk,
+  input  rst,
+  // system bus
+  input  vld,
+  input  wen,
+  input  adr,
+  input  ben,
+  input  wdt,
+  output rdt,
+  output rdy
+);
+
 endinterface: r5p_bus_if

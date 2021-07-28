@@ -68,22 +68,9 @@ end
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_bus_if #(.AW (IAW), .DW (IDW)) bus_if (.clk (clk), .rst (rst));
-r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_ls (.clk (clk), .rst (rst));
-
-// instruction fetch bus
-logic           if_req;
-logic [IAW-1:0] if_adr;
-logic [IDW-1:0] if_rdt;
-logic           if_ack;
-// load/store bus, LS memory bus, controller bus
-logic           ls_req, ls_mem_req, ls_ctl_req;
-logic           ls_wen, ls_mem_wen, ls_ctl_wen;
-logic [DAW-1:0] ls_adr, ls_mem_adr, ls_ctl_adr;  // +1 bits for decoder
-logic [DBW-1:0] ls_ben, ls_mem_ben, ls_ctl_ben;
-logic [DDW-1:0] ls_wdt, ls_mem_wdt, ls_ctl_wdt;
-logic [DDW-1:0] ls_rdt, ls_mem_rdt, ls_ctl_rdt;
-logic           ls_ack, ls_mem_ack, ls_ctl_ack;
+r5p_bus_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
+r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
+r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -127,44 +114,21 @@ assign bus_if.wen = 'x;
 ////////////////////////////////////////////////////////////////////////////////
 
 string if_str;
-always if_str = disasm(ISA, if_rdt);
+always if_str = disasm(ISA, bus_if.rdt);
 
 mem #(
   .ISA  (ISA),
   .FN   ("mem_if.bin"),
   .SZ   (2**IAW),
-  .DW   (IDW),
   .DBG  ("INS"),
   .OPC  (1'b1)
 ) mem_if (
-  // system signals
-  .clk  (clk),
-  // instruction fetch
-  .req  (bus_if.vld),
-  .wen  (bus_if.wen),
-  .adr  (bus_if.adr),
-  .ben  (bus_if.ben),
-  .wdt  (bus_if.wdt),
-  .rdt  (bus_if.rdt),
-  .ack  (bus_if.rdy)
+  .s    (bus_if)
 );
 
 /*
-r5p_bus_mon #(
-  .DW   (IDW),
-  .AW   (IAW),
-) bus_mon_if (
-  // system signals
-  .clk  (clk),
-  .rst  (rst),
-  // instruction fetch
-  .req  (if_req),
-  .wen  (1'b0),
-  .adr  (if_adr),
-  .ben  ('1),
-  .wdt  ('x),
-  .rdt  (if_rdt),
-  .ack  (if_ack)
+r5p_bus_mon bus_mon_if (
+  .s  (bus_if)
 );
 */
 
@@ -174,23 +138,12 @@ r5p_bus_mon #(
 
 r5p_bus_dec #(
   .AW  (DAW),
-  .DW  (DDW),
   .BN  (2),       // bus number
   .AS  ({ {1'b1, {(DAW-1){1'bx}}} ,   // 0x0_0000 ~ 0x0_ffff - data memory
           {1'b0, {(DAW-1){1'bx}}} })  // 0x1_0000 ~ 0x1_ffff - controller
 ) ls_dec (
-  // system signals
-  .clk  (clk),
-  .rst  (rst),
-  // data load/store
-  // slave port and master ports
-  .s_req  (bus_ls.vld),  .m_req  ('{ls_ctl_req, ls_mem_req}),
-  .s_wen  (bus_ls.wen),  .m_wen  ('{ls_ctl_wen, ls_mem_wen}),
-  .s_ben  (bus_ls.ben),  .m_ben  ('{ls_ctl_ben, ls_mem_ben}),
-  .s_adr  (bus_ls.adr),  .m_adr  ('{ls_ctl_adr, ls_mem_adr}),
-  .s_wdt  (bus_ls.wdt),  .m_wdt  ('{ls_ctl_wdt, ls_mem_wdt}),
-  .s_rdt  (bus_ls.rdt),  .m_rdt  ('{ls_ctl_rdt, ls_mem_rdt}),
-  .s_ack  (bus_ls.rdy),  .m_ack  ('{ls_ctl_ack, ls_mem_ack})
+  .s  (bus_ls      ),
+  .m  (bus_mem[1:0])
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -201,38 +154,16 @@ mem #(
   .ISA  (ISA),
   .FN   ("mem_ls.bin"),
   .SZ   (2**(DAW-1)),
-  .DW   (DDW),
   .DBG  ("DAT"),
   .TXT  (1'b1)
 ) mem_ls (
-  // system signals
-  .clk  (clk),
-  // data load/store
-  .req  (ls_mem_req),
-  .wen  (ls_mem_wen),
-  .ben  (ls_mem_ben),
-  .adr  (ls_mem_adr[DAW-2:0]),
-  .wdt  (ls_mem_wdt),
-  .rdt  (ls_mem_rdt),
-  .ack  (ls_mem_ack)
+  .s    (bus_mem[0])
 );
 
 /*
-r5p_bus_mon #(
-  .DW   (DDW),
-  .AW   (DAW),
-) bus_mon_ls (
-  // system signals
-  .clk  (clk),
-  .rst  (rst),
+r5p_bus_mon bus_mon_ls (
   // data load/store
-  .req  (ls_req),
-  .wen  (ls_wen),
-  .adr  (ls_adr),
-  .ben  (ls_ben),
-  .wdt  (ls_wdt),
-  .rdt  (ls_rdt),
-  .ack  (ls_ack)
+  .s  (bus_mem[0])
 );
 */
 
@@ -249,20 +180,20 @@ if (rst) begin
   rvmodel_data_begin <= 'x;
   rvmodel_data_end   <= 'x;
   rvmodel_halt       <= '0;
-end else if (ls_ctl_req & ls_ctl_ack) begin
-  if (ls_ctl_wen) begin
+end else if (bus_mem[1].vld & bus_mem[1].rdy) begin
+  if (bus_mem[1].wen) begin
     // write access
-    case (ls_ctl_adr[5-1:0])
-      5'h00:  rvmodel_data_begin <= ls_ctl_wdt;
-      5'h08:  rvmodel_data_end   <= ls_ctl_wdt;
-      5'h10:  rvmodel_halt       <= ls_ctl_wdt[0];
+    case (bus_mem[1].adr[5-1:0])
+      5'h00:  rvmodel_data_begin <= bus_mem[1].wdt;
+      5'h08:  rvmodel_data_end   <= bus_mem[1].wdt;
+      5'h10:  rvmodel_halt       <= bus_mem[1].wdt[0];
       default:  ;  // do nothing
     endcase
   end
 end
 
 // controller response is immediate
-assign ls_ctl_ack = 1'b1;
+assign bus_mem[1].rdy = 1'b1;
 
 // finish simulation
 always @(posedge clk)
