@@ -110,29 +110,6 @@ assign bus_if.ben = '1;
 assign bus_if.wen = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
-// program memory
-////////////////////////////////////////////////////////////////////////////////
-
-string if_str;
-always if_str = disasm(ISA, bus_if.rdt);
-
-mem #(
-  .ISA  (ISA),
-  .FN   ("mem_if.bin"),
-  .SZ   (2**IAW),
-  .DBG  ("INS"),
-  .OPC  (1'b1)
-) mem_if (
-  .s    (bus_if)
-);
-
-/*
-r5p_bus_mon bus_mon_if (
-  .s  (bus_if)
-);
-*/
-
-////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -147,23 +124,22 @@ r5p_bus_dec #(
 );
 
 ////////////////////////////////////////////////////////////////////////////////
-// data memory
+// memory
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
   .ISA  (ISA),
-  .FN   ("mem_ls.bin"),
-  .SZ   (2**(DAW-1)),
-  .DBG  ("DAT"),
-  .TXT  (1'b1)
-) mem_ls (
-  .s    (bus_mem[0])
+  .FN   ("mem.bin"),
+  .SZ   (2**IAW),
+  .DBG  ("BUS")
+) mem (
+  .bus_if  (bus_if),
+  .bus_ls  (bus_mem[0])
 );
 
 /*
-r5p_bus_mon bus_mon_ls (
-  // data load/store
-  .s  (bus_mem[0])
+r5p_bus_mon bus_mon_if (
+  .s  (bus_if)
 );
 */
 
@@ -200,8 +176,8 @@ always @(posedge clk)
 if (rvmodel_halt | timeout) begin
   if (rvmodel_halt)  $display("HALT");
   if (timeout     )  $display("TIMEOUT");
-  void'(mem_ls.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
-  void'(mem_ls.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
+  void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
+  void'(mem.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
   $finish;
 end
 
@@ -209,7 +185,7 @@ end
 // TODO: not working in Verilator, at least if the C code ends the simulation.
 final begin
   $display("FINAL");
-  void'(mem_ls.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
+  void'(mem.write_hex("signature.txt", int'(rvmodel_data_begin), int'(rvmodel_data_end)));
   $display("TIME: cnt = %d", cnt);
 end
 

@@ -4,15 +4,16 @@
 
 module mem #(
   isa_t        ISA = '{RV_64I, RV_M},
+  // number of interfaces
+  int unsigned IN  = 1,
   // 1kB by default
-  string       FN  = "",          // binary initialization file name
-  int unsigned SZ  = 2**12,       // memory size in bytes
+  string       FN  = "",     // binary initialization file name
+  int unsigned SZ  = 2**12,  // memory size in bytes
   // debug functionality
-  string       DBG = "",          // module name to be printed in messages, if empty debug is disabled
-  bit          TXT = 1'b0,        // print out ASCII text
-  bit          OPC = 1'b0         // print out RISC-V operation code
+  string       DBG = ""      // module name to be printed in messages, if empty debug is disabled
 )(
-  r5p_bus_if.sub s                // system bus subordinate port  (master device connects here)
+  r5p_bus_if.sub bus_if,   // instruction fetch
+  r5p_bus_if.sub bus_ls    // load store
 );
 
 import riscv_isa_pkg::*;
@@ -63,65 +64,105 @@ function int write_hex (
 endfunction: write_hex
 
 ////////////////////////////////////////////////////////////////////////////////
-// write/read access
+// instruction fetch
 ////////////////////////////////////////////////////////////////////////////////
 
-always @(posedge s.clk)
-if (s.vld) begin
-  if (s.wen) begin
-    // write access
-    for (int unsigned i=0; i<s.BW; i++) begin
-      if (s.ben[i])  mem[int'(s.adr)+i] <= s.wdt[8*i+:8];
-    end
+always @(posedge bus_if.clk)
+if (bus_if.vld) begin
+  if (bus_if.wen) begin
+//  // write access
+//  for (int unsigned b=0; b<bus_if.BW; b++) begin
+//    if (bus_if.ben[b])  mem[int'(bus_if.adr)+b] <= bus_if.wdt[8*b+:8];
+//  end
   end else begin
     // read access
-    for (int unsigned i=0; i<s.BW; i++) begin
-      if (s.ben[i])  s.rdt[8*i+:8] <= mem[int'(s.adr)+i];
-      else           s.rdt[8*i+:8] <= 'x;
+    for (int unsigned b=0; b<bus_if.BW; b++) begin
+      if (bus_if.ben[b])  bus_if.rdt[8*b+:8] <= mem[int'(bus_if.adr)+b];
+      else                bus_if.rdt[8*b+:8] <= 'x;
     end
   end
 end
 
+// trivial ready
+assign bus_if.rdy = 1'b1;
+//always @(posedge clk)
+//  bus_if.rdy <= bus_if.vld;
+
 ////////////////////////////////////////////////////////////////////////////////
-// bs.rdypressure
+// load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-// trivial s.rdynowledge
-assign s.rdy = 1'b1;
+always @(posedge bus_ls.clk)
+if (bus_ls.vld) begin
+  if (bus_ls.wen) begin
+    // write access
+    for (int unsigned b=0; b<bus_ls.BW; b++) begin
+      if (bus_ls.ben[b])  mem[int'(bus_ls.adr)+b] <= bus_ls.wdt[8*b+:8];
+    end
+  end else begin
+    // read access
+    for (int unsigned b=0; b<bus_ls.BW; b++) begin
+      if (bus_ls.ben[b])  bus_ls.rdt[8*b+:8] <= mem[int'(bus_ls.adr)+b];
+      else                bus_ls.rdt[8*b+:8] <= 'x;
+    end
+  end
+end
+
+// trivial ready
+assign bus_ls.rdy = 1'b1;
 //always @(posedge clk)
-//  s.rdy <= s.vld;
+//  bus_ls.rdy <= bus_ls.vld;
 
 ////////////////////////////////////////////////////////////////////////////////
 // write/read debug printout
 ////////////////////////////////////////////////////////////////////////////////
 
 generate
-if (DBG != "") begin
+if (DBG != "") begin: debug
 
-logic [s.DW-1:0] dat;
+  logic [bus_if.DW-1:0] dat_if;
 
-always @(posedge s.clk)
-if (s.vld) begin
-  if (s.wen) begin
-    // write access
-    for (int unsigned i=0; i<s.BW; i++) begin
-      if (s.ben[i])  dat[8*i+:8] = s.wdt[8*i+:8];
-      else           dat[8*i+:8] = s.wdt[8*i+:8];
+  always @(posedge bus_if.clk)
+  if (bus_if.vld) begin
+    if (bus_if.wen) begin
+      // write access
+      for (int unsigned b=0; b<bus_if.BW; b++) begin
+        if (bus_if.ben[b])  dat_if[8*b+:8] = bus_if.wdt[8*b+:8];
+        else                dat_if[8*b+:8] = bus_if.wdt[8*b+:8];
+      end
+    end else begin
+      // read access
+      for (int unsigned b=0; b<bus_if.BW; b++) begin
+        if (bus_if.ben[b])  dat_if[8*b+:8] = mem[int'(bus_if.adr)+b];
+        else                dat_if[8*b+:8] = mem[int'(bus_if.adr)+b];
+      end
     end
-  end else begin
-    // read access
-    for (int unsigned i=0; i<s.BW; i++) begin
-      if (s.ben[i])  dat[8*i+:8] = mem[int'(s.adr)+i];
-      else           dat[8*i+:8] = mem[int'(s.adr)+i];
-    end
+    $write("%s (IF) %s: s.adr=0x%h dat=0x%h s.ben=0b%b", DBG, bus_if.wen ? "W" : "R", bus_if.adr, dat_if, bus_if.ben);
+    $write(" opc='%s'\n", disasm(ISA, dat_if));
   end
-  $write("%s %s: s.adr=0x%h dat=0x%h s.ben=0b%b", DBG, s.wen ? "W" : "R", s.adr, dat, s.ben);
-  if (TXT) $write(" txt='%s'", dat);
-  if (OPC) $write(" opc='%s'", disasm(ISA, dat[32-1:0]));
-  $write("\n");
-end
 
-end
+  logic [bus_ls.DW-1:0] dat_ls;
+
+  always @(posedge bus_ls.clk)
+  if (bus_ls.vld) begin
+    if (bus_ls.wen) begin
+      // write access
+      for (int unsigned b=0; b<bus_ls.BW; b++) begin
+        if (bus_ls.ben[b])  dat_ls[8*b+:8] = bus_ls.wdt[8*b+:8];
+        else                dat_ls[8*b+:8] = bus_ls.wdt[8*b+:8];
+      end
+    end else begin
+      // read access
+      for (int unsigned b=0; b<bus_ls.BW; b++) begin
+        if (bus_ls.ben[b])  dat_ls[8*b+:8] = mem[int'(bus_ls.adr)+b];
+        else                dat_ls[8*b+:8] = mem[int'(bus_ls.adr)+b];
+      end
+    end
+    $write("%s (LS) %s: s.adr=0x%h dat=0x%h s.ben=0b%b", DBG, bus_ls.wen ? "W" : "R", bus_ls.adr, dat_ls, bus_ls.ben);
+    $write(" txt='%s'\n", dat_ls);
+  end
+
+end: debug
 endgenerate
 
 endmodule: mem
