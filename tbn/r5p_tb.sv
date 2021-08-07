@@ -13,10 +13,10 @@ module r5p_tb #(
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   // instruction bus
-  int unsigned IAW = 21,    // instruction address width
+  int unsigned IAW = 22,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
   // data bus
-  int unsigned DAW = 17,    // data address width
+  int unsigned DAW = 22,    // data address width
   int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8  // data byte en width
 )(
@@ -115,9 +115,9 @@ assign bus_if.wen = 'x;
 
 r5p_bus_dec #(
   .AW  (DAW),
-  .BN  (2),       // bus number
-  .AS  ({ {1'b1, {(DAW-1){1'bx}}} ,   // 0x0_0000 ~ 0x0_ffff - data memory
-          {1'b0, {(DAW-1){1'bx}}} })  // 0x1_0000 ~ 0x1_ffff - controller
+  .BN  (2),                      // bus number
+  .AS  ({ {2'b1x, 20'hxxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
+          {2'b0x, 20'hxxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
 ) ls_dec (
   .s  (bus_ls      ),
   .m  (bus_mem[1:0])

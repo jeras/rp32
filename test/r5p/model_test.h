@@ -33,7 +33,7 @@
   .align 4; .global end_signature; end_signature:  \
   RVMODEL_DATA_SECTION                                                        \
 
-#define TESTUTIL_BASE                  0x10000
+#define TESTUTIL_BASE                  0x200000
 #define TESTUTIL_ADDR_BEGIN_SIGNATURE  0x00
 #define TESTUTIL_ADDR_END_SIGNATURE    0x08
 #define TESTUTIL_ADDR_HALT             0x10
