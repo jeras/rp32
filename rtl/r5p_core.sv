@@ -12,8 +12,6 @@ module r5p_core #(
   isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
-  // privilege implementation details
-  csr_vector_t VEC = MODE_DIRECT,  // mtvec MODE
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
@@ -22,9 +20,10 @@ module r5p_core #(
   int unsigned DAW = 32,    // data    address width
   int unsigned DDW = XLEN,  // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
-  // constants ???
+  // privilege implementation details
+  csr_vector_t VEC = MODE_DIRECT,  // mtvec MODE
   logic [XLEN-1:0] MTVEC = 'h0000_0000,  // machine trap vector
-  logic [XLEN-1:0] PC0   = 'h0000_0080   // reset vector
+  logic [XLEN-1:0] PC0   = 'h0000_0000   // reset vector
 )(
   // system signals
   input  logic                  clk,
