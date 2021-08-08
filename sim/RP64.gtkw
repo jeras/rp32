@@ -1,0 +1,102 @@
+[*]
+[*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
+[*] Sat Aug  7 23:15:00 2021
+[*]
+[dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
+[dumpfile_mtime] "Sat Aug  7 23:10:39 2021"
+[dumpfile_size] 256325
+[savefile] "/home/ijeras/VLSI/rp32/sim/RP64.gtkw"
+[timestart] 1000
+[size] 1977 1434
+[pos] -1 -1
+*-21.175501 13133190 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.r5p_tb.
+[treeopen] top.r5p_tb.DUT.
+[sst_width] 384
+[signals_width] 425
+[sst_expanded] 1
+[sst_vpaned_height] 432
+@28
+top.r5p_tb.clk
+top.r5p_tb.rst
+@420
+top.r5p_tb.cnt
+@22
+top.r5p_tb.rvmodel_data_begin[63:0]
+top.r5p_tb.rvmodel_data_end[63:0]
+@28
+top.r5p_tb.rvmodel_halt
+@800200
+-BUS IF
+@420
+top.r5p_tb.bus_if.AW
+top.r5p_tb.bus_if.DW
+@28
+top.r5p_tb.bus_if.clk
+top.r5p_tb.bus_if.rst
+top.r5p_tb.bus_if.vld
+top.r5p_tb.bus_if.wen
+@22
+top.r5p_tb.bus_if.ben[3:0]
+top.r5p_tb.bus_if.wdt[31:0]
+top.r5p_tb.bus_if.rdt[31:0]
+@28
+top.r5p_tb.bus_if.rdy
+@1000200
+-BUS IF
+@800200
+-BUS LS
+@420
+top.r5p_tb.bus_ls.AW
+top.r5p_tb.bus_ls.DW
+@28
+top.r5p_tb.bus_ls.clk
+top.r5p_tb.bus_ls.rst
+top.r5p_tb.bus_ls.vld
+@23
+top.r5p_tb.bus_ls.adr[21:0]
+@28
+top.r5p_tb.bus_ls.wen
+@22
+top.r5p_tb.bus_ls.ben[7:0]
+top.r5p_tb.bus_ls.wdt[63:0]
+top.r5p_tb.bus_ls.rdt[63:0]
+@28
+top.r5p_tb.bus_ls.rdy
+@1000200
+-BUS LS
+@22
+top.r5p_tb.DUT.gpr.gpr(1)[63:0]
+top.r5p_tb.DUT.gpr.gpr(2)[63:0]
+top.r5p_tb.DUT.gpr.gpr(3)[63:0]
+top.r5p_tb.DUT.gpr.gpr(4)[63:0]
+top.r5p_tb.DUT.gpr.gpr(5)[63:0]
+top.r5p_tb.DUT.gpr.gpr(6)[63:0]
+top.r5p_tb.DUT.gpr.gpr(7)[63:0]
+top.r5p_tb.DUT.gpr.gpr(8)[63:0]
+top.r5p_tb.DUT.gpr.gpr(9)[63:0]
+top.r5p_tb.DUT.gpr.gpr(10)[63:0]
+top.r5p_tb.DUT.gpr.gpr(11)[63:0]
+top.r5p_tb.DUT.gpr.gpr(12)[63:0]
+top.r5p_tb.DUT.gpr.gpr(13)[63:0]
+top.r5p_tb.DUT.gpr.gpr(14)[63:0]
+top.r5p_tb.DUT.gpr.gpr(15)[63:0]
+top.r5p_tb.DUT.gpr.gpr(16)[63:0]
+top.r5p_tb.DUT.gpr.gpr(17)[63:0]
+top.r5p_tb.DUT.gpr.gpr(18)[63:0]
+top.r5p_tb.DUT.gpr.gpr(19)[63:0]
+top.r5p_tb.DUT.gpr.gpr(20)[63:0]
+top.r5p_tb.DUT.gpr.gpr(21)[63:0]
+top.r5p_tb.DUT.gpr.gpr(22)[63:0]
+top.r5p_tb.DUT.gpr.gpr(23)[63:0]
+top.r5p_tb.DUT.gpr.gpr(24)[63:0]
+top.r5p_tb.DUT.gpr.gpr(25)[63:0]
+top.r5p_tb.DUT.gpr.gpr(26)[63:0]
+top.r5p_tb.DUT.gpr.gpr(27)[63:0]
+top.r5p_tb.DUT.gpr.gpr(28)[63:0]
+top.r5p_tb.DUT.gpr.gpr(29)[63:0]
+top.r5p_tb.DUT.gpr.gpr(30)[63:0]
+top.r5p_tb.DUT.gpr.gpr(31)[63:0]
+[pattern_trace] 1
+[pattern_trace] 0
