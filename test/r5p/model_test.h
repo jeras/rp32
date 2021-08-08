@@ -7,9 +7,6 @@
   #define ALIGNMENT 2
 #endif
 
-
-//#include "riscv_test.h"
-
 //-----------------------------------------------------------------------
 // RVMODEL Macros
 //-----------------------------------------------------------------------
@@ -82,4 +79,3 @@
 #define RVMODEL_CLEAR_MEXT_INT
 
 #endif // _COMPLIANCE_MODEL_H
-
