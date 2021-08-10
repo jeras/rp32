@@ -179,10 +179,13 @@ parameter csr_map_ut CSR_WEN = '{
 // read write access
 ///////////////////////////////////////////////////////////////////////////////
 
+logic            aen;  // access enable (depends on register address range)
+logic            ren;  // read enable
+logic            wen;  // write enable
 logic [XLEN-1:0] msk;  // mask data
 
-// read access
-assign rdt = ctl.ren ? csr.a[ctl.adr] : 'x;
+// current privilege level
+isa_level_t level = LVL_M;
 
 // CSR mask decoder
 always_comb begin
@@ -192,6 +195,17 @@ always_comb begin
     default: msk = 'x;
   endcase
 end
+
+// read/write access permissions
+assign aen = ctl.adr.level <= level;
+assign ren = aen & ctl.ren;
+assign wen = aen & ctl.wen & (ctl.adr.perm != ACCESS_RO3);
+
+// TODO: define access error conditions triggering illegal instruction
+
+
+// read access
+assign rdt = ren ? csr.a[ctl.adr] : '0;
 
 // write access (CSR operation decoder)
 always_ff @(posedge clk, posedge rst)
@@ -224,9 +238,6 @@ end else begin
     end
   end
 end
-
-// TODO
-isa_level_t level = LVL_M;
 
 always_comb begin
   unique case (level)

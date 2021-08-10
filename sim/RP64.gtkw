@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
-[*] Sat Aug  7 23:15:00 2021
+[*] Sun Aug  8 06:36:36 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Sat Aug  7 23:10:39 2021"
-[dumpfile_size] 256325
+[dumpfile_mtime] "Sun Aug  8 00:20:28 2021"
+[dumpfile_size] 178603
 [savefile] "/home/ijeras/VLSI/rp32/sim/RP64.gtkw"
 [timestart] 1000
 [size] 1977 1434
 [pos] -1 -1
-*-21.175501 13133190 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.175500 25000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
@@ -36,6 +36,9 @@ top.r5p_tb.bus_if.DW
 top.r5p_tb.bus_if.clk
 top.r5p_tb.bus_if.rst
 top.r5p_tb.bus_if.vld
+@22
+top.r5p_tb.bus_if.adr[21:0]
+@28
 top.r5p_tb.bus_if.wen
 @22
 top.r5p_tb.bus_if.ben[3:0]
@@ -54,7 +57,7 @@ top.r5p_tb.bus_ls.DW
 top.r5p_tb.bus_ls.clk
 top.r5p_tb.bus_ls.rst
 top.r5p_tb.bus_ls.vld
-@23
+@22
 top.r5p_tb.bus_ls.adr[21:0]
 @28
 top.r5p_tb.bus_ls.wen
@@ -66,7 +69,9 @@ top.r5p_tb.bus_ls.rdt[63:0]
 top.r5p_tb.bus_ls.rdy
 @1000200
 -BUS LS
-@22
+@800201
+-GPR
+@23
 top.r5p_tb.DUT.gpr.gpr(1)[63:0]
 top.r5p_tb.DUT.gpr.gpr(2)[63:0]
 top.r5p_tb.DUT.gpr.gpr(3)[63:0]
@@ -98,5 +103,7 @@ top.r5p_tb.DUT.gpr.gpr(28)[63:0]
 top.r5p_tb.DUT.gpr.gpr(29)[63:0]
 top.r5p_tb.DUT.gpr.gpr(30)[63:0]
 top.r5p_tb.DUT.gpr.gpr(31)[63:0]
+@1000201
+-GPR
 [pattern_trace] 1
 [pattern_trace] 0

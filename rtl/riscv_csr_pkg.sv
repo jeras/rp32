@@ -15,20 +15,7 @@ localparam int unsigned UXLEN = XLEN;
 // CSR address
 ///////////////////////////////////////////////////////////////////////////////
 
-// access permissions
-typedef enum logic [2-1:0] {
-  ACCESS_RW0 = 2'b00,  // read/write
-  ACCESS_RW1 = 2'b01,  // read/write
-  ACCESS_RW2 = 2'b10,  // read/write
-  ACCESS_RO3 = 2'b11   // read-only
-} csr_perm_t;
-
-// CSR address structure
-typedef struct packed {
-   csr_perm_t  perm;
-   isa_level_t level;
-   logic [7:0] addr;
-} csr_addr_t;
+// NOTE: this is defined in riscv_csr_pkg
 
 ////////////////////////////////////////////////////////////////////////////////
 // Machine-Level CSRs

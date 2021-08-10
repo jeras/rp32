@@ -679,43 +679,6 @@ typedef struct packed {
 localparam ctl_m_t CTL_M_ILL = '{op: 'x, s12: 2'bxx, rt: 'x, en: '0};
 
 ///////////////////////////////////////////////////////////////////////////////
-// Zicsr standard extension
-///////////////////////////////////////////////////////////////////////////////
-
-// CSR operation type
-typedef enum logic [2-1:0] {
-  CSR_RW  = 2'b01,  // read/write
-  CSR_SET = 2'b10,  // set
-  CSR_CLR = 2'b11   // clear
-} csr_op_t;
-
-// CSR mask source
-typedef enum logic [1-1:0] {
-  CSR_REG = 1'b0,  // register
-  CSR_IMM = 1'b1   // immediate
-} csr_msk_t;
-
-// CSR address
-typedef logic [12-1:0] csr_adr_t;
-
-// CSR immediate (zero extended from 5 to 32 bits
-typedef logic [5-1:0] csr_imm_t;
-
-// control structure
-// TODO: change when Verilator supports unpacked structures
-typedef struct packed {
-  logic     wen;  // write enable
-  logic     ren;  // read enable
-  csr_adr_t adr;  // address
-  csr_imm_t imm;  // immediate
-  csr_msk_t msk;  // mask
-  csr_op_t  op ;  // operation
-} ctl_csr_t;
-
-// illegal (idle) value
-localparam ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: 'x, imm: 'x, msk: 'x, op: 'x};
-
-///////////////////////////////////////////////////////////////////////////////
 // privileged instructions
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -747,6 +710,57 @@ typedef struct packed {
 
 // illegal (idle) value
 localparam ctl_priv_t CTL_PRIV_ILL = '{ena: 1'b0, typ: 'x};
+
+///////////////////////////////////////////////////////////////////////////////
+// Zicsr standard extension
+///////////////////////////////////////////////////////////////////////////////
+
+// CSR operation type
+typedef enum logic [2-1:0] {
+  CSR_RW  = 2'b01,  // read/write
+  CSR_SET = 2'b10,  // set
+  CSR_CLR = 2'b11   // clear
+} csr_op_t;
+
+// CSR mask source
+typedef enum logic [1-1:0] {
+  CSR_REG = 1'b0,  // register
+  CSR_IMM = 1'b1   // immediate
+} csr_msk_t;
+
+// access permissions
+// NOTE: from privileged spec
+typedef enum logic [2-1:0] {
+  ACCESS_RW0 = 2'b00,  // read/write
+  ACCESS_RW1 = 2'b01,  // read/write
+  ACCESS_RW2 = 2'b10,  // read/write
+  ACCESS_RO3 = 2'b11   // read-only
+} csr_perm_t;
+
+// CSR address structure
+// NOTE: from privileged spec
+typedef struct packed {
+   csr_perm_t  perm;
+   isa_level_t level;
+   logic [7:0] addr;
+} csr_adr_t;
+
+// CSR immediate (zero extended from 5 to 32 bits
+typedef logic [5-1:0] csr_imm_t;
+
+// control structure
+// TODO: change when Verilator supports unpacked structures
+typedef struct packed {
+  logic     wen;  // write enable
+  logic     ren;  // read enable
+  csr_adr_t adr;  // address
+  csr_imm_t imm;  // immediate
+  csr_msk_t msk;  // mask
+  csr_op_t  op ;  // operation
+} ctl_csr_t;
+
+// illegal (idle) value
+localparam ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: 'x, imm: 'x, msk: 'x, op: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
 // illegal instruction
