@@ -1,18 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
-[*] Sun Aug  8 06:36:36 2021
+[*] Tue Aug 10 06:13:28 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Sun Aug  8 00:20:28 2021"
-[dumpfile_size] 178603
+[dumpfile_mtime] "Tue Aug 10 05:39:17 2021"
+[dumpfile_size] 178781
 [savefile] "/home/ijeras/VLSI/rp32/sim/RP64.gtkw"
-[timestart] 1000
-[size] 1977 1434
+[timestart] 2784100
+[size] 1920 1043
 [pos] -1 -1
-*-15.175500 25000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.282946 2945700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
+[treeopen] top.r5p_tb.DUT.csr.
+[treeopen] top.r5p_tb.DUT.csr.csr.
+[treeopen] top.r5p_tb.DUT.csr.csr.s.
+[treeopen] top.r5p_tb.DUT.csr.ctl.
 [sst_width] 384
 [signals_width] 425
 [sst_expanded] 1
@@ -69,9 +73,9 @@ top.r5p_tb.bus_ls.rdt[63:0]
 top.r5p_tb.bus_ls.rdy
 @1000200
 -BUS LS
-@800201
--GPR
-@23
+@c00200
+-GPR regset
+@22
 top.r5p_tb.DUT.gpr.gpr(1)[63:0]
 top.r5p_tb.DUT.gpr.gpr(2)[63:0]
 top.r5p_tb.DUT.gpr.gpr(3)[63:0]
@@ -103,7 +107,66 @@ top.r5p_tb.DUT.gpr.gpr(28)[63:0]
 top.r5p_tb.DUT.gpr.gpr(29)[63:0]
 top.r5p_tb.DUT.gpr.gpr(30)[63:0]
 top.r5p_tb.DUT.gpr.gpr(31)[63:0]
+@1401200
+-GPR regset
+@800200
+-CSR ctl
+@28
+top.r5p_tb.DUT.csr.ctl.wen
+top.r5p_tb.DUT.csr.ctl.ren
+@100000028
+top.r5p_tb.DUT.csr.ctl.op[1:0]
+top.r5p_tb.DUT.csr.ctl.msk
+@22
+top.r5p_tb.DUT.csr.ctl.imm[4:0]
+@800200
+-adr
+@100000028
+top.r5p_tb.DUT.csr.ctl.adr.perm[1:0]
+top.r5p_tb.DUT.csr.ctl.adr.level[1:0]
+@22
+top.r5p_tb.DUT.csr.ctl.adr.addr[7:0]
+@1000200
+-adr
+-CSR ctl
+@800200
+-CSR regset
+-mtvec [305]
+@22
+top.r5p_tb.DUT.csr.csr.s.mtvec.BASE[61:0]
+@100000028
+top.r5p_tb.DUT.csr.csr.s.mtvec.MODE[1:0]
+@1000200
+-mtvec [305]
+@800200
+-mscratch [340]
+@22
+top.r5p_tb.DUT.csr.csr.s.mscratch.scratch[63:0]
+@1000200
+-mscratch [340]
+@800200
+-mepc [341]
+@22
+top.r5p_tb.DUT.csr.csr.s.mepc.epc[62:0]
+@28
+top.r5p_tb.DUT.csr.csr.s.mepc.zero_00_00
+@1000200
+-mepc [341]
+@800200
+-mcause [342]
+@28
+top.r5p_tb.DUT.csr.csr.s.mcause.Interrupt
+@22
+top.r5p_tb.DUT.csr.csr.s.mcause.Exception_Code[62:0]
+@1000200
+-mcause [342]
+@800201
+-mtval [343]
+@23
+top.r5p_tb.DUT.csr.csr.s.mtval.mtval[63:0]
 @1000201
--GPR
+-mtval [343]
+@1000200
+-CSR regset
 [pattern_trace] 1
 [pattern_trace] 0
