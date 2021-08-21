@@ -274,20 +274,20 @@ r5p_csr #(
   // system signals
   .clk     (clk),
   .rst     (rst),
-  // control
-  .ctl     (id_ctl.csr),
-  // data input/output
-  .wdt     (gpr_rs1),
-  .rdt     (csr_rdt),
-  // CSR address map union
-  .csr     (csr_csr),
-  // TODO
+  // CSR address map union output
+  .csr_map (csr_csr),
+  // CSR control and data input/output
+  .csr_ctl (id_ctl.csr),
+  .csr_wdt (gpr_rs1),
+  .csr_rdt (csr_rdt),
+  // trap handler
   .priv_i  (id_ctl.priv),
   .trap_i  (id_ctl.i.pc == PC_TRP),
   .cause_i (CAUSE_EXC_OP_EBREAK),
   .epc_i   (XLEN'(if_pcs  )),
   .tvec    (csr_tvec),
   .epc_o   (csr_epc )
+  // TODO: debugger, ...
 );
 
 ///////////////////////////////////////////////////////////////////////////////

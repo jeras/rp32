@@ -14,9 +14,9 @@
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
 [treeopen] top.r5p_tb.DUT.csr.
-[treeopen] top.r5p_tb.DUT.csr.csr.
-[treeopen] top.r5p_tb.DUT.csr.csr.s.
-[treeopen] top.r5p_tb.DUT.csr.ctl.
+[treeopen] top.r5p_tb.DUT.csr.csr_map.
+[treeopen] top.r5p_tb.DUT.csr.csr_map.s.
+[treeopen] top.r5p_tb.DUT.csr.csr_ctl.
 [sst_width] 384
 [signals_width] 425
 [sst_expanded] 1
@@ -112,20 +112,20 @@ top.r5p_tb.DUT.gpr.gpr(31)[63:0]
 @800200
 -CSR ctl
 @28
-top.r5p_tb.DUT.csr.ctl.wen
-top.r5p_tb.DUT.csr.ctl.ren
+top.r5p_tb.DUT.csr.csr_ctl.csr_wen
+top.r5p_tb.DUT.csr.csr_ctl.csr_ren
 @100000028
-top.r5p_tb.DUT.csr.ctl.op[1:0]
-top.r5p_tb.DUT.csr.ctl.msk
+top.r5p_tb.DUT.csr.csr_ctl.op[1:0]
+top.r5p_tb.DUT.csr.csr_ctl.csr_msk
 @22
-top.r5p_tb.DUT.csr.ctl.imm[4:0]
+top.r5p_tb.DUT.csr.csr_ctl.imm[4:0]
 @800200
 -adr
 @100000028
-top.r5p_tb.DUT.csr.ctl.adr.perm[1:0]
-top.r5p_tb.DUT.csr.ctl.adr.level[1:0]
+top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0]
+top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0]
 @22
-top.r5p_tb.DUT.csr.ctl.adr.addr[7:0]
+top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
 @1000200
 -adr
 -CSR ctl
@@ -133,37 +133,37 @@ top.r5p_tb.DUT.csr.ctl.adr.addr[7:0]
 -CSR regset
 -mtvec [305]
 @22
-top.r5p_tb.DUT.csr.csr.s.mtvec.BASE[61:0]
+top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0]
 @100000028
-top.r5p_tb.DUT.csr.csr.s.mtvec.MODE[1:0]
+top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
 @1000200
 -mtvec [305]
 @800200
 -mscratch [340]
 @22
-top.r5p_tb.DUT.csr.csr.s.mscratch.scratch[63:0]
+top.r5p_tb.DUT.csr.csr_map.s.mscratch.scratch[63:0]
 @1000200
 -mscratch [340]
 @800200
 -mepc [341]
 @22
-top.r5p_tb.DUT.csr.csr.s.mepc.epc[62:0]
+top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0]
 @28
-top.r5p_tb.DUT.csr.csr.s.mepc.zero_00_00
+top.r5p_tb.DUT.csr.csr_map.s.mepc.zero_00_00
 @1000200
 -mepc [341]
 @800200
 -mcause [342]
 @28
-top.r5p_tb.DUT.csr.csr.s.mcause.Interrupt
+top.r5p_tb.DUT.csr.csr_map.s.mcause.Interrupt
 @22
-top.r5p_tb.DUT.csr.csr.s.mcause.Exception_Code[62:0]
+top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0]
 @1000200
 -mcause [342]
 @800201
 -mtval [343]
 @23
-top.r5p_tb.DUT.csr.csr.s.mtval.mtval[63:0]
+top.r5p_tb.DUT.csr.csr_map.s.mtval.mtval[63:0]
 @1000201
 -mtval [343]
 @1000200

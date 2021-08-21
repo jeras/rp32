@@ -14,239 +14,98 @@ module r5p_csr #(
   // system signals
   input  logic            clk,  // clock
   input  logic            rst,  // reset
-  // CSR control structure
-  input  ctl_csr_t        ctl,
-  // CSR data input/output
-  input  logic [XLEN-1:0] wdt,  // write data
-  output logic [XLEN-1:0] rdt,  // read data
-  // CSR address map union
-  output csr_map_ut       csr,
-  // TODO
-  input  ctl_priv_t       priv_i,
-  input  logic            trap_i,
+  // CSR address map union output
+  output csr_map_ut       csr_map,
+  // CSR control and data input/output
+  input  ctl_csr_t        csr_ctl,  // CSR instruction control structure
+  input  logic [XLEN-1:0] csr_wdt,  // write data from GPR
+  output logic [XLEN-1:0] csr_rdt,  // read  data to   GPR
+  // trap handler
+  input  ctl_priv_t       priv_i,  // privileged instruction control structure
+  input  logic            trap_i,  // 
   input  logic [XLEN-1:0] cause_i,
   input  logic [XLEN-1:0] epc_i,  // PC increment
   output logic [XLEN-1:0] epc_o,  // exception program counter
   output logic [XLEN-1:0] tvec    // trap vector
+  // TODO: debugger, ...
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-//
+// read/write access
 ///////////////////////////////////////////////////////////////////////////////
 
-//  mstatus      ;  // 0x300       // Machine status register.
-//  misa         ;  // 0x301       // ISA and extensions
-//  mie          ;  // 0x304       // Machine interrupt-enable register.
-//  mtvec        ;  // 0x305       // Machine trap-handler base address.
-//  mcounteren   ;  // 0x306       // Machine counter enable.
-//  mcsratch     ;  // 0x340       // Csratch register for machine trap handlers.
-//  mepc         ;  // 0x341       // Machine exception program counter.
-//  mcause       ;  // 0x342       // Machine trap cause.
-//  mtval        ;  // 0x343       // Machine bad address or instruction.
-//  mip          ;  // 0x344       // Machine interrupt pending.
-
-/*
-// reset value
-
-// enable read access
-parameter csr_map_ut CSR_REN_S = '{
-  // 0x300       // Machine status register.
-  mstatus    : '{
-    SD         = '1,  // 63    // SD=((FS==11) OR (XS==11)))
-    wpri_62_38 = '0,  // 62:38 //
-  // Endianness Control
-    MBE        = '1,  // 37    // M-mode endianness
-    SBE        = '1,  // 36    // S-mode endianness
-  // Base ISA Control
-    SXL        : '1,  // 35:34 // S-mode XLEN
-    UXL        : '1,  // 33:32 // U-mode XLEN
-    wpri_31_23 : '0,  // 31:23 //
-  // Virtualization Support
-    TSR        : '1,  // 22    // Trap SRET
-    TW         : '1,  // 21    // Timeout Wait
-    TVM        : '1,  // 20    // Trap Virtual Memory
-  // Memory Privilige
-    MXR        : '1,  // 19    // Make eXecutable Readable
-    SUM        : '1,  // 18    // permit Supervisor User Memory access
-    MPRV       : '1,  // 17    // Modify PRiVilege
-  // Extension Context Status
-    XS         : '1,  // 16:15 // user-mode extensions context status
-    FS         : '1,  // 14:13 // floating-point context status
-  // Privilege and Global Interrupt-Enable Stack
-    MPP        : '1,  // 12:11 // machine previous privilege mode
-    wpri_10_09 : '0,  // 10: 9 //
-    SPP        : '1,  //  8    // supervisor previous privilege mode
-    MPIE       : '1,  //  7    // machine interrupt-enable active prior to the trap
-    UBE        : '1,  //  6    // U-mode endianness
-    SPIE       : '1,  //  5    // supervisor interrupt-enable active prior to the trap
-    wpri_04_04 : '0,  //  4    //
-    MIE        : '1,  //  3    // machine global interrupt-enable
-    wpri_02_02 : '0,  //  2    //
-    SIE        : '1,  //  1    // supervisor global interrupt-enable
-    wpri_00_00 : '0   //  0    //
-  },
-  // 0x301       // ISA and extensions
-  misa       : '{
-    MXL        : '1,  // Machine XLEN
-    warl_xx_26 : '0,  // Reserved
-    Extensions : {
-      Z : '0,  // 25 // Reserved
-      Y : '0,  // 24 // Reserved
-      X : '1,  // 23 // Non-standard extensions present
-      W : '0,  // 22 // Reserved
-      V : '1,  // 21 // Tentatively reserved for Vector extension
-      U : '1,  // 20 // User mode implemented
-      T : '1,  // 19 // Tentatively reserved for Transactional Memory extension
-      S : '1,  // 18 // Supervisor mode implemented
-      R : '0,  // 17 // Reserved
-      Q : '1,  // 16 // Quad-precision floating-point extension
-      P : '1,  // 15 // Tentatively reserved for Packed-SIMD extension
-      O : '0,  // 14 // Reserved
-      N : '1,  // 13 // User-level interrupts supported
-      M : '1,  // 12 // Integer Multiply/Divide extension
-      L : '1,  // 11 // Tentatively reserved for Decimal Floating-Point extension
-      K : '0,  // 10 // Reserved
-      J : '1,  //  9 // Tentatively reserved for Dynamically Translated Languages extension
-      I : '1,  //  8 // RV32I/64I/128I base ISA
-      H : '1,  //  7 // Hypervisor extension
-      G : '0,  //  6 // Reserved
-      F : '1,  //  5 // Single-precision floating-point extension
-      E : '1,  //  4 // RV32E base ISA
-      D : '1,  //  3 // Double-precision floating-point extension
-      C : '1,  //  2 // Compressed extension
-      B : '1,  //  1 // Tentatively reserved for Bit-Manipulation extension
-      A : '1,  //  0 // Atomic extension
-    }
-  },
-  // 0x304       // Machine interrupt-enable register.
-  mie        : '{
-    Interrupts : '1,  // **:16 //
-    zero_15_12 : '0,  // 15:12 //
-    MEIE       : '1,  // 11    // machine-level external interrupt
-    zero_10_10 : '0,  // 10    //
-    SEIE       : '1,  //  9    // supervisor-level external interrupt
-    zero_08_08 : '0,  //  8    //
-    MTIE       : '1,  //  7    // machine-level timer interrupt
-    zero_06_06 : '0,  //  6    //
-    STIE       : '1,  //  5    // supervisor-level timer interrupt
-    zero_04_04 : '0,  //  4    //
-    MSIE       : '1,  //  3    // machine-level software interrupt
-    zero_02_02 : '0,  //  2    //
-    SSIE       : '1,  //  1    // supervisor-level software interrupt
-    zero_00_00 : '0   //  0    //
-  },
-  // 0x305       // Machine trap-handler base address.
-  mtvec      : '{
-    BASE : '1,  // **: 2 // vector base address
-    MODE : '1   //  1: 0 // vector mode
-  },
-    // 0x306       // Machine counter enable.
-  mcounteren : '{
-
-  },
-  mcsratch   : '{},  // 0x340       // Csratch register for machine trap handlers.
-  mepc       : '{},  // 0x341       // Machine exception program counter.
-  mcause     : '{},  // 0x342       // Machine trap cause.
-  mtval      : '{},  // 0x343       // Machine bad address or instruction.
-  // 0x344       // Machine interrupt pending.
-  mip        : '{
-    Interrupts : '1,  // **:16 //
-    zero_15_12 : '0,  // 15:12 //
-    MEIP       : '1,  // 11    // machine-level external interrupt
-    zero_10_10 : '0,  // 10    //
-    SEIP       : '1,  //  9    // supervisor-level external interrupt
-    zero_08_08 : '0,  //  8    //
-    MTIP       : '1,  //  7    // machine-level timer interrupt
-    zero_06_06 : '0,  //  6    //
-    STIP       : '1,  //  5    // supervisor-level timer interrupt
-    zero_04_04 : '0,  //  4    //
-    MSIP       : '1,  //  3    // machine-level software interrupt
-    zero_02_02 : '0,  //  2    //
-    SSIP       : '1,  //  1    // supervisor-level software interrupt
-    zero_00_00 : '0   //  0    //
-  },
-  default    : '0;  
-};
-
-// enable write access
-parameter csr_map_ut CSR_WEN = '{
-
-};
-
-*/
-
-///////////////////////////////////////////////////////////////////////////////
-// read write access
-///////////////////////////////////////////////////////////////////////////////
-
-logic            aen;  // access enable (depends on register address range)
-logic            ren;  // read enable
-logic            wen;  // write enable
-logic [XLEN-1:0] msk;  // mask data
+logic            csr_aen;  // access enable (depends on register address range)
+logic            csr_ren;  // read enable
+logic            csr_wen;  // write enable
+logic [XLEN-1:0] csr_msk;  // mask data
 
 // current privilege level
 isa_level_t level = LVL_M;
 
 // CSR mask decoder
 always_comb begin
-  unique case (ctl.msk)
-    CSR_REG: msk = wdt;             // GPR register source 1
-    CSR_IMM: msk = XLEN'(ctl.imm);  // 5-bit zero extended immediate
-    default: msk = 'x;
+  unique case (csr_ctl.msk)
+    CSR_REG: csr_msk = csr_wdt;             // GPR register source 1
+    CSR_IMM: csr_msk = XLEN'(csr_ctl.imm);  // 5-bit zero extended immediate
+    default: csr_msk = 'x;
   endcase
 end
 
 // read/write access permissions
-assign aen = ctl.adr.level <= level;
-assign ren = aen & ctl.ren;
-assign wen = aen & ctl.wen & (ctl.adr.perm != ACCESS_RO3);
+assign csr_aen = csr_ctl.adr.level <= level;
+assign csr_ren = csr_aen & csr_ctl.ren;
+assign csr_wen = csr_aen & csr_ctl.wen & (csr_ctl.adr.perm != ACCESS_RO3);
 
 // TODO: define access error conditions triggering illegal instruction
 
 
 // read access
-assign rdt = ren ? csr.a[ctl.adr] : '0;
+assign csr_rdt = csr_ren ? csr_map.a[csr_ctl.adr] : '0;
 
 // write access (CSR operation decoder)
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
   // TODO: use a better default
   for (int unsigned i=1; i<2**12; i++) begin: reset
-    csr.a[i] <= '{default: '0};
+    csr_map.a[i] <= '{default: '0};
   end: reset
   // individual registers
-  csr.s.misa  <= csr_misa_f(ISA);
-  csr.s.mtvec <= MTVEC;
+  csr_map.s.misa  <= csr_misa_f(ISA);
+  csr_map.s.mtvec <= MTVEC;
 end else begin
   if (trap_i) begin
     // trap handler
     unique case (level)
-      LVL_U:  begin  csr.s.uepc <= epc_i;  csr.s.ucause <= cause_i;  end  // User/Application
-      LVL_S:  begin  csr.s.sepc <= epc_i;  csr.s.scause <= cause_i;  end  // Supervisor
-      LVL_R:  begin                                                  end  // Reserved
-      LVL_M:  begin  csr.s.mepc <= epc_i;  csr.s.mcause <= cause_i;  end  // Machine
+      LVL_U:  begin  csr_map.s.uepc <= epc_i;  csr_map.s.ucause <= cause_i;  end  // User/Application
+      LVL_S:  begin  csr_map.s.sepc <= epc_i;  csr_map.s.scause <= cause_i;  end  // Supervisor
+      LVL_R:  begin                                                          end  // Reserved
+      LVL_M:  begin  csr_map.s.mepc <= epc_i;  csr_map.s.mcause <= cause_i;  end  // Machine
     endcase
   end else begin
     // Zicsr access
-    if (ctl.wen) begin
-      unique casez (ctl.op)
-        CSR_RW : csr.a[ctl.adr] <=        wdt;  // read/write
-        CSR_SET: csr.a[ctl.adr] <= rdt |  msk;  // set   masked bits
-        CSR_CLR: csr.a[ctl.adr] <= rdt & ~msk;  // clear masked bits
-        default: csr.a[ctl.adr] <= 'x;
+    if (csr_wen) begin
+      unique casez (csr_ctl.op)
+        CSR_RW : csr_map.a[csr_ctl.adr] <=            csr_wdt;  // read/write
+        CSR_SET: csr_map.a[csr_ctl.adr] <= csr_rdt |  csr_msk;  // set   masked bits
+        CSR_CLR: csr_map.a[csr_ctl.adr] <= csr_rdt & ~csr_msk;  // clear masked bits
+        default: begin end
       endcase
     end
   end
 end
 
+// TVEC (trap-vector address) and EPC (machine exception program counter)
+// depend on 
 always_comb begin
   unique case (level)
-    LVL_U:  begin  tvec = csr.s.utvec;  epc_o = csr.s.uepc;  end  // User/Application
-    LVL_S:  begin  tvec = csr.s.stvec;  epc_o = csr.s.sepc;  end  // Supervisor
-    LVL_R:  begin  tvec = 'x         ;  epc_o = 'x        ;  end  // Reserved
-    LVL_M:  begin  tvec = csr.s.mtvec;  epc_o = csr.s.mepc;  end  // Machine
-  //default:begin  tvec = 'x         ;  epc_o = 'x        ;  end  // Reserved
+    LVL_U:  begin  tvec = csr_map.s.utvec;  epc_o = csr_map.s.uepc;  end  // User/Application
+    LVL_S:  begin  tvec = csr_map.s.stvec;  epc_o = csr_map.s.sepc;  end  // Supervisor
+    LVL_R:  begin  tvec = 'x             ;  epc_o = 'x            ;  end  // Reserved
+    LVL_M:  begin  tvec = csr_map.s.mtvec;  epc_o = csr_map.s.mepc;  end  // Machine
+  //default:begin  tvec = 'x             ;  epc_o = 'x            ;  end  // Reserved
   endcase
 end
+
+// 
 
 endmodule: r5p_csr
