@@ -21,7 +21,6 @@ module r5p_core #(
   int unsigned DDW = XLEN,  // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
   // privilege implementation details
-  csr_vector_t VEC = MODE_DIRECT,  // mtvec MODE
   logic [XLEN-1:0] MTVEC = 'h0000_0000,  // machine trap vector
   logic [XLEN-1:0] PC0   = 'h0000_0000   // reset vector
 )(

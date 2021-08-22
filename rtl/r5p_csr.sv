@@ -4,6 +4,7 @@
 
 import riscv_isa_pkg::ctl_csr_t;
 import riscv_csr_pkg::*;
+import riscv_csr_adr_map_pkg::*;
 
 module r5p_csr #(
   isa_t            ISA = RV32I,
@@ -29,6 +30,22 @@ module r5p_csr #(
   output logic [XLEN-1:0] tvec    // trap vector
   // TODO: debugger, ...
 );
+
+///////////////////////////////////////////////////////////////////////////////
+// helper functions
+///////////////////////////////////////////////////////////////////////////////
+
+// TVEC address calculator
+function logic [XLEN-1:0] tvec_f (
+  csr_mtvec_t  tvec,
+  csr_mcause_t cause
+);
+  unique case (tvec.MODE)
+    TVEC_MODE_DIRECT  : tvec_f = {tvec.BASE, 2'b00};
+    TVEC_MODE_VECTORED: tvec_f = {tvec.BASE + 4 * cause[6-1:0], 2'b00};
+    default           : tvec_f = 'x;
+  endcase
+endfunction: tvec_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // read/write access
@@ -69,10 +86,24 @@ if (rst) begin
   for (int unsigned i=1; i<2**12; i++) begin: reset
     csr_map.a[i] <= '{default: '0};
   end: reset
-  // individual registers
-  csr_map.s.misa  <= csr_misa_f(ISA);
-  csr_map.s.mtvec <= MTVEC;
+  // individual registers reset values are overriden
+  csr_map.s.misa      <= csr_misa_f(ISA);
+  csr_map.s.mvendorid <= '0;
+  csr_map.s.marchid   <= '0;
+  csr_map.s.mimpid    <= '0;
+  csr_map.s.mtvec     <= MTVEC;
+  csr_map.s.medeleg   <= '0;
+  csr_map.s.mideleg   <= '0;
+//  csr_map.s.m   <= '0;
+//  csr_map.s.m   <= '0;
+//  csr_map.s.m   <= '0;
+//  csr_map.s.m   <= '0;
+//  csr_map.s.m   <= '0;
+//  csr_map.s.m   <= '0;
+//  csr_map.s.m   <= '0;
 end else begin
+
+  // trap handler
   if (trap_i) begin
     // trap handler
     unique case (level)
@@ -92,17 +123,21 @@ end else begin
       endcase
     end
   end
+
+  // hardware performance monitor
+
+
 end
 
 // TVEC (trap-vector address) and EPC (machine exception program counter)
 // depend on 
 always_comb begin
   unique case (level)
-    LVL_U:  begin  tvec = csr_map.s.utvec;  epc_o = csr_map.s.uepc;  end  // User/Application
-    LVL_S:  begin  tvec = csr_map.s.stvec;  epc_o = csr_map.s.sepc;  end  // Supervisor
-    LVL_R:  begin  tvec = 'x             ;  epc_o = 'x            ;  end  // Reserved
-    LVL_M:  begin  tvec = csr_map.s.mtvec;  epc_o = csr_map.s.mepc;  end  // Machine
-  //default:begin  tvec = 'x             ;  epc_o = 'x            ;  end  // Reserved
+    LVL_U:  begin  tvec = tvec_f(csr_map.s.utvec, csr_map.s.ucause);  epc_o = csr_map.s.uepc;  end  // User/Application
+    LVL_S:  begin  tvec = tvec_f(csr_map.s.stvec, csr_map.s.scause);  epc_o = csr_map.s.sepc;  end  // Supervisor
+    LVL_R:  begin  tvec = 'x                                       ;  epc_o = 'x            ;  end  // Reserved
+    LVL_M:  begin  tvec = tvec_f(csr_map.s.mtvec, csr_map.s.mcause);  epc_o = csr_map.s.mepc;  end  // Machine
+  //default:begin  tvec = 'x                                       ;  epc_o = 'x            ;  end  // Reserved
   endcase
 end
 

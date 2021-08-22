@@ -11,6 +11,10 @@ localparam int unsigned MXLEN = XLEN;
 localparam int unsigned SXLEN = XLEN;
 localparam int unsigned UXLEN = XLEN;
 
+typedef logic [MXLEN-1:0] logic_mxlen_t;
+typedef logic [SXLEN-1:0] logic_sxlen_t;
+typedef logic [UXLEN-1:0] logic_uxlen_t;
+
 ///////////////////////////////////////////////////////////////////////////////
 // CSR address
 ///////////////////////////////////////////////////////////////////////////////
@@ -18,7 +22,7 @@ localparam int unsigned UXLEN = XLEN;
 // NOTE: this is defined in riscv_csr_pkg
 
 ////////////////////////////////////////////////////////////////////////////////
-// Machine-Level CSRs
+// common definitions
 ////////////////////////////////////////////////////////////////////////////////
 
 // XLEN enumeration
@@ -42,6 +46,18 @@ typedef enum logic [1:0] { // FS meaning // XS Meaning
   CONTEXT_CLEAN   = 2'b10,  // Clean     // None dirty, some clean
   CONTEXT_DIRTY   = 2'b11   // Dirty     // Some dirty
 } csr_context_t;
+
+// Encoding of *tvec MODE field
+typedef enum logic [1:0] {
+  TVEC_MODE_DIRECT   = 2'b00,  // All exceptions set pc to BASE.
+  TVEC_MODE_VECTORED = 2'b01,  // Asynchronous interrupts set pc to BASE+4×cause.
+  TVEC_MODE_RES_2    = 2'b10,  // Reserved
+  TVEC_MODE_RES_3    = 2'b11   // Machine
+} csr_vector_t;
+
+////////////////////////////////////////////////////////////////////////////////
+// Machine-Level CSRs
+////////////////////////////////////////////////////////////////////////////////
 
 // Machine ISA Register
 typedef struct packed {
@@ -213,28 +229,20 @@ typedef struct packed {
   logic [03:00] wpri_03_00;  //  3: 0 //
 } csr_mstatush_rv32_t;
 
-// Encoding of mtvec MODE field
-typedef enum logic [1:0] {
-  MODE_DIRECT   = 2'b00,  // All exceptions set pc to BASE.
-  MODE_VECTORED = 2'b01,  // Asynchronous interrupts set pc to BASE+4×cause.
-  MODE_RES_2    = 2'b10,  // Reserved
-  MODE_RES_3    = 2'b11   // Machine
-} csr_vector_t;
-
 // Machine Trap-Vector Base-Address Register
 typedef struct packed {
   logic [MXLEN-1:2] BASE;  // **: 2 // vector base address
   csr_vector_t      MODE;  //  1: 0 // vector mode
 } csr_mtvec_t;
 
-// Machine Exception Delegation Register 'medeleg'
+// Machine Exception Delegation Register
 typedef struct packed {
-  logic [MXLEN-1:0] Synchronous_Exceptions;  //
+  logic [MXLEN-1:0] Synchronous_Exceptions;
 } csr_medeleg_t;
 
-// Machine Interrupt Delegation Register 'mideleg'
+// Machine Interrupt Delegation Register
 typedef struct packed {
-  logic [MXLEN-1:0] Interrupts;  //
+  logic [MXLEN-1:0] Interrupts;
 } csr_mideleg_t;
 
 // Machine Interrupt Pending Register
@@ -363,6 +371,51 @@ typedef struct packed {
 } csr_mtval_t;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Supervisor-Level CSRs
+////////////////////////////////////////////////////////////////////////////////
+
+// Supervisor Trap-Vector Base-Address Register
+typedef struct packed {
+  logic [SXLEN-1:2] BASE;  // **: 2 // vector base address
+  csr_vector_t      MODE;  //  1: 0 // vector mode
+} csr_stvec_t;
+
+// Supervisor Exception Delegation Register
+typedef struct packed {
+  logic [SXLEN-1:0] Synchronous_Exceptions;
+} csr_sedeleg_t;
+
+// Supervisor Interrupt Delegation Register
+typedef struct packed {
+  logic [SXLEN-1:0] Interrupts;
+} csr_sideleg_t;
+
+// Supervisor Interrupt Pending Register
+typedef struct packed {
+  logic [SXLEN-1:16] Interrupts;  // **:16 //
+  logic      [15:10] zero_15_10;  // 15:12 //
+  logic              SEIP      ;  //  9    // supervisor-level external interrupt
+  logic      [08:06] zero_08_06;  //  8    //
+  logic              STIP      ;  //  5    // supervisor-level timer interrupt
+  logic      [04:02] zero_04_02;  //  4    //
+  logic              SSIP      ;  //  1    // supervisor-level software interrupt
+  logic      [00:00] zero_00_00;  //  0    //
+} csr_sip_t;
+
+// Supervisor Interrupt Pending Register
+typedef struct packed {
+  logic [SXLEN-1:16] Interrupts;  // **:16 //
+  logic      [15:10] zero_15_10;  // 15:12 //
+  logic              SEIE      ;  //  9    // supervisor-level external interrupt
+  logic      [08:06] zero_08_06;  //  8    //
+  logic              STIE      ;  //  5    // supervisor-level timer interrupt
+  logic      [04:02] zero_04_02;  //  4    //
+  logic              SSIE      ;  //  1    // supervisor-level software interrupt
+  logic      [00:00] zero_00_00;  //  0    //
+} csr_sie_t;
+
+////////////////////////////////////////////////////////////////////////////////
+// User-Level CSRs
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -373,11 +426,11 @@ typedef struct packed {
 */
 
 ///////////////////////////////////////////////////////////////////////////////
-// address map
+// CSR address map
 ///////////////////////////////////////////////////////////////////////////////
 
-/* verilator lint_off LITENDIAN */
 // SCR address map structure
+/* verilator lint_off LITENDIAN */
 typedef struct packed {
   // User Trap Setup
   logic                   [XLEN-1:0] ustatus      ;  // 0x000       // User status register.
@@ -402,8 +455,8 @@ typedef struct packed {
   logic [12'h101:12'h101] [XLEN-1:0] res_101_101  ;
   logic                   [XLEN-1:0] sedeleg      ;  // 0x102       // Supervisor exception delegation register.
   logic                   [XLEN-1:0] sideleg      ;  // 0x103       // Supervisor interrupt delegation register.
-  logic                   [XLEN-1:0] sie          ;  // 0x104       // Supervisor interrupt-enable register.
-  logic                   [XLEN-1:0] stvec        ;  // 0x105       // Supervisor trap handler base address.
+  csr_sie_t                          sie          ;  // 0x104       // Supervisor interrupt-enable register.
+  csr_stvec_t                        stvec        ;  // 0x105       // Supervisor trap handler base address.
   logic                   [XLEN-1:0] scounteren   ;  // 0x106       // Supervisor counter enable.
   logic [12'h107:12'h13f] [XLEN-1:0] res_107_13f  ;
   // Supervisor Trap Handling
@@ -420,8 +473,8 @@ typedef struct packed {
   // Virtual Supervisor Registers
   logic                   [XLEN-1:0] vsstatus     ;  // 0x200       // Virtual supervisor status register.
   logic [12'h201:12'h203] [XLEN-1:0] res_201_203  ;
-  logic                   [XLEN-1:0] vsie         ;  // 0x204       // Virtual supervisor interrupt-enable register.
-  logic                   [XLEN-1:0] vstvec       ;  // 0x205       // Virtual supervisor trap handler base address.
+  csr_sie_t                          vsie         ;  // 0x204       // Virtual supervisor interrupt-enable register.
+  csr_stvec_t                        vstvec       ;  // 0x205       // Virtual supervisor trap handler base address.
   logic [12'h206:12'h23f] [XLEN-1:0] res_206_23f  ;
   logic                   [XLEN-1:0] vsscratch    ;  // 0x240       // Virtual supervisor scratch register.
   logic                   [XLEN-1:0] vsepc        ;  // 0x241       // Virtual supervisor exception program counter.
@@ -444,7 +497,7 @@ typedef struct packed {
   logic                   [XLEN-1:0] mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
   logic [12'h311:12'h31f] [XLEN-1:0] res_311_31f  ;
   // Machine Counter Setup
-  csr_mcountinhibit_t                mcountinhibit; // 0x320       // Machine counter-inhibit register.
+  csr_mcountinhibit_t                mcountinhibit;  // 0x320       // Machine counter-inhibit register.
   logic [12'h321:12'h322] [XLEN-1:0] res_321_322  ;
   logic [12'h003:12'h01f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
   // Machine Trap Handling
