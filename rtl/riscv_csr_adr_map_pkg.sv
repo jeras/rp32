@@ -7,9 +7,9 @@ package riscv_csr_adr_map_pkg;
 // CSR address structure
 // 'bit' type is used for this constant
 typedef struct packed {
-   bit [11:10] perm;
-   bit [09:08] level;
-   bit [07:00] addr;
+  bit [11:10] perm;
+  bit [09:08] level;
+  bit [07:00] addr;
 } csr_adr_bit_t;
 
 // SCR address map structure

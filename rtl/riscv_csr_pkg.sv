@@ -499,7 +499,7 @@ typedef struct packed {
   // Machine Counter Setup
   csr_mcountinhibit_t                mcountinhibit;  // 0x320       // Machine counter-inhibit register.
   logic [12'h321:12'h322] [XLEN-1:0] res_321_322  ;
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmevent    ;  // 0x323~0x33F // Machine performance-monitoring event selector.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmevent    ;  // 0x323:0x33F // Machine performance-monitoring event selector.
   // Machine Trap Handling
   csr_mscratch_t                     mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
   csr_mepc_t                         mepc         ;  // 0x341       // Machine exception program counter.
@@ -511,8 +511,8 @@ typedef struct packed {
   logic                   [XLEN-1:0] mtval2       ;  // 0x34B       // Machine bad guest physical address.
   logic [12'h34c:12'h39f] [XLEN-1:0] res_34c_39f  ;
   // Machine Memory Protection
-  logic [12'h000:12'h00f] [XLEN-1:0] pmpcfg       ;  // 0x3A0~0x3AF // Physical memory protection configuration. (the odd ones are RV32 only)
-  logic [12'h000:12'h03f] [XLEN-1:0] pmpaddr      ;  // 0x3B0~0x3EF // Physical memory protection address register.
+  logic [12'h000:12'h00f] [XLEN-1:0] pmpcfg       ;  // 0x3A0:0x3AF // Physical memory protection configuration. (the odd ones are RV32 only)
+  logic [12'h000:12'h03f] [XLEN-1:0] pmpaddr      ;  // 0x3B0:0x3EF // Physical memory protection address register.
   logic [12'h3f0:12'h5a7] [XLEN-1:0] res_3f0_5a7  ;
 
   // Debug/Trace Registers
@@ -567,23 +567,23 @@ typedef struct packed {
   logic                   [XLEN-1:0] mcycle       ;  // 0xB00       // Machine cycle counter.
   logic [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
   logic                   [XLEN-1:0] minstret     ;  // 0xB02       // Machine instructions-retired counter.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounter  ;  // 0xB03       // Machine performance-monitoring counter.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounter  ;  // 0xB03:0xB1f // Machine performance-monitoring counter.
   logic [12'hb20:12'hb7f] [XLEN-1:0] res_b20_b7f  ;
   logic                   [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
   logic [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
   logic                   [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB83-0xB9F // Upper 32 bits of mhpmcounter*, RV32 only.
+  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB83:0xB9F // Upper 32 bits of mhpmcounter*, RV32 only.
   logic [12'hba0:12'hbff] [XLEN-1:0] res_ba0_bff  ;
   // User Counter/Timers
   logic                   [XLEN-1:0] cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
   logic                   [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
   logic                   [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
-  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03~0xC1F // Performance-monitoring counter. (3~31)
+  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03:0xC1F // Performance-monitoring counter. (3~31)
   logic [12'hc20:12'hc7f] [XLEN-1:0] res_c20_c7f  ;
   logic                   [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
   logic                   [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
   logic                   [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83~0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
+  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83:0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
   logic [12'hca0:12'he11] [XLEN-1:0] res_ca0_e11  ;
   // Hypervisor Trap Handling (continued)
   logic                   [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
