@@ -4,7 +4,9 @@
 
 import riscv_isa_pkg::ctl_csr_t;
 import riscv_csr_pkg::*;
-import riscv_csr_adr_map_pkg::*;
+//import riscv_csr_adr_map_pkg::*;
+
+import r5p_pkg::*;
 
 module r5p_csr #(
   isa_t            ISA = RV32I,
@@ -27,9 +29,88 @@ module r5p_csr #(
   input  logic [XLEN-1:0] cause_i,
   input  logic [XLEN-1:0] epc_i,  // PC increment
   output logic [XLEN-1:0] epc_o,  // exception program counter
-  output logic [XLEN-1:0] tvec    // trap vector
+  output logic [XLEN-1:0] tvec,   // trap vector
+  // hardware performance monitor
+  input  r5p_hpmevent_t   event_i
   // TODO: debugger, ...
 );
+
+///////////////////////////////////////////////////////////////////////////////
+// CSR access details
+///////////////////////////////////////////////////////////////////////////////
+
+// current privilege level
+// TODO: current level should be a register
+isa_level_t level = LVL_M;
+
+///////////////////////////////////////////////////////////////////////////////
+// CSR Address Mapping Conventions
+///////////////////////////////////////////////////////////////////////////////
+
+// convention signals
+logic cnv_aen;  // access enable  (depends on register address range)
+logic cnv_ren;  // read   enable
+logic cnv_wen;  // write  enable  (depends on register address range)
+
+// convention access enable
+//   Access is enabled if the level in the CSR address
+//   is lower or equal to the current privilege level.
+assign cnv_aen = csr_ctl.adr.level <= level;
+
+// convention read/write enable
+//   Read access has no additional limitations.
+//   Write access is further limited to `ACCESS_RW[012]` segments of the CSR address space.
+assign cnv_ren = cnv_aen;
+assign cnv_wen = cnv_aen & (csr_ctl.adr.perm != ACCESS_RO3);
+
+logic csr_ren;  // read   enable
+logic csr_wen;  // write  enable  (depends on register address range)
+
+// CSR read/write enable
+// Depends on Zicsr instruction decoder and CSR Address Mapping Conventions)
+assign csr_ren = csr_ctl.ren & cnv_ren;
+assign csr_wen = csr_ctl.wen & cnv_wen;
+
+// CSR address decoder
+csr_dec_ut csr_dec;
+
+// TODO: define access error conditions triggering illegal instruction
+
+// CSR access illegal function
+function logic [XLEN-1:0] csr_ill_f (
+  logic [XLEN-1:0] csr_rdt
+);
+endfunction: csr_ill_f
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CSR data constructs
+///////////////////////////////////////////////////////////////////////////////
+
+// CSR data mask
+logic [XLEN-1:0] csr_msk;
+
+// CSR data mask decoder
+always_comb begin
+  unique case (csr_ctl.msk)
+    CSR_REG: csr_msk = csr_wdt;             // GPR register source 1
+    CSR_IMM: csr_msk = XLEN'(csr_ctl.imm);  // 5-bit zero extended immediate
+    default: csr_msk = 'x;
+  endcase
+end
+
+// CSR write mask function
+function logic [XLEN-1:0] csr_wdt_f (
+  logic [XLEN-1:0] csr_rdt
+);
+  unique casez (csr_ctl.op)
+    CSR_RW : csr_wdt_f =            csr_msk;  // write mask bits
+    CSR_SET: csr_wdt_f = csr_rdt |  csr_msk;  // set   mask bits
+    CSR_CLR: csr_wdt_f = csr_rdt & ~csr_msk;  // clear mask bits
+    default: begin end
+  endcase
+endfunction: csr_wdt_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // helper functions
@@ -51,30 +132,20 @@ endfunction: tvec_f
 // read/write access
 ///////////////////////////////////////////////////////////////////////////////
 
-logic            csr_aen;  // access enable (depends on register address range)
-logic            csr_ren;  // read enable
-logic            csr_wen;  // write enable
-logic [XLEN-1:0] csr_msk;  // mask data
+  logic tmp1;
+  logic tmp2;
 
-// current privilege level
-isa_level_t level = LVL_M;
+  assign tmp1 = csr_map.s.mcountinhibit.CY;
+  assign tmp2 = event_i.cycle;
 
-// CSR mask decoder
-always_comb begin
-  unique case (csr_ctl.msk)
-    CSR_REG: csr_msk = csr_wdt;             // GPR register source 1
-    CSR_IMM: csr_msk = XLEN'(csr_ctl.imm);  // 5-bit zero extended immediate
-    default: csr_msk = 'x;
-  endcase
+initial begin
+  $display("DEBUG: %s", $typename(csr_map.s.mcountinhibit.CY), $bits(csr_map.s.mcountinhibit.CY));
+  $display("DEBUG: %s", $typename(event_i.cycle), $bits(event_i.cycle));
+  $finish;
 end
 
-// read/write access permissions
-assign csr_aen = csr_ctl.adr.level <= level;
-assign csr_ren = csr_aen & csr_ctl.ren;
-assign csr_wen = csr_aen & csr_ctl.wen & (csr_ctl.adr.perm != ACCESS_RO3);
-
-// TODO: define access error conditions triggering illegal instruction
-
+// CSR address decoder
+assign csr_dec = csr_dec_f(csr_ctl.adr);
 
 // read access
 assign csr_rdt = csr_ren ? csr_map.a[csr_ctl.adr] : '0;
@@ -124,9 +195,30 @@ end else begin
     end
   end
 
-  // hardware performance monitor
-
-
+  ///////////////////////////////////////////////////////////////////////////////
+  // machine hardware performance monitor
+  ///////////////////////////////////////////////////////////////////////////////
+  
+  // machine cycle counter
+  if (csr_wen & csr_dec.s.mcycle) begin
+    csr_map.s.mcycle <= csr_wdt_f(csr_map.s.mcycle);
+  end else begin
+    if (~csr_map.s.mcountinhibit.CY & event_i.cycle)  csr_map.s.mcycle <= csr_map.s.mcycle + 1;
+  end
+  // machine instruction-retired counter
+  if (csr_wen & csr_dec.s.minstret) begin
+    csr_map.s.minstret <= csr_wdt_f(csr_map.s.minstret);
+  end else begin
+    if (~csr_map.s.mcountinhibit.IR & event_i.instret)  csr_map.s.minstret <= csr_map.s.minstret + 1;
+  end
+  // machine performance monitor counter
+  for (int unsigned i=3; i<32; i++) begin
+    if (csr_wen & csr_dec.s.mhpmcounter[i]) begin
+      csr_map.s.mhpmcounter[i] <= csr_wdt_f(csr_map.s.mhpmcounter[i]);
+    end else begin
+      if (~csr_map.s.mcountinhibit.HPM[i] & |(XLEN'(event_i) & csr_map.s.mhpmevent[i]))  csr_map.s.mhpmcounter[i] <= csr_map.s.mhpmcounter[i] + 1;
+    end
+  end
 end
 
 // TVEC (trap-vector address) and EPC (machine exception program counter)

@@ -5,6 +5,8 @@
 import riscv_isa_pkg::*;
 import riscv_csr_pkg::*;
 
+import r5p_pkg::*;
+
 module r5p_core #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
@@ -289,7 +291,9 @@ r5p_csr #(
   .cause_i (CAUSE_EXC_OP_EBREAK),
   .epc_i   (XLEN'(if_pcs  )),
   .tvec    (csr_tvec),
-  .epc_o   (csr_epc )
+  .epc_o   (csr_epc ),
+  // hardware performance monitor
+  .event_i (r5p_hpmevent_t'(1))
   // TODO: debugger, ...
 );
 

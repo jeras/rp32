@@ -766,4 +766,160 @@ parameter csr_map_st CSR_MAP_WR = '{
   /* verilator lint_on WIDTHCONCAT */
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// CSR address decoder
+///////////////////////////////////////////////////////////////////////////////
+
+// SCR address decoder structure
+/* verilator lint_off LITENDIAN */
+typedef struct packed {
+  logic                   ustatus      ;  // 0x000       // User status register.
+  logic                   fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
+  logic                   frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
+  logic                   fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
+  logic                   uie          ;  // 0x004       // User interrupt-enable register.
+  logic                   utvec        ;  // 0x005       // User trap handler base address.
+  logic [12'h006:12'h03f] res_006_03f  ;
+  logic                   uscratch     ;  // 0x040       // Scratch register for user trap handlers.
+  logic                   uepc         ;  // 0x041       // User exception program counter.
+  logic                   ucause       ;  // 0x042       // User trap cause.
+  logic                   utval        ;  // 0x043       // User bad address or instruction.
+  logic                   uip          ;  // 0x044       // User interrupt pending.
+  logic [12'h045:12'h0ff] res_045_0ff  ;
+  logic                   sstatus      ;  // 0x100       // Supervisor status register.
+  logic [12'h101:12'h101] res_101_101  ;
+  logic                   sedeleg      ;  // 0x102       // Supervisor exception delegation register.
+  logic                   sideleg      ;  // 0x103       // Supervisor interrupt delegation register.
+  logic                   sie          ;  // 0x104       // Supervisor interrupt-enable register.
+  logic                   stvec        ;  // 0x105       // Supervisor trap handler base address.
+  logic                   scounteren   ;  // 0x106       // Supervisor counter enable.
+  logic [12'h107:12'h13f] res_107_13f  ;
+  logic                   sscratch     ;  // 0x140       // Scratch register for supervisor trap handlers.
+  logic                   sepc         ;  // 0x141       // Supervisor exception program counter.
+  logic                   scause       ;  // 0x142       // Supervisor trap cause.
+  logic                   stval        ;  // 0x143       // Supervisor bad address or instruction.
+  logic                   sip          ;  // 0x144       // Supervisor interrupt pending.
+  logic [12'h145:12'h17f] res_145_17f  ;
+  logic                   satp         ;  // 0x180       // Supervisor address translation and protection.
+  logic [12'h181:12'h1ff] res_181_1ff  ;
+  logic                   vsstatus     ;  // 0x200       // Virtual supervisor status register.
+  logic [12'h201:12'h203] res_201_203  ;
+  logic                   vsie         ;  // 0x204       // Virtual supervisor interrupt-enable register.
+  logic                   vstvec       ;  // 0x205       // Virtual supervisor trap handler base address.
+  logic [12'h206:12'h23f] res_206_23f  ;
+  logic                   vsscratch    ;  // 0x240       // Virtual supervisor scratch register.
+  logic                   vsepc        ;  // 0x241       // Virtual supervisor exception program counter.
+  logic                   vscause      ;  // 0x242       // Virtual supervisor trap cause.
+  logic                   vstval       ;  // 0x243       // Virtual supervisor bad address or instruction.
+  logic                   vsip         ;  // 0x244       // Virtual supervisor interrupt pending.
+  logic [12'h245:12'h27f] res_245_27f  ;
+  logic                   vsatp        ;  // 0x280       // Virtual supervisor address translation and protection.
+  logic [12'h281:12'h2ff] res_281_2ff  ;
+  logic                   mstatus      ;  // 0x300       // Machine status register.
+  logic                   misa         ;  // 0x301       // ISA and extensions
+  logic                   medeleg      ;  // 0x302       // Machine exception delegation register.
+  logic                   mideleg      ;  // 0x303       // Machine interrupt delegation register.
+  logic                   mie          ;  // 0x304       // Machine interrupt-enable register.
+  logic                   mtvec        ;  // 0x305       // Machine trap-handler base address.
+  logic                   mcounteren   ;  // 0x306       // Machine counter enable.
+  logic [12'h307:12'h30f] res_307_30f  ;
+  logic                   mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
+  logic [12'h311:12'h31f] res_311_31f  ;
+  logic                   mcountinhibit;  // 0x320       // Machine counter-inhibit register.
+  logic [12'h321:12'h322] res_321_322  ;
+  logic [12'h003:12'h01f] mhpmevent    ;  // 0x323:0x33F // Machine performance-monitoring event selector.
+  logic                   mscratch     ;  // 0x340       // Scratch register for machine trap handlers.
+  logic                   mepc         ;  // 0x341       // Machine exception program counter.
+  logic                   mcause       ;  // 0x342       // Machine trap cause.
+  logic                   mtval        ;  // 0x343       // Machine bad address or instruction.
+  logic                   mip          ;  // 0x344       // Machine interrupt pending.
+  logic [12'h345:12'h349] res_345_349  ;
+  logic                   mtinst       ;  // 0x34A       // Machine trap instruction (transformed).
+  logic                   mtval2       ;  // 0x34B       // Machine bad guest physical address.
+  logic [12'h34c:12'h39f] res_34c_39f  ;
+  logic [12'h000:12'h00f] pmpcfg       ;  // 0x3A0:0x3AF // Physical memory protection configuration. (the odd ones are RV32 only)
+  logic [12'h000:12'h03f] pmpaddr      ;  // 0x3B0:0x3EF // Physical memory protection address register.
+  logic [12'h3f0:12'h5a7] res_3f0_5a7  ;
+  logic                   scontext     ;  // 0x5A8       // Supervisor-mode context register.
+  logic [12'h5a9:12'h5ff] res_5a9_5ff  ;
+  logic                   hstatus      ;  // 0x600       // Hypervisor status register.
+  logic [12'h601:12'h601] res_601_601  ;
+  logic                   hedeleg      ;  // 0x602       // Hypervisor exception delegation register.
+  logic                   hideleg      ;  // 0x603       // Hypervisor interrupt delegation register.
+  logic                   hie          ;  // 0x604       // Hypervisor interrupt-enable register.
+  logic                   htimedelta   ;  // 0x605       // Delta for VS/VU-mode timer.
+  logic                   hcounteren   ;  // 0x606       // Hypervisor counter enable.
+  logic                   htvec        ;  // 0x607       // Hypervisor guest external interrupt-enable register.
+  logic [12'h608:12'h614] res_608_614  ;
+  logic                   htimedeltah  ;  // 0x615       // Upper 32 bits of htimedelta, RV32 only.
+  logic [12'h616:12'h642] res_616_642  ;
+  logic                   htval        ;  // 0x643       // Hypervisor bad guest physical address.
+  logic                   hip          ;  // 0x644       // Hypervisor interrupt pending.
+  logic                   hvip         ;  // 0x645       // Hypervisor virtual interrupt pending.
+  logic [12'h646:12'h649] res_646_649  ;
+  logic                   htinst       ;  // 0x64A       // Hypervisor trap instruction (transformed).
+  logic [12'h64b:12'h67f] res_64b_67f  ;
+  logic                   hgatp        ;  // 0x680       // Hypervisor guest address translation and protection.
+  logic [12'h681:12'h6a7] res_681_6a7  ;
+  logic                   hcontext     ;  // 0x6A8       // Hypervisor-mode context register.
+  logic [12'h6a9:12'h79f] res_6a9_79f  ;
+  logic                   tselect      ;  // 0x7A0       // Debug/Trace trigger register select.
+  logic                   tdata1       ;  // 0x7A1       // First Debug/Trace trigger data register.
+  logic                   tdata2       ;  // 0x7A2       // Second Debug/Trace trigger data register.
+  logic                   tdata3       ;  // 0x7A3       // Third Debug/Trace trigger data register.
+  logic [12'h7a4:12'h7a7] res_7a4_7a7  ;
+  logic                   mcontext     ;  // 0x7A8       // Machine-mode context register.
+  logic [12'h7a9:12'h7af] res_7a9_7af  ;
+  logic                   dcsr         ;  // 0x7B0       // Debug control and status register.
+  logic                   dpc          ;  // 0x7B1       // Debug PC.
+  logic                   dscratch0    ;  // 0x7B2       // Debug scratch register 0.
+  logic                   dscratch1    ;  // 0x7B3       // Debug scratch register 1.
+  logic [12'h7b4:12'haff] res_7b4_aff  ;
+  logic                   mcycle       ;  // 0xB00       // Machine cycle counter.
+  logic [12'hb01:12'hb01] res_b01_b01  ;
+  logic                   minstret     ;  // 0xB02       // Machine instructions-retired counter.
+  logic [12'h003:12'h01f] mhpmcounter  ;  // 0xB03:0xB1f // Machine performance-monitoring counter.
+  logic [12'hb20:12'hb7f] res_b20_b7f  ;
+  logic                   mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
+  logic [12'hb81:12'hb81] res_b81_b81  ;
+  logic                   minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
+  logic [12'h003:12'h01f] mhpmcounterh ;  // 0xB83:0xB9F // Upper 32 bits of mhpmcounter*, RV32 only.
+  logic [12'hba0:12'hbff] res_ba0_bff  ;
+  logic                   cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
+  logic                   time_        ;  // 0xC01       // Timer for RDTIME instruction.
+  logic                   instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
+  logic [12'h003:12'h01f] hpmcounter   ;  // 0xC03:0xC1F // Performance-monitoring counter. (3~31)
+  logic [12'hc20:12'hc7f] res_c20_c7f  ;
+  logic                   cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
+  logic                   timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
+  logic                   instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
+  logic [12'h003:12'h01f] hpmcounterh  ;  // 0xC83:0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
+  logic [12'hca0:12'he11] res_ca0_e11  ;
+  logic                   hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
+  logic [12'he13:12'hf10] res_e13_f10  ;
+  logic                   mvendorid    ;  // 0xF11       // Vendor ID.
+  logic                   marchid      ;  // 0xF12       // Architecture ID.
+  logic                   mimpid       ;  // 0xF13       // Implementation ID.
+  logic                   mhartid      ;  // 0xF14       // Hardware thread ID.
+  logic [12'hf15:12'hfff] res_f15_fff  ;
+} csr_dec_st;
+/* verilator lint_on LITENDIAN */
+
+// SCR address decoder array
+/* verilator lint_off LITENDIAN */
+typedef logic [0:2**12-1] csr_dec_at;
+/* verilator lint_on LITENDIAN */
+
+// SCR address decoder union
+typedef union packed {
+  csr_dec_st s;  // structure
+  csr_dec_at a;  // array
+} csr_dec_ut;
+
+// SCR address decoder union
+function csr_dec_ut csr_dec_f (input csr_adr_t adr);
+  csr_dec_f.a = '0;
+  csr_dec_f.a[adr] = 1'b1;
+endfunction: csr_dec_f
+
 endpackage: riscv_csr_pkg
