@@ -31,3 +31,20 @@ TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=M make -C 
 
 #TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=I RISCV_TEST=addi-01 make -C ../submodules/riscv-arch-test verify
 
+################################################################################
+# RP64 - imperas
+################################################################################
+
+# first imperas simulator/test tarball must be extracted into the `submodules` folder
+# this was tested with `riscv-ovpsim-plus-bitmanip-tests.v20210721.zip`
+
+# to get an instruction trace for Imperas target
+# (this was done in the Imperas extracted folder, so no make path or TARGET are specified)
+XLEN=64 RISCV_DEVICE=I RISCV_TEST=ADD-01 RISCV_TARGET_FLAGS="--trace --tracechange" make verify
+XLEN=64 RISCV_DEVICE=C RISCV_TEST=I-C-EBREAK-01 RISCV_TARGET_FLAGS="--trace --tracechange" make verify
+
+# to get a reference trace with register changes
+
+
+# to run a test from Imperas on "r5p"
+TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=I make -C ../submodules/imperas-riscv-tests clean simulate verify
