@@ -16,15 +16,170 @@ localparam string REG_F [0:31] = '{"ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft
                                    "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"};
 
 function string reg_x (logic [5-1:0] r, bit abi=1'b0);
-//  reg_x = abi ? REG_X[r] : $sformatf("x%0d", r);
-  reg_x = $sformatf("x%0d", r);
+  reg_x = abi ? REG_X[r] : $sformatf("x%0d", r);
+//  reg_x = $sformatf("x%0d", r);
 endfunction: reg_x
 
+///////////////////////////////////////////////////////////////////////////////
+// CSR register names
+///////////////////////////////////////////////////////////////////////////////
+
+typedef string srting_array_t [];
+
+// function creating a dynamic array of strings, a concatenation of string and index
+function srting_array_t str_n (logic [12-1:0] l, logic [12-1:0] r, string str_i);
+  if (l>r) begin
+    // MSB to LSB (decrementing order)
+    str_n = new[l-r+1];
+    for (logic [12-1:0] i=l; i>=r; i--)
+      str_n[i] = $sformatf("%s[%d]", str_i, i);
+  end else begin
+    // LSB to MSB (incrementing order)
+    str_n = new[r-l+1];
+    for (logic [12-1:0] i=l; i<=r; i++)
+      str_n[i] = $sformatf("%s[%d]", str_i, i);
+  end
+endfunction: str_n
+
+/*
+localparam string CSR [12'h000:12'hfff] = {
+                         "ustatus",
+                         "fflafs",
+                         "frm",
+                         "fcsr",
+                         "uie",
+                         "utvec",
+  str_n(12'h006,12'h03f, "res_006_03f"),
+                         "uscratch",
+                         "uepc",
+                         "ucause",
+                         "utval",
+                         "uip",
+  str_n(12'h045,12'h0ff, "res_045_0ff"),
+                         "sstatus",
+  str_n(12'h101,12'h101, "res_101_101"),
+                         "sedeleg",
+                         "sideleg",
+                         "sie",
+                         "stvec",
+                         "scounteren",
+  str_n(12'h107,12'h13f, "res_107_13f"),
+                         "sscratch",
+                         "sepc",
+                         "scause",
+                         "stval",
+                         "sip",
+  str_n(12'h145,12'h17f, "res_145_17f"),
+                         "satp",
+  str_n(12'h181,12'h1ff, "res_181_1ff"),
+                         "vsstatus",
+  str_n(12'h201,12'h203, "res_201_203"),
+                         "vsie",
+                         "vstvec",
+  str_n(12'h206,12'h23f, "res_206_23f"),
+                         "vsscratch",
+                         "vsepc",
+                         "vscause",
+                         "vstval",
+                         "vsip",
+  str_n(12'h27f,12'h245, "res_245_27f"),
+                         "vsatp",
+  str_n(12'h2ff,12'h281, "res_281_2ff"),
+                         "mstatus",
+                         "misa",
+                         "medeleg",
+                         "mideleg",
+                         "mie",
+                         "mtvec",
+                         "mcounteren",
+  str_n(12'h30f,12'h307, "res_307_30f"),
+                         "mstatush",
+  str_n(12'h31f,12'h311, "res_311_31f"),
+
+                         "mcountinhibit",
+  str_n(12'h321,12'h322, "res_321_322"),
+  str_n(12'h003,12'h01f, "mhpmevent"),
+                         "mscratch",
+                         "mepc",
+                         "mcause",
+                         "mtval",
+                         "mip",
+  str_n(12'h345,12'h349, "res_345_349"),
+                         "mtinst",
+                         "mtval2",
+  str_n(12'h34c,12'h39f, "res_34c_39f"),
+  str_n(12'h000,12'h00f, "pmpcfg"),
+  str_n(12'h000,12'h03f, "pmpaddr"),
+  str_n(12'h3f0,12'h5a7, "res_3f0_5a7"),
+                         "scontext",
+  str_n(12'h5a9,12'h5ff, "res_5a9_5ff"),
+                         "hstatus",
+  str_n(12'h601,12'h601, "res_601_601"),
+                         "hedeleg",
+                         "hideleg",
+                         "hie",
+                         "htimedelta",
+                         "hcounteren",
+                         "htvec",
+  str_n(12'h608,12'h614, "res_608_614"),
+                         "htimedeltah",
+  str_n(12'h616,12'h642, "res_616_642"),
+                         "htval",
+                         "hip",
+                         "hvip",
+  str_n(12'h646,12'h649, "res_646_649"),
+                         "htinst",
+  str_n(12'h64b,12'h67f, "res_64b_67f"),
+                         "hgatp",
+  str_n(12'h681,12'h6a7, "res_681_6a7"),
+                         "hcontext",
+  str_n(12'h6a9,12'h79f, "res_6a9_79f"),
+                         "tselect",
+                         "tdata1",
+                         "tdata2",
+                         "tdata3",
+  str_n(12'h7a4,12'h7a7, "res_7a4_7a7"),
+                         "mcontext",
+  str_n(12'h7a9,12'h7af, "res_7a9_7af"),
+                         "dcsr",
+                         "dpc",
+                         "dscratch0",
+                         "dscratch1",
+  str_n(12'h7b4,12'haff, "res_7b4_aff"),
+                         "mcycle",
+  str_n(12'hb01,12'hb01, "res_b01_b01"),
+                         "minstret",
+  str_n(12'h003,12'h01f, "mhpmcounter"),
+  str_n(12'hb20,12'hb7f, "res_b20_b7f"),
+                         "mcycleh",
+  str_n(12'hb81,12'hb81, "res_b81_b81"),
+                         "minstreth",
+  str_n(12'h003,12'h01f, "mhpmcounterh"),
+  str_n(12'hba0,12'hbff, "res_ba0_bff"),
+                         "cycle",
+                         "time_",
+                         "instret",
+  str_n(12'h003,12'h01f, "hpmcounter"),
+  str_n(12'hc20,12'hc7f, "res_c20_c7f"),
+                         "cycleh",
+                         "timeh",
+                         "instreth",
+  str_n(12'h003,12'h01f, "hpmcounterh"),
+  str_n(12'hca0,12'he11, "res_ca0_e11"),
+                         "hgeip",
+  str_n(12'he13,12'hf10, "res_e13_f10"),
+                         "mvendorid",
+                         "marchid",
+                         "mimpid",
+                         "mhartid",
+  str_n(12'hf15,12'hfff, "res_f15_fff")
+};
+*/
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction disassembler
 ///////////////////////////////////////////////////////////////////////////////
 
-function string disasm32 (isa_t isa, op32_t op, bit abi=0);
+function string disasm32 (isa_t isa, op32_t op, bit abi=1);
 
 ctl_t t;
 t = dec32(isa, op);
