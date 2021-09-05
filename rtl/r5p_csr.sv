@@ -132,18 +132,6 @@ endfunction: tvec_f
 // read/write access
 ///////////////////////////////////////////////////////////////////////////////
 
-  logic tmp1;
-  logic tmp2;
-
-  assign tmp1 = csr_map.s.mcountinhibit.CY;
-  assign tmp2 = event_i.cycle;
-
-initial begin
-  $display("DEBUG: %s", $typename(csr_map.s.mcountinhibit.CY), $bits(csr_map.s.mcountinhibit.CY));
-  $display("DEBUG: %s", $typename(event_i.cycle), $bits(event_i.cycle));
-  $finish;
-end
-
 // CSR address decoder
 assign csr_dec = csr_dec_f(csr_ctl.adr);
 
@@ -173,6 +161,10 @@ if (rst) begin
 //  csr_map.s.m   <= '0;
 //  csr_map.s.m   <= '0;
 end else begin
+
+// TODO:
+// mstatus
+// mtval on ebreak to PC?
 
   // trap handler
   if (trap_i) begin
