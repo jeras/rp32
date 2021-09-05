@@ -7,8 +7,7 @@ RISCV_GCC_OPTS ?= -static -mcmodel=medany -g -fvisibility=hidden -nostdlib -nost
 
 COMPILE_CMD=\
 	$$(RISCV_GCC) $(1) $$(RISCV_GCC_OPTS) \
-	-I$(ROOTDIR)/riscv-test-env/ \
-	-I$(ROOTDIR)/riscv-test-env/p/ \
+	-I$(ROOTDIR)/riscv-test-suite/env/ \
 	-I$(TARGETDIR)/$(RISCV_TARGET)/ \
 	-DPRIV_MISA_S=0 \
 	-DPRIV_MISA_U=0 \
