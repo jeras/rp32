@@ -1,27 +1,26 @@
 [*]
 [*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
-[*] Sun Sep  5 15:13:20 2021
+[*] Mon Sep  6 06:14:28 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Sun Sep  5 14:19:22 2021"
-[dumpfile_size] 360294
+[dumpfile_mtime] "Mon Sep  6 06:12:20 2021"
+[dumpfile_size] 180639
 [savefile] "/home/ijeras/VLSI/rp32/sim/RP64.gtkw"
-[timestart] 2344950
-[size] 1848 1016
+[timestart] 1000
+[size] 1884 2096
 [pos] -1 -1
-*-14.269591 2399250 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.134483 3270000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
 [treeopen] top.r5p_tb.DUT.csr.
 [treeopen] top.r5p_tb.DUT.csr.csr_ctl.
-[treeopen] top.r5p_tb.DUT.csr.csr_map.
 [treeopen] top.r5p_tb.DUT.csr.csr_map.s.
 [treeopen] top.r5p_tb.DUT.gpr.
-[sst_width] 48
+[sst_width] 233
 [signals_width] 425
-[sst_expanded] 0
-[sst_vpaned_height] 432
+[sst_expanded] 1
+[sst_vpaned_height] 998
 @28
 top.r5p_tb.clk
 top.r5p_tb.rst
@@ -32,6 +31,9 @@ top.r5p_tb.rvmodel_data_begin[63:0]
 top.r5p_tb.rvmodel_data_end[63:0]
 @28
 top.r5p_tb.rvmodel_halt
+@22
+top.r5p_tb.DUT.if_pc[21:0]
+top.r5p_tb.DUT.csr_tvec[63:0]
 @800200
 -BUS IF
 @420
@@ -78,7 +80,6 @@ top.r5p_tb.bus_ls.rdy
 -GPR regset
 @22
 top.r5p_tb.DUT.gpr.gpr[1][63:0]
-@23
 top.r5p_tb.DUT.gpr.gpr[2][63:0]
 top.r5p_tb.DUT.gpr.gpr[3][63:0]
 top.r5p_tb.DUT.gpr.gpr[4][63:0]
@@ -130,16 +131,16 @@ top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
 @800200
 -CSR regset
 -mtvec [305]
+@800023
+#{mtvec[63:0]} (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
+@23
+top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0]
+@100000029
+top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
+@1001201
+-group_end
 @1000200
 -mtvec [305]
-@800022
-#{mtvec[63:0]} (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
-@22
-top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0]
-@100000028
-top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
-@1001200
--group_end
 @800200
 -mscratch [340]
 @22
@@ -148,10 +149,14 @@ top.r5p_tb.DUT.csr.csr_map.s.mscratch.scratch[63:0]
 -mscratch [340]
 @800200
 -mepc [341]
+@800022
+#{epc[63:0]} (0)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (62)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] top.r5p_tb.DUT.csr.csr_map.s.mepc.zero_00_00
 @22
 top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0]
 @28
 top.r5p_tb.DUT.csr.csr_map.s.mepc.zero_00_00
+@1001200
+-group_end
 @1000200
 -mepc [341]
 @800200
@@ -173,6 +178,8 @@ top.r5p_tb.DUT.csr.csr_map.s.mtval.mtval[63:0]
 @1000200
 -mtval [343]
 -CSR regset
+@800200
+-mstatus [300]
 @800022
 #{mstatus[63:0]} top.r5p_tb.DUT.csr.csr_map.s.mstatus.SD (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] top.r5p_tb.DUT.csr.csr_map.s.mstatus.MBE top.r5p_tb.DUT.csr.csr_map.s.mstatus.SBE (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] top.r5p_tb.DUT.csr.csr_map.s.mstatus.TSR top.r5p_tb.DUT.csr.csr_map.s.mstatus.TW top.r5p_tb.DUT.csr.csr_map.s.mstatus.TVM top.r5p_tb.DUT.csr.csr_map.s.mstatus.MXR top.r5p_tb.DUT.csr.csr_map.s.mstatus.SUM top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPRV (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.XS[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.XS[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.FS[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.FS[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0] top.r5p_tb.DUT.csr.csr_map.s.mstatus.SPP top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.UBE top.r5p_tb.DUT.csr.csr_map.s.mstatus.SPIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_04_04 top.r5p_tb.DUT.csr.csr_map.s.mstatus.MIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_02_02 top.r5p_tb.DUT.csr.csr_map.s.mstatus.SIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_00_00
 @28
@@ -212,5 +219,11 @@ top.r5p_tb.DUT.csr.csr_map.s.mstatus.SIE
 top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_00_00
 @1001200
 -group_end
+@1000200
+-mstatus [300]
+@22
+top.r5p_tb.DUT.csr.tvec[63:0]
+@100000028
+top.r5p_tb.DUT.csr.level[1:0]
 [pattern_trace] 1
 [pattern_trace] 0
