@@ -137,7 +137,7 @@ endfunction: csr_misa_f
 typedef struct packed {
   logic [MXLEN-1:32] zero;    // **:32 //
   logic    [32-1:07] Bank;    // 31:07 //
-  logic    [   6:00] Offset;  //
+  logic    [   6:00] Offset;  // 06:00 //
 } csr_mvendorid_t;
 
 // Machine Architecture ID Register
