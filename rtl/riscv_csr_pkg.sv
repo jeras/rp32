@@ -142,17 +142,17 @@ typedef struct packed {
 
 // Machine Architecture ID Register
 typedef struct packed {
-  logic [MXLEN-1-1:0] Architecture_ID;  // MSB is 1'b0 for open source projects
+  logic [MXLEN-1:0] Architecture_ID;  // MSB is 1'b0 for open source projects
 } csr_marchid_t;
 
 // Machine Implementation ID Register
 typedef struct packed {
-  logic [MXLEN-1-1:0] Implementation_ID;
+  logic [MXLEN-1:0] Implementation_ID;
 } csr_mimpid_t;
 
 // Hart ID Register
 typedef struct packed {
-  logic [MXLEN-1-1:0] Hart_ID;  //
+  logic [MXLEN-1:0] Hart_ID;  //
 } csr_mhartid_t;
 
 // Machine Status Register
@@ -245,7 +245,7 @@ typedef struct packed {
   logic [MXLEN-1:0] Interrupts;
 } csr_mideleg_t;
 
-// Machine Interrupt Pending Register
+// Machine Interrupt-Pending Register
 typedef struct packed {
   logic [MXLEN-1:16] Interrupts;  // **:16 //
   logic      [15:12] zero_15_12;  // 15:12 //
@@ -263,7 +263,7 @@ typedef struct packed {
   logic      [00:00] zero_00_00;  //  0    //
 } csr_mip_t;
 
-// Machine Interrupt Pending Register
+// Machine Interrupt-Enable Register
 typedef struct packed {
   logic [MXLEN-1:16] Interrupts;  // **:16 //
   logic      [15:12] zero_15_12;  // 15:12 //
@@ -369,6 +369,26 @@ typedef enum csr_mcause_t {
 typedef struct packed {
   logic [MXLEN-1:0] mtval;  //
 } csr_mtval_t;
+
+// Encoding of address matching mode field in PMP configuration registers
+typedef enum logic [1:0] {
+  PMP_A_OFF   = 2'd0,  // Null region (disabled)
+  PMP_A_TOR   = 2'd1,  // Top of range
+  PMP_A_NA4   = 2'd2,  // Naturally aligned four-byte region
+  PMP_A_NAPOT = 2'd3   // Naturally aligned power-of-two region, ≥8 bytes
+} csr_pmp_a_t;
+
+// PMP configuration register format
+typedef struct packed {
+  logic       L;         // 7   // 
+  logic [1:0] zero_6_5;  // 6:5 // instruction execution
+  csr_pmp_a_t A;         // 4:3 // instruction execution  
+  logic       X;         // 2   // instruction execution
+  logic       W;         // 1   // write
+  logic       R;         // 0   // read
+} csr_pmp_cfg_t;
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Supervisor-Level CSRs
@@ -589,10 +609,10 @@ typedef struct packed {
   logic                   [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
   logic [12'he13:12'hf10] [XLEN-1:0] res_e13_f10  ;
   // Machine Information Registers
-  logic                   [XLEN-1:0] mvendorid    ;  // 0xF11       // Vendor ID.
-  logic                   [XLEN-1:0] marchid      ;  // 0xF12       // Architecture ID.
-  logic                   [XLEN-1:0] mimpid       ;  // 0xF13       // Implementation ID.
-  logic                   [XLEN-1:0] mhartid      ;  // 0xF14       // Hardware thread ID.
+  csr_mvendorid_t                    mvendorid    ;  // 0xF11       // Vendor ID.
+  csr_marchid_t                      marchid      ;  // 0xF12       // Architecture ID.
+  csr_mimpid_t                       mimpid       ;  // 0xF13       // Implementation ID.
+  csr_mhartid_t                      mhartid      ;  // 0xF14       // Hardware thread ID.
   logic [12'hf15:12'hfff] [XLEN-1:0] res_f15_fff  ;
 } csr_map_st;
 /* verilator lint_on LITENDIAN */
@@ -619,7 +639,7 @@ typedef union packed {
 `define WERE '0  // 0 - (WERE) Write Error, Read Error (NOTE: not a neme from the specification)
                  //            non-existent CSR, access shall raise an illegal instruction exception
 
-parameter csr_map_st CSR_MAP_WR = '{
+localparam csr_map_st CSR_MAP_WR = '{
   // 0x300       // Machine status register.
   mstatus    : '{
     SD         : `WARL,  // 63    // SD=((FS==11) OR (XS==11)))
