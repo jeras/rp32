@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.110 (w)1999-2020 BSI
-[*] Mon Sep  6 06:14:28 2021
+[*] Fri Sep 10 06:00:09 2021
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Mon Sep  6 06:12:20 2021"
-[dumpfile_size] 180639
+[dumpfile_mtime] "Tue Sep  7 01:15:26 2021"
+[dumpfile_size] 173737
 [savefile] "/home/ijeras/VLSI/rp32/sim/RP64.gtkw"
-[timestart] 1000
-[size] 1884 2096
-[pos] -1 -1
-*-20.134483 3270000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 2526900
+[size] 1848 2096
+[pos] -1835 -1
+*-14.300732 2580000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
@@ -17,7 +17,7 @@
 [treeopen] top.r5p_tb.DUT.csr.csr_ctl.
 [treeopen] top.r5p_tb.DUT.csr.csr_map.s.
 [treeopen] top.r5p_tb.DUT.gpr.
-[sst_width] 233
+[sst_width] 361
 [signals_width] 425
 [sst_expanded] 1
 [sst_vpaned_height] 998
@@ -120,24 +120,36 @@ top.r5p_tb.DUT.csr.csr_ctl.op[1:0]
 top.r5p_tb.DUT.csr.csr_ctl.imm[4:0]
 @800200
 -adr
+@800022
+#{adr[11:0]} (0)top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0] (1)top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0] (0)top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0] (1)top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0] (0)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (1)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (2)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (3)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (4)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (5)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (6)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (7)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
 @100000028
 top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0]
 top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0]
 @22
 top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
+@1001200
+-group_end
 @1000200
 -adr
 -CSR ctl
 @800200
+-ISA priv
+@29
+top.r5p_tb.DUT.csr.priv_i.ena
+@100000029
+top.r5p_tb.DUT.csr.priv_i.typ[3:0]
+@1000200
+-ISA priv
+@800200
 -CSR regset
 -mtvec [305]
-@800023
+@800022
 #{mtvec[63:0]} (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
-@23
+@22
 top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0]
-@100000029
+@100000028
 top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
-@1001201
+@1001200
 -group_end
 @1000200
 -mtvec [305]
