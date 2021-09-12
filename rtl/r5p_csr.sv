@@ -35,12 +35,12 @@ module r5p_csr #(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-// CSR access details
+// current privilege level
 ///////////////////////////////////////////////////////////////////////////////
 
-// current privilege level
-// TODO: current level should be a register
-isa_level_t level = LVL_M;
+// NOTE: the current privelege level is not visible by reading any CSR
+//       software code itself must be aware of the privelege level it is running in
+isa_level_t level;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR Address Mapping Conventions
@@ -114,6 +114,7 @@ endfunction: csr_wdt_f
 ///////////////////////////////////////////////////////////////////////////////
 
 // *CAUSE
+// TODO: extend with missing causes
 function csr_mcause_t cause_f (
   ctl_priv_t  priv,
   isa_level_t level
@@ -129,6 +130,13 @@ function csr_mcause_t cause_f (
     default: cause_f = 'x;
   endcase
 endfunction: cause_f
+
+csr_mcause_t cause;
+assign cause = cause_f(priv_i, level);
+
+// trap delegation
+logic [XLEN-1:0] deleg;
+assign deleg = cause.Interrupt ? csr_map.s.mideleg : csr_map.s.medeleg;
 
 // TVEC address calculator
 function logic [XLEN-1:0] tvec_f (
@@ -155,6 +163,8 @@ assign csr_rdt = csr_ren ? csr_map.a[csr_ctl.adr] : '0;
 // write access (CSR operation decoder)
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
+  // system starts in machine privilege level
+  level <= LVL_M;
   // NOTE: a direct union to union (or struct to struct) assignment triggered some Verilator bug
   //   csr_map <= CSR_RST;  // this is triggering a verilator bug
   for (int unsigned i=0; i<2**12; i++) begin: reset
@@ -171,13 +181,16 @@ end else begin
 
   // trap handler
   if (trap_i) begin
-    // epc
-    unique case (level)
-      LVL_U:  begin  csr_map.s.uepc <= epc_i;  csr_map.s.ucause <= cause_f(priv_i, level);  end  // User/Application
-      LVL_S:  begin  csr_map.s.sepc <= epc_i;  csr_map.s.scause <= cause_f(priv_i, level);  end  // Supervisor
-      LVL_R:  begin                                                                         end  // Reserved
-      LVL_M:  begin  csr_map.s.mepc <= epc_i;  csr_map.s.mcause <= cause_f(priv_i, level);  end  // Machine
-    endcase
+    if (deleg[cause[$clog2(XLEN)-1:0]]) begin
+      // delegate to S mode
+      level <= LVL_S;
+      csr_map.s.sepc   <= epc_i;
+      csr_map.s.scause <= cause_f(priv_i, level);
+    end else begin
+      level            <= LVL_M;
+      csr_map.s.mepc   <= epc_i;
+      csr_map.s.mcause <= cause_f(priv_i, level);
+    end
   end else begin
     // Zicsr access
     if (csr_wen) begin
