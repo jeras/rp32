@@ -139,10 +139,14 @@ assign csr_rdt = csr_ren ? csr_map.a[csr_ctl.adr] : '0;
 // write access (CSR operation decoder)
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
-  csr_map <= CSR_RST;
+  // NOTE: a direct union to union (or struct to struct) assignment triggered some Verilator bug
+  //   csr_map <= CSR_RST;  // this is triggering a verilator bug
+  for (int unsigned i=0; i<2**12; i++) begin: reset
+    csr_map.a[i] <= CSR_RST.a[i];
+  end: reset
   // individual registers reset values are overriden
-  csr_map.s.misa      <= csr_misa_f(ISA);
-//csr_map.s.mtvec     <= MTVEC;
+//  csr_map.s.misa      <= csr_misa_f(ISA);
+//  csr_map.s.mtvec     <= MTVEC;
 end else begin
 
 // TODO:
