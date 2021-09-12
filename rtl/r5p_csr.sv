@@ -26,7 +26,6 @@ module r5p_csr #(
   // trap handler
   input  ctl_priv_t       priv_i,  // privileged instruction control structure
   input  logic            trap_i,  // 
-  input  logic [XLEN-1:0] cause_i,
   input  logic [XLEN-1:0] epc_i,  // PC increment
   output logic [XLEN-1:0] epc_o,  // exception program counter
   output logic [XLEN-1:0] tvec,   // trap vector
@@ -114,6 +113,23 @@ endfunction: csr_wdt_f
 // helper functions
 ///////////////////////////////////////////////////////////////////////////////
 
+// *CAUSE
+function csr_mcause_t cause_f (
+  ctl_priv_t  priv,
+  isa_level_t level
+);
+  unique casez (priv_i.typ)
+    PRIV_EBREAK: cause_f = CAUSE_EXC_OP_EBREAK;
+    PRIV_ECALL : unique case (level)
+      LVL_U: cause_f = CAUSE_EXC_OP_UCALL;  // Environment call from U-mode
+      LVL_S: cause_f = CAUSE_EXC_OP_SCALL;  // Environment call from S-mode
+      LVL_R: cause_f = CAUSE_EXC_OP_RSV  ;  // Reserved
+      LVL_M: cause_f = CAUSE_EXC_OP_MCALL;  // Environment call from M-mode
+    endcase
+    default: cause_f = 'x;
+  endcase
+endfunction: cause_f
+
 // TVEC address calculator
 function logic [XLEN-1:0] tvec_f (
   csr_mtvec_t  tvec,
@@ -155,12 +171,12 @@ end else begin
 
   // trap handler
   if (trap_i) begin
-    // trap handler
+    // epc
     unique case (level)
-      LVL_U:  begin  csr_map.s.uepc <= epc_i;  csr_map.s.ucause <= cause_i;  end  // User/Application
-      LVL_S:  begin  csr_map.s.sepc <= epc_i;  csr_map.s.scause <= cause_i;  end  // Supervisor
-      LVL_R:  begin                                                          end  // Reserved
-      LVL_M:  begin  csr_map.s.mepc <= epc_i;  csr_map.s.mcause <= cause_i;  end  // Machine
+      LVL_U:  begin  csr_map.s.uepc <= epc_i;  csr_map.s.ucause <= cause_f(priv_i, level);  end  // User/Application
+      LVL_S:  begin  csr_map.s.sepc <= epc_i;  csr_map.s.scause <= cause_f(priv_i, level);  end  // Supervisor
+      LVL_R:  begin                                                                         end  // Reserved
+      LVL_M:  begin  csr_map.s.mepc <= epc_i;  csr_map.s.mcause <= cause_f(priv_i, level);  end  // Machine
     endcase
   end else begin
     // Zicsr access

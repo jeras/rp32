@@ -288,7 +288,7 @@ r5p_csr #(
   // trap handler
   .priv_i  (id_ctl.priv),
   .trap_i  (id_ctl.i.pc == PC_TRP),
-  .cause_i (CAUSE_EXC_OP_EBREAK),
+//  .cause_i (CAUSE_EXC_OP_EBREAK),
   .epc_i   (XLEN'(if_pc)),
   .tvec    (csr_tvec),
   .epc_o   (csr_epc ),
