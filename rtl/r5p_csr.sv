@@ -4,9 +4,9 @@
 
 import riscv_isa_pkg::ctl_csr_t;
 import riscv_csr_pkg::*;
-//import riscv_csr_adr_map_pkg::*;
 
 import r5p_pkg::*;
+import r5p_csr_pkg::*;
 
 module r5p_csr #(
   isa_t            ISA = RV32I,
@@ -82,8 +82,6 @@ function logic [XLEN-1:0] csr_ill_f (
 );
 endfunction: csr_ill_f
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // CSR data constructs
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,25 +139,10 @@ assign csr_rdt = csr_ren ? csr_map.a[csr_ctl.adr] : '0;
 // write access (CSR operation decoder)
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
-  // TODO: use a better default
-  for (int unsigned i=1; i<2**12; i++) begin: reset
-    csr_map.a[i] <= '{default: '0};
-  end: reset
+  csr_map <= CSR_RST;
   // individual registers reset values are overriden
   csr_map.s.misa      <= csr_misa_f(ISA);
-  csr_map.s.mvendorid <= '0;
-  csr_map.s.marchid   <= '0;
-  csr_map.s.mimpid    <= '0;
-  csr_map.s.mtvec     <= MTVEC;
-  csr_map.s.medeleg   <= '0;
-  csr_map.s.mideleg   <= '0;
-//  csr_map.s.m   <= '0;
-//  csr_map.s.m   <= '0;
-//  csr_map.s.m   <= '0;
-//  csr_map.s.m   <= '0;
-//  csr_map.s.m   <= '0;
-//  csr_map.s.m   <= '0;
-//  csr_map.s.m   <= '0;
+//csr_map.s.mtvec     <= MTVEC;
 end else begin
 
 // TODO:
