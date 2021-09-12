@@ -10,8 +10,8 @@
   .align 4; .global begin_signature; begin_signature:
 
 #define RVMODEL_DATA_END                                                      \
-  .alive 4; .global end_signature; end_signature:                             \
-  RVMODEL_DATA_SECTION                                                        
+  .align 4; .global end_signature; end_signature:                             \
+  RVMODEL_DATA_SECTION
 
 //RVMODEL_BOOT
 //-----------------------------------------------------------------------
