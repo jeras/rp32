@@ -692,10 +692,11 @@ typedef enum logic [1:0] {
 
 // NOTE: only the *RET privilege level is optimally encoded
 //       the rest tries to allign with *CAUSE register encoding
+// TODO: rethink this encoding
 typedef enum logic [4-1:0] {
-  PRIV_EBREAK = {2'b00, 2'b11},
-  PRIV_ECALL  = {2'b10, 2'bxx},
-  PRIV_WFI    = {2'b11, 2'bxx},
+  PRIV_EBREAK = {2'b00, 2'b11},  // csr_cause_t'(CAUSE_EXC_OP_EBREAK)
+  PRIV_ECALL  = {2'b10, 2'b??},  // csr_cause_t'(CAUSE_EXC_OP_*CALL)  for U/S//M modes
+  PRIV_WFI    = {2'b11, 2'b11},  //  PRIV_WFI    = {2'b11, 2'bxx},
   PRIV_URET   = {2'b01, LVL_U},
   PRIV_SRET   = {2'b01, LVL_S},
   PRIV_MRET   = {2'b01, LVL_M}
