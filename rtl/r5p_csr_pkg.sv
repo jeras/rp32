@@ -282,7 +282,7 @@ localparam csr_mtval_t CSR_RST_MTVAL = '0;
 localparam csr_mtval_t CSR_WEM_MTVAL = '0;
 
 ///////////////////////////////////////////////////////////////////////////////
-// Access types
+// CSR reset values
 ///////////////////////////////////////////////////////////////////////////////
 
 localparam csr_map_ut CSR_RST = '{s: '{
@@ -307,5 +307,33 @@ localparam csr_map_ut CSR_RST = '{s: '{
   default    : '0
   /* verilator lint_on WIDTHCONCAT */
 } };
+
+///////////////////////////////////////////////////////////////////////////////
+// CSR write enable mask
+///////////////////////////////////////////////////////////////////////////////
+
+localparam csr_map_ut CSR_WEM = '{s: '{
+  mstatus       :            CSR_WEM_MSTATUS       ,  // 0x300       // Machine status register.
+  misa          :            CSR_WEM_MISA          ,  // 0x301       // ISA and extensions
+  mie           :            CSR_WEM_MIE           ,  // 0x304       // Machine interrupt-enable register.
+  mtvec         :            CSR_WEM_MTVEC         ,  // 0x305       // Machine trap-handler base address.
+  mcounteren    :            CSR_WEM_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
+  mcountinhibit :            CSR_WEM_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
+  mscratch      :            CSR_WEM_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
+  mepc          :            CSR_WEM_MEPC          ,  // 0x341       // Machine exception program counter.
+  mcause        :            CSR_WEM_MCAUSE        ,  // 0x342       // Machine trap cause.
+  mtval         :            CSR_WEM_MTVAL         ,  // 0x343       // Machine bad address or instruction.
+  mip           :            CSR_WEM_MIP           ,  // 0x344       // Machine interrupt pending.
+  mhpmcounter   : '{default: CSR_WEM_MHPMCOUNTER  },  // 0xB03:0xB1f // Machine performance-monitoring counter.
+  mhpmevent     : '{default: CSR_WEM_MHPMEVENT    },  // 0x323:0x33F // Machine performance-monitoring event selector.
+  mvendorid     :            CSR_WEM_MVENDORID     ,  // 0xF11       // Vendor ID.
+  marchid       :            CSR_WEM_MARCHID       ,  // 0xF12       // Architecture ID.
+  mimpid        :            CSR_WEM_MIMPID        ,  // 0xF13       // Implementation ID.
+  mhartid       :            CSR_WEM_MHARTID       ,  // 0xF14       // Hardware thread ID.
+  /* verilator lint_off WIDTHCONCAT */
+  default    : '0
+  /* verilator lint_on WIDTHCONCAT */
+} };
+
 
 endpackage: r5p_csr_pkg
