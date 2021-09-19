@@ -54,7 +54,7 @@ jobs:
 
       - name: 'Run RISC-V Architecture Tests'
         run: |
-        export PATH=`pwd`/risc/bin/:$PATH
-        cd test
-        TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=I make -C ../submodules/riscv-arch-test verify
-        #${{ matrix.suite }}
+          export PATH=`pwd`/risc/bin/:$PATH
+          cd test
+          TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=I make -C ../submodules/riscv-arch-test verify
+          #${{ matrix.suite }}
