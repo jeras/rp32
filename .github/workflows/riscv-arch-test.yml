@@ -48,7 +48,7 @@ jobs:
 
       - name: "Setup Verilator"
         run: |
-          sudo apt install systemc
+          sudo apt install libsystemc
           wget https://github.com/sifive/verilator/releases/download/4.204-0sifive3/verilator_4.204-0sifive3_amd64.deb
           dpkg -i verilator_4.204-0sifive3_amd64.deb
 
