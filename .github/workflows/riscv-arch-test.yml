@@ -38,6 +38,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: "repository checkout"
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: "Setup RISC-V GCC"
         run: |
