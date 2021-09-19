@@ -88,10 +88,10 @@ VFLAGS += --coverage
 all: sim
 
 lint: ${HDL}
-	${VERILATOR_ROOT}/bin/verilator --lint-only ${HDL} --top ${TOP}
+	verilator --lint-only ${HDL} --top ${TOP}
 
 sim: ${HDL}
-	${VERILATOR_ROOT}/bin/verilator $(VFLAGS) --top ${TOP} ${HDL} ${TSC}
+	verilator $(VFLAGS) --top ${TOP} ${HDL} ${TSC}
 
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
