@@ -20,17 +20,17 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
       strategy:
-      fail-fast: false
-      matrix:
-        xlen:
-        - 32
-        - 64
-        device:
-        - I
-        - C
-        - M
-        - privilege
-        - Zifencei
+        fail-fast: false
+        matrix:
+          xlen:
+          - 32
+          - 64
+          device:
+          - I
+          - C
+          - M
+          - privilege
+          - Zifencei
     name: "RISC-V Compatibility Check"
 
     # Steps represent a sequence of tasks that will be executed as part of the job
