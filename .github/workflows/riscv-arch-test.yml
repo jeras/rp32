@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir riscv
           wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2021.09.16/riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
-          tar -xzf -C riscv
+          tar -xzf riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
           ls -al riscv
 
       - name: "Setup Verilator"
