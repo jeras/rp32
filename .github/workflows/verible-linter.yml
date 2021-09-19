@@ -29,3 +29,4 @@ jobs:
         with:
           paths: ./rtl
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          reviewdog_reporter: 'github-pr-review'
