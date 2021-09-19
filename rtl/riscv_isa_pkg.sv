@@ -651,8 +651,9 @@ typedef struct packed {
   wb_t   wb ;   // write back multiplexer/enable
 } ctl_i_t;
 
+// NOTE: trap on illegal instruction
 // illegal (idle) value          pc    , br, alu, ls   , wb
-localparam ctl_i_t CTL_I_ILL = '{PC_PCI, 'x,  'x, LS_X , 'x};
+localparam ctl_i_t CTL_I_ILL = '{PC_TRP, 'x,  'x, LS_X , 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension

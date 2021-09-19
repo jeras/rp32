@@ -70,9 +70,6 @@ logic csr_wen;  // write  enable  (depends on register address range)
 assign csr_ren = csr_ctl.ren & cnv_ren;
 assign csr_wen = csr_ctl.wen & cnv_wen;
 
-// CSR address decoder
-csr_dec_ut csr_dec;
-
 // TODO: define access error conditions triggering illegal instruction
 
 // CSR access illegal function
@@ -154,9 +151,6 @@ endfunction: tvec_f
 // read/write access
 ///////////////////////////////////////////////////////////////////////////////
 
-// CSR address decoder
-assign csr_dec = csr_dec_f(csr_ctl.adr);
-
 // read access
 assign csr_rdt = csr_ren ? csr_map.a[csr_ctl.adr] : '0;
 
@@ -208,20 +202,20 @@ end else begin
   ///////////////////////////////////////////////////////////////////////////////
   
   // machine cycle counter
-  if (csr_wen & csr_dec.s.mcycle) begin
+  if (csr_wen & (csr_ctl.adr == csr__mcycle)) begin
     csr_map.s.mcycle <= csr_wdt_f(csr_map.s.mcycle);
   end else begin
     if (~csr_map.s.mcountinhibit.CY & event_i.cycle)  csr_map.s.mcycle <= csr_map.s.mcycle + 1;
   end
   // machine instruction-retired counter
-  if (csr_wen & csr_dec.s.minstret) begin
+  if (csr_wen & (csr_ctl.adr == csr__minstret)) begin
     csr_map.s.minstret <= csr_wdt_f(csr_map.s.minstret);
   end else begin
     if (~csr_map.s.mcountinhibit.IR & event_i.instret)  csr_map.s.minstret <= csr_map.s.minstret + 1;
   end
   // machine performance monitor counter
-  for (int unsigned i=3; i<32; i++) begin
-    if (csr_wen & csr_dec.s.mhpmcounter[i]) begin
+  for (bit [12-1:0] i=3; i<=31; i++) begin
+    if (csr_wen & (csr_ctl.adr == csr_dec_t'(csr__mhpmcounter3+i-12'd3))) begin
       csr_map.s.mhpmcounter[i] <= csr_wdt_f(csr_map.s.mhpmcounter[i]);
     end else begin
       if (~csr_map.s.mcountinhibit.HPM[i] & |(XLEN'(event_i) & csr_map.s.mhpmevent[i]))  csr_map.s.mhpmcounter[i] <= csr_map.s.mhpmcounter[i] + 1;
