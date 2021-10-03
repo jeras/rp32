@@ -24,39 +24,53 @@ module r5p_alu #(
 logic [XLEN-1:0] in1;  // input 1
 logic [XLEN-1:0] in2;  // input 2
 
+// operands
+logic [XLEN-1:0] op1;  // operand 1
+logic [XLEN-1:0] op2;  // operand 2
+
+// invert operand 2
+logic            inv;
+
 // shift ammount
 logic [$clog2(XLEN)-1:0] sa;
 
 // summation
-logic ovf;  // overflow bit
+logic            ovf;  // overflow bit
 logic [XLEN-1:0] sum;
 
 // operation result
 logic [XLEN-1:0] val;
 
-// ALU inputs
-always_comb begin
-  // ALU input multiplexer
-  unique casez (ctl.ai)
-    AI_R1_R2: begin in1 = rs1; in2 = rs2; end
-    AI_R1_IM: begin in1 = rs1; in2 = imm; end
-    AI_PC_IM: begin in1 = pc ; in2 = imm; end
-    default : begin in1 = 'x ; in2 = 'x ; end
-  endcase
-  // handle inputs for operations with less than XLEN width
-  unique casez (ctl.rt)
-    R_X    : in1 =                        in1         ;  // XLEN
-    R_SW   : in1 = {{XLEN-32{in1[32-1]}}, in1[32-1:0]};  //   signed word
-    R_UW   : in1 = {{XLEN-32{1'b0     }}, in1[32-1:0]};  // unsigned word
-    default: in1 =                        in1         ;  // XLEN
-  endcase
-end
+// ALU input multiplexer
+always_comb
+unique casez (ctl.ai)
+  AI_R1_R2: begin in1 = rs1; in2 = rs2; end
+  AI_R1_IM: begin in1 = rs1; in2 = imm; end
+  AI_PC_IM: begin in1 = pc ; in2 = imm; end
+  default : begin in1 = 'x ; in2 = 'x ; end
+endcase
 
-// TODO: sum is not primarily for output, use it for adder based instructions
-// TODO: construct proper subtraction condition
+// handle inputs for operations with less than XLEN width
+always_comb
+unique casez (ctl.rt)
+  R_X    : op1 =                        in1         ;  // XLEN
+  R_SW   : op1 = {{XLEN-32{in1[32-1]}}, in1[32-1:0]};  //   signed word
+  R_UW   : op1 = {{XLEN-32{1'b0     }}, in1[32-1:0]};  // unsigned word
+  default: op1 =                        in1         ;  // XLEN
+endcase
+
+// invert operand 2 (bit 5 of f7 segment of operand)
+assign inv = ctl.ao.f7_5;
+
+// invert second operand for subtraction
+always_comb
+unique casez (inv)
+  1'b0   : op2 =  in2;  // addition
+  1'b1   : op2 = ~in2;  // subtraction
+endcase
+
 // adder (summation, subtraction)
-//assign {ovf, sum} = $signed(rs1) + (ctl.alu.sig ? -$signed(rs2) : +$signed(rs2));
-assign {ovf, sum} = $signed(in1) + $signed(in2);
+assign {ovf, sum} = $signed(op1) + $signed(op2) + $signed(XLEN'(inv));
 
 // TODO:
 // * see if overflow can be used
@@ -74,8 +88,8 @@ endcase
 always_comb
 unique casez (ctl.ao)
   // adder based instructions
-  AO_ADD : val =   $signed(in1) +   $signed(in2);
-  AO_SUB : val =   $signed(in1) -   $signed(in2);
+  AO_ADD : val = sum;
+  AO_SUB : val = sum;
   AO_SLT : val =   $signed(in1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
   AO_SLTU: val = $unsigned(in1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
   // bitwise logical operations
@@ -97,7 +111,5 @@ unique casez (ctl.rt)
   R_UW   : rd = {{XLEN-32{val[32-1]}}, val[32-1:0]};  // sign extended word
   default: rd =                        val         ;  // XLEN
 endcase
-
-//assign rd = val;
 
 endmodule: r5p_alu

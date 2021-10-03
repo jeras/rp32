@@ -556,7 +556,7 @@ typedef enum logic [2-1:0] {
 
 // ALU operation {func7[5], func3}
 typedef struct packed {
-  logic          f7_5;
+  logic          f7_5;  // used for subtraction
   op32_r_func3_t f3;
 } alu_op_t;
 
