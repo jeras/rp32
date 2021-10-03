@@ -30,10 +30,8 @@ jobs:
       - name: Install Dependencies
         run: sudo xargs apt-get install -y < .github/workflows/apt-packages.txt
 
-      - env:
-          CXX: g++-4.8
-          CC: gcc-4.8
-        run: make verilator -C regression SUITE=none
+      - name: Build Verilator
+        run: make
 
   # This workflow contains a single job called "build"
   build:
@@ -43,9 +41,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        xlen:
+        xlen:
 #        - 32
-#        - 64
+        - 64
         device:
         - I
         - C
@@ -82,8 +80,11 @@ jobs:
           key: verilator-${{ hashFiles('./verilator.hash') }}-v1
 
       - name: 'Run RISC-V Architecture Tests'
+        env:
+          RISCV_TARGET: r5p
+          XLEN:         ${{ matrix.xlen }}
+          RISCV_DEVICE: ${{ matrix.device }}
         run: |
           export PATH=`pwd`/riscv/bin/:$PATH
           cd test
-          TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=64 RISCV_DEVICE=I make -C ../submodules/riscv-arch-test verify
-          #${{ matrix.suite }}
+          TARGETDIR=`pwd` WORK=`pwd`/work make -C ../submodules/riscv-arch-test verify
