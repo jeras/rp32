@@ -25,13 +25,15 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ./emulator/verilator
-          key: verilator-${{ hashFiles('./verilator.hash') }}-v1
+          key: verilator-${{ hashFiles('./verilator.hash') }}-v2
 
       - name: Install Dependencies
         run: sudo xargs apt-get install -y < .github/workflows/apt-packages.txt
 
-      - name: Build Verilator
-        run: make
+      - env:
+          CXX: g++
+          CC: gcc
+        run: make verilator -C regression SUITE=none  prepare-verilator-cache:
 
   # This workflow contains a single job called "build"
   build:
