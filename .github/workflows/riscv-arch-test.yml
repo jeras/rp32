@@ -33,7 +33,7 @@ jobs:
       - env:
           CXX: g++
           CC: gcc
-        run: make verilator -C regression SUITE=none  prepare-verilator-cache:
+        run: make verilator -C regression SUITE=none
 
   # This workflow contains a single job called "build"
   build:
