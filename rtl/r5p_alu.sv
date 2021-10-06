@@ -97,9 +97,9 @@ unique casez (ctl.ao)
   AO_OR  : val = in1 | in2;
   AO_XOR : val = in1 ^ in2;
   // barrel shifter
-  AO_SRA : val =   $signed(in1) >>> sa;
-  AO_SRL : val = $unsigned(in1)  >> sa;
-  AO_SLL : val = $unsigned(in1)  << sa;
+  AO_SRA : val =   $signed(op1) >>> sa;
+  AO_SRL : val = $unsigned(op1)  >> sa;
+  AO_SLL : val = $unsigned(op1)  << sa;
   default: val = 'x;
 endcase
 
