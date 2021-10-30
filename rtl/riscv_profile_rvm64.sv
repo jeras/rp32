@@ -22,14 +22,14 @@ package riscv_profile_rvm64;
 // reset value
 
 // enable read access
-parameter csr_map_ut CSR_REN_S = '{
+localparam csr_map_ut CSR_REN_S = '{
   // 0x300       // Machine status register.
   mstatus    : '{
-    SD         = '1,  // 63    // SD=((FS==11) OR (XS==11)))
-    wpri_62_38 = '0,  // 62:38 //
+    SD         : '1,  // 63    // SD=((FS==11) OR (XS==11)))
+    wpri_62_38 : '0,  // 62:38 //
   // Endianness Control
-    MBE        = '1,  // 37    // M-mode endianness
-    SBE        = '1,  // 36    // S-mode endianness
+    MBE        : '1,  // 37    // M-mode endianness
+    SBE        : '1,  // 36    // S-mode endianness
   // Base ISA Control
     SXL        : '1,  // 35:34 // S-mode XLEN
     UXL        : '1,  // 33:32 // U-mode XLEN
@@ -88,7 +88,7 @@ parameter csr_map_ut CSR_REN_S = '{
       D : '1,  //  3 // Double-precision floating-point extension
       C : '1,  //  2 // Compressed extension
       B : '1,  //  1 // Tentatively reserved for Bit-Manipulation extension
-      A : '1,  //  0 // Atomic extension
+      A : '1   //  0 // Atomic extension
     }
   },
   // 0x304       // Machine interrupt-enable register.
@@ -138,12 +138,12 @@ parameter csr_map_ut CSR_REN_S = '{
     SSIP       : '1,  //  1    // supervisor-level software interrupt
     zero_00_00 : '0   //  0    //
   },
-  default    : '0;  
+  default    : '0
 };
 
 // enable write access
 parameter csr_map_ut CSR_WEN = '{
-
+  default    : '0
 };
 
 endpackage: riscv_profile_rvm64
