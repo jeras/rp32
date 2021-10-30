@@ -51,11 +51,13 @@ TOP = r5p_tb
 # Verilator compiler/linker flags
 ################################################################################
 
+# specify SystemVerilog LRM version
+#VFLAGS  = +1800-2012ext+sv
+# set VERILATOR macro (used to handle tool quirks)
+#VFLAGS += -DVERILATOR
 # set XLEN parameter
 XLEN ?= 32
-VFLAGS  = -GXLEN=${XLEN}
-# specify SystemVerilog LRM version
-#VFLAGS += +1800-2012ext+sv
+VFLAGS += -GXLEN=${XLEN}
 # Generate SystemC in executable form
 VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
