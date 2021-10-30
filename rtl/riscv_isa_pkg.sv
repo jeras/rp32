@@ -18,8 +18,7 @@ typedef struct packed {
 } isa_base_t;
 
 // base enumerations
-// TODO: verilator does not support struct literals inside enumeration definition
-typedef enum isa_base_t {
+typedef enum logic [$bits(isa_base_t)-1:0] {
   //           EWDQ
   RV_32E  = 4'b1100,
   RV_32I  = 4'b0100,
@@ -36,7 +35,7 @@ typedef struct packed {
 } isa_priv_t;
 
 // privilege mode support
-typedef enum isa_priv_t {
+typedef enum logic [$bits(isa_priv_t)-1:0] {
   MODES_NONE = 4'b0000, // no privileged modes are supported
   MODES_M    = 4'b1000,  // Simple embedded systems
   MODES_MU   = 4'b1001,  // Secure embedded systems
@@ -67,7 +66,7 @@ typedef struct packed {
 } isa_ext_t;
 
 // standard extensions
-typedef enum isa_ext_t {
+typedef enum logic [$bits(isa_ext_t)-1:0] {
   //                MAFD_ZZ_QLCBJTPVNHS_ZZ
   RV_M        = 19'b1000_00_00000000000_00,  // integer multiplication and division
   RV_A        = 19'b0100_00_00000000000_00,  // atomic instructions
@@ -102,7 +101,7 @@ typedef struct packed {
 
 // enumerations for common and individual configurations
 // TODO: verilator does not support struct literals inside enumeration definition
-typedef enum isa_spec_t {
+typedef enum logic [$bits(isa_spec_t)-1:0] {
   RV32E   = {RV_32E , RV_NONE    },
   RV32I   = {RV_32I , RV_NONE    },
   RV64I   = {RV_64I , RV_NONE    },
@@ -561,8 +560,7 @@ typedef struct packed {
 } alu_op_t;
 
 // ALU operation {func7[5], func3}
-// TODO: verilator does not support struct literals inside enumeration definition
-typedef enum alu_op_t {
+typedef enum logic [$bits(alu_op_t)-1:0] {
   AO_ADD  = {1'b0, ADD },  // addition
   AO_SUB  = {1'b1, ADD },  // subtraction
   AO_SLL  = {1'b?, SL  },  // shift left logical
@@ -609,8 +607,7 @@ typedef struct packed {
 } lsu_t;
 
 // load/store enumeration type
-// TODO: verilator does not support struct literals inside enumeration definition
-typedef enum lsu_t {
+typedef enum logic [$bits(lsu_t)-1:0] {
   //        en,   we, f3
   L_BS = {1'b1, 1'b0, LB },  // load signed byte
   L_HS = {1'b1, 1'b0, LH },  // load signed half

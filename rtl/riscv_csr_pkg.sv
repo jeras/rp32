@@ -322,7 +322,7 @@ typedef struct packed {
 } csr_mcause_t;
 
 // Machine cause register (mcause) values after trap
-typedef enum csr_mcause_t {
+typedef enum logic [$bits(csr_mcause_t)-1:0] {
   // Interrupts
   CAUSE_IRQ_RSV_0            = {1'b1, (MXLEN-1-6)'(0), 6'd00},  // Reserved
   CAUSE_IRQ_SW_S             = {1'b1, (MXLEN-1-6)'(0), 6'd01},  // Supervisor software interrupt
