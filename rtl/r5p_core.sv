@@ -10,6 +10,7 @@ import r5p_pkg::*;
 module r5p_core #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+`ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -18,6 +19,7 @@ module r5p_core #(
   isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+`endif
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
@@ -27,7 +29,6 @@ module r5p_core #(
   int unsigned DDW = XLEN,  // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
   // privilege implementation details
-  logic [XLEN-1:0] MTVEC = 'h0000_0000,  // machine trap vector
   logic [XLEN-1:0] PC0   = 'h0000_0000   // reset vector
 )(
   // system signals
@@ -47,6 +48,17 @@ module r5p_core #(
   input  logic [DBW-1:0][8-1:0] ls_rdt,  // read data
   input  logic                  ls_ack   // write or read acknowledge
 );
+
+`ifdef SYNOPSYS_VERILOG_COMPILER
+// extensions  (see `riscv_isa_pkg` for enumeration definition)
+localparam isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr;
+// privilige modes
+localparam  isa_priv_et MODES = MODES_M;
+// ISA
+localparam  isa_t       ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: RV_M | RV_C | RV_Zicsr}, priv: MODES}
+                            : XLEN==64 ? '{spec: '{base: RV_64I , ext: RV_M | RV_C | RV_Zicsr}, priv: MODES}
+                                       : '{spec: '{base: RV_128I, ext: RV_M | RV_C | RV_Zicsr}, priv: MODES};
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -272,9 +284,7 @@ r5p_mdu #(
 ///////////////////////////////////////////////////////////////////////////////
 
 r5p_csr #(
-  .ISA     (ISA),
-  .XLEN    (XLEN),
-  .MTVEC   (MTVEC)
+  .XLEN    (XLEN)
 ) csr (
   // system signals
   .clk     (clk),

@@ -2,17 +2,15 @@
 // R5P: control/status registers
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::ctl_csr_t;
+import riscv_isa_pkg::*;
 import riscv_csr_pkg::*;
 
 import r5p_pkg::*;
 import r5p_csr_pkg::*;
 
 module r5p_csr #(
-  isa_t            ISA = RV32I,
-  int unsigned     XLEN = 32,
-  // constants ???
-  logic [XLEN-1:0] MTVEC = '0  // machine trap vector
+  // RISC-V ISA
+  int unsigned     XLEN = 32
 )(
   // system signals
   input  logic            clk,  // clock

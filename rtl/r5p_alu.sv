@@ -2,7 +2,7 @@
 // R5P: arithmetic/logic unit (ALU)
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::alu_t;
+import riscv_isa_pkg::*;
 
 module r5p_alu #(
   int unsigned XLEN = 32

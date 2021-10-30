@@ -87,32 +87,32 @@ localparam csr_mstatus_rv64_t CSR_RST_MSTATUS = '{
   default: '0
 };
 localparam csr_mstatus_rv64_t CSR_WEM_MSTATUS = '{
-  SD  : 1'b0,           // SD=((FS==11) OR (XS==11)))
+  SD  :                1'b0,    // SD=((FS==11) OR (XS==11)))
   // Endianness Control
-  MBE : 1'b0,           // M-mode endianness
-  SBE : 1'b0,           // S-mode endianness
+  MBE : csr_endian_t '(1'b0),   // M-mode endianness
+  SBE : csr_endian_t '(1'b0),   // S-mode endianness
   // Base ISA Control
-  SXL : 2'b00,          // S-mode XLEN
-  UXL : 2'b00,          // U-mode XLEN
+  SXL : csr_xlen_t   '(2'b00),  // S-mode XLEN
+  UXL : csr_xlen_t   '(2'b00),  // U-mode XLEN
   // Virtualization Support
-  TSR : 1'b0,           // Trap SRET
-  TW  : 1'b0,           // Timeout Wait
-  TVM : 1'b0,           // Trap Virtual Memory
+  TSR :                1'b0,    // Trap SRET
+  TW  :                1'b0,    // Timeout Wait
+  TVM :                1'b0,    // Trap Virtual Memory
   // Memory Privilige
-  MXR : 1'b0,           // Make eXecutable Readable
-  SUM : 1'b0,           // permit Supervisor User Memory access
-  MPRV: 1'b0,           // Modify PRiVilege
+  MXR :                1'b0,    // Make eXecutable Readable
+  SUM :                1'b0,    // permit Supervisor User Memory access
+  MPRV:                1'b0,    // Modify PRiVilege
   // Extension Context Status
-  XS  : 2'b00,          // user-mode extensions context status
-  FS  : 2'b00,          // floating-point context status
+  XS  : csr_context_t'(2'b00),  // user-mode extensions context status
+  FS  : csr_context_t'(2'b00),  // floating-point context status
   // Privilege and Global Interrupt-Enable Stack
-  MPP : 2'b00,          // machine previous privilege mode
-  SPP : 1'b0,           // supervisor previous privilege mode
-  MPIE: 1'b0,           // machine interrupt-enable active prior to the trap
-  UBE : ENDIAN_LITTLE,  // U-mode endianness
-  SPIE: 1'b0,           // supervisor interrupt-enable active prior to the trap
-  MIE : 1'b1,           // machine global interrupt-enable
-  SIE : 1'b0,           // supervisor global interrupt-enable
+  MPP : isa_level_t  '(2'b00),  // machine previous privilege mode
+  SPP :                1'b0,    // supervisor previous privilege mode
+  MPIE:                1'b0,    // machine interrupt-enable active prior to the trap
+  UBE : csr_endian_t '(1'b0),   // U-mode endianness
+  SPIE:                1'b0,    // supervisor interrupt-enable active prior to the trap
+  MIE :                1'b1,    // machine global interrupt-enable
+  SIE :                1'b0,    // supervisor global interrupt-enable
   default: '0
 };
 
@@ -122,8 +122,8 @@ localparam csr_mtvec_t CSR_RST_MTVEC = '{
   MODE: TVEC_MODE_DIRECT   // vector mode
 };
 localparam csr_mtvec_t CSR_WEM_MTVEC = '{
-  BASE: '1,                // vector base address
-  MODE: 2'b01              // vector mode
+  BASE:                '1,     // vector base address
+  MODE: csr_vector_t'(2'b01)   // vector mode (one bit is reserved)
 };
 
 //// Machine Exception Delegation Register
@@ -285,62 +285,58 @@ localparam csr_mtval_t CSR_WEM_MTVAL = '0;
 // CSR reset values
 ///////////////////////////////////////////////////////////////////////////////
 
-localparam csr_map_ut CSR_RST = '{s: '{
-    mstatus       :            CSR_RST_MSTATUS       ,  // 0x300       // Machine status register.
-    misa          :            CSR_RST_MISA          ,  // 0x301       // ISA and extensions
-    mie           :            CSR_RST_MIE           ,  // 0x304       // Machine interrupt-enable register.
-    mtvec         :            CSR_RST_MTVEC         ,  // 0x305       // Machine trap-handler base address.
-    mcounteren    :            CSR_RST_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
-    mcountinhibit :            CSR_RST_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
-    mscratch      :            CSR_RST_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
-    mepc          :            CSR_RST_MEPC          ,  // 0x341       // Machine exception program counter.
-    mcause        :            CSR_RST_MCAUSE        ,  // 0x342       // Machine trap cause.
-    mtval         :            CSR_RST_MTVAL         ,  // 0x343       // Machine bad address or instruction.
-    mip           :            CSR_RST_MIP           ,  // 0x344       // Machine interrupt pending.
-    mhpmcounter   : '{default: CSR_RST_MHPMCOUNTER  },  // 0xB03:0xB1f // Machine performance-monitoring counter.
-    mhpmevent     : '{default: CSR_RST_MHPMEVENT    },  // 0x323:0x33F // Machine performance-monitoring event selector.
-    mvendorid     :            CSR_RST_MVENDORID     ,  // 0xF11       // Vendor ID.
-    marchid       :            CSR_RST_MARCHID       ,  // 0xF12       // Architecture ID.
-    mimpid        :            CSR_RST_MIMPID        ,  // 0xF13       // Implementation ID.
-    mhartid       :            CSR_RST_MHARTID       ,  // 0xF14       // Hardware thread ID.
-    /* verilator lint_off WIDTHCONCAT */
-    default    : '0
-    /* verilator lint_on WIDTHCONCAT */
-  }
-`ifdef SYNOPSYS_VERILOG_COMPILER
-  , default : '0  // not correct, but expected by Synopsys Verilog Compiler (Lattice Diamond)
-`endif
+localparam csr_map_st CSR_RST_S = '{
+  mstatus       :            CSR_RST_MSTATUS       ,  // 0x300       // Machine status register.
+  misa          :            CSR_RST_MISA          ,  // 0x301       // ISA and extensions
+  mie           :            CSR_RST_MIE           ,  // 0x304       // Machine interrupt-enable register.
+  mtvec         :            CSR_RST_MTVEC         ,  // 0x305       // Machine trap-handler base address.
+  mcounteren    :            CSR_RST_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
+  mcountinhibit :            CSR_RST_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
+  mscratch      :            CSR_RST_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
+  mepc          :            CSR_RST_MEPC          ,  // 0x341       // Machine exception program counter.
+  mcause        :            CSR_RST_MCAUSE        ,  // 0x342       // Machine trap cause.
+  mtval         :            CSR_RST_MTVAL         ,  // 0x343       // Machine bad address or instruction.
+  mip           :            CSR_RST_MIP           ,  // 0x344       // Machine interrupt pending.
+  mhpmcounter   : '{default: CSR_RST_MHPMCOUNTER  },  // 0xB03:0xB1f // Machine performance-monitoring counter.
+  mhpmevent     : '{default: CSR_RST_MHPMEVENT    },  // 0x323:0x33F // Machine performance-monitoring event selector.
+  mvendorid     :            CSR_RST_MVENDORID     ,  // 0xF11       // Vendor ID.
+  marchid       :            CSR_RST_MARCHID       ,  // 0xF12       // Architecture ID.
+  mimpid        :            CSR_RST_MIMPID        ,  // 0xF13       // Implementation ID.
+  mhartid       :            CSR_RST_MHARTID       ,  // 0xF14       // Hardware thread ID.
+  /* verilator lint_off WIDTHCONCAT */
+  default    : '0
+  /* verilator lint_on WIDTHCONCAT */
 };
+
+localparam csr_map_ut CSR_RST = CSR_RST_S;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR write enable mask
 ///////////////////////////////////////////////////////////////////////////////
 
-localparam csr_map_ut CSR_WEM = '{s: '{
-    mstatus       :            CSR_WEM_MSTATUS       ,  // 0x300       // Machine status register.
-    misa          :            CSR_WEM_MISA          ,  // 0x301       // ISA and extensions
-    mie           :            CSR_WEM_MIE           ,  // 0x304       // Machine interrupt-enable register.
-    mtvec         :            CSR_WEM_MTVEC         ,  // 0x305       // Machine trap-handler base address.
-    mcounteren    :            CSR_WEM_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
-    mcountinhibit :            CSR_WEM_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
-    mscratch      :            CSR_WEM_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
-    mepc          :            CSR_WEM_MEPC          ,  // 0x341       // Machine exception program counter.
-    mcause        :            CSR_WEM_MCAUSE        ,  // 0x342       // Machine trap cause.
-    mtval         :            CSR_WEM_MTVAL         ,  // 0x343       // Machine bad address or instruction.
-    mip           :            CSR_WEM_MIP           ,  // 0x344       // Machine interrupt pending.
-    mhpmcounter   : '{default: CSR_WEM_MHPMCOUNTER  },  // 0xB03:0xB1f // Machine performance-monitoring counter.
-    mhpmevent     : '{default: CSR_WEM_MHPMEVENT    },  // 0x323:0x33F // Machine performance-monitoring event selector.
-    mvendorid     :            CSR_WEM_MVENDORID     ,  // 0xF11       // Vendor ID.
-    marchid       :            CSR_WEM_MARCHID       ,  // 0xF12       // Architecture ID.
-    mimpid        :            CSR_WEM_MIMPID        ,  // 0xF13       // Implementation ID.
-    mhartid       :            CSR_WEM_MHARTID       ,  // 0xF14       // Hardware thread ID.
-    /* verilator lint_off WIDTHCONCAT */
-    default    : '0
-    /* verilator lint_on WIDTHCONCAT */
-  }
-`ifdef SYNOPSYS_VERILOG_COMPILER
-  , default : '0  // not correct, but expected by Synopsys Verilog Compiler (Lattice Diamond)
-`endif
+localparam csr_map_st CSR_WEM_S = '{
+  mstatus       :            CSR_WEM_MSTATUS       ,  // 0x300       // Machine status register.
+  misa          :            CSR_WEM_MISA          ,  // 0x301       // ISA and extensions
+  mie           :            CSR_WEM_MIE           ,  // 0x304       // Machine interrupt-enable register.
+  mtvec         :            CSR_WEM_MTVEC         ,  // 0x305       // Machine trap-handler base address.
+  mcounteren    :            CSR_WEM_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
+  mcountinhibit :            CSR_WEM_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
+  mscratch      :            CSR_WEM_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
+  mepc          :            CSR_WEM_MEPC          ,  // 0x341       // Machine exception program counter.
+  mcause        :            CSR_WEM_MCAUSE        ,  // 0x342       // Machine trap cause.
+  mtval         :            CSR_WEM_MTVAL         ,  // 0x343       // Machine bad address or instruction.
+  mip           :            CSR_WEM_MIP           ,  // 0x344       // Machine interrupt pending.
+  mhpmcounter   : '{default: CSR_WEM_MHPMCOUNTER  },  // 0xB03:0xB1f // Machine performance-monitoring counter.
+  mhpmevent     : '{default: CSR_WEM_MHPMEVENT    },  // 0x323:0x33F // Machine performance-monitoring event selector.
+  mvendorid     :            CSR_WEM_MVENDORID     ,  // 0xF11       // Vendor ID.
+  marchid       :            CSR_WEM_MARCHID       ,  // 0xF12       // Architecture ID.
+  mimpid        :            CSR_WEM_MIMPID        ,  // 0xF13       // Implementation ID.
+  mhartid       :            CSR_WEM_MHARTID       ,  // 0xF14       // Hardware thread ID.
+  /* verilator lint_off WIDTHCONCAT */
+  default    : '0
+  /* verilator lint_on WIDTHCONCAT */
 };
+
+localparam csr_map_ut CSR_WEM = CSR_WEM_S;
 
 endpackage: r5p_csr_pkg

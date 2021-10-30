@@ -642,43 +642,43 @@ typedef union packed {
 localparam csr_map_st CSR_MAP_WR = '{
   // 0x300       // Machine status register.
   mstatus    : '{
-    SD         : `WARL,  // 63    // SD=((FS==11) OR (XS==11)))
-    wpri_62_38 : `WPRI,  // 62:38 //
+    SD         :                `WARL ,  // 63    // SD=((FS==11) OR (XS==11)))
+    wpri_62_38 :                `WPRI ,  // 62:38 //
     // Endianness Control
-    MBE        : `WLRL,  // 37    // M-mode endianness
-    SBE        : `WLRL,  // 36    // S-mode endianness
+    MBE        : csr_endian_t '(`WLRL),  // 37    // M-mode endianness
+    SBE        : csr_endian_t '(`WLRL),  // 36    // S-mode endianness
     // Base ISA Control
-    SXL        : `WLRL,  // 35:34 // S-mode XLEN
-    UXL        : `WLRL,  // 33:32 // U-mode XLEN
-    wpri_31_23 : `WPRI,  // 31:23 //
+    SXL        : csr_xlen_t   '(`WLRL),  // 35:34 // S-mode XLEN
+    UXL        : csr_xlen_t   '(`WLRL),  // 33:32 // U-mode XLEN
+    wpri_31_23 :                `WPRI ,  // 31:23 //
     // Virtualization Support
-    TSR        : `WLRL,  // 22    // Trap SRET
-    TW         : `WLRL,  // 21    // Timeout Wait
-    TVM        : `WLRL,  // 20    // Trap Virtual Memory
+    TSR        :                `WLRL ,  // 22    // Trap SRET
+    TW         :                `WLRL ,  // 21    // Timeout Wait
+    TVM        :                `WLRL ,  // 20    // Trap Virtual Memory
     // Memory Privilige
-    MXR        : `WLRL,  // 19    // Make eXecutable Readable
-    SUM        : `WLRL,  // 18    // permit Supervisor User Memory access
-    MPRV       : `WLRL,  // 17    // Modify PRiVilege
+    MXR        :                `WLRL ,  // 19    // Make eXecutable Readable
+    SUM        :                `WLRL ,  // 18    // permit Supervisor User Memory access
+    MPRV       :                `WLRL ,  // 17    // Modify PRiVilege
     // Extension Context Status
-    XS         : `WLRL,  // 16:15 // user-mode extensions context status
-    FS         : `WLRL,  // 14:13 // floating-point context status
+    XS         : csr_context_t'(`WLRL),  // 16:15 // user-mode extensions context status
+    FS         : csr_context_t'(`WLRL),  // 14:13 // floating-point context status
     // Privilege and Global Interrupt-Enable Stack
-    MPP        : `WLRL,  // 12:11 // machine previous privilege mode
-    wpri_10_09 : `WPRI,  // 10: 9 //
-    SPP        : `WLRL,  //  8    // supervisor previous privilege mode
-    MPIE       : `WLRL,  //  7    // machine interrupt-enable active prior to the trap
-    UBE        : `WLRL,  //  6    // U-mode endianness
-    SPIE       : `WLRL,  //  5    // supervisor interrupt-enable active prior to the trap
-    wpri_04_04 : `WPRI,  //  4    //
-    MIE        : `WLRL,  //  3    // machine global interrupt-enable
-    wpri_02_02 : `WPRI,  //  2    //
-    SIE        : `WLRL,  //  1    // supervisor global interrupt-enable
-    wpri_00_00 : `WPRI   //  0    //
+    MPP        : isa_level_t  '(`WLRL),  // 12:11 // machine previous privilege mode
+    wpri_10_09 :                `WPRI ,  // 10: 9 //
+    SPP        :                `WLRL ,  //  8    // supervisor previous privilege mode
+    MPIE       :                `WLRL ,  //  7    // machine interrupt-enable active prior to the trap
+    UBE        : csr_endian_t '(`WLRL),  //  6    // U-mode endianness
+    SPIE       :                `WLRL ,  //  5    // supervisor interrupt-enable active prior to the trap
+    wpri_04_04 :                `WPRI ,  //  4    //
+    MIE        :                `WLRL ,  //  3    // machine global interrupt-enable
+    wpri_02_02 :                `WPRI ,  //  2    //
+    SIE        :                `WLRL ,  //  1    // supervisor global interrupt-enable
+    wpri_00_00 :                `WPRI    //  0    //
   },
   // 0x301       // ISA and extensions
   misa       : '{
-    MXL        : `WARL,  // Machine XLEN
-    warl_xx_26 : `WARL,  // Reserved
+    MXL        : csr_xlen_t   '(`WARL),  // Machine XLEN
+    warl_xx_26 :                `WARL ,  // Reserved
     Extensions : '{
       Z : `WARL,  // 25 // Reserved
       Y : `WARL,  // 24 // Reserved
@@ -727,8 +727,8 @@ localparam csr_map_st CSR_MAP_WR = '{
   },
   // 0x305       // Machine trap-handler base address.
   mtvec      : '{
-    BASE : `WARL,  // **: 2 // vector base address
-    MODE : `WARL   //  1: 0 // vector mode
+    BASE :               `WARL ,  // **: 2 // vector base address
+    MODE : csr_vector_t'(`WARL)   //  1: 0 // vector mode
   },
   // 0x306       // Machine counter enable.
   mcounteren : '{

@@ -2,7 +2,7 @@
 // R5P: branch unit
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::br_t;
+import riscv_isa_pkg::*;
 
 module r5p_br #(
   int unsigned XLEN = 32
