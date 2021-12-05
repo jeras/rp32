@@ -50,14 +50,8 @@ module r5p_core #(
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
-// extensions  (see `riscv_isa_pkg` for enumeration definition)
-localparam isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr;
-// privilige modes
-localparam  isa_priv_et MODES = MODES_M;
 // ISA
-localparam  isa_t       ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: RV_M | RV_C | RV_Zicsr}, priv: MODES}
-                            : XLEN==64 ? '{spec: '{base: RV_64I , ext: RV_M | RV_C | RV_Zicsr}, priv: MODES}
-                                       : '{spec: '{base: RV_128I, ext: RV_M | RV_C | RV_Zicsr}, priv: MODES};
+localparam  isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -264,48 +258,75 @@ r5p_alu #(
   .rd      (alu_rd )
 );
 
-// mul/div/rem unit
-r5p_mdu #(
-  .XLEN    (XLEN)
-) mdu (
-  // system signals
-  .clk     (clk),
-  .rst     (rst),
-  // control
-  .ctl     (id_ctl.m),
-  // data input/output
-  .rs1     (gpr_rs1),
-  .rs2     (gpr_rs2),
-  .rd      (mul_rd )
-);
+generate
+if (ISA.spec.ext.Zicsr) begin: mdu_gen
+
+  // mul/div/rem unit
+  r5p_mdu #(
+    .XLEN    (XLEN)
+  ) mdu (
+    // system signals
+    .clk     (clk),
+    .rst     (rst),
+    // control
+    .ctl     (id_ctl.m),
+    // data input/output
+    .rs1     (gpr_rs1),
+    .rs2     (gpr_rs2),
+    .rd      (mul_rd )
+  );
+
+end: mdu_gen
+else begin: mdu_nogen
+
+  // data output
+  assign mul_rd  = '0;
+
+end: mdu_nogen
+endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR
 ///////////////////////////////////////////////////////////////////////////////
 
-r5p_csr #(
-  .XLEN    (XLEN)
-) csr (
-  // system signals
-  .clk     (clk),
-  .rst     (rst),
-  // CSR address map union output
-  .csr_map (csr_csr),
-  // CSR control and data input/output
-  .csr_ctl (id_ctl.csr),
-  .csr_wdt (gpr_rs1),
-  .csr_rdt (csr_rdt),
+generate
+if (ISA.spec.ext.Zicsr) begin: csr_gen
+
+  r5p_csr #(
+    .XLEN    (XLEN)
+  ) csr (
+    // system signals
+    .clk     (clk),
+    .rst     (rst),
+    // CSR address map union output
+    .csr_map (csr_csr),
+    // CSR control and data input/output
+    .csr_ctl (id_ctl.csr),
+    .csr_wdt (gpr_rs1),
+    .csr_rdt (csr_rdt),
+    // trap handler
+    .priv_i  (id_ctl.priv),
+    .trap_i  (id_ctl.i.pc == PC_TRP),
+  //.cause_i (CAUSE_EXC_OP_EBREAK),
+    .epc_i   (XLEN'(if_pc)),
+    .epc_o   (csr_epc ),
+    .tvec_o  (csr_tvec),
+    // hardware performance monitor
+    .event_i (r5p_hpmevent_t'(1))
+    // TODO: debugger, ...
+  );
+
+end: csr_gen
+else begin: csr_nogen
+
+  // CSR data output
+  assign csr_rdt  = '0;
   // trap handler
-  .priv_i  (id_ctl.priv),
-  .trap_i  (id_ctl.i.pc == PC_TRP),
-//  .cause_i (CAUSE_EXC_OP_EBREAK),
-  .epc_i   (XLEN'(if_pc)),
-  .tvec    (csr_tvec),
-  .epc_o   (csr_epc ),
-  // hardware performance monitor
-  .event_i (r5p_hpmevent_t'(1))
-  // TODO: debugger, ...
-);
+  assign csr_epc  = '0;
+  assign csr_tvec = '0;
+
+end: csr_nogen
+endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store
