@@ -53,10 +53,10 @@ endcase
 // handle inputs for operations with less than XLEN width
 always_comb
 unique casez (ctl.rt)
-  R_X    : op1 =                        in1         ;  // XLEN
-  R_SW   : op1 = {{XLEN-32{in1[32-1]}}, in1[32-1:0]};  //   signed word
-  R_UW   : op1 = {{XLEN-32{1'b0     }}, in1[32-1:0]};  // unsigned word
-  default: op1 =                        in1         ;  // XLEN
+  R_X    : op1 =                 in1          ;  // XLEN
+  R_SW   : op1 = XLEN'(  signed'(in1[32-1:0]));  //   signed word
+  R_UW   : op1 = XLEN'(unsigned'(in1[32-1:0]));  // unsigned word
+  default: op1 =                 in1          ;  // XLEN
 endcase
 
 // invert operand 2 (bit 5 of f7 segment of operand)
