@@ -24,9 +24,9 @@ module r5p_csr #(
   // trap handler
   input  ctl_priv_t       priv_i,  // privileged instruction control structure
   input  logic            trap_i,  // 
-  input  logic [XLEN-1:0] epc_i,  // PC increment
-  output logic [XLEN-1:0] epc_o,  // exception program counter
-  output logic [XLEN-1:0] tvec,   // trap vector
+  input  logic [XLEN-1:0] epc_i ,  // PC increment
+  output logic [XLEN-1:0] epc_o ,  // exception program counter
+  output logic [XLEN-1:0] tvec_o,  // trap vector
   // hardware performance monitor
   input  r5p_hpmevent_t   event_i
   // TODO: debugger, ...
@@ -225,11 +225,11 @@ end
 // depend on 
 always_comb begin
   unique case (level)
-    LVL_U:  begin  tvec = tvec_f(csr_map.s.utvec, csr_map.s.ucause);  epc_o = csr_map.s.uepc;  end  // User/Application
-    LVL_S:  begin  tvec = tvec_f(csr_map.s.stvec, csr_map.s.scause);  epc_o = csr_map.s.sepc;  end  // Supervisor
-    LVL_R:  begin  tvec = 'x                                       ;  epc_o = 'x            ;  end  // Reserved
-    LVL_M:  begin  tvec = tvec_f(csr_map.s.mtvec, csr_map.s.mcause);  epc_o = csr_map.s.mepc;  end  // Machine
-  //default:begin  tvec = 'x                                       ;  epc_o = 'x            ;  end  // Reserved
+    LVL_U:  begin  tvec_o = tvec_f(csr_map.s.utvec, csr_map.s.ucause);  epc_o = csr_map.s.uepc;  end  // User/Application
+    LVL_S:  begin  tvec_o = tvec_f(csr_map.s.stvec, csr_map.s.scause);  epc_o = csr_map.s.sepc;  end  // Supervisor
+    LVL_R:  begin  tvec_o = 'x                                       ;  epc_o = 'x            ;  end  // Reserved
+    LVL_M:  begin  tvec_o = tvec_f(csr_map.s.mtvec, csr_map.s.mcause);  epc_o = csr_map.s.mepc;  end  // Machine
+  //default:begin  tvec_o = 'x                                       ;  epc_o = 'x            ;  end  // Reserved
   endcase
 end
 
