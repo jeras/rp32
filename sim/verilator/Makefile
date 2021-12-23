@@ -96,6 +96,7 @@ PAR += -GXLEN=${XLEN}
 ################################################################################
 
 ARG = +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ARG+= +trace
 
 ################################################################################
 #
@@ -106,9 +107,12 @@ all: sim
 lint: ${HDL}
 	verilator --lint-only ${HDL} --top ${TOP}
 
-sim: ${HDL}
+verilate: ${HDL} ${TSC}
 	verilator $(VFLAGS) ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
 
+compile: verilate
 	make -j 4 -C obj_dir -f V${TOP}.mk
+
+sim: compile
+	obj_dir/V${TOP} ${ARG}
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
-	obj_dir/V${TOP} +trace ${ARG}
