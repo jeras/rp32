@@ -16,8 +16,8 @@ COMPILE_CMD=\
 	$$(RISCV_OBJCOPY)          -O binary $$@ $$@.bin
 
 OBJ_CMD = $$(RISCV_OBJDUMP) $$@ -D > $$@.objdump; \
-		  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug; \
-		  $$(RISCV_READELF) -a $$@ > $$@.readelf
+	  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug; \
+	  $$(RISCV_READELF) -a $$@ > $$@.readelf
 
 COMPILE_TARGET=\
 	    $(COMPILE_CMD); \
@@ -34,9 +34,5 @@ COMPILE_TARGET=\
         fi ;
 
 RUN_TARGET=\
-	cp $(*).elf_if.bin $(TARGETDIR)/../sim/mem_if.bin; \
-	cp $(*).elf_ls.bin $(TARGETDIR)/../sim/mem_ls.bin; \
-	cp $(*).elf.bin    $(TARGETDIR)/../sim/mem.bin; \
-	cd $(TARGETDIR)/../sim/; \
-	make -f Makefile.verilator XLEN=64; \
-	cp signature.txt $(*).signature.output
+	make -C $(TARGETDIR)/../sim/verilator -f Makefile XLEN=64 \
+	FILE_MEM=$(*).elf.bin FILE_SIG=$(*).signature.output

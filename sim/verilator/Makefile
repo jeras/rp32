@@ -2,9 +2,9 @@
 # HDL source files
 ################################################################################
 
-PATH_RTL=../rtl
-PATH_TBN=../tbn
-PATH_SRC=../src
+PATH_RTL=../../hdl/rtl
+PATH_TBN=../../hdl/tbn
+PATH_SRC=../../hdl/src
 
 # SystemVerilog RTL
 RTL =${PATH_RTL}/r5p_bus_if.sv
@@ -31,7 +31,7 @@ TSV+=${PATH_TBN}/r5p_bus_mon.sv
 TSV+=${PATH_TBN}/r5p_tb.sv
 
 # SystemC bench (Test SystemC)
-TSC  = sc_main.cpp
+TSC =${PATH_SRC}/sc_main.cpp
 
 # combined HDL sources
 HDL =${RTL}

@@ -34,5 +34,5 @@ COMPILE_TARGET=\
         fi ;
 
 RUN_TARGET=\
-	make -C $(TARGETDIR)/../sim/ -f Makefile.verilator \
-	XLEN=32 FILE_MEM=$(*).elf.bin FILE_SIG=$(*).signature.output
+	make -C $(TARGETDIR)/../sim/verilator -f Makefile XLEN=32 \
+	FILE_MEM=$(*).elf.bin FILE_SIG=$(*).signature.output
