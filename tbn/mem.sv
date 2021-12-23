@@ -27,8 +27,10 @@ logic [8-1:0] mem [0:SZ-1];
 
 // initialization
 initial
-if (FN!="") begin
-  void'(read_bin(FN));
+begin
+  if (FN!="") begin
+    void'(read_bin(FN));
+  end
 end
 
 // read binary into memory
