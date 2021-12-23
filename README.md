@@ -22,6 +22,17 @@ export SYSTEMC_INCLUDE=/opt/systemc-2.3.3/include/
 export SYSTEMC_LIBDIR=/opt/systemc-2.3.3/lib-linux64/
 ```
 
+## Lattice diamond
+
+Run license server
+```bash
+sudo /usr/local/diamond/3.12/ispfpga/bin/lin64/lmgrd -l /usr/local/diamond/3.12/license/license.log -c /usr/local/diamond/3.12/license/license.dat
+```
+
+Run Lattice Diamond
+```bash
+/usr/local/diamond/3.12/bin/lin64/diamond
+```
 
 ## Ubuntu 18.04, `Quartus-lite-18.0.0.614-linux.tar`
 
