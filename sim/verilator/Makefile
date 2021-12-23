@@ -7,31 +7,28 @@ PATH_TBN=../../hdl/tbn
 PATH_SRC=../../hdl/src
 
 # SystemVerilog RTL
-RTL =${PATH_RTL}/r5p_bus_if.sv
-RTL+=${PATH_RTL}/r5p_bus_arb.sv
-RTL+=${PATH_RTL}/r5p_bus_dec.sv
-RTL+=${PATH_RTL}/riscv_isa_pkg.sv
-RTL+=${PATH_RTL}/riscv_csr_pkg.sv
+RTL =${PATH_RTL}/soc/r5p_bus_if.sv
+RTL+=${PATH_RTL}/soc/r5p_bus_arb.sv
+RTL+=${PATH_RTL}/soc/r5p_bus_dec.sv
+RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
+RTL+=${PATH_RTL}/riscv/riscv_csr_pkg.sv
 #RTL+=${PATH_RTL}/riscv_csr_adr_map_pkg.sv
-RTL+=${PATH_RTL}/r5p_pkg.sv
-RTL+=${PATH_RTL}/r5p_br.sv
-RTL+=${PATH_RTL}/r5p_gpr.sv
-RTL+=${PATH_RTL}/r5p_alu.sv
-RTL+=${PATH_RTL}/r5p_mdu.sv
-#RTL+=${PATH_RTL}/r5p_fpu.sv
-RTL+=${PATH_RTL}/r5p_lsu.sv
-RTL+=${PATH_RTL}/r5p_csr_pkg.sv
-RTL+=${PATH_RTL}/r5p_csr.sv
-RTL+=${PATH_RTL}/r5p_core.sv
+RTL+=${PATH_RTL}/core/r5p_pkg.sv
+RTL+=${PATH_RTL}/core/r5p_br.sv
+RTL+=${PATH_RTL}/core/r5p_gpr.sv
+RTL+=${PATH_RTL}/core/r5p_alu.sv
+RTL+=${PATH_RTL}/core/r5p_mdu.sv
+#RTL+=${PATH_RTL}/core/r5p_fpu.sv
+RTL+=${PATH_RTL}/core/r5p_lsu.sv
+RTL+=${PATH_RTL}/core/r5p_csr_pkg.sv
+RTL+=${PATH_RTL}/core/r5p_csr.sv
+RTL+=${PATH_RTL}/core/r5p_core.sv
 
 # SystemVerilog bench (Test SV)
 TSV =${PATH_TBN}/riscv_asm_pkg.sv
 TSV+=${PATH_TBN}/mem.sv
 TSV+=${PATH_TBN}/r5p_bus_mon.sv
 TSV+=${PATH_TBN}/r5p_tb.sv
-
-# SystemC bench (Test SystemC)
-TSC =${PATH_SRC}/sc_main.cpp
 
 # combined HDL sources
 HDL =${RTL}
@@ -45,7 +42,8 @@ TOP = r5p_tb
 # SystemC
 ################################################################################
 
-
+# SystemC bench (Test SystemC)
+TSC =${PATH_SRC}/sc_main.cpp
 
 ################################################################################
 # Verilator compiler/linker flags
