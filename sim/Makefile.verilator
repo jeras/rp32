@@ -53,11 +53,6 @@ TOP = r5p_tb
 
 # specify SystemVerilog LRM version
 #VFLAGS  = +1800-2012ext+sv
-# set VERILATOR macro (used to handle tool quirks)
-#VFLAGS += -DVERILATOR
-# set XLEN parameter
-XLEN ?= 32
-VFLAGS += -GXLEN=${XLEN}
 # Generate SystemC in executable form
 VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
@@ -77,11 +72,32 @@ VFLAGS += --trace-structs
 # Check SystemVerilog assertions
 VFLAGS += --assert
 # Generate coverage analysis
-VFLAGS += --coverage
+#VFLAGS += --coverage
 # Run Verilator in debug mode
 #VFLAGS += --debug
 # Add this trace to get a backtrace in gdb
 #VFLAGS += --gdbbt
+
+################################################################################
+# Verilog macros
+################################################################################
+
+# set VERILATOR macro (used to handle tool quirks)
+#MCR += -DVERILATOR
+
+################################################################################
+# Verilog toplevel parameter override
+################################################################################
+
+# set XLEN parameter
+XLEN ?= 32
+PAR += -GXLEN=${XLEN}
+
+################################################################################
+# Verilog $plusargs runtime arguments
+################################################################################
+
+ARG = +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
 
 ################################################################################
 #
@@ -93,8 +109,8 @@ lint: ${HDL}
 	verilator --lint-only ${HDL} --top ${TOP}
 
 sim: ${HDL}
-	verilator $(VFLAGS) --top ${TOP} ${HDL} ${TSC}
+	verilator $(VFLAGS) ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
 
 	make -j 4 -C obj_dir -f V${TOP}.mk
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat
-	obj_dir/V${TOP} +trace
+	obj_dir/V${TOP} +trace ${ARG}

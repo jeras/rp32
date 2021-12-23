@@ -9,17 +9,15 @@ COMPILE_CMD=\
 	$$(RISCV_GCC) $(1) $$(RISCV_GCC_OPTS) \
 	-I$(ROOTDIR)/riscv-test-suite/env/ \
 	-I$(TARGETDIR)/$(RISCV_TARGET)/ \
-	-DPRIV_MISA_S=0 \
-	-DPRIV_MISA_U=0 \
-	-DTRAPHANDLER="\"$(TARGETDIR)/$(RISCV_TARGET)/handler.S\"" \
 	-T$(TARGETDIR)/$(RISCV_TARGET)/link.ld \
 	$$< -o $$@; \
 	$$(RISCV_OBJCOPY) -j .text -O binary $$@ $$@_if.bin; \
-	$$(RISCV_OBJCOPY) -j .data -O binary $$@ $$@_ls.bin
+	$$(RISCV_OBJCOPY) -j .data -O binary $$@ $$@_ls.bin; \
+	$$(RISCV_OBJCOPY)          -O binary $$@ $$@.bin
 
 OBJ_CMD = $$(RISCV_OBJDUMP) $$@ -D > $$@.objdump; \
-		  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug; \
-		  $$(RISCV_READELF) -a $$@ > $$@.readelf
+	  $$(RISCV_OBJDUMP) $$@ --source > $$@.debug; \
+	  $$(RISCV_READELF) -a $$@ > $$@.readelf
 
 COMPILE_TARGET=\
 	    $(COMPILE_CMD); \
@@ -36,8 +34,5 @@ COMPILE_TARGET=\
         fi ;
 
 RUN_TARGET=\
-	cp $(*).elf_if.bin $(TARGETDIR)/../sim/mem_if.bin; \
-	cp $(*).elf_ls.bin $(TARGETDIR)/../sim/mem_ls.bin; \
-	cd $(TARGETDIR)/../sim/; \
-	make -f Makefile.verilator XLEN=32; \
-	cp signature.txt $(*).signature.output
+	make -C $(TARGETDIR)/../sim/ -f Makefile.verilator \
+	XLEN=32 FILE_MEM=$(*).elf.bin FILE_SIG=$(*).signature.output
