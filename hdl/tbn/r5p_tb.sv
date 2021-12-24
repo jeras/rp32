@@ -108,7 +108,7 @@ r5p_core #(
 
 assign bus_if.wen = 1'b0;
 assign bus_if.ben = '1;
-assign bus_if.wen = 'x;
+assign bus_if.wdt = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder

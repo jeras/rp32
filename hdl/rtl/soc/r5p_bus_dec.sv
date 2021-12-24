@@ -5,6 +5,7 @@
 module r5p_bus_dec #(
   // bus parameters
   int unsigned AW = 32,    // address width
+  int unsigned DW = 32,    // data width
   // interconnect parameters
   int unsigned BN = 2,     // bus number
   logic [BN-1:0] [AW-1:0] AS = '{BN{'x}}
@@ -18,12 +19,12 @@ module r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 // decoder signals
-logic [BN-1:0]            s_dec;
-logic [BN-1:0]            m_dec;
+logic [BN-1:0]          s_dec;
+logic [BN-1:0]          m_dec;
 
 // temporary signals
-logic [BN-1:0] [s.DW-1:0] t_rdt;  // read data
-logic [BN-1:0]            t_rdy;  // acknowledge
+logic [BN-1:0] [DW-1:0] t_rdt;  // read data
+logic [BN-1:0]          t_rdy;  // acknowledge
 
 generate
 for (genvar i=0; i<BN; i++) begin
