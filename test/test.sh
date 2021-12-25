@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Verilator setup
-source ../sim/settings.sh
+source ../sim/verilator/settings.sh
 
 ################################################################################
 # RP32
