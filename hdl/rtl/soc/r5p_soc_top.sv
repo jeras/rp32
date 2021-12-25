@@ -5,9 +5,21 @@
 import riscv_isa_pkg::*;
 
 module r5p_soc_top #(
+  // GPIO
+  int unsigned GW = 32,
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
-//  isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
+  `ifndef SYNOPSYS_VERILOG_COMPILER
+  // extensions  (see `riscv_isa_pkg` for enumeration definition)
+  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  // privilige modes
+  isa_priv_t   MODES = MODES_M,
+  // ISA
+//isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+//                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
+//                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+  isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
+  `endif
   // instruction bus
   int unsigned IAW = 14,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
@@ -15,8 +27,8 @@ module r5p_soc_top #(
   int unsigned DAW = 15,    // data address width
   int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8, // data byte en width
-  // GPIO
-  int unsigned GW = 32
+  // memory initialization file names
+  string       IFN = "mem_if.vmem"     // instruction memory file name
 )(
   // system signals
   input  logic          clk,  // clock
@@ -25,8 +37,10 @@ module r5p_soc_top #(
   inout  wire  [GW-1:0] gpio
 );
 
-//import riscv_isa_pkg::*;
-//localparam isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
+`ifdef SYNOPSYS_VERILOG_COMPILER
+// ISA
+localparam  isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -43,7 +57,7 @@ r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 r5p_core #(
   // RISC-V ISA
   .XLEN (XLEN),
-//  .ISA  (ISA),
+  .ISA  (ISA),
   // instruction bus
   .IAW  (IAW),
   .IDW  (IDW),
@@ -93,7 +107,7 @@ r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_soc_mem #(
-//.FN   (),
+  .FN   (IFN),
   .AW   (IAW),
   .DW   (IDW)
 ) imem (

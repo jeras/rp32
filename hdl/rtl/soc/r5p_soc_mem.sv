@@ -20,7 +20,10 @@ logic [DW-1:0] mem [0:(2**AW)/BW-1];
 
 initial
 begin
-  $readmemh(FN, mem);
+  if (FN != "") begin
+    $display("DEBUG: loading file %s into %m", FN);
+    $readmemh(FN, mem);
+  end
 end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,13 +35,13 @@ if (bus.vld) begin
   if (bus.wen) begin
     // write access
     for (int unsigned b=0; b<bus.BW; b++) begin
-      if (bus.ben[b])  mem[bus.adr/BW][8*b+:8] <= bus.wdt[8*b+:8];
+      if (bus.ben[b])  mem[bus.adr[AW-1:$clog2(BW)]][8*b+:8] <= bus.wdt[8*b+:8];
     end
   end else begin
     // read access
-    bus.rdt <= mem[bus.adr/BW];
+    bus.rdt <= mem[bus.adr[AW-1:$clog2(BW)]];
 //  for (int unsigned b=0; b<bus.BW; b++) begin
-//    if (bus.ben[b])  bus.rdt[8*b+:8] <= mem[bus.adr/BW][8*b+:8];
+//    if (bus.ben[b])  bus.rdt[8*b+:8] <= mem[bus.adr[AW-1:$clog2(BW)]][8*b+:8];
 //    else             bus.rdt[8*b+:8] <= 'x;
 //  end
   end

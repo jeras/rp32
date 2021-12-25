@@ -54,7 +54,7 @@ TSC =${PATH_SRC}/sc_main.cpp
 ################################################################################
 
 # specify SystemVerilog LRM version
-#VFLAGS  = +1800-2012ext+sv
+#VFLAGS += +1800-2012ext+sv
 # Generate SystemC in executable form
 VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
@@ -99,7 +99,7 @@ PAR += -GXLEN=${XLEN}
 # Verilog $plusargs runtime arguments
 ################################################################################
 
-ARG = +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ARG+= +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
 ARG+= +trace
 
 ################################################################################

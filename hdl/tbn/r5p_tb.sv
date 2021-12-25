@@ -1,4 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
+// R5P testbench for core module
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_tb #(
@@ -79,11 +80,11 @@ r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
 r5p_core #(
   // RISC-V ISA
-  .ISA  (ISA),
   .XLEN (XLEN),
+  .ISA  (ISA),
   // instruction bus
-  .IDW  (IDW),
   .IAW  (IAW),
+  .IDW  (IDW),
   // data bus
   .DAW  (DAW),
   .DDW  (DDW)
@@ -116,6 +117,7 @@ assign bus_if.wdt = 'x;
 
 r5p_bus_dec #(
   .AW  (DAW),
+  .DW  (DDW),
   .BN  (2),                      // bus number
   .AS  ({ {2'b1x, 20'hxxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
           {2'b0x, 20'hxxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
