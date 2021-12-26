@@ -1,15 +1,12 @@
     .global _start
 
 _start:
-
-    li x29, 6
-    li x30, 3
-    divu  x31, x29, x30
-
-halt:
-    li t1, 0x10000
-    li t0, 1
-    sw t0, 0x08(t1)
+    li x28, 0x00004000  # GPIO base address
+    li x29, 0x01234567  # GPIO output
+    li x30, 0xFFFFFFFF  # GPIO output enable (all enabled)
+    sw x29, 0x00(x28)   # write GPIO output
+    sw x30, 0x08(x28)   # write GPIO output enable
+    lw x31, 0x10(x28)   # read GPIO input
 
 finish:
-    beq t1, t1, finish
+    beq t1, t1, finish  # infinite loop
