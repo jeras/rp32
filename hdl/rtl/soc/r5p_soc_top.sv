@@ -9,7 +9,7 @@ module r5p_soc_top #(
   int unsigned GW = 32,
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
-  `ifndef SYNOPSYS_VERILOG_COMPILER
+`ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -19,7 +19,7 @@ module r5p_soc_top #(
 //                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
 //                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
-  `endif
+`endif
   // instruction bus
   int unsigned IAW = 14,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
@@ -30,6 +30,12 @@ module r5p_soc_top #(
   // memory initialization file names
   string       IFN = "mem_if.vmem"     // instruction memory file name
 )(
+`ifdef SYNOPSYS_VERILOG_COMPILER
+  // _synthesis issue debug signals
+  output logic [XLEN-1:0] syn_dbg_pc,
+  output logic [XLEN-1:0] syn_dbg_op,
+  output logic [XLEN-1:0] syn_dbg_imm,
+`endif
   // system signals
   input  logic          clk,  // clock
   input  logic          rst,  // reset
@@ -57,7 +63,9 @@ r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 r5p_core #(
   // RISC-V ISA
   .XLEN (XLEN),
+`ifndef SYNOPSYS_VERILOG_COMPILER
   .ISA  (ISA),
+`endif
   // instruction bus
   .IAW  (IAW),
   .IDW  (IDW),
@@ -65,6 +73,12 @@ r5p_core #(
   .DAW  (DAW),
   .DDW  (DDW)
 ) core (
+`ifdef SYNOPSYS_VERILOG_COMPILER
+  // _synthesis issue debug signals
+  .syn_dbg_pc  (syn_dbg_pc ),
+  .syn_dbg_op  (syn_dbg_op ),
+  .syn_dbg_imm (syn_dbg_imm),
+`endif
   // system signals
   .clk     (clk),
   .rst     (rst),

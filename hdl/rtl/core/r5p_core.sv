@@ -3,7 +3,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 import riscv_isa_pkg::*;
+`ifndef SYNOPSYS_VERILOG_COMPILER
 import riscv_csr_pkg::*;
+`endif
 
 import r5p_pkg::*;
 
@@ -16,9 +18,10 @@ module r5p_core #(
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
-  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
-                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
-                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+//isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+//                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
+//                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+  isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
 `endif
   // instruction bus
   int unsigned IAW = 32,    // program address width
@@ -31,6 +34,12 @@ module r5p_core #(
   // privilege implementation details
   logic [XLEN-1:0] PC0   = 'h0000_0000   // reset vector
 )(
+`ifdef SYNOPSYS_VERILOG_COMPILER
+  // _synthesis issue debug signals
+  output logic [XLEN-1:0] syn_dbg_pc,
+  output logic [XLEN-1:0] syn_dbg_op,
+  output logic [XLEN-1:0] syn_dbg_imm,
+`endif
   // system signals
   input  logic                  clk,
   input  logic                  rst,
@@ -48,6 +57,13 @@ module r5p_core #(
   input  logic [DBW-1:0][8-1:0] ls_rdt,  // read data
   input  logic                  ls_ack   // write or read acknowledge
 );
+
+`ifdef SYNOPSYS_VERILOG_COMPILER
+  // _synthesis issue debug signals
+  assign syn_dbg_pc  = if_pc;
+  assign syn_dbg_op  = if_rdt;
+  assign syn_dbg_imm = id_ctl.imm;
+`endif
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
 // ISA
@@ -259,7 +275,7 @@ r5p_alu #(
 );
 
 generate
-if (ISA.spec.ext.Zicsr) begin: mdu_gen
+if (ISA.spec.ext.M) begin: mdu_gen
 
   // mul/div/rem unit
   r5p_mdu #(
