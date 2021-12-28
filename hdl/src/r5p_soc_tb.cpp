@@ -36,7 +36,7 @@ int sc_main(int argc, char **argv) {
 
     // system signals
     sc_clock              clk ("clk", 10, SC_NS, 0.5, 0, SC_NS, true);
-    sc_signal<bool>       rst;
+    sc_signal<bool>       rst_n;
     sc_signal<vluint32_t> gpio;
 
     // Construct the Verilated model, from inside Vr5p_soc_top.h
@@ -44,9 +44,9 @@ int sc_main(int argc, char **argv) {
     const std::unique_ptr<Vr5p_soc_top> top{new Vr5p_soc_top{"top"}};
 
     // Attach Vr5p_soc_top's signals to this upper model
-    top->clk(clk);
-    top->rst(rst);
-    top->gpio(gpio);
+    top->clk  (clk);
+    top->rst_n(rst_n);
+    top->gpio (gpio);
 
     // You must do one evaluation before enabling waves, in order to allow
     // SystemC to interconnect everything for testing.
@@ -69,9 +69,9 @@ int sc_main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////
 
     // reset sequence
-    rst = 0;
+    rst_n = 0;
     sc_start(20, SC_NS);
-    rst = 1;
+    rst_n = 1;
     sc_start(200000, SC_NS);
     //sc_start();
 

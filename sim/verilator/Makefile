@@ -26,6 +26,7 @@ RTL+=${PATH_RTL}/soc/r5p_bus_if.sv
 RTL+=${PATH_RTL}/soc/r5p_bus_arb.sv
 RTL+=${PATH_RTL}/soc/r5p_bus_dec.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
+RTL+=${PATH_RTL}/soc/r5p_soc_gpio.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_top.sv
 
 # SystemVerilog bench (Test SV)
