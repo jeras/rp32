@@ -69,9 +69,9 @@ int sc_main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////
 
     // reset sequence
-    rst = 1;
-    sc_start(20, SC_NS);
     rst = 0;
+    sc_start(20, SC_NS);
+    rst = 1;
     sc_start(200000, SC_NS);
     //sc_start();
 
