@@ -18,13 +18,13 @@ module r5p_soc_mem #(
 
 logic [DW-1:0] mem [0:(2**AW)/BW-1];
 
-initial
-begin
-  if (FN != "") begin
-    $display("DEBUG: loading file %s into %m", FN);
-    $readmemh(FN, mem);
-  end
-end
+//initial
+//begin
+//  if (FN != "") begin
+//    $display("DEBUG: loading file %s into %m", FN);
+//    $readmemh(FN, mem);
+//  end
+//end
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store
@@ -34,9 +34,10 @@ always @(posedge bus.clk)
 if (bus.vld) begin
   if (bus.wen) begin
     // write access
-    for (int unsigned b=0; b<bus.BW; b++) begin
-      if (bus.ben[b])  mem[bus.adr[AW-1:$clog2(BW)]][8*b+:8] <= bus.wdt[8*b+:8];
-    end
+    mem[bus.adr[AW-1:$clog2(BW)]] <= bus.wdt;
+//  for (int unsigned b=0; b<bus.BW; b++) begin
+//    if (bus.ben[b])  mem[bus.adr[AW-1:$clog2(BW)]][8*b+:8] <= bus.wdt[8*b+:8];
+//  end
   end else begin
     // read access
     bus.rdt <= mem[bus.adr[AW-1:$clog2(BW)]];

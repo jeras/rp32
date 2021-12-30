@@ -29,37 +29,22 @@ module r5p_soc_top #(
   string       IFN = "mem_if.vmem"     // instruction memory file name
 )(
   // system signals
-  input  logic          clk,    // clock
-  input  logic          rst_n,  // reset (active low)
+  input  logic          clk,  // clock
+  input  logic          rst,  // reset (active low)
   // GPIO
-  inout  wire  [GW-1:0] gpio
+  output logic [GW-1:0] gpio_o,
+  output logic [GW-1:0] gpio_e,
+  input  logic [GW-1:0] gpio_i
 );
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-// reset synchronizer
-logic rst_r;
-logic rst;
-
 // system busses
 r5p_bus_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
 r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
 r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
-
-// GPIO
-logic [GW-1:0] gpio_o;
-logic [GW-1:0] gpio_e;
-logic [GW-1:0] gpio_i;
-
-///////////////////////////////////////////////////////////////////////////////
-// reset synchronizer
-////////////////////////////////////////////////////////////////////////////////
-
-always @(posedge clk, negedge rst_n)
-if (~rst_n)  {rst, rst_r} <= 2'b1;
-else         {rst, rst_r} <= {rst_r, 1'b0};
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P core instance
@@ -117,6 +102,7 @@ r5p_bus_dec #(
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
 // instruction memory
 r5p_soc_mem #(
   .FN   (IFN),
@@ -134,6 +120,29 @@ r5p_soc_mem #(
 ) dmem (
   .bus  (bus_mem[0])
 );
+*/
+
+blk_mem_gen_0 imem (
+  .clka   (bus_if.clk),
+  .ena    (bus_if.vld),
+  .wea    (bus_if.wen),
+  .addra  (bus_if.adr),
+  .dina   (bus_if.wdt),
+  .douta  (bus_if.rdt)
+);
+
+assign bus_if.rdy = 1'b1;
+
+blk_mem_gen_0 dmem (
+  .clka   (bus_mem[0].clk),
+  .ena    (bus_mem[0].vld),
+  .wea    (bus_mem[0].wen),
+  .addra  (bus_mem[0].adr),
+  .dina   (bus_mem[0].wdt),
+  .douta  (bus_mem[0].rdt)
+);
+
+assign bus_mem[0].rdy = 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO
@@ -150,14 +159,5 @@ r5p_soc_gpio #(
   // bus interface
   .bus     (bus_mem[1])
 );
-
-// GPIO
-generate for (genvar i=0; i<GW; i++)
-begin
-  assign gpio[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
-end
-endgenerate
-
-assign gpio_i = gpio;
 
 endmodule: r5p_soc_top

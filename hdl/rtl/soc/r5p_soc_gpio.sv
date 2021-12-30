@@ -1,5 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO controller RTL
+//
+// NOTE: In case this module is connected to asynchronous signals,
+//       the input signals `gpio_i` require a CDC synchronizer.
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_soc_gpio #(
@@ -13,19 +16,6 @@ module r5p_soc_gpio #(
   r5p_bus_if.sub bus
 );
 
-logic [GW-1:0] gpio_r;
-logic [GW-1:0] gpio_t;
-
-// asynchronous input synchronization
-always_ff @(posedge bus.clk, posedge bus.rst)
-if (bus.rst) begin
-  gpio_r <= '0;
-  gpio_t <= '0;
-end else begin
-  gpio_r <= gpio_i;
-  gpio_t <= gpio_r;
-end
-
 // read input
 always_ff @(posedge bus.clk, posedge bus.rst)
 if (bus.rst) begin
@@ -36,7 +26,7 @@ end else if (bus.vld & bus.rdy) begin
     case (bus.adr[4-1:0])
       4'h0:    bus.rdt <= gpio_o;
       4'h4:    bus.rdt <= gpio_e;
-      4'h8:    bus.rdt <= gpio_t;
+      4'h8:    bus.rdt <= gpio_i;
       default: bus.rdt <= 'x;
     endcase
   end
