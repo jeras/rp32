@@ -26,7 +26,9 @@ module r5p_soc_top #(
   int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8, // data byte en width
   // memory initialization file names
-  string       IFN = "mem_if.vmem"     // instruction memory file name
+  string       IFN = "mem_if.vmem",    // instruction memory file name
+  // implementation device (ASIC/FPGA vendor/device)
+  string       CHIP = ""
 )(
   // system signals
   input  logic          clk,  // clock
@@ -59,7 +61,9 @@ r5p_core #(
   .IDW  (IDW),
   // data bus
   .DAW  (DAW),
-  .DDW  (DDW)
+  .DDW  (DDW),
+  // implementation device (ASIC/FPGA vendor/device)
+  .CHIP (CHIP)
 ) core (
   // system signals
   .clk     (clk),
@@ -102,47 +106,141 @@ r5p_bus_dec #(
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
-// instruction memory
-r5p_soc_mem #(
-  .FN   (IFN),
-  .AW   (IAW),
-  .DW   (IDW)
-) imem (
-  .bus  (bus_if)
-);
+generate
+if (CHIP == "ARTIX_XPM") begin
 
-// data memory
-r5p_soc_mem #(
-//.FN   (),
-  .AW   (DAW-1),
-  .DW   (DDW)
-) dmem (
-  .bus  (bus_mem[0])
-);
-*/
+  // xpm_memory_spram: Single Port RAM
+  // Xilinx Parameterized Macro, version 2021.2
+  xpm_memory_spram #(
+    .ADDR_WIDTH_A        (IAW-2),           // DECIMAL
+    .AUTO_SLEEP_TIME     (0),               // DECIMAL
+    .BYTE_WRITE_WIDTH_A  (8),               // DECIMAL
+    .CASCADE_HEIGHT      (0),               // DECIMAL
+    .ECC_MODE            ("no_ecc"),        // String
+    .MEMORY_INIT_FILE    ("none"),          // String
+    .MEMORY_INIT_PARAM   ("0"),             // String
+    .MEMORY_OPTIMIZATION ("true"),          // String
+    .MEMORY_PRIMITIVE    ("auto"),          // String
+    .MEMORY_SIZE         (8 * 2**IAW),      // DECIMAL
+    .MESSAGE_CONTROL     (0),               // DECIMAL
+    .READ_DATA_WIDTH_A   (IDW),             // DECIMAL
+    .READ_LATENCY_A      (1),               // DECIMAL
+    .READ_RESET_VALUE_A  ("0"),             // String
+    .RST_MODE_A          ("SYNC"),          // String
+    .SIM_ASSERT_CHK      (0),               // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+    .USE_MEM_INIT        (1),               // DECIMAL
+    .USE_MEM_INIT_MMI    (0),               // DECIMAL
+    .WAKEUP_TIME         ("disable_sleep"), // String
+    .WRITE_DATA_WIDTH_A  (IDW),             // DECIMAL
+    .WRITE_MODE_A        ("read_first"),    // String
+    .WRITE_PROTECT       (1)                // DECIMAL
+  ) imem (
+    // unused control/status signals
+    .injectdbiterra (1'b0),
+    .injectsbiterra (1'b0),
+    .dbiterra       (),
+    .sbiterra       (),
+    .sleep          (1'b0),
+    .regcea         (1'b1),
+    // system bus
+    .clka   (bus_if.clk),
+    .rsta   (bus_if.rst),
+    .ena    (bus_if.vld),
+    .wea    (bus_if.wen),
+    .addra  (bus_if.adr[IAW-1:2]),
+    .dina   (bus_if.wdt),
+    .douta  (bus_if.rdt)
+  );
 
-blk_mem_gen_0 imem (
-  .clka   (bus_if.clk),
-  .ena    (bus_if.vld),
-  .wea    (bus_if.wen),
-  .addra  (bus_if.adr),
-  .dina   (bus_if.wdt),
-  .douta  (bus_if.rdt)
-);
+  // xpm_memory_spram: Single Port RAM
+  // Xilinx Parameterized Macro, version 2021.2
+  xpm_memory_spram #(
+    .ADDR_WIDTH_A        (DAW-$clog2(DBW)), // DECIMAL
+    .AUTO_SLEEP_TIME     (0),               // DECIMAL
+    .BYTE_WRITE_WIDTH_A  (8),               // DECIMAL
+    .CASCADE_HEIGHT      (0),               // DECIMAL
+    .ECC_MODE            ("no_ecc"),        // String
+    .MEMORY_INIT_FILE    ("none"),          // String
+    .MEMORY_INIT_PARAM   ("0"),             // String
+    .MEMORY_OPTIMIZATION ("true"),          // String
+    .MEMORY_PRIMITIVE    ("auto"),          // String
+    .MEMORY_SIZE         (8 * 2**DAW),      // DECIMAL
+    .MESSAGE_CONTROL     (0),               // DECIMAL
+    .READ_DATA_WIDTH_A   (DDW),             // DECIMAL
+    .READ_LATENCY_A      (1),               // DECIMAL
+    .READ_RESET_VALUE_A  ("0"),             // String
+    .RST_MODE_A          ("SYNC"),          // String
+    .SIM_ASSERT_CHK      (0),               // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+    .USE_MEM_INIT        (1),               // DECIMAL
+    .USE_MEM_INIT_MMI    (0),               // DECIMAL
+    .WAKEUP_TIME         ("disable_sleep"), // String
+    .WRITE_DATA_WIDTH_A  (DDW),             // DECIMAL
+    .WRITE_MODE_A        ("read_first"),    // String
+    .WRITE_PROTECT       (1)                // DECIMAL
+  ) dmem (
+    // unused control/status signals
+    .injectdbiterra (1'b0),
+    .injectsbiterra (1'b0),
+    .dbiterra       (),
+    .sbiterra       (),
+    .sleep          (1'b0),
+    .regcea         (1'b1),
+    // system bus
+    .clka   (bus_mem[0].clk),
+    .rsta   (bus_mem[0].rst),
+    .ena    (bus_mem[0].vld),
+    .wea    (bus_mem[0].wen),
+    .addra  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
+    .dina   (bus_mem[0].wdt),
+    .douta  (bus_mem[0].rdt)
+  );
 
-assign bus_if.rdy = 1'b1;
+end else if (CHIP == "ARTIX_GEN") begin
 
-blk_mem_gen_0 dmem (
-  .clka   (bus_mem[0].clk),
-  .ena    (bus_mem[0].vld),
-  .wea    (bus_mem[0].wen),
-  .addra  (bus_mem[0].adr),
-  .dina   (bus_mem[0].wdt),
-  .douta  (bus_mem[0].rdt)
-);
+  blk_mem_gen_0 imem (
+    .clka   (bus_if.clk),
+    .ena    (bus_if.vld),
+    .wea    (bus_if.wen),
+    .addra  (bus_if.adr),
+    .dina   (bus_if.wdt),
+    .douta  (bus_if.rdt)
+  );
 
-assign bus_mem[0].rdy = 1'b1;
+  assign bus_if.rdy = 1'b1;
+
+  blk_mem_gen_0 dmem (
+    .clka   (bus_mem[0].clk),
+    .ena    (bus_mem[0].vld),
+    .wea    (bus_mem[0].wen),
+    .addra  (bus_mem[0].adr),
+    .dina   (bus_mem[0].wdt),
+    .douta  (bus_mem[0].rdt)
+  );
+
+  assign bus_mem[0].rdy = 1'b1;
+
+end else begin
+
+  // instruction memory
+  r5p_soc_mem #(
+    .FN   (IFN),
+    .AW   (IAW),
+    .DW   (IDW)
+  ) imem (
+    .bus  (bus_if)
+  );
+
+  // data memory
+  r5p_soc_mem #(
+  //.FN   (),
+    .AW   (DAW-1),
+    .DW   (DDW)
+  ) dmem (
+    .bus  (bus_mem[0])
+  );
+
+end
+endgenerate
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO

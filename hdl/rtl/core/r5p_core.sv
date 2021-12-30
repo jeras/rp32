@@ -28,7 +28,9 @@ module r5p_core #(
   int unsigned DDW = XLEN,  // data    data    width
   int unsigned DBW = DDW/8, // data    byte en width
   // privilege implementation details
-  logic [XLEN-1:0] PC0   = 'h0000_0000   // reset vector
+  logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
+  // implementation device (ASIC/FPGA vendor/device)
+  string       CHIP = ""
 )(
   // system signals
   input  logic                  clk,
@@ -216,7 +218,8 @@ assign id_ctl = dec(ISA, id_op32);
 // general purpose registers
 r5p_gpr #(
   .AW      (ISA.spec.base.E ? 4 : 5),
-  .XLEN    (XLEN)
+  .XLEN    (XLEN),
+  .CHIP    (CHIP)
 ) gpr (
   // system signals
   .clk     (clk),

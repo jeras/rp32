@@ -5,7 +5,8 @@
 module r5p_gpr #(
   int unsigned AW   = 5,   // can be 4 for RV32E base ISA
   int unsigned XLEN = 32,  // XLEN width
-  bit          RST  = 1'b0 // reset enabled
+  // implementation device (ASIC/FPGA vendor/device)
+  string       CHIP = ""
 )(
   // system signals
   input  logic            clk,  // clock
@@ -33,44 +34,73 @@ logic [XLEN-1:0] t_rs2;
 assign wen = e_rd & |a_rd;
 
 generate
-if (RST) begin
+if (CHIP == "ARTIX_XPM") begin
 
-  // register file
-  logic [XLEN-1:0] gpr [1:2**AW-1];
+  // xpm_memory_dpdistram: Dual Port Distributed RAM
+  // Xilinx Parameterized Macro, version 2021.2
+  xpm_memory_dpdistram #(
+    .ADDR_WIDTH_A            (AW),             // DECIMAL
+    .ADDR_WIDTH_B            (AW),             // DECIMAL
+    .BYTE_WRITE_WIDTH_A      (XLEN),           // DECIMAL
+    .CLOCKING_MODE           ("common_clock"), // String
+    .MEMORY_INIT_FILE        ("none"),         // String
+    .MEMORY_INIT_PARAM       ("0"),            // String
+    .MEMORY_OPTIMIZATION     ("true"),         // String
+    .MEMORY_SIZE             (XLEN * 2**AW),   // DECIMAL
+    .MESSAGE_CONTROL         (0),              // DECIMAL
+    .READ_DATA_WIDTH_A       (XLEN),           // DECIMAL
+    .READ_DATA_WIDTH_B       (XLEN),           // DECIMAL
+    .READ_LATENCY_A          (1),              // DECIMAL (registered, port is not used)
+    .READ_LATENCY_B          (0),              // DECIMAL (combinational)
+    .READ_RESET_VALUE_A      ("0"),            // String
+    .READ_RESET_VALUE_B      ("0"),            // String
+    .RST_MODE_A              ("SYNC"),         // String
+    .RST_MODE_B              ("SYNC"),         // String
+    .SIM_ASSERT_CHK          (0),              // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+    .USE_EMBEDDED_CONSTRAINT (0),              // DECIMAL
+    .USE_MEM_INIT            (1),              // DECIMAL
+    .USE_MEM_INIT_MMI        (0),              // DECIMAL
+    .WRITE_DATA_WIDTH_A      (XLEN)            // DECIMAL
+  ) xpm_memory_dpdistram_inst [2:1] (
+    .douta   (),
+    .doutb   ({t_rs2, t_rs1}),
+    .addra   (a_rd),
+    .addrb   ({a_rs2, a_rs1}),
+    .clka    (clk),
+    .clkb    (clk),
+    .dina    (d_rd),
+    .ena     (1'b1),
+    .enb     (1'b1),
+    .regcea  (1'b1),
+    .regceb  (1'b1),
+    .rsta    (rst),
+    .rstb    (rst),
+    .wea     (wen)
+  );
+
+end else if (CHIP == "ARTIX_GEN") begin
+
+  dist_mem_gen_0 gpr [2:1] (
+    .clk   (clk),
+    .we    (wen),
+    .a     (a_rd),
+    .d     (d_rd),
+    .dpra  ({a_rs2, a_rs1}),
+    .dpo   ({t_rs2, t_rs1})
+  );
+
+end else begin
+
+  // register file (FPGA would initialize it to all zeros)
+  logic [XLEN-1:0] gpr [1:2**AW-1] = '{default: '0};
 
   // write access
-  always_ff @(posedge clk, posedge rst)
-  if (rst) begin
-    for (int unsigned i=1; i<2**AW; i++) begin: reset
-      gpr[i] <= '0;
-    end: reset
-  end else if (wen) begin
-    gpr[a_rd] <= d_rd;
-  end
+  always_ff @(posedge clk)
+  if (wen)  gpr[a_rd] <= d_rd;
 
   // read access
   assign t_rs1 = gpr[a_rs1];
   assign t_rs2 = gpr[a_rs2];
-
-end else begin
-
-  dist_mem_gen_0 gpr1 (
-    .clk   (clk),
-    .we    (wen),
-    .a     (a_rd),
-    .d     (d_rd),
-    .dpra  (a_rs1),
-    .dpo   (t_rs1)
-  );
-
-  dist_mem_gen_0 gpr2 (
-    .clk   (clk),
-    .we    (wen),
-    .a     (a_rd),
-    .d     (d_rd),
-    .dpra  (a_rs2),
-    .dpo   (t_rs2)
-  );
 
 end
 endgenerate

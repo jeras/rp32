@@ -9,7 +9,7 @@ module r5p_soc_arty (
   input  logic          CLK100MHZ,  // clock
   input  logic          ck_rst,     // reset (active low)
   // GPIO
-  inout  wire  [41-1:0] ck_io
+  inout  wire  [42-1:0] ck_io
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,8 @@ xpm_cdc_async_rst_inst (
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_soc_top #(
-  .GW      (32)
+  .GW      (32),
+  .CHIP    ("ARTIX_XPM")
 )(
   // system signals
   .clk     (clk),
@@ -113,7 +114,7 @@ endgenerate
 
 // unused IO
 generate
-for (genvar i=32; i<41; i++) begin
+for (genvar i=32; i<42; i++) begin
   assign ck_io[i] = 1'bz;
 end
 endgenerate
