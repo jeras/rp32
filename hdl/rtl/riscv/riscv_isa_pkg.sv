@@ -176,7 +176,7 @@ typedef struct packed {
 } gpr_t;
 
 // illegal (idle) value
-localparam gpr_t GPR_ILL = '{e: '0, a: 'x};
+const gpr_t GPR_ILL = '{e: '0, a: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit immediate type
@@ -185,7 +185,7 @@ localparam gpr_t GPR_ILL = '{e: '0, a: 'x};
 typedef logic signed [32-1:0] imm_t;
 
 // illegal (idle) value
-localparam imm_t IMM_ILL = 'x;
+const imm_t IMM_ILL = 'x;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction format
@@ -404,7 +404,7 @@ typedef enum {
 } op16_frm_t;
 
 // don't care value
-localparam op16_frm_t T_XX_X = op16_frm_t'('x);
+const op16_frm_t T_XX_X = op16_frm_t'('x);
 
 // immediate decoder qualifiers
 typedef enum {
@@ -418,7 +418,7 @@ typedef enum {
 } op16_imm_t;
 
 // don't care value
-localparam op16_imm_t T_X_X = op16_imm_t'('x);
+const op16_imm_t T_X_X = op16_imm_t'('x);
 
 ///////////////////////////////////////////////////////////////////////////////
 // 16-bit OP immediate decoder
@@ -542,11 +542,8 @@ typedef enum logic [3-1:0] {
   PC_EPC = 3'b101   // EPC value from CSR
 } pc_t;
 
-// don't care value
-localparam pc_t PC_XXX = pc_t'('x);
-
 // TODO: do this properly
-localparam pc_t PC_ILL = PC_PCI;
+const pc_t PC_ILL = PC_PCI;
 
 // branch type
 typedef op32_b_func3_t br_t;
@@ -563,7 +560,7 @@ typedef enum logic [2-1:0] {
 } alu_in_t;
 
 // don't care value
-localparam alu_in_t AI_XX_XX = alu_in_t'('x);
+const alu_in_t AI_XX_XX = alu_in_t'('x);
 
 // ALU operation {func7[5], func3}
 typedef struct packed {
@@ -598,7 +595,7 @@ typedef enum logic [3-1:0] {
 } result_t;
 
 // don't care value
-localparam result_t R_XX = result_t'('x);
+const result_t R_XX = result_t'('x);
 
 // ALU type
 // TODO: change when Verilator supports unpacked structures
@@ -609,7 +606,7 @@ typedef struct packed {
 } alu_t;
 
 // illegal (idle) value
-localparam alu_t CTL_ALU_ILL = '{ai: AI_XX_XX, ao: 'x, rt: R_XX};
+const alu_t CTL_ALU_ILL = '{ai: AI_XX_XX, ao: 'x, rt: R_XX};
 
 // load/store func3 union
 typedef union packed {
@@ -658,7 +655,7 @@ typedef enum logic [3-1:0] {
 } wb_t;
 
 // don't care value
-localparam wb_t WB_XXX = wb_t'('x);
+const wb_t WB_XXX = wb_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
@@ -672,7 +669,7 @@ typedef struct packed {
 
 // NOTE: trap on illegal instruction
 // illegal (idle) value
-localparam ctl_i_t CTL_I_ILL = '{pc: PC_PCI, br: BXXX, alu: CTL_ALU_ILL, lsu: LS_X , wb: WB_XXX};
+const ctl_i_t CTL_I_ILL = '{pc: PC_PCI, br: BXXX, alu: CTL_ALU_ILL, lsu: LS_X , wb: WB_XXX};
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension
@@ -687,7 +684,7 @@ typedef enum logic [2-1:0] {
 } muldiv_t;
 
 // don't care value
-localparam muldiv_t M_XXX = muldiv_t'('x);
+const muldiv_t M_XXX = muldiv_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
@@ -699,7 +696,7 @@ typedef struct packed {
 } ctl_m_t;
 
 // illegal (idle) value
-localparam ctl_m_t CTL_M_ILL = '{op: M_XXX, s12: 2'bxx, rt: R_XX, en: 1'b0};
+const ctl_m_t CTL_M_ILL = '{op: M_XXX, s12: 2'bxx, rt: R_XX, en: 1'b0};
 
 ///////////////////////////////////////////////////////////////////////////////
 // privileged instructions
@@ -726,7 +723,7 @@ typedef enum logic [4-1:0] {
 } isa_priv_typ_t;
 
 // don't care value
-localparam isa_priv_typ_t PRIV_XXX = isa_priv_typ_t'('x);
+const isa_priv_typ_t PRIV_XXX = isa_priv_typ_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
@@ -736,7 +733,7 @@ typedef struct packed {
 } ctl_priv_t;
 
 // illegal (idle) value
-localparam ctl_priv_t CTL_PRIV_ILL = '{ena: 1'b0, typ: PRIV_XXX};
+const ctl_priv_t CTL_PRIV_ILL = '{ena: 1'b0, typ: PRIV_XXX};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Zicsr standard extension
@@ -751,7 +748,7 @@ typedef enum logic [2-1:0] {
 } csr_op_t;
 
 // don't care value
-localparam csr_op_t CSR_XXX = csr_op_t'('x);
+const csr_op_t CSR_XXX = csr_op_t'('x);
 
 // CSR mask source
 typedef enum logic [1-1:0] {
@@ -760,7 +757,7 @@ typedef enum logic [1-1:0] {
 } csr_msk_t;
 
 // don't care value
-localparam csr_msk_t CSR_MX = csr_msk_t'('x);
+const csr_msk_t CSR_MX = csr_msk_t'('x);
 
 // access permissions
 // NOTE: from privileged spec
@@ -780,13 +777,13 @@ typedef struct packed {
 } csr_adr_t;
 
 // don't care value
-localparam csr_adr_t CSR_AX = csr_adr_t'('x);
+const csr_adr_t CSR_AX = csr_adr_t'('x);
 
 // CSR immediate (zero extended from 5 to 32 bits
 typedef logic [5-1:0] csr_imm_t;
 
 // don't care value
-localparam csr_imm_t IMM_X = csr_imm_t'('x);
+const csr_imm_t IMM_X = csr_imm_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
@@ -802,7 +799,7 @@ typedef struct packed {
 // illegal (idle) value
 /* verilator lint_off WIDTHCONCAT */
 // TODO: Verilator should not complain here
-localparam ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: CSR_AX, imm: IMM_X, msk: CSR_MX, op: CSR_XXX};
+const ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: CSR_AX, imm: IMM_X, msk: CSR_MX, op: CSR_XXX};
 /* verilator lint_on WIDTHCONCAT */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -847,7 +844,7 @@ typedef struct packed {
 } ctl_t;
 
 // illegal (idle) value
-localparam ctl_t CTL_ILL = '{
+const ctl_t CTL_ILL = '{
   ill : ILL,
   gpr : GPR_ILL,
   imm : IMM_ILL,
