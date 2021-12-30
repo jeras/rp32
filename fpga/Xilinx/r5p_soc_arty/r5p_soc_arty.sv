@@ -4,7 +4,10 @@
 // NOTE: details on XPM libraries: ug953-vivado-7series-libraries.pdf
 ////////////////////////////////////////////////////////////////////////////////
 
-module r5p_soc_arty (
+module r5p_soc_arty #(
+  // implementation device (ASIC/FPGA vendor/device)
+  string CHIP = "ARTIX_XPM"
+)(
   // system signals
   input  logic          CLK100MHZ,  // clock
   input  logic          ck_rst,     // reset (active low)
@@ -62,8 +65,8 @@ xpm_cdc_async_rst_inst (
 
 r5p_soc_top #(
   .GW      (32),
-  .CHIP    ("ARTIX_XPM")
-)(
+  .CHIP    (CHIP)
+) soc (
   // system signals
   .clk     (clk),
   .rst     (rst),
