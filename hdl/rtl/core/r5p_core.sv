@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 import riscv_isa_pkg::*;
-import riscv_csr_pkg::*;
+//import riscv_csr_pkg::*;
 
 import r5p_pkg::*;
 
@@ -86,7 +86,7 @@ logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
 logic [XLEN-1:0] csr_rdt;  // read  data
 
 // CSR address map union
-csr_map_ut       csr_csr;
+//csr_map_ut       csr_csr;
 
 logic [XLEN-1:0] csr_tvec;
 logic [XLEN-1:0] csr_epc ;

@@ -23,7 +23,6 @@ module r5p_soc_arty #(
 logic clk;
 
 // reset synchronizer
-logic rst_r;
 logic rst;
 
 // GPIO
@@ -41,6 +40,8 @@ assign clk = CLK100MHZ;
 ///////////////////////////////////////////////////////////////////////////////
 // reset synchronizer
 ////////////////////////////////////////////////////////////////////////////////
+
+//logic rst_r;
 
 //always @(posedge clk, negedge ck_rst)
 //if (~ck_rst)  {rst, rst_r} <= 2'b1;
