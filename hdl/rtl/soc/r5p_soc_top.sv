@@ -117,8 +117,8 @@ if (CHIP == "ARTIX_XPM") begin
     .BYTE_WRITE_WIDTH_A  (8),               // DECIMAL
     .CASCADE_HEIGHT      (0),               // DECIMAL
     .ECC_MODE            ("no_ecc"),        // String
-    .MEMORY_INIT_FILE    ("none"),          // String
-    .MEMORY_INIT_PARAM   ("0"),             // String
+    .MEMORY_INIT_FILE    ("imem.mem"),      // String
+    .MEMORY_INIT_PARAM   (""),              // String
     .MEMORY_OPTIMIZATION ("true"),          // String
     .MEMORY_PRIMITIVE    ("auto"),          // String
     .MEMORY_SIZE         (8 * 2**IAW),      // DECIMAL
@@ -143,14 +143,16 @@ if (CHIP == "ARTIX_XPM") begin
     .sleep          (1'b0),
     .regcea         (1'b1),
     // system bus
-    .clka   (bus_if.clk),
-    .rsta   (bus_if.rst),
-    .ena    (bus_if.vld),
-    .wea    (bus_if.wen),
-    .addra  (bus_if.adr[IAW-1:2]),
-    .dina   (bus_if.wdt),
-    .douta  (bus_if.rdt)
+    .clka   (   bus_if.clk),
+    .rsta   (   bus_if.rst),
+    .ena    (   bus_if.vld),
+    .wea    ({4{bus_if.wen}}),
+    .addra  (   bus_if.adr[IAW-1:2]),
+    .dina   (   bus_if.wdt),
+    .douta  (   bus_if.rdt)
   );
+
+  assign bus_if.rdy = 1'b1;
 
   // xpm_memory_spram: Single Port RAM
   // Xilinx Parameterized Macro, version 2021.2
@@ -189,11 +191,13 @@ if (CHIP == "ARTIX_XPM") begin
     .clka   (bus_mem[0].clk),
     .rsta   (bus_mem[0].rst),
     .ena    (bus_mem[0].vld),
-    .wea    (bus_mem[0].wen),
+    .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
     .addra  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
     .dina   (bus_mem[0].wdt),
     .douta  (bus_mem[0].rdt)
   );
+
+  assign bus_mem[0].rdy = 1'b1;
 
 end else if (CHIP == "ARTIX_GEN") begin
 
