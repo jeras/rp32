@@ -34,7 +34,7 @@ logic [XLEN-1:0] t_rs2;
 assign wen = e_rd & |a_rd;
 
 generate
-if (CHIP == "ARTIX_XPM") begin
+if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
 
   // xpm_memory_dpdistram: Dual Port Distributed RAM
   // Xilinx Parameterized Macro, version 2021.2
@@ -78,7 +78,8 @@ if (CHIP == "ARTIX_XPM") begin
     .wea     (wen)
   );
 
-end else if (CHIP == "ARTIX_GEN") begin
+end: gen_artix_xpm
+else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
 
   dist_mem_gen_0 gpr [2:1] (
     .clk   (clk),
@@ -89,7 +90,8 @@ end else if (CHIP == "ARTIX_GEN") begin
     .dpo   ({t_rs2, t_rs1})
   );
 
-end else begin
+end: gen_artix_gen
+else begin: gen_default
 
   // register file (FPGA would initialize it to all zeros)
   logic [XLEN-1:0] gpr [1:2**AW-1] = '{default: '0};
@@ -102,7 +104,7 @@ end else begin
   assign t_rs1 = gpr[a_rs1];
   assign t_rs2 = gpr[a_rs2];
 
-end
+end: gen_default
 endgenerate
 
 // special handling of x0

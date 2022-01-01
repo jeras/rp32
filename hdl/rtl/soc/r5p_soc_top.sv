@@ -107,7 +107,7 @@ r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 generate
-if (CHIP == "ARTIX_XPM") begin
+if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
 
   // xpm_memory_spram: Single Port RAM
   // Xilinx Parameterized Macro, version 2021.2
@@ -199,15 +199,16 @@ if (CHIP == "ARTIX_XPM") begin
 
   assign bus_mem[0].rdy = 1'b1;
 
-end else if (CHIP == "ARTIX_GEN") begin
+end: gen_artix_xpm
+else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
 
   blk_mem_gen_0 imem (
-    .clka   (bus_if.clk),
-    .ena    (bus_if.vld),
-    .wea    (bus_if.wen),
-    .addra  (bus_if.adr),
-    .dina   (bus_if.wdt),
-    .douta  (bus_if.rdt)
+    .clka   (   bus_if.clk),
+    .ena    (   bus_if.vld),
+    .wea    ({4{bus_if.wen}}),
+    .addra  (   bus_if.adr[IAW-1:2]),
+    .dina   (   bus_if.wdt),
+    .douta  (   bus_if.rdt)
   );
 
   assign bus_if.rdy = 1'b1;
@@ -215,15 +216,16 @@ end else if (CHIP == "ARTIX_GEN") begin
   blk_mem_gen_0 dmem (
     .clka   (bus_mem[0].clk),
     .ena    (bus_mem[0].vld),
-    .wea    (bus_mem[0].wen),
-    .addra  (bus_mem[0].adr),
+    .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
+    .addra  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
     .dina   (bus_mem[0].wdt),
     .douta  (bus_mem[0].rdt)
   );
 
   assign bus_mem[0].rdy = 1'b1;
 
-end else begin
+end: gen_artix_gen
+else begin: gen_default
 
   // instruction memory
   r5p_soc_mem #(
@@ -243,7 +245,7 @@ end else begin
     .bus  (bus_mem[0])
   );
 
-end
+end: gen_default
 endgenerate
 
 ////////////////////////////////////////////////////////////////////////////////
