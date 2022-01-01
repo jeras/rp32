@@ -19,7 +19,7 @@ wire  [42-1:0] ck_io;
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_soc_arty #(
-  .CHIP    (CHIP)
+//  .CHIP    (CHIP)
 ) DUT (
   // system signals
   .CLK100MHZ (clk),

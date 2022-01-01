@@ -6,7 +6,7 @@
 
 module r5p_soc_arty #(
   // implementation device (ASIC/FPGA vendor/device)
-  string CHIP = "ARTIX_XPM"
+  string CHIP = "ARTIX_GEN"
 )(
   // system signals
   input  logic          CLK100MHZ,  // clock
