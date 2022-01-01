@@ -86,7 +86,7 @@ logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
 logic [XLEN-1:0] csr_rdt;  // read  data
 
 // CSR address map union
-//csr_map_ut       csr_csr;
+csr_map_ut       csr_csr;
 
 logic [XLEN-1:0] csr_tvec;
 logic [XLEN-1:0] csr_epc ;
@@ -137,7 +137,7 @@ generate
 if (0) begin
 
   // branch ALU for checking branch conditions
-  r5p_br #(
+  r5p_bru #(
     .XLEN    (XLEN)
   ) br (
     // control
@@ -152,7 +152,7 @@ if (0) begin
 end else begin
 
   always_comb
-  case (id_ctl.i.br) inside
+  case (id_ctl.i.bru) inside
     BEQ    : if_tkn = ~(|alu_rd);
     BNE    : if_tkn =  (|alu_rd);
     BLT    : if_tkn =    alu_rd[0];
@@ -179,7 +179,7 @@ endgenerate
 //assign if_pcb = if_pc + IAW'(id_ctl.imm);
 
 // PC addend
-assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm)
+assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm32)
                                                  : IAW'(opsiz(id_op16[16-1:0]));
 
 // PC sum
@@ -248,7 +248,7 @@ r5p_alu #(
   // control
   .ctl     (id_ctl.i.alu),
   // data input/output
-  .imm     (XLEN'(id_ctl.imm)),
+  .imm     (XLEN'(id_ctl.imm32)),
   .pc      (XLEN'(if_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
@@ -369,13 +369,13 @@ r5p_lsu #(
 // write back multiplexer
 always_comb begin
   unique case (id_ctl.i.wb)
-    WB_ALU : gpr_rd = alu_rd;             // ALU output
-    WB_MEM : gpr_rd = lsu_rdt;            // memory read data
-    WB_PCI : gpr_rd = XLEN'(if_pcs);      // PC increment
-    WB_IMM : gpr_rd = XLEN'(id_ctl.imm);  // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
-    WB_CSR : gpr_rd = csr_rdt;            // CSR
-    WB_MUL : gpr_rd = mul_rd;             // mul/div/rem
-    default: gpr_rd = 'x;                 // none
+    WB_ALU : gpr_rd = alu_rd;               // ALU output
+    WB_MEM : gpr_rd = lsu_rdt;              // memory read data
+    WB_PCI : gpr_rd = XLEN'(if_pcs);        // PC increment
+    WB_IMM : gpr_rd = XLEN'(id_ctl.imm32);  // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
+    WB_CSR : gpr_rd = csr_rdt;              // CSR
+    WB_MUL : gpr_rd = mul_rd;               // mul/div/rem
+    default: gpr_rd = 'x;                   // none
   endcase
 end
 

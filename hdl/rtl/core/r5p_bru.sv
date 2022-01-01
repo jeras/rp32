@@ -4,11 +4,11 @@
 
 import riscv_isa_pkg::*;
 
-module r5p_br #(
+module r5p_bru #(
   int unsigned XLEN = 32
 )(
   // control
-  input  br_t             ctl,
+  input  bru_t            ctl,
   // data input/output
   input  logic [XLEN-1:0] rs1,  // source register 1 / immediate
   input  logic [XLEN-1:0] rs2,  // source register 2 / PC
@@ -35,4 +35,4 @@ case (ctl) inside
   default: tkn = 'x;
 endcase
 
-endmodule: r5p_br
+endmodule: r5p_bru

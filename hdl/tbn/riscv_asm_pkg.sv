@@ -40,36 +40,36 @@ t = dec32(isa, op);
 casez (op)
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
 32'b0000_0000_0000_0000_0000_0000_0001_0011: disasm32 = $sformatf("nop");
-32'b????_????_????_????_????_????_?011_0111: disasm32 = $sformatf("lui    %s, 0x%08x"     , gpr_n(t.gpr.a.rd , abi), t.imm);
-32'b????_????_????_????_????_????_?001_0111: disasm32 = $sformatf("auipc  %s, 0x%08x"     , gpr_n(t.gpr.a.rd , abi), t.imm);
-32'b????_????_????_????_????_????_?110_1111: disasm32 = $sformatf("jal    %s, 0x%06x"     , gpr_n(t.gpr.a.rd , abi), t.imm);
-32'b????_????_????_????_?000_????_?110_0111: disasm32 = $sformatf("jalr   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?000_????_?110_0011: disasm32 = $sformatf("beq    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-32'b????_????_????_????_?001_????_?110_0011: disasm32 = $sformatf("bne    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-32'b????_????_????_????_?100_????_?110_0011: disasm32 = $sformatf("blt    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-32'b????_????_????_????_?101_????_?110_0011: disasm32 = $sformatf("bge    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-32'b????_????_????_????_?110_????_?110_0011: disasm32 = $sformatf("bltu   %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-32'b????_????_????_????_?111_????_?110_0011: disasm32 = $sformatf("bgeu   %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-32'b????_????_????_????_?000_????_?000_0011: disasm32 = $sformatf("lb     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?001_????_?000_0011: disasm32 = $sformatf("lh     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?010_????_?000_0011: disasm32 = $sformatf("lw     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?011_????_?000_0011: disasm32 = $sformatf("ld     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?100_????_?000_0011: disasm32 = $sformatf("lbu    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?101_????_?000_0011: disasm32 = $sformatf("lhu    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?110_????_?000_0011: disasm32 = $sformatf("lwu    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?000_????_?010_0011: disasm32 = $sformatf("sb     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?001_????_?010_0011: disasm32 = $sformatf("sh     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?010_????_?010_0011: disasm32 = $sformatf("sw     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?011_????_?010_0011: disasm32 = $sformatf("sd     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?000_????_?001_0011: disasm32 = $sformatf("addi   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?010_????_?001_0011: disasm32 = $sformatf("slti   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?011_????_?001_0011: disasm32 = $sformatf("sltiu  %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?100_????_?001_0011: disasm32 = $sformatf("xori   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?110_????_?001_0011: disasm32 = $sformatf("ori    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?111_????_?001_0011: disasm32 = $sformatf("andi   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-32'b0000_00??_????_????_?001_????_?001_0011: disasm32 = $sformatf("slli   %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
-32'b0000_00??_????_????_?101_????_?001_0011: disasm32 = $sformatf("srli   %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
-32'b0100_00??_????_????_?101_????_?001_0011: disasm32 = $sformatf("srai   %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
+32'b????_????_????_????_????_????_?011_0111: disasm32 = $sformatf("lui    %s, 0x%08x"     , gpr_n(t.gpr.a.rd , abi), t.imm32);
+32'b????_????_????_????_????_????_?001_0111: disasm32 = $sformatf("auipc  %s, 0x%08x"     , gpr_n(t.gpr.a.rd , abi), t.imm32);
+32'b????_????_????_????_????_????_?110_1111: disasm32 = $sformatf("jal    %s, 0x%06x"     , gpr_n(t.gpr.a.rd , abi), t.imm32);
+32'b????_????_????_????_?000_????_?110_0111: disasm32 = $sformatf("jalr   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?000_????_?110_0011: disasm32 = $sformatf("beq    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+32'b????_????_????_????_?001_????_?110_0011: disasm32 = $sformatf("bne    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+32'b????_????_????_????_?100_????_?110_0011: disasm32 = $sformatf("blt    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+32'b????_????_????_????_?101_????_?110_0011: disasm32 = $sformatf("bge    %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+32'b????_????_????_????_?110_????_?110_0011: disasm32 = $sformatf("bltu   %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+32'b????_????_????_????_?111_????_?110_0011: disasm32 = $sformatf("bgeu   %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+32'b????_????_????_????_?000_????_?000_0011: disasm32 = $sformatf("lb     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?001_????_?000_0011: disasm32 = $sformatf("lh     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?010_????_?000_0011: disasm32 = $sformatf("lw     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?011_????_?000_0011: disasm32 = $sformatf("ld     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?100_????_?000_0011: disasm32 = $sformatf("lbu    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?101_????_?000_0011: disasm32 = $sformatf("lhu    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?110_????_?000_0011: disasm32 = $sformatf("lwu    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?000_????_?010_0011: disasm32 = $sformatf("sb     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?001_????_?010_0011: disasm32 = $sformatf("sh     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?010_????_?010_0011: disasm32 = $sformatf("sw     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?011_????_?010_0011: disasm32 = $sformatf("sd     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?000_????_?001_0011: disasm32 = $sformatf("addi   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?010_????_?001_0011: disasm32 = $sformatf("slti   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?011_????_?001_0011: disasm32 = $sformatf("sltiu  %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?100_????_?001_0011: disasm32 = $sformatf("xori   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?110_????_?001_0011: disasm32 = $sformatf("ori    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?111_????_?001_0011: disasm32 = $sformatf("andi   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b0000_00??_????_????_?001_????_?001_0011: disasm32 = $sformatf("slli   %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
+32'b0000_00??_????_????_?101_????_?001_0011: disasm32 = $sformatf("srli   %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
+32'b0100_00??_????_????_?101_????_?001_0011: disasm32 = $sformatf("srai   %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
 32'b0000_000?_????_????_?000_????_?011_0011: disasm32 = $sformatf("add    %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
 32'b0100_000?_????_????_?000_????_?011_0011: disasm32 = $sformatf("sub    %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
 32'b0000_000?_????_????_?010_????_?011_0011: disasm32 = $sformatf("slt    %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
@@ -99,10 +99,10 @@ casez (op)
 32'b0001_0000_0010_0000_0000_0000_0111_0011: disasm32 = $sformatf("wfi");
 
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
-32'b????_????_????_????_?000_????_?001_1011: disasm32 = $sformatf("addiw  %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), imm32(op, T_I), gpr_n(t.gpr.a.rs1, abi));
-32'b0000_000?_????_????_?001_????_?001_1011: disasm32 = $sformatf("slliw  %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm[5-1:0]);
-32'b0000_000?_????_????_?101_????_?001_1011: disasm32 = $sformatf("srliw  %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm[5-1:0]);
-32'b0100_000?_????_????_?101_????_?001_1011: disasm32 = $sformatf("sraiw  %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm[5-1:0]);
+32'b????_????_????_????_?000_????_?001_1011: disasm32 = $sformatf("addiw  %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+32'b0000_000?_????_????_?001_????_?001_1011: disasm32 = $sformatf("slliw  %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32[5-1:0]);
+32'b0000_000?_????_????_?101_????_?001_1011: disasm32 = $sformatf("srliw  %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32[5-1:0]);
+32'b0100_000?_????_????_?101_????_?001_1011: disasm32 = $sformatf("sraiw  %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32[5-1:0]);
 32'b0000_000?_????_????_?000_????_?011_1011: disasm32 = $sformatf("addw   %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
 32'b0100_000?_????_????_?000_????_?011_1011: disasm32 = $sformatf("subw   %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
 32'b0000_000?_????_????_?001_????_?011_1011: disasm32 = $sformatf("sllw   %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
@@ -166,29 +166,29 @@ if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
   16'b0000_0000_0000_0000: disasm16 = $sformatf("ILLEGAL");
   16'b0000_0000_000?_??00: disasm16 = $sformatf("ILLEGAL    RES");  // C.ADDI4SP, nzuimm=0, RES
-  16'b000?_????_????_??00: disasm16 = $sformatf("c.addi4spn %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-  16'b010?_????_????_??00: disasm16 = $sformatf("c.lw       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b000?_????_????_??00: disasm16 = $sformatf("c.addi4spn %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+  16'b010?_????_????_??00: disasm16 = $sformatf("c.lw       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b100?_????_????_??00: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
-  16'b110?_????_????_??00: disasm16 = $sformatf("c.sw       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b110?_????_????_??00: disasm16 = $sformatf("c.sw       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b0000_0000_0000_0001: disasm16 = $sformatf("c.nop");
   16'b000?_0000_0???_??01: disasm16 = $sformatf("c.nop      HINT");  // C.NOP, nzimm!=0, HINT
   16'b0000_????_?000_0001: disasm16 = $sformatf("c.addi     HINT");  // C.ADDI, nzimm=0, HINT
-  16'b000?_????_????_??01: disasm16 = $sformatf("c.addi     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b000?_????_????_??01: disasm16 = $sformatf("c.addi     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b001?_????_????_??01: disasm16 = $sformatf("ILLEGAL");  // C.JAL, only RV32, NOTE: there are no restriction on immediate value
   16'b010?_0000_0???_??01: disasm16 = $sformatf("c.li       HINT");  // C.LI, rd=0, HINT
-  16'b010?_????_????_??01: disasm16 = $sformatf("c.li       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b010?_????_????_??01: disasm16 = $sformatf("c.li       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b0110_0001_0000_0001: disasm16 = $sformatf("ILLEGAL    RES");  // C.ADDI16SP, nzimm=0, RES
-  16'b011?_0001_0???_??01: disasm16 = $sformatf("c.addi16sp %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b011?_0001_0???_??01: disasm16 = $sformatf("c.addi16sp %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b0110_????_?000_0001: disasm16 = $sformatf("ILLEGAL    RES");  // C.LUI, nzimm=0, RES
   16'b011?_0000_0???_??01: disasm16 = $sformatf("c.lui      HINT");
-  16'b011?_????_????_??01: disasm16 = $sformatf("c.lui      %s, 0x%08x"       , gpr_n(t.gpr.a.rd , abi), t.imm);
+  16'b011?_????_????_??01: disasm16 = $sformatf("c.lui      %s, 0x%08x"       , gpr_n(t.gpr.a.rd , abi), t.imm32);
   16'b1001_00??_????_??01: disasm16 = $sformatf("ILLEGAL    NSE");  // C.SRLI, only RV32, nzuimm[5]=1, NSE
   16'b1000_00??_?000_0001: disasm16 = $sformatf("c.srli     HINT");
-  16'b100?_00??_????_??01: disasm16 = $sformatf("c.srli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
+  16'b100?_00??_????_??01: disasm16 = $sformatf("c.srli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
   16'b1001_01??_?000_0001: disasm16 = $sformatf("ILLEGAL    NSE");  // C.SRAI, only RV32, nzuimm[5]=1, NSE
   16'b1000_01??_?000_0001: disasm16 = $sformatf("c.srai     HINT");
-  16'b100?_01??_????_??01: disasm16 = $sformatf("c.srai     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
-  16'b100?_10??_????_??01: disasm16 = $sformatf("c.andi     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b100?_01??_????_??01: disasm16 = $sformatf("c.srai     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
+  16'b100?_10??_????_??01: disasm16 = $sformatf("c.andi     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b1000_11??_?00?_??01: disasm16 = $sformatf("c.sub      %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
   16'b1000_11??_?01?_??01: disasm16 = $sformatf("c.xor      %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
   16'b1000_11??_?10?_??01: disasm16 = $sformatf("c.or       %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
@@ -197,46 +197,46 @@ if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1001_11??_?01?_??01: disasm16 = $sformatf("ILLEGAL    RES");  // RES
   16'b1001_11??_?10?_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
   16'b1001_11??_?11?_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
-  16'b101?_????_????_??01: disasm16 = $sformatf("c.j        0x%x"                                                             , t.imm);
-  16'b110?_????_????_??01: disasm16 = $sformatf("c.beqz     %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
-  16'b111?_????_????_??01: disasm16 = $sformatf("c.bnez     %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm);
+  16'b101?_????_????_??01: disasm16 = $sformatf("c.j        0x%x"                                                             , t.imm32);
+  16'b110?_????_????_??01: disasm16 = $sformatf("c.beqz     %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
+  16'b111?_????_????_??01: disasm16 = $sformatf("c.bnez     %s, %s, 0x%04x" , gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi), t.imm32);
   16'b0001_????_????_??10: disasm16 = $sformatf("ILLEGAL    NSE");  // C.SLLI, only RV32, nzuimm[5]=1, NSE
   16'b0000_0000_0000_0010: disasm16 = $sformatf("c.slli     HINT");  // C.SLLI, nzuimm=0, rd=0, HINT
   16'b0000_????_?000_0010: disasm16 = $sformatf("c.slli     HINT");  // C.SLLI, nzuimm=0, HINT
   16'b000?_0000_0???_??10: disasm16 = $sformatf("c.slli     HINT");  // C.SLLI, rd=0, HINT
-  16'b000?_????_????_??10: disasm16 = $sformatf("c.slli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
+  16'b000?_????_????_??10: disasm16 = $sformatf("c.slli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
   16'b010?_0000_0???_??10: disasm16 = $sformatf("ILLEGAL    RES");  // C.LWSP, rd=0, RES
-  16'b010?_????_????_??10: disasm16 = $sformatf("c.lwsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b010?_????_????_??10: disasm16 = $sformatf("c.lwsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b1000_0000_0000_0010: disasm16 = $sformatf("ILLEGAL    RES");  // C.JR, rs1=0, RES
   16'b1000_????_?000_0010: disasm16 = $sformatf("c.jr       %s", gpr_n(t.gpr.a.rs1, abi));
   16'b1000_????_????_??10: disasm16 = $sformatf("c.mv       %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
   16'b1001_0000_0000_0010: disasm16 = $sformatf("c.break");
-  16'b1001_????_?000_0010: disasm16 = $sformatf("c.jalr     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b1001_????_?000_0010: disasm16 = $sformatf("c.jalr     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   16'b1001_????_????_??10: disasm16 = $sformatf("c.add      %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
-  16'b110?_????_????_??10: disasm16 = $sformatf("c.swsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b110?_????_????_??10: disasm16 = $sformatf("c.swsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   default: begin end
 endcase end
 
 // RV64 I base extension
 if (|(isa.spec.base & (RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
-  16'b011?_????_????_??00: disasm16 = $sformatf("c.ld       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-  16'b111?_????_????_??00: disasm16 = $sformatf("c.sd       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-  16'b100?_00??_????_??01: disasm16 = $sformatf("c.srli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
-  16'b100?_01??_????_??01: disasm16 = $sformatf("c.srai     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
+  16'b011?_????_????_??00: disasm16 = $sformatf("c.ld       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+  16'b111?_????_????_??00: disasm16 = $sformatf("c.sd       %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+  16'b100?_00??_????_??01: disasm16 = $sformatf("c.srli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
+  16'b100?_01??_????_??01: disasm16 = $sformatf("c.srai     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
   16'b1001_11??_?00?_??01: disasm16 = $sformatf("c.subw     %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
   16'b1001_11??_?01?_??01: disasm16 = $sformatf("c.addw     %s, %s, %s"     , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), gpr_n(t.gpr.a.rs2, abi));
   16'b001?_0000_0???_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // C.ADDIW, rd=0, RES
-  16'b001?_????_????_??01: disasm16 = $sformatf("c.addiw    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-  16'b000?_????_????_??10: disasm16 = $sformatf("c.slli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm);
+  16'b001?_????_????_??01: disasm16 = $sformatf("c.addiw    %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+  16'b000?_????_????_??10: disasm16 = $sformatf("c.slli     %s, %s, 0x%02x" , gpr_n(t.gpr.a.rd , abi), gpr_n(t.gpr.a.rs1, abi), t.imm32);
   16'b011?_0000_0???_??10: disasm16 = $sformatf("ILLEGAL    RES");  // C.LDSP, rd=0, RES
-  16'b011?_????_????_??10: disasm16 = $sformatf("c.ldsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
-  16'b111?_????_????_??10: disasm16 = $sformatf("c.sdsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+  16'b011?_????_????_??10: disasm16 = $sformatf("c.ldsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
+  16'b111?_????_????_??10: disasm16 = $sformatf("c.sdsp     %s, 0x%03x (%s)", gpr_n(t.gpr.a.rs2, abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
   default: begin end
 endcase end
 
-//$sformatf("c.jal    %s, 0x%06x"     , gpr_n(t.gpr.a.rd , abi), t.imm);
-//$sformatf("c.jalr   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm, gpr_n(t.gpr.a.rs1, abi));
+//$sformatf("c.jal    %s, 0x%06x"     , gpr_n(t.gpr.a.rd , abi), t.imm32);
+//$sformatf("c.jalr   %s, 0x%03x (%s)", gpr_n(t.gpr.a.rd , abi), t.imm32, gpr_n(t.gpr.a.rs1, abi));
 
 endfunction: disasm16
 

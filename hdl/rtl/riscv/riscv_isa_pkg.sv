@@ -179,15 +179,6 @@ typedef struct packed {
 const gpr_t GPR_ILL = '{e: '0, a: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
-// 32-bit immediate type
-///////////////////////////////////////////////////////////////////////////////
-
-typedef logic signed [32-1:0] imm_t;
-
-// illegal (idle) value
-const imm_t IMM_ILL = 'x;
-
-///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction format
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -293,66 +284,117 @@ typedef enum {
 } op32_frm_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+// 32-bit immediate type
+///////////////////////////////////////////////////////////////////////////////
+
+// full sized immediate type definition
+typedef logic signed [32-1:0] imm32_t;
+
+// full sized immediate illegal (idle) value
+const imm32_t IMM32_ILL = 'x;
+
+///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
+// per instruction format type definitions
+typedef logic signed [12  -1:0] imm_i_i_t;  // 12's
+typedef logic signed [12  -1:0] imm_i_s_t;  // 12's
+typedef logic signed [12+1-1:0] imm_i_b_t;  // 13's
+typedef logic signed [32  -1:0] imm_i_u_t;  // 32's
+typedef logic signed [20    :0] imm_i_j_t;  // 21's
+
+typedef struct packed {
+  imm_i_i_t i;
+  imm_i_s_t s;
+  imm_i_b_t b;
+  imm_i_u_t u;
+  imm_i_j_t j;
+} imm_i_t;
+
+// per instruction format illegal (idle) value
+const imm_i_i_t IMM_I_I_ILL = 'x;
+const imm_i_s_t IMM_I_S_ILL = 'x;
+const imm_i_b_t IMM_I_B_ILL = 'x;
+const imm_i_u_t IMM_I_U_ILL = 'x;
+const imm_i_j_t IMM_I_J_ILL = 'x;
+
+const imm_i_t IMM_I_ILL = '{
+  i: IMM_I_I_ILL,
+  s: IMM_I_S_ILL,
+  b: IMM_I_B_ILL,
+  u: IMM_I_U_ILL,
+  j: IMM_I_J_ILL
+};
+
 // ALU/load immediate (I-type)
-function logic signed [12-1:0] imm_i (op32_t op);
-  imm_i = $signed({op.i.imm_11_0});
-endfunction: imm_i
+function imm_i_i_t imm_i_i_f (op32_t op);
+  imm_i_i_f = $signed({op.i.imm_11_0});
+endfunction: imm_i_i_f
 
 // store immediate (S-type)
-function logic signed [12-1:0] imm_s (op32_t op);
-  imm_s = $signed({op.s.imm_11_5, op.s.imm_4_0});
-endfunction: imm_s
+function imm_i_s_t imm_i_s_f (op32_t op);
+  imm_i_s_f = $signed({op.s.imm_11_5, op.s.imm_4_0});
+endfunction: imm_i_s_f
 
 // branch immediate (B-type)
-function logic signed [12+1-1:0] imm_b (op32_t op);
-  imm_b = $signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0});
-endfunction: imm_b
+function imm_i_b_t imm_i_b_f (op32_t op);
+  imm_i_b_f = $signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0});
+endfunction: imm_i_b_f
 
 // ALU upper immediate (must be signed for RV64)
-function logic signed [32-1:0] imm_u (op32_t op);
-  imm_u = $signed({op.u.imm_31_12, 12'h000});
-endfunction: imm_u
+function imm_i_u_t imm_i_u_f (op32_t op);
+  imm_i_u_f = $signed({op.u.imm_31_12, 12'h000});
+endfunction: imm_i_u_f
 
 // ALU jump immediate
-function logic signed [20:0] imm_j (op32_t op);
-  imm_j = $signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0});
-endfunction: imm_j
+function imm_i_j_t imm_i_j_f (op32_t op);
+  imm_i_j_f = $signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0});
+endfunction: imm_i_j_f
 // jump addition is done in ALU while the PC adder is used to calculate the link address
 
 // full immediate decoder
-function imm_t imm32 (op32_t op, op32_frm_t frm);
+function imm_i_t imm_i_f (op32_t op);
+  imm_i_f = '{
+    i: imm_i_i_f(op),
+    s: imm_i_s_f(op),
+    b: imm_i_b_f(op),
+    u: imm_i_u_f(op),
+    j: imm_i_j_f(op)
+  };
+endfunction: imm_i_f
+
+// full immediate decoder
+function imm32_t imm32_f (imm_i_t imm_i, op32_frm_t frm);
   unique case (frm)
-    T_R4   : imm32 = IMM_ILL;
-    T_R    : imm32 = IMM_ILL;
-    T_I    : imm32 = imm_t'(imm_i(op));  // s11
-    T_S    : imm32 = imm_t'(imm_s(op));  // s11
-    T_B    : imm32 = imm_t'(imm_b(op));  // s12
-    T_U    : imm32 = imm_t'(imm_u(op));  // s31
-    T_J    : imm32 = imm_t'(imm_j(op));  // s20
-    default: imm32 = IMM_ILL;
+    T_R4   : imm32_f = IMM32_ILL;
+    T_R    : imm32_f = IMM32_ILL;
+    T_I    : imm32_f = imm32_t'(imm_i.i);  // 12's
+    T_S    : imm32_f = imm32_t'(imm_i.s);  // 12's
+    T_B    : imm32_f = imm32_t'(imm_i.b);  // 13's
+    T_U    : imm32_f = imm32_t'(imm_i.u);  // 32's
+    T_J    : imm32_f = imm32_t'(imm_i.j);  // 21's
+    default: imm32_f = IMM32_ILL;
   endcase
-endfunction: imm32
+endfunction: imm32_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function gpr_t gpr32 (op32_t op, op32_frm_t frm);
+function gpr_t gpr32_f (op32_t op, op32_frm_t frm);
   unique case (frm)
-    T_R4   : gpr32 = GPR_ILL;
+    T_R4   : gpr32_f = GPR_ILL;
     //                  rs1,rs2, rd           rs1,       rs2,       rd
-    T_R    : gpr32 = '{'{'1, '1, '1}, '{op.r .rs1, op.r .rs2, op.r .rd}};
-    T_I    : gpr32 = '{'{'1, '0, '1}, '{op.i .rs1,        'x, op.i .rd}};
-    T_S    : gpr32 = '{'{'1, '1, '0}, '{op.s .rs1, op.s .rs2,       'x}};
-    T_B    : gpr32 = '{'{'1, '1, '0}, '{op.b .rs1, op.b .rs2,       'x}};
-    T_U    : gpr32 = '{'{'0, '0, '1}, '{       'x,        'x, op.u .rd}};
-    T_J    : gpr32 = '{'{'0, '0, '1}, '{       'x,        'x, op.j .rd}};
-    default: gpr32 = GPR_ILL;
+    T_R    : gpr32_f = '{'{'1, '1, '1}, '{op.r .rs1, op.r .rs2, op.r .rd}};
+    T_I    : gpr32_f = '{'{'1, '0, '1}, '{op.i .rs1,        'x, op.i .rd}};
+    T_S    : gpr32_f = '{'{'1, '1, '0}, '{op.s .rs1, op.s .rs2,       'x}};
+    T_B    : gpr32_f = '{'{'1, '1, '0}, '{op.b .rs1, op.b .rs2,       'x}};
+    T_U    : gpr32_f = '{'{'0, '0, '1}, '{       'x,        'x, op.u .rd}};
+    T_J    : gpr32_f = '{'{'0, '0, '1}, '{       'x,        'x, op.j .rd}};
+    default: gpr32_f = GPR_ILL;
   endcase
-endfunction: gpr32
+endfunction: gpr32_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // 16-bit compressed instruction format
@@ -468,64 +510,64 @@ function logic unsigned [12-1:0] imm_cls (op16_t op, op16_imm_t imm);
 endfunction: imm_cls
 
 // full immediate decoder
-function imm_t imm16 (op16_t i, op16_frm_t sel, op16_imm_t imm);
-  imm16 = '0;
+function imm32_t imm16_f (op16_t i, op16_frm_t sel, op16_imm_t imm);
+  imm16_f = '0;
   unique case (sel)
     T_CR  ,
-    T_CR_0:  imm16 = IMM_ILL;
-    T_CR_L:  imm16 = '0;
+    T_CR_0:  imm16_f = IMM32_ILL;
+    T_CR_L:  imm16_f = '0;
     T_CI  :
       case (imm)
-        T_C_P:  imm16 = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
-        T_C_S:  imm16 = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-        T_C_U:  imm16 = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
-        default: imm16 = IMM_ILL;
+        T_C_P:  imm16_f = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+        T_C_S:  imm16_f = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+        T_C_U:  imm16_f = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
+        default: imm16_f = IMM32_ILL;
       endcase
-    T_CI_J:  imm16 = '0;
+    T_CI_J:  imm16_f = '0;
     T_CI_S:
       case (imm)
-        T_C_F: {imm16[31:10], {imm16[9], imm16[4], imm16[6], imm16[8:7], imm16[5]}, imm16[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
-        default: imm16 = IMM_ILL;
+        T_C_F: {imm16_f[31:10], {imm16_f[9], imm16_f[4], imm16_f[6], imm16_f[8:7], imm16_f[5]}, imm16_f[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
+        default: imm16_f = IMM32_ILL;
       endcase
-    T_CI_L:  imm16 = imm_t'(imm_ci_l(i, imm));
-    T_CSS :  imm16 = imm_t'(imm_css (i, imm));
-    T_CIW : {imm16[5:4], imm16[9:6], imm16[2], imm16[3]} = i.ciw.imm_12_05;
+    T_CI_L:  imm16_f = imm32_t'(imm_ci_l(i, imm));
+    T_CSS :  imm16_f = imm32_t'(imm_css (i, imm));
+    T_CIW : {imm16_f[5:4], imm16_f[9:6], imm16_f[2], imm16_f[3]} = i.ciw.imm_12_05;
     T_CL  ,
-    T_CS  :  imm16 = imm_t'(imm_cls (i, imm));
-    T_CA  :  imm16 = IMM_ILL;
-    T_CB  :  imm16 = imm_t'(imm_cb  (i));
-    T_CB_A:  imm16 = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+    T_CS  :  imm16_f = imm32_t'(imm_cls (i, imm));
+    T_CA  :  imm16_f = IMM32_ILL;
+    T_CB  :  imm16_f = imm32_t'(imm_cb  (i));
+    T_CB_A:  imm16_f = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
     T_CJ  ,
-    T_CJ_L: {imm16[31:12], {imm16[11], imm16[4], imm16[9:8], imm16[10], imm16[6], imm16[7], imm16[3:1], imm16[5]}, imm16[0]} = 32'($signed({i.cj.target, 1'b0}));
-    default: imm16 = IMM_ILL;
+    T_CJ_L: {imm16_f[31:12], {imm16_f[11], imm16_f[4], imm16_f[9:8], imm16_f[10], imm16_f[6], imm16_f[7], imm16_f[3:1], imm16_f[5]}, imm16_f[0]} = 32'($signed({i.cj.target, 1'b0}));
+    default: imm16_f = IMM32_ILL;
   endcase
-endfunction: imm16
+endfunction: imm16_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // 16-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function gpr_t gpr16 (op16_t op, op16_frm_t frm);
+function gpr_t gpr16_f (op16_t op, op16_frm_t frm);
   unique case (frm)   // rs1,rs2,rd                        rs1  ,                rs2  ,                rd
-    T_CR   :  gpr16 = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CR_0 :  gpr16 = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CR_L :  gpr16 = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
-    T_CI   :  gpr16 = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
-    T_CI_J :  gpr16 = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,     'x              ,     'x                  }};
-    T_CI_S :  gpr16 = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
-    T_CI_L :  gpr16 = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
-    T_CSS  :  gpr16 = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,     'x                  }};
-    T_CIW  :  gpr16 = '{'{'0, '0, '1}, '{ 5'h02                 ,     'x              , {2'b01, op.ciw.rd_     }}};
-    T_CL   :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },     'x              , {2'b01, op.cl .rd_     }}};
-    T_CS   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},     'x                  }};
-    T_CA   :  gpr16 = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
-    T_CB   :  gpr16 = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};  // Branch
-    T_CB_A :  gpr16 = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch/Arithmetic
-    T_CJ   :  gpr16 = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'd00                  }};  // C.J   using x0, NOTE: writeback could be disabled
-    T_CJ_L :  gpr16 = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'h01                  }};  // C.JAL using x1
-    default:  gpr16 = '{'{'0, '0, '0}, '{    'x                 ,     'x              ,     'x                  }};
+    T_CR   :  gpr16_f = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
+    T_CR_0 :  gpr16_f = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
+    T_CR_L :  gpr16_f = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
+    T_CI   :  gpr16_f = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_J :  gpr16_f = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,     'x              ,     'x                  }};
+    T_CI_S :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_L :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CSS  :  gpr16_f = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,     'x                  }};
+    T_CIW  :  gpr16_f = '{'{'0, '0, '1}, '{ 5'h02                 ,     'x              , {2'b01, op.ciw.rd_     }}};
+    T_CL   :  gpr16_f = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },     'x              , {2'b01, op.cl .rd_     }}};
+    T_CS   :  gpr16_f = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},     'x                  }};
+    T_CA   :  gpr16_f = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
+    T_CB   :  gpr16_f = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};  // Branch
+    T_CB_A :  gpr16_f = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch/Arithmetic
+    T_CJ   :  gpr16_f = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'd00                  }};  // C.J   using x0, NOTE: writeback could be disabled
+    T_CJ_L :  gpr16_f = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'h01                  }};  // C.JAL using x1
+    default:  gpr16_f = '{'{'0, '0, '0}, '{    'x                 ,     'x              ,     'x                  }};
   endcase
-endfunction: gpr16
+endfunction: gpr16_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // I base (32E, 32I, 64I, 128I)
@@ -545,11 +587,8 @@ typedef enum logic [3-1:0] {
 // TODO: do this properly
 const pc_t PC_ILL = PC_PCI;
 
-// branch type
-typedef op32_b_func3_t br_t;
-
-// branch immediate type {12-bit, 1'b0}
-typedef logic signed [12+1-1:0] br_imm_t;
+// branch unit type
+typedef op32_b_func3_t bru_t;
 
 // ALU input operand multiplexer
 // the encoding is not directly derived from opcode
@@ -661,7 +700,7 @@ const wb_t WB_XXX = wb_t'('x);
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
   pc_t   pc ;   // PC multiplexer
-  br_t   br ;   // branch type
+  bru_t  bru;   // branch type
   alu_t  alu;   // ALU (multiplexer/operation/width)
   lsu_t  lsu;   // load/store (enable/wrte/sign/size)
   wb_t   wb ;   // write back multiplexer/enable
@@ -669,7 +708,7 @@ typedef struct packed {
 
 // NOTE: trap on illegal instruction
 // illegal (idle) value
-const ctl_i_t CTL_I_ILL = '{pc: PC_PCI, br: BXXX, alu: CTL_ALU_ILL, lsu: LS_X , wb: WB_XXX};
+const ctl_i_t CTL_I_ILL = '{pc: PC_PCI, bru: BXXX, alu: CTL_ALU_ILL, lsu: LS_X , wb: WB_XXX};
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension
@@ -822,9 +861,10 @@ typedef enum {
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
   ill_t      ill;     // illegal
+  imm_i_t    imm_i;   // immediate value
+//imm_c_t    imm_c;   // immediate value
+  imm32_t    imm32;   // immediate value
   gpr_t      gpr;     // GPR control signals
-  imm_t      imm;     // immediate value
-//  br_imm_t   br_imm;  // branch immediate
   ctl_i_t    i;       // integer
   ctl_m_t    m;       // integer multiplication and division
 //ctl_a_t    a;       // atomic
@@ -845,13 +885,15 @@ typedef struct packed {
 
 // illegal (idle) value
 const ctl_t CTL_ILL = '{
-  ill : ILL,
-  gpr : GPR_ILL,
-  imm : IMM_ILL,
-  i   : CTL_I_ILL,
-  m   : CTL_M_ILL,
-  csr : CTL_CSR_ILL,
-  priv: CTL_PRIV_ILL
+  ill   : ILL,
+  imm_i : IMM_I_ILL,
+//imm_c : IMM_C_ILL,
+  imm32 : IMM32_ILL,
+  gpr   : GPR_ILL,
+  i     : CTL_I_ILL,
+  m     : CTL_M_ILL,
+  csr   : CTL_CSR_ILL,
+  priv  : CTL_PRIV_ILL
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1036,15 +1078,13 @@ endcase end
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
 if (t.ill != ILL) begin
-  t.gpr = gpr32(op, f);
-  t.imm = imm32(op, f);
+  t.imm_i = imm_i_f(op);
+  t.imm32 = imm32_f(t.imm_i, f);
+  t.gpr   = gpr32_f(op     , f);
 end
 
-// immediate values for each unit
-//t.br_imm = 
-
-// assign temporary variable to return value
-dec32 = t;
+// return temporary variable
+return(t);
 
 endfunction: dec32
 
@@ -1190,8 +1230,9 @@ endcase end
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
 if (t.ill != ILL) begin
-  t.gpr = gpr16(op, fi.f);
-  t.imm = imm16(op, fi.f, fi.i);
+//t.imm_c = imm_c_f(op, fi.f, fi.i);
+  t.imm32 = imm16_f(op, fi.f, fi.i);
+  t.gpr   = gpr16_f(op, fi.f);
 end
 
 // assign temporary variable to return value
@@ -1205,13 +1246,12 @@ endfunction: dec16
 // instruction decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// TODO: check for C extension
 // instruction decoder
 function ctl_t dec (isa_t isa, op32_t op);
   case (opsiz(op[16-1:0]))
-    2      : dec = dec16(isa, op[16-1:0]);  // 16-bit C standard extension
-    4      : dec = dec32(isa, op[32-1:0]);  // 32-bit
-    default: dec = CTL_ILL;
+    2      : dec = isa.spec.ext.C ? dec16(isa, op[16-1:0]) : CTL_ILL;  // 16-bit C standard extension
+    4      : dec =                  dec32(isa, op[32-1:0])          ;  // 32-bit
+    default: dec =                                           CTL_ILL;  // OP sizes above 4 bytes are not supported
   endcase
 endfunction: dec
 
