@@ -86,7 +86,9 @@ logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
 logic [XLEN-1:0] csr_rdt;  // read  data
 
 // CSR address map union
+`ifdef VERILATOR
 csr_map_ut       csr_csr;
+`endif
 
 logic [XLEN-1:0] csr_tvec;
 logic [XLEN-1:0] csr_epc ;
@@ -179,7 +181,7 @@ endgenerate
 //assign if_pcb = if_pc + IAW'(id_ctl.imm);
 
 // PC addend
-assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm32)
+assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm_i.b)
                                                  : IAW'(opsiz(id_op16[16-1:0]));
 
 // PC sum
@@ -369,13 +371,13 @@ r5p_lsu #(
 // write back multiplexer
 always_comb begin
   unique case (id_ctl.i.wb)
-    WB_ALU : gpr_rd = alu_rd;               // ALU output
-    WB_MEM : gpr_rd = lsu_rdt;              // memory read data
-    WB_PCI : gpr_rd = XLEN'(if_pcs);        // PC increment
-    WB_IMM : gpr_rd = XLEN'(id_ctl.imm32);  // immediate  // TODO: optimize this code // imm32(id_op32, T_U)
-    WB_CSR : gpr_rd = csr_rdt;              // CSR
-    WB_MUL : gpr_rd = mul_rd;               // mul/div/rem
-    default: gpr_rd = 'x;                   // none
+    WB_ALU : gpr_rd = alu_rd;                 // ALU output
+    WB_MEM : gpr_rd = lsu_rdt;                // memory read data
+    WB_PCI : gpr_rd = XLEN'(if_pcs);          // PC increment
+    WB_IMM : gpr_rd = XLEN'(id_ctl.imm_i.u);  // immediate
+    WB_CSR : gpr_rd = csr_rdt;                // CSR
+    WB_MUL : gpr_rd = mul_rd;                 // mul/div/rem
+    default: gpr_rd = 'x;                     // none
   endcase
 end
 
