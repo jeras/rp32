@@ -691,24 +691,24 @@ typedef enum logic [3-1:0] {
   WB_CSR = 3'b100,  //   // CSR value
   WB_MUL = 3'b101,  //   // MUL/DIV/REM
   WB_IDL = 3'b111   // TODO: idle
-} wb_t;
+} wbu_t;
 
 // don't care value
-const wb_t WB_XXX = wb_t'('x);
+const wbu_t WB_XXX = wbu_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
   pc_t   pc ;   // PC multiplexer
-  bru_t  bru;   // branch type
+  bru_t  bru;   // branch unit
   alu_t  alu;   // ALU (multiplexer/operation/width)
   lsu_t  lsu;   // load/store (enable/wrte/sign/size)
-  wb_t   wb ;   // write back multiplexer/enable
+  wbu_t  wbu;   // write back unit multiplexer/enable
 } ctl_i_t;
 
 // NOTE: trap on illegal instruction
 // illegal (idle) value
-const ctl_i_t CTL_I_ILL = '{pc: PC_PCI, bru: BXXX, alu: CTL_ALU_ILL, lsu: LS_X , wb: WB_XXX};
+const ctl_i_t CTL_I_ILL = '{pc: PC_PCI, bru: BXXX, alu: CTL_ALU_ILL, lsu: LS_X , wbu: WB_XXX};
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension

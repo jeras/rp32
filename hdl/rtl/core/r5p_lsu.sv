@@ -35,6 +35,14 @@ module r5p_lsu #(
 // word address width
 localparam int unsigned WW = $clog2(BW);
 
+// read/write transfer
+logic ls_rtr;
+logic ls_wtr;
+
+// read/write transfer
+assign ls_rtr = ls_req & ls_ack & ~ls_wen;
+assign ls_wtr = ls_req & ls_ack &  ls_wen;
+
 // request
 assign ls_req = ctl.en & ~dly;
 
@@ -98,11 +106,25 @@ unique case (ctl.f3)
   default: ls_wdt = 'x;
 endcase
 
+// read alignment
+logic [WW-1:0] ral;
+lsu_f3_t       rf3;
+
+// read alignment
+always_ff @ (posedge clk, posedge rst)
+if (rst) begin
+  ral <= '0;
+  rf3 <= '0;
+end else if (ls_rtr) begin
+  ral <= adr[WW-1:0];
+  rf3 <= ctl.f3;
+end
+
 // read data (sign extend)
 always_comb begin: blk_rdt
   logic [XLEN-1:0] tmp;
-  tmp = ls_rdt >> (8*adr[WW-1:0]);
-  unique case (ctl.f3)
+  tmp = ls_rdt >> (8*ral);
+  unique case (rf3)
     LB     : rdt = DW'(  $signed( 8'(tmp)));
     LH     : rdt = DW'(  $signed(16'(tmp)));
     LW     : rdt = DW'(  $signed(32'(tmp)));
@@ -118,6 +140,6 @@ end: blk_rdt
 // access delay
 always_ff @ (posedge clk, posedge rst)
 if (rst)  dly <= 1'b0;
-else      dly <= ls_req & ls_ack & ~ls_wen;
+else      dly <= ls_rtr;
 
 endmodule: r5p_lsu

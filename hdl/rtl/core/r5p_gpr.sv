@@ -111,8 +111,8 @@ endgenerate
 generate
 if (WBYP) begin: gen_wb_bypass
 
-  assign d_rs1 = (a_rd == a_rs1) ? d_rd : t_rs1;
-  assign d_rs2 = (a_rd == a_rs2) ? d_rd : t_rs2;
+  assign d_rs1 = (wen & (a_rd == a_rs1)) ? d_rd : t_rs1;
+  assign d_rs2 = (wen & (a_rd == a_rs2)) ? d_rd : t_rs2;
 
 end: gen_wb_bypass
 else begin: gen_wb_default

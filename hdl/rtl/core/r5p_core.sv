@@ -225,6 +225,7 @@ assign id_ctl = dec(ISA, id_op32);
 r5p_gpr #(
   .AW      (ISA.spec.base.E ? 4 : 5),
   .XLEN    (XLEN),
+  .WBYP    (1'b1),
   .CHIP    (CHIP)
 ) gpr (
   // system signals
@@ -233,7 +234,7 @@ r5p_gpr #(
   // read/write enable
   .e_rs1   (id_ctl.gpr.e.rs1),
   .e_rs2   (id_ctl.gpr.e.rs2),
-  .e_rd    (wbu_wen & (id_ctl.i.wb == WB_LSU ? lsu_dly : 1'b1)),
+  .e_rd    (wbu_wen),
   // read/write address
   .a_rs1   (id_ctl.gpr.a.rs1),
   .a_rs2   (id_ctl.gpr.a.rs2),
