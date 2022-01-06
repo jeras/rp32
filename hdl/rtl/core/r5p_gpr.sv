@@ -3,8 +3,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_gpr #(
-  int unsigned AW   = 5,   // can be 4 for RV32E base ISA
-  int unsigned XLEN = 32,  // XLEN width
+  int unsigned AW   = 5,     // can be 4 for RV32E base ISA
+  int unsigned XLEN = 32,    // XLEN width
+  bit          WBYP = 1'b0,  // write bypass
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -94,7 +95,7 @@ end: gen_artix_gen
 else begin: gen_default
 
   // register file (FPGA would initialize it to all zeros)
-  logic [XLEN-1:0] gpr [1:2**AW-1] = '{default: '0};
+  logic [XLEN-1:0] gpr [0:2**AW-1] = '{default: '0};
 
   // write access
   always_ff @(posedge clk)
@@ -107,8 +108,19 @@ else begin: gen_default
 end: gen_default
 endgenerate
 
-// special handling of x0
-assign d_rs1 = (e_rs1 & |a_rs1) ? t_rs1 : '0;
-assign d_rs2 = (e_rs2 & |a_rs2) ? t_rs2 : '0;
+generate
+if (WBYP) begin: gen_wb_bypass
+
+  assign d_rs1 = (a_rd == a_rs1) ? d_rd : t_rs1;
+  assign d_rs2 = (a_rd == a_rs2) ? d_rd : t_rs2;
+
+end: gen_wb_bypass
+else begin: gen_wb_default
+
+  assign d_rs1 = t_rs1;
+  assign d_rs2 = t_rs2;
+
+end: gen_wb_default
+endgenerate
 
 endmodule: r5p_gpr
