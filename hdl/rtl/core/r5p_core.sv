@@ -71,16 +71,15 @@ op16_t           id_op16; // 16-bit operation code
 ctl_t            id_ctl;  // control structure
 logic            id_vld;  // instruction valid
 
-// GPR
+// GPR read
 logic [XLEN-1:0] gpr_rs1;  // register source 1
 logic [XLEN-1:0] gpr_rs2;  // register source 2
-logic [XLEN-1:0] gpr_rd ;  // register destination
 
 // ALU
-logic [XLEN-1:0] alu_rd ;  // register destination
+logic [XLEN-1:0] alu_dat;  // register destination
 
 // MUL/DIV/REM
-logic [XLEN-1:0] mul_rd;   // multiplier unit outpLENt
+logic [XLEN-1:0] mul_dat;  // multiplier unit outpLENt
 
 // CSR
 logic [XLEN-1:0] csr_rdt;  // read  data
@@ -99,6 +98,11 @@ logic [XLEN-1:0] lsu_wdt;  // write data
 logic [XLEN-1:0] lsu_rdt;  // read data
 logic            lsu_mal;  // MisALigned
 logic            lsu_dly;  // DeLaYed writeback enable
+
+// write back unit (GPR destination register access)
+logic            wbu_wen;  // write enable
+logic    [5-1:0] wbu_adr;  // address
+logic [XLEN-1:0] wbu_dat;  // data
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction fetch
@@ -155,12 +159,12 @@ end else begin
 
   always_comb
   case (id_ctl.i.bru) inside
-    BEQ    : if_tkn = ~(|alu_rd);
-    BNE    : if_tkn =  (|alu_rd);
-    BLT    : if_tkn =    alu_rd[0];
-    BGE    : if_tkn = ~  alu_rd[0];
-    BLTU   : if_tkn =    alu_rd[0];
-    BGEU   : if_tkn = ~  alu_rd[0];
+    BEQ    : if_tkn = ~(|alu_dat);
+    BNE    : if_tkn =  (|alu_dat);
+    BLT    : if_tkn =    alu_dat[0];
+    BGE    : if_tkn = ~  alu_dat[0];
+    BLTU   : if_tkn =    alu_dat[0];
+    BGEU   : if_tkn = ~  alu_dat[0];
     default: if_tkn = 'x;
   endcase
 
@@ -193,7 +197,7 @@ if (if_ack & id_vld) begin
   case (id_ctl.i.pc)
     PC_PCI,
     PC_BRN : if_pcn = if_pcs;
-    PC_JMP : if_pcn = {alu_rd[IAW-1:1], 1'b0};
+    PC_JMP : if_pcn = {alu_dat[IAW-1:1], 1'b0};
     PC_TRP : if_pcn = IAW'(csr_tvec);
     PC_EPC : if_pcn = IAW'(csr_epc);
     default: if_pcn = 'x;
@@ -229,15 +233,15 @@ r5p_gpr #(
   // read/write enable
   .e_rs1   (id_ctl.gpr.e.rs1),
   .e_rs2   (id_ctl.gpr.e.rs2),
-  .e_rd    (id_ctl.gpr.e.rd & (id_ctl.i.wb == WB_MEM ? lsu_dly : 1'b1)),
+  .e_rd    (wbu_wen & (id_ctl.i.wb == WB_LSU ? lsu_dly : 1'b1)),
   // read/write address
   .a_rs1   (id_ctl.gpr.a.rs1),
   .a_rs2   (id_ctl.gpr.a.rs2),
-  .a_rd    (id_ctl.gpr.a.rd ),
+  .a_rd    (wbu_adr),
   // read/write data
   .d_rs1   (gpr_rs1),
   .d_rs2   (gpr_rs2),
-  .d_rd    (gpr_rd )
+  .d_rd    (wbu_dat)
 );
 
 // base ALU
@@ -254,7 +258,7 @@ r5p_alu #(
   .pc      (XLEN'(if_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
-  .rd      (alu_rd )
+  .rd      (alu_dat)
 );
 
 generate
@@ -272,14 +276,14 @@ if (ISA.spec.ext.M) begin: mdu_gen
     // data input/output
     .rs1     (gpr_rs1),
     .rs2     (gpr_rs2),
-    .rd      (mul_rd )
+    .rd      (mul_dat)
   );
 
 end: mdu_gen
 else begin: mdu_nogen
 
   // data output
-  assign mul_rd  = '0;
+  assign mul_dat = '0;
 
 end: mdu_nogen
 endgenerate
@@ -332,7 +336,7 @@ endgenerate
 ///////////////////////////////////////////////////////////////////////////////
 
 // intermediate signals
-assign lsu_adr = alu_rd;  // TODO: use ALU destination RPG data output
+assign lsu_adr = alu_dat;  // TODO: use ALU destination RPG data output
 assign lsu_wdt = gpr_rs2;
 
 // load/store unit
@@ -368,17 +372,25 @@ r5p_lsu #(
 // write back
 ///////////////////////////////////////////////////////////////////////////////
 
-// write back multiplexer
-always_comb begin
-  unique case (id_ctl.i.wb)
-    WB_ALU : gpr_rd = alu_rd;                 // ALU output
-    WB_MEM : gpr_rd = lsu_rdt;                // memory read data
-    WB_PCI : gpr_rd = XLEN'(if_pcs);          // PC increment
-    WB_IMM : gpr_rd = XLEN'(id_ctl.imm_i.u);  // immediate
-    WB_CSR : gpr_rd = csr_rdt;                // CSR
-    WB_MUL : gpr_rd = mul_rd;                 // mul/div/rem
-    default: gpr_rd = 'x;                     // none
-  endcase
-end
+r5p_wbu #(
+  .XLEN    (XLEN)
+) wbu (
+  // system signals
+  .clk     (clk),
+  .rst     (rst),
+  // control
+  .ctl     (id_ctl),
+  // write data inputs
+  .alu     (alu_dat),                // ALU output
+  .lsu     (lsu_rdt),                // LSU load
+  .pcs     (XLEN'(if_pcs)),          // PC increment
+  .imm     (XLEN'(id_ctl.imm_i.u)),  // immediate
+  .csr     (csr_rdt),                // CSR
+  .mul     (mul_dat),                // mul/div/rem
+  // GPR write back
+  .wen     (wbu_wen),
+  .adr     (wbu_adr),
+  .dat     (wbu_dat)
+);
 
 endmodule: r5p_core

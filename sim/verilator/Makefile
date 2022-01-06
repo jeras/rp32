@@ -17,6 +17,7 @@ RTL+=${PATH_RTL}/core/r5p_alu.sv
 RTL+=${PATH_RTL}/core/r5p_mdu.sv
 #RTL+=${PATH_RTL}/core/r5p_fpu.sv
 RTL+=${PATH_RTL}/core/r5p_lsu.sv
+RTL+=${PATH_RTL}/core/r5p_wbu.sv
 RTL+=${PATH_RTL}/core/r5p_csr_pkg.sv
 RTL+=${PATH_RTL}/core/r5p_csr.sv
 RTL+=${PATH_RTL}/core/r5p_core.sv
