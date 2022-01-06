@@ -112,6 +112,31 @@ assign bus_if.ben = '1;
 assign bus_if.wdt = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
+// GPR change log
+////////////////////////////////////////////////////////////////////////////////
+
+localparam int unsigned AW = 5;
+
+logic [XLEN-1:0] gpr_tmp [0:2**AW-1] = '{default: '0};
+logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
+
+// hierarchical path to GPR inside RTL
+//assign gpr_tmp = top.r5p_tb.DUT.gpr.gen_default.gpr;
+assign gpr_tmp = r5p_tb.DUT.gpr.gen_default.gpr;
+
+always_ff @(posedge clk)
+begin
+  // delayed copy of all GPR
+  gpr_dly <= gpr_tmp;
+  // check each GPR for changes
+  for (int unsigned i=0; i<32; i++) begin
+    if (gpr_dly[i] != gpr_tmp[i]) begin
+      $display("Info   %s %08h -> %08h", gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
+    end
+  end
+end
+
+////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
