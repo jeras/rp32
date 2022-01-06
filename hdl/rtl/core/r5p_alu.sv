@@ -78,10 +78,10 @@ assign {ovf, sum} = $signed(op1) + $signed(op2) + $signed(XLEN'(inv));
 // shift length
 always_comb
 unique casez (ctl.rt)
-  R_X    : sa =                                   in2[$clog2(XLEN)-1:0] ;  // XLEN
+  R_X    : sa =                 in2[$clog2(XLEN)-1:0] ;  // XLEN
   R_SW,
-  R_UW   : sa = {{$clog2(XLEN)-$clog2(32){1'b0}}, in2[$clog2(32  )-1:0]};  // word
-  default: sa =                                   in2[$clog2(XLEN)-1:0] ;  // XLEN
+  R_UW   : sa = ($clog2(XLEN))'(in2[$clog2(32  )-1:0]);  // word
+  default: sa =                 in2[$clog2(XLEN)-1:0] ;  // XLEN
 endcase
 
 // operations
@@ -90,16 +90,16 @@ unique casez (ctl.ao)
   // adder based instructions
   AO_ADD : val = sum;
   AO_SUB : val = sum;
-  AO_SLT : val =   $signed(in1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
-  AO_SLTU: val = $unsigned(in1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
+  AO_SLT : val =   $signed(rs1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
+  AO_SLTU: val = $unsigned(rs1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
   // bitwise logical operations
-  AO_AND : val = in1 & in2;
-  AO_OR  : val = in1 | in2;
-  AO_XOR : val = in1 ^ in2;
+  AO_AND : val = rs1 & in2;
+  AO_OR  : val = rs1 | in2;
+  AO_XOR : val = rs1 ^ in2;
   // barrel shifter
-  AO_SRA : val =   $signed(op1) >>> sa;
-  AO_SRL : val = $unsigned(op1)  >> sa;
-  AO_SLL : val = $unsigned(op1)  << sa;
+  AO_SRA : val =   $signed(rs1) >>> sa;
+  AO_SRL : val = $unsigned(rs1)  >> sa;
+  AO_SLL : val = $unsigned(rs1)  << sa;
   default: val = 'x;
 endcase
 
