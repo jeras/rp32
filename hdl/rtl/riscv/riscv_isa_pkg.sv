@@ -861,6 +861,7 @@ typedef enum {
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
   ill_t      ill;     // illegal
+  integer    siz;     // instruction size
   imm_i_t    imm_i;   // immediate value
 //imm_c_t    imm_c;   // immediate value
   imm32_t    imm32;   // immediate value
@@ -886,6 +887,7 @@ typedef struct packed {
 // illegal (idle) value
 const ctl_t CTL_ILL = '{
   ill   : ILL,
+  siz   : 0,
   imm_i : IMM_I_ILL,
 //imm_c : IMM_C_ILL,
   imm32 : IMM32_ILL,
@@ -909,6 +911,9 @@ op32_frm_t f;  // instruction format
 
 // illegal (idle) default
 t = CTL_ILL;
+
+// set instruction size
+t.siz = 4;
 
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
@@ -1114,6 +1119,9 @@ struct packed {
 
 // illegal (idle) default
 t = CTL_ILL;
+
+// set instruction size
+t.siz = 2;
 
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)

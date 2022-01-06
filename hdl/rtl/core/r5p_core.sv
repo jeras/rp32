@@ -182,7 +182,7 @@ endgenerate
 
 // PC addend
 assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm_i.b)
-                                                 : IAW'(opsiz(id_op16[16-1:0]));
+                                                 : IAW'(id_ctl.siz);
 
 // PC sum
 assign if_pcs = if_pc + if_pca;
