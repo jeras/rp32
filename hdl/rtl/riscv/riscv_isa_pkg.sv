@@ -624,7 +624,8 @@ typedef enum logic [$bits(alu_op_t)-1:0] {
 // TODO: optimize enumeration against opcode
 // result type
 typedef enum logic [3-1:0] {
-  R_X  = 3'b?00,  // XLEN
+  R_SX = 3'b100,  //   signed XLEN
+  R_UX = 3'b000,  // unsigned XLEN
   R_SW = 3'b101,  //   signed word
   R_UW = 3'b001,  // unsigned word
   R_SD = 3'b110,  //   signed double
@@ -920,41 +921,41 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;       '{pc    , br  , '{ai      , ao     , rt  }, ls  , wb    };
   32'b0000_0000_0000_0000_0000_0000_0000_0000: begin                                                                                        end  // illegal instruction
   32'b????_????_????_????_????_????_?011_0111: begin f = T_U; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // LUI
-  32'b????_????_????_????_????_????_?001_0111: begin f = T_U; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_PC_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // AUIPC
-  32'b????_????_????_????_????_????_?110_1111: begin f = T_J; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // JAL  TODO: Instruction-address-misaligned exception
-  32'b????_????_????_????_?000_????_?110_0111: begin f = T_I; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // JALR TODO: Instruction-address-misaligned exception
-  32'b????_????_????_????_?000_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BEQ , '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_XXX}; end  // BEQ
-  32'b????_????_????_????_?001_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BNE , '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_XXX}; end  // BNE
-  32'b????_????_????_????_?100_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BLT , '{AI_R1_R2, AO_SLT , R_X }, LS_X, WB_XXX}; end  // BLT
-  32'b????_????_????_????_?101_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BGE , '{AI_R1_R2, AO_SLT , R_X }, LS_X, WB_XXX}; end  // BGE
-  32'b????_????_????_????_?110_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BLTU, '{AI_R1_R2, AO_SLTU, R_X }, LS_X, WB_XXX}; end  // BLTU
-  32'b????_????_????_????_?111_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BGEU, '{AI_R1_R2, AO_SLTU, R_X }, LS_X, WB_XXX}; end  // BGEU
-  32'b????_????_????_????_?000_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_BS, WB_LSU}; end  // LB
-  32'b????_????_????_????_?001_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_HS, WB_LSU}; end  // LH
-  32'b????_????_????_????_?010_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_LSU}; end  // LW
-  32'b????_????_????_????_?100_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_BU, WB_LSU}; end  // LBU
-  32'b????_????_????_????_?101_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_HU, WB_LSU}; end  // LHU
-  32'b????_????_????_????_?000_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_B , WB_XXX}; end  // SB
-  32'b????_????_????_????_?001_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_H , WB_XXX}; end  // SH
-  32'b????_????_????_????_?010_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_W , WB_XXX}; end  // SW
+  32'b????_????_????_????_????_????_?001_0111: begin f = T_U; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_PC_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // AUIPC TODO: signed or unsigned
+  32'b????_????_????_????_????_????_?110_1111: begin f = T_J; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // JAL  TODO: Instruction-address-misaligned exception
+  32'b????_????_????_????_?000_????_?110_0111: begin f = T_I; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // JALR TODO: Instruction-address-misaligned exception
+  32'b????_????_????_????_?000_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BEQ , '{AI_R1_R2, AO_SUB , R_XX}, LS_X, WB_XXX}; end  // BEQ
+  32'b????_????_????_????_?001_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BNE , '{AI_R1_R2, AO_SUB , R_XX}, LS_X, WB_XXX}; end  // BNE
+  32'b????_????_????_????_?100_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BLT , '{AI_R1_R2, AO_SLT , R_SX}, LS_X, WB_XXX}; end  // BLT
+  32'b????_????_????_????_?101_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BGE , '{AI_R1_R2, AO_SLT , R_SX}, LS_X, WB_XXX}; end  // BGE
+  32'b????_????_????_????_?110_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BLTU, '{AI_R1_R2, AO_SLTU, R_UX}, LS_X, WB_XXX}; end  // BLTU
+  32'b????_????_????_????_?111_????_?110_0011: begin f = T_B; t.ill = STD; t.i = '{PC_BRN, BGEU, '{AI_R1_R2, AO_SLTU, R_UX}, LS_X, WB_XXX}; end  // BGEU
+  32'b????_????_????_????_?000_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_BS, WB_LSU}; end  // LB
+  32'b????_????_????_????_?001_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_HS, WB_LSU}; end  // LH
+  32'b????_????_????_????_?010_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_WS, WB_LSU}; end  // LW
+  32'b????_????_????_????_?100_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_BU, WB_LSU}; end  // LBU
+  32'b????_????_????_????_?101_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_HU, WB_LSU}; end  // LHU
+  32'b????_????_????_????_?000_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_B , WB_XXX}; end  // SB
+  32'b????_????_????_????_?001_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_H , WB_XXX}; end  // SH
+  32'b????_????_????_????_?010_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_W , WB_XXX}; end  // SW
   32'b0000_0000_0000_0000_0000_0000_0001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_XXX}; end  // NOP (ADDI x0, x0, 0), 32'h000000013
-  32'b????_????_????_????_?000_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // ADDI
-  32'b????_????_????_????_?010_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLT , R_XX}, LS_X, WB_ALU}; end  // SLTI
-  32'b????_????_????_????_?011_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLTU, R_XX}, LS_X, WB_ALU}; end  // SLTIU
+  32'b????_????_????_????_?000_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // ADDI
+  32'b????_????_????_????_?010_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLT , R_SX}, LS_X, WB_ALU}; end  // SLTI
+  32'b????_????_????_????_?011_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLTU, R_UX}, LS_X, WB_ALU}; end  // SLTIU
   32'b????_????_????_????_?100_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_XOR , R_XX}, LS_X, WB_ALU}; end  // XORI
   32'b????_????_????_????_?110_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_OR  , R_XX}, LS_X, WB_ALU}; end  // ORI
   32'b????_????_????_????_?111_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_AND , R_XX}, LS_X, WB_ALU}; end  // ANDI
-  32'b0000_000?_????_????_?001_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // SLLI
-  32'b0000_000?_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // SRLI
-  32'b0100_000?_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // SRAI
-  32'b0000_000?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // ADD
-  32'b0100_000?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_ALU}; end  // SUB
-  32'b0000_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLT , R_XX}, LS_X, WB_ALU}; end  // SLT
-  32'b0000_000?_????_????_?011_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLTU, R_XX}, LS_X, WB_ALU}; end  // SLTU
+  32'b0000_000?_????_????_?001_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // SLLI
+  32'b0000_000?_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // SRLI
+  32'b0100_000?_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // SRAI
+  32'b0000_000?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // ADD
+  32'b0100_000?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_SX}, LS_X, WB_ALU}; end  // SUB
+  32'b0000_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLT , R_SX}, LS_X, WB_ALU}; end  // SLT
+  32'b0000_000?_????_????_?011_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLTU, R_UX}, LS_X, WB_ALU}; end  // SLTU
   32'b0000_000?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_XOR , R_XX}, LS_X, WB_ALU}; end  // XOR
-  32'b0000_000?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLL , R_X }, LS_X, WB_ALU}; end  // SLL
-  32'b0000_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRL , R_X }, LS_X, WB_ALU}; end  // SRL
-  32'b0100_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRA , R_X }, LS_X, WB_ALU}; end  // SRA
+  32'b0000_000?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // SLL
+  32'b0000_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // SRL
+  32'b0100_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // SRA
   32'b0000_000?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_OR  , R_XX}, LS_X, WB_ALU}; end  // OR
   32'b0000_000?_????_????_?111_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_AND , R_XX}, LS_X, WB_ALU}; end  // AND
   32'b????_????_????_????_?000_????_?000_1111: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_XXX}; end  // FENCE
@@ -963,13 +964,13 @@ endcase end
 // RV64 I base extension
 if (|(isa.spec.base & (RV_64I | RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;       '{pc    , br  , '{ai      , ao     , rt  }, ls  , wb    };
-  32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_LSU}; end  // LD
-  32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_WU, WB_LSU}; end  // LWU
-  32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_D , WB_XXX}; end  // SD
+  32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_DS, WB_LSU}; end  // LD
+  32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_WU, WB_LSU}; end  // LWU
+  32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_D , WB_XXX}; end  // SD
   32'b????_????_????_????_?000_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // ADDIW
-  32'b0000_00??_????_????_?001_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // SLLI
-  32'b0000_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // SRLI
-  32'b0100_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // SRAI
+  32'b0000_00??_????_????_?001_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_SX}, LS_X, WB_ALU}; end  // SLLI
+  32'b0000_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_SX}, LS_X, WB_ALU}; end  // SRLI
+  32'b0100_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // SRAI
   32'b0000_000?_????_????_?001_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_UW}, LS_X, WB_ALU}; end  // SLLIW
   32'b0000_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLIW
   32'b0100_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAIW
@@ -985,9 +986,9 @@ endcase end
 // RV128 I base extension
 if (|(isa.spec.base & (RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;       '{pc    , br  , '{ai      , ao     , rt  }, ls  , wb    };
-//32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_LSU}; end  // LQ
-  32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_DU, WB_LSU}; end  // LDU
-//32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_Q , WB_XXX}; end  // SQ
+//32'b????_????_????_????_?011_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_QS, WB_LSU}; end  // LQ
+  32'b????_????_????_????_?110_????_?000_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_DU, WB_LSU}; end  // LDU
+//32'b????_????_????_????_?011_????_?010_0011: begin f = T_S; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_Q , WB_XXX}; end  // SQ
   32'b????_????_????_????_?000_????_?101_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // ADDID
   32'b0000_00??_????_????_?001_????_?101_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_UW}, LS_X, WB_ALU}; end  // SLLID
   32'b0000_00??_????_????_?101_????_?101_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLID
@@ -1002,14 +1003,14 @@ endcase end
 // RV32 M standard extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I)) & isa.spec.ext.M) begin casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;       '{pc    , br  , alu        , lsu , wb    };       '{   op,   s12, rt  , en};
-  32'b0000_001?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUL, 2'b11, R_X , '1}; end  // MUL
-  32'b0000_001?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b11, R_X , '1}; end  // MULH
-  32'b0000_001?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b10, R_X , '1}; end  // MULHSU
-  32'b0000_001?_????_????_?011_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b00, R_X , '1}; end  // MULHU
-  32'b0000_001?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_DIV, 2'b11, R_X , '1}; end  // DIV
-  32'b0000_001?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_DIV, 2'b00, R_X , '1}; end  // DIVU
-  32'b0000_001?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_REM, 2'b11, R_X , '1}; end  // REM
-  32'b0000_001?_????_????_?111_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_REM, 2'b00, R_X , '1}; end  // REMU
+  32'b0000_001?_????_????_?000_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUL, 2'b11, R_SX, '1}; end  // MUL
+  32'b0000_001?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b11, R_SX, '1}; end  // MULH
+  32'b0000_001?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b10, R_UX, '1}; end  // MULHSU
+  32'b0000_001?_????_????_?011_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_MUH, 2'b00, R_UX, '1}; end  // MULHU
+  32'b0000_001?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_DIV, 2'b11, R_SX, '1}; end  // DIV
+  32'b0000_001?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_DIV, 2'b00, R_UX, '1}; end  // DIVU
+  32'b0000_001?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_REM, 2'b11, R_SX, '1}; end  // REM
+  32'b0000_001?_????_????_?111_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, CTL_ALU_ILL, LS_X, WB_MUL}; t.m = '{M_REM, 2'b00, R_UX, '1}; end  // REMU
 endcase end
 
 // RV64 M standard extension
@@ -1064,20 +1065,20 @@ endcase end
 
 //// RV32/RV64 Zba standard extension
 //if (|(isa.spec.base & (RV_32I | RV_64I)) & isa.spec.ext.Zba) begin casez (op)
-//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{bi      , bo          , br }, lsu , wb    }
-//  32'b0010_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD   , R_X}, LS_X, WB_BLU}; end  // SH1ADD
-//  32'b0010_000?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD   , R_X}, LS_X, WB_BLU}; end  // SH2ADD
-//  32'b0010_000?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH3ADD   , R_X}, LS_X, WB_BLU}; end  // SH3ADD
+//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{bi      , bo          , br  }, lsu , wb    }
+//  32'b0010_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD   , R_SX}, LS_X, WB_BLU}; end  // SH1ADD
+//  32'b0010_000?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD   , R_SX}, LS_X, WB_BLU}; end  // SH2ADD
+//  32'b0010_000?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH3ADD   , R_SX}, LS_X, WB_BLU}; end  // SH3ADD
 //endcase end
 //
 //// RV32 Zba standard extension
 //if (|(isa.spec.base & (RV_64I)) & isa.spec.ext.Zba) begin casez (op)
-//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{bi      , bo          , br }, lsu , wb    }
-//  32'b0000_100?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_ADD.UW   , R_X}, LS_X, WB_BLU}; end  // ADD.SW
-//  32'b0010_000?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD.UW, R_X}, LS_X, WB_BLU}; end  // SH1ADD.UW
-//  32'b0010_000?_????_????_?100_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD.UW, R_X}, LS_X, WB_BLU}; end  // SH2ADD.UW
-//  32'b0010_000?_????_????_?110_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH3ADD.UW, R_X}, LS_X, WB_BLU}; end  // SH3ADD.UW
-//  32'b0000_10??_????_????_?001_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLLI.UW  , R_X}, LS_X, WB_ALU}; end  // SLLI.UW
+//  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210            frm;         ill;        {pc    , br  , '{bi      , bo          , br  }, lsu , wb    }
+//  32'b0000_100?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_ADD.UW   , R_SX}, LS_X, WB_BLU}; end  // ADD.SW
+//  32'b0010_000?_????_????_?010_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH1ADD.UW, R_SX}, LS_X, WB_BLU}; end  // SH1ADD.UW
+//  32'b0010_000?_????_????_?100_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH2ADD.UW, R_SX}, LS_X, WB_BLU}; end  // SH2ADD.UW
+//  32'b0010_000?_????_????_?110_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_R2, BO_SH3ADD.UW, R_SX}, LS_X, WB_BLU}; end  // SH3ADD.UW
+//  32'b0000_10??_????_????_?001_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, 'x  , '{AI_R1_IM, AO_SLLI.UW  , R_SX}, LS_X, WB_ALU}; end  // SLLI.UW
 //endcase end
 
 // GPR and immediate decoders are based on instruction formats
@@ -1127,54 +1128,54 @@ t.siz = 2;
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
   16'b0000_0000_0000_0000: begin                                                                                                      end  // illegal instruction
-  16'b0000_0000_000?_??00: begin fi = '{T_CIW , T_X_X}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI4SPN, nzuimm = 0
-  16'b000?_????_????_??00: begin fi = '{T_CIW , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI4SPN
-  16'b010?_????_????_??00: begin fi = '{T_CL  , T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_LSU}; end  // C.LW
+  16'b0000_0000_000?_??00: begin fi = '{T_CIW , T_X_X}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI4SPN, nzuimm = 0
+  16'b000?_????_????_??00: begin fi = '{T_CIW , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI4SPN
+  16'b010?_????_????_??00: begin fi = '{T_CL  , T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_WS, WB_LSU}; end  // C.LW
   16'b100?_????_????_??00: begin                                                                                                      end  // Reserved
-  16'b110?_????_????_??00: begin fi = '{T_CS  , T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_W , WB_XXX}; end  // C.SW
-  16'b0000_0000_0000_0001: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.NOP
-  16'b000?_0000_0???_??01: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.NOP, nzimm != 0
-  16'b0000_????_?000_0001: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI, nzimm = 0 // TODO prevent WB
-  16'b000?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI
-  16'b001?_????_????_??01: begin fi = '{T_CJ_L, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JAL, only RV32
+  16'b110?_????_????_??00: begin fi = '{T_CS  , T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_W , WB_XXX}; end  // C.SW
+  16'b0000_0000_0000_0001: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.NOP
+  16'b000?_0000_0???_??01: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.NOP, nzimm != 0
+  16'b0000_????_?000_0001: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI, nzimm = 0 // TODO prevent WB
+  16'b000?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI
+  16'b001?_????_????_??01: begin fi = '{T_CJ_L, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // C.JAL, only RV32
   16'b010?_0000_0???_??01: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LI, rd = 0
   16'b010?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LI
-  16'b0110_0001_0000_0001: begin fi = '{T_CI_S, T_C_F}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI16SP, nzimm = 0
-  16'b011?_0001_0???_??01: begin fi = '{T_CI_S, T_C_F}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADDI16SP
+  16'b0110_0001_0000_0001: begin fi = '{T_CI_S, T_C_F}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI16SP, nzimm = 0
+  16'b011?_0001_0???_??01: begin fi = '{T_CI_S, T_C_F}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI16SP
   16'b0110_????_?000_0001: begin fi = '{T_CI  , T_C_P}; t.ill = RES; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LUI, nzimm = 0
   16'b011?_0000_0???_??01: begin fi = '{T_CI  , T_C_P}; t.ill = HNT; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LUI, rd = 0
   16'b011?_????_????_??01: begin fi = '{T_CI  , T_C_P}; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LUI
-  16'b1001_00??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32,    nzuimm[5] = 1
-  16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64, nzuimm    = 0
-  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
-  16'b1001_01??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32   , nzuimm[5] = 1
-  16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64, nzuimm    = 0
-  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
-  16'b100?_10??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_AND , R_X }, LS_X, WB_ALU}; end  // C.ANDI
-  16'b1000_11??_?00?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_ALU}; end  // C.SUB
-  16'b1000_11??_?01?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_XOR , R_X }, LS_X, WB_ALU}; end  // C.XOR
-  16'b1000_11??_?10?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_OR  , R_X }, LS_X, WB_ALU}; end  // C.OR
-  16'b1000_11??_?11?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_AND , R_X }, LS_X, WB_ALU}; end  // C.AND
+  16'b1001_00??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI, only RV32,    nzuimm[5] = 1
+  16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64, nzuimm    = 0
+  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
+  16'b1001_01??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = NSE; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI, only RV32   , nzuimm[5] = 1
+  16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_W}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64, nzuimm    = 0
+  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
+  16'b100?_10??_????_??01: begin fi = '{T_CB_A, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_AND , R_XX}, LS_X, WB_ALU}; end  // C.ANDI
+  16'b1000_11??_?00?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_XX}, LS_X, WB_ALU}; end  // C.SUB
+  16'b1000_11??_?01?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_XOR , R_XX}, LS_X, WB_ALU}; end  // C.XOR
+  16'b1000_11??_?10?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_OR  , R_XX}, LS_X, WB_ALU}; end  // C.OR
+  16'b1000_11??_?11?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_AND , R_XX}, LS_X, WB_ALU}; end  // C.AND
   16'b1001_11??_?00?_??01: begin                                                                                                      end  // RES (only RV64/128)
   16'b1001_11??_?01?_??01: begin                                                                                                      end  // RES (only RV64/128)
   16'b1001_11??_?10?_??01: begin                                                                                                      end  // Reserved
   16'b1001_11??_?11?_??01: begin                                                                                                      end  // Reserved
-  16'b101?_????_????_??01: begin fi = '{T_CJ  , T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.J
-  16'b110?_????_????_??01: begin fi = '{T_CB  , T_X_X}; t.ill = STD; t.i = '{PC_BRN, BEQ , '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_XXX}; end  // C.BEQZ
-  16'b111?_????_????_??01: begin fi = '{T_CB  , T_X_X}; t.ill = STD; t.i = '{PC_BRN, BNE , '{AI_R1_R2, AO_SUB , R_X }, LS_X, WB_XXX}; end  // C.BNEZ
-  16'b0001_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = NSE; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI, only RV32, nzuimm[5] = 1
-  16'b0000_0000_0000_0010: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI, nzuimm = 0, rd = 0
-  16'b0000_????_?000_0010: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI, nzuimm = 0
-  16'b000?_0000_0???_??10: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI,             rd = 0
-  16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI
-  16'b010?_0000_0???_??10: begin fi = '{T_CI_L, T_C_W}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_LSU}; end  // C.LWSP, rd = 0
-  16'b010?_????_????_??10: begin fi = '{T_CI_L, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_WS, WB_LSU}; end  // C.LWSP
-  16'b1000_0000_0000_0010: begin fi = '{T_CI_J, T_X_X}; t.ill = RES; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR, rs1 = 0
-  16'b1000_????_?000_0010: begin fi = '{T_CI_J, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JR
-  16'b1000_????_????_??10: begin fi = '{T_CR_0, T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.MV
-  16'b1001_????_?000_0010: begin fi = '{T_CR_L, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_X }, LS_X, WB_PCI}; end  // C.JALR
-  16'b1001_????_????_??10: begin fi = '{T_CR  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_X }, LS_X, WB_ALU}; end  // C.ADD
-  16'b110?_????_????_??10: begin fi = '{T_CSS , T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_W , WB_XXX}; end  // C.SWSP
+  16'b101?_????_????_??01: begin fi = '{T_CJ  , T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // C.J
+  16'b110?_????_????_??01: begin fi = '{T_CB  , T_X_X}; t.ill = STD; t.i = '{PC_BRN, BEQ , '{AI_R1_R2, AO_SUB , R_XX}, LS_X, WB_XXX}; end  // C.BEQZ
+  16'b111?_????_????_??01: begin fi = '{T_CB  , T_X_X}; t.ill = STD; t.i = '{PC_BRN, BNE , '{AI_R1_R2, AO_SUB , R_XX}, LS_X, WB_XXX}; end  // C.BNEZ
+  16'b0001_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = NSE; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI, only RV32, nzuimm[5] = 1
+  16'b0000_0000_0000_0010: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI, nzuimm = 0, rd = 0
+  16'b0000_????_?000_0010: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI, nzuimm = 0
+  16'b000?_0000_0???_??10: begin fi = '{T_CI  , T_C_U}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI,             rd = 0
+  16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI
+  16'b010?_0000_0???_??10: begin fi = '{T_CI_L, T_C_W}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_WS, WB_LSU}; end  // C.LWSP, rd = 0
+  16'b010?_????_????_??10: begin fi = '{T_CI_L, T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_WS, WB_LSU}; end  // C.LWSP
+  16'b1000_0000_0000_0010: begin fi = '{T_CI_J, T_X_X}; t.ill = RES; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // C.JR, rs1 = 0
+  16'b1000_????_?000_0010: begin fi = '{T_CI_J, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // C.JR
+  16'b1000_????_????_??10: begin fi = '{T_CR_0, T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.MV
+  16'b1001_????_?000_0010: begin fi = '{T_CR_L, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // C.JALR
+  16'b1001_????_????_??10: begin fi = '{T_CR  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADD
+  16'b110?_????_????_??10: begin fi = '{T_CSS , T_C_W}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_W , WB_XXX}; end  // C.SWSP
 endcase end
 
 // privileged mode
@@ -1205,34 +1206,34 @@ endcase end
 // RV64 I base extension
 if (|(isa.spec.base & (RV_64I | RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
-  16'b011?_????_????_??00: begin fi = '{T_CL  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_LSU}; end  // C.LD
-  16'b111?_????_????_??00: begin fi = '{T_CS  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_D , WB_XXX}; end  // C.SD
-  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
-  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
+  16'b011?_????_????_??00: begin fi = '{T_CL  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_DS, WB_LSU}; end  // C.LD
+  16'b111?_????_????_??00: begin fi = '{T_CS  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_D , WB_XXX}; end  // C.SD
+  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
+  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI, only RV32/64
   16'b1001_11??_?00?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_SW}, LS_X, WB_ALU}; end  // C.SUBW
   16'b1001_11??_?01?_??01: begin fi = '{T_CA  , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // C.ADDW
   16'b001?_0000_0???_??01: begin fi = '{T_CI  , T_C_S}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // C.ADDIW, rd = 0
   16'b001?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // C.ADDIW
-  16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI
-  16'b011?_0000_0???_??10: begin fi = '{T_CI_L, T_C_D}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_LSU}; end  // C.LDSP, rd = 0
-  16'b011?_????_????_??10: begin fi = '{T_CI_L, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_DS, WB_LSU}; end  // C.LDSP
-  16'b111?_????_????_??10: begin fi = '{T_CSS , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_D , WB_XXX}; end  // C.SDSP
+  16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_U}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI
+  16'b011?_0000_0???_??10: begin fi = '{T_CI_L, T_C_D}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_DS, WB_LSU}; end  // C.LDSP, rd = 0
+  16'b011?_????_????_??10: begin fi = '{T_CI_L, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_DS, WB_LSU}; end  // C.LDSP
+  16'b111?_????_????_??10: begin fi = '{T_CSS , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_D , WB_XXX}; end  // C.SDSP
 endcase end
 
 // RV128 I base extension
 if (|(isa.spec.base & (RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
-//16'b001?_????_????_??00: begin fi = '{T_CL  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_LSU}; end  // C.LQ  // TODO: load quad encoding not supported yet
-  16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_Q , WB_XXX}; end  // C.SQ
-  16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
-  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_X }, LS_X, WB_ALU}; end  // C.SRLI
-  16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI64  // TODO: decode immediate as signed
-  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_X }, LS_X, WB_ALU}; end  // C.SRAI
-  16'b0000_????_?000_0010: begin fi = '{T_CI  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI64
-  16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_X }, LS_X, WB_ALU}; end  // C.SLLI
-//16'b001?_0000_0???_??10: begin fi = '{T_CI_L, T_C_Q}; t.ill = RES; t.i = '{PC_ILL, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_LSU}; end  // C.LQSP, rd = 0
-//16'b001?_????_????_??10: begin fi = '{T_CI_L, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, L_QS, WB_LSU}; end  // C.LQSP  // TODO: load quad encoding not supported yet
-  16'b101?_????_????_??10: begin fi = '{T_CSS , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_X }, S_Q , WB_XXX}; end  // C.SQSP
+//16'b001?_????_????_??00: begin fi = '{T_CL  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_QS, WB_LSU}; end  // C.LQ  // TODO: load quad encoding not supported yet
+  16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_Q , WB_XXX}; end  // C.SQ
+  16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
+  16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI
+  16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI64  // TODO: decode immediate as signed
+  16'b100?_01??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI
+  16'b0000_????_?000_0010: begin fi = '{T_CI  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI64
+  16'b000?_????_????_??10: begin fi = '{T_CI  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_XX}, LS_X, WB_ALU}; end  // C.SLLI
+//16'b001?_0000_0???_??10: begin fi = '{T_CI_L, T_C_Q}; t.ill = RES; t.i = '{PC_ILL, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_QS, WB_LSU}; end  // C.LQSP, rd = 0
+//16'b001?_????_????_??10: begin fi = '{T_CI_L, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, L_QS, WB_LSU}; end  // C.LQSP  // TODO: load quad encoding not supported yet
+  16'b101?_????_????_??10: begin fi = '{T_CSS , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_ADD , R_SX}, S_Q , WB_XXX}; end  // C.SQSP
 endcase end
 
 // GPR and immediate decoders are based on instruction formats
