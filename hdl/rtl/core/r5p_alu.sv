@@ -42,6 +42,7 @@ logic [XLEN-1:0] sum;
 logic [XLEN-1:0] val;
 
 // ALU input multiplexer
+// check is a separate set of constans can be used for adder based and the rest of instructions
 always_comb
 unique casez (ctl.ai)
   AI_R1_R2: begin in1 = rs1; in2 = rs2; end
@@ -54,7 +55,7 @@ endcase
 // adder
 ///////////////////////////////////////////////////////////////////////////////
 
-// handle adder inputs for operations with less than XLEN width
+// signed/unsigned extension
 always_comb
 unique casez (ctl.rt)
   R_SX   : op1 = (XLEN+1)'(  signed'(in1        ));  //   signed XLEN
@@ -64,19 +65,21 @@ unique casez (ctl.rt)
   default: op1 = (XLEN+1)'(          in1         );  //   signed XLEN
 endcase
 
-// invert operand 2 (bit 5 of f7 segment of operand)
-assign inv = ctl.ao.f7_5
-           | (ctl.ao ==? AO_SLTU);
-
-// invert second operand for subtraction
+// signed/unsigned extension
 always_comb
-unique casez (inv)
-  1'b0   : op2 = (XLEN+1)'(unsigned'( in2));  // addition
-  1'b1   : op2 = (XLEN+1)'(unsigned'(~in2));  // subtraction
+unique casez (ctl.rt)
+  R_SX   : op2 = (XLEN+1)'(  signed'(in2        ));  //   signed XLEN
+  R_UX   : op2 = (XLEN+1)'(unsigned'(in2        ));  // unsigned XLEN
+  R_SW   : op2 = (XLEN+1)'(  signed'(in2[32-1:0]));  //   signed word
+  R_UW   : op2 = (XLEN+1)'(unsigned'(in2[32-1:0]));  // unsigned word
+  default: op2 = (XLEN+1)'(          in2         );  //   signed XLEN
 endcase
 
+// invert operand 2 (bit 5 of f7 segment of operand)
+assign inv = ctl.ao.f7_5 | (ctl.ao ==? AO_SLT) | (ctl.ao ==? AO_SLTU);
+
 // adder (summation, subtraction)
-assign {ovf, sum} = $signed(op1) + $signed(op2) + $signed((XLEN+1)'(inv));
+assign {ovf, sum} = $signed(op1) + $signed(inv ? ~op2 : op2) + $signed((XLEN+1)'(inv));
 
 // TODO:
 // * see if overflow can be used
@@ -103,11 +106,12 @@ endcase
 always_comb
 unique casez (ctl.ao)
   // adder based instructions
-  AO_ADD : val = sum;
+  AO_ADD ,
   AO_SUB : val = sum;
-  AO_SLT : val =   $signed(rs1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
-  AO_SLTU: val = $unsigned(rs1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
-//  AO_SLTU: val = XLEN'(ovf);
+//  AO_SLT : val =   $signed(rs1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
+//  AO_SLTU: val = $unsigned(rs1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
+  AO_SLT ,
+  AO_SLTU: val = XLEN'(ovf);
   // bitwise logical operations
   AO_AND : val = rs1 & in2;
   AO_OR  : val = rs1 | in2;
@@ -120,6 +124,7 @@ unique casez (ctl.ao)
 endcase
 
 // handling operations narower than XLEN
+// TODO: check if all or only adder based instructions have 32 versions
 always_comb
 unique casez (ctl.rt)
   R_SX,
