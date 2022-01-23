@@ -17,7 +17,9 @@ module r5p_alu #(
   input  logic [XLEN-1:0] pc ,  // PC
   input  logic [XLEN-1:0] rs1,  // source register 1
   input  logic [XLEN-1:0] rs2,  // source register 2
-  output logic [XLEN-1:0] rd    // destination register
+  output logic [XLEN-1:0] rd ,  // destination register
+  // side ouputs
+  output logic [XLEN-0:0] sum   // summation result including overflow bit
 );
 
 // multiplexed inputs
@@ -33,10 +35,6 @@ logic            inv;
 
 // shift ammount
 logic [$clog2(XLEN)-1:0] sa;
-
-// summation
-logic            ovf;  // overflow bit
-logic [XLEN-1:0] sum;
 
 // operation result
 logic [XLEN-1:0] val;
@@ -79,10 +77,7 @@ endcase
 assign inv = ctl.ao.f7_5 | (ctl.ao ==? AO_SLT) | (ctl.ao ==? AO_SLTU);
 
 // adder (summation, subtraction)
-assign {ovf, sum} = $signed(op1) + $signed(inv ? ~op2 : op2) + $signed((XLEN+1)'(inv));
-
-// TODO:
-// * see if overflow can be used
+assign sum = $signed(op1) + $signed(inv ? ~op2 : op2) + $signed((XLEN+1)'(inv));
 
 ///////////////////////////////////////////////////////////////////////////////
 // shifter
@@ -107,11 +102,9 @@ always_comb
 unique casez (ctl.ao)
   // adder based instructions
   AO_ADD ,
-  AO_SUB : val = sum;
-//  AO_SLT : val =   $signed(rs1) <   $signed(in2) ? XLEN'(1) : XLEN'(0);
-//  AO_SLTU: val = $unsigned(rs1) < $unsigned(in2) ? XLEN'(1) : XLEN'(0);
+  AO_SUB : val = XLEN'(sum);
   AO_SLT ,
-  AO_SLTU: val = XLEN'(ovf);
+  AO_SLTU: val = XLEN'(sum[XLEN]);
   // bitwise logical operations
   AO_AND : val = rs1 & in2;
   AO_OR  : val = rs1 | in2;

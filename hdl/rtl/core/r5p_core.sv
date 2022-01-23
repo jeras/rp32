@@ -77,6 +77,7 @@ logic [XLEN-1:0] gpr_rs2;  // register source 2
 
 // ALU
 logic [XLEN-1:0] alu_dat;  // register destination
+logic [XLEN-0:0] alu_sum;  // summation result including overflow bit
 
 // MUL/DIV/REM
 logic [XLEN-1:0] mul_dat;  // multiplier unit outpLENt
@@ -159,12 +160,12 @@ end else begin
 
   always_comb
   case (id_ctl.i.bru) inside
-    BEQ    : if_tkn = ~(|alu_dat);
-    BNE    : if_tkn =  (|alu_dat);
-    BLT    : if_tkn =    alu_dat[0];
-    BGE    : if_tkn = ~  alu_dat[0];
-    BLTU   : if_tkn =    alu_dat[0];
-    BGEU   : if_tkn = ~  alu_dat[0];
+    BEQ    : if_tkn = ~(|alu_sum[XLEN-1:0]);
+    BNE    : if_tkn =  (|alu_sum[XLEN-1:0]);
+    BLT    : if_tkn =    alu_sum[XLEN];
+    BGE    : if_tkn = ~  alu_sum[XLEN];
+    BLTU   : if_tkn =    alu_sum[XLEN];
+    BGEU   : if_tkn = ~  alu_sum[XLEN];
     default: if_tkn = 'x;
   endcase
 
@@ -197,7 +198,7 @@ if (if_ack & id_vld) begin
   case (id_ctl.i.pc)
     PC_PCI,
     PC_BRN : if_pcn = if_pcs;
-    PC_JMP : if_pcn = {alu_dat[IAW-1:1], 1'b0};
+    PC_JMP : if_pcn = {alu_sum[IAW-1:1], 1'b0};
     PC_TRP : if_pcn = IAW'(csr_tvec);
     PC_EPC : if_pcn = IAW'(csr_epc);
     default: if_pcn = 'x;
@@ -259,7 +260,9 @@ r5p_alu #(
   .pc      (XLEN'(if_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
-  .rd      (alu_dat)
+  .rd      (alu_dat),
+  // side ouputs
+  .sum     (alu_sum)
 );
 
 generate
@@ -337,7 +340,7 @@ endgenerate
 ///////////////////////////////////////////////////////////////////////////////
 
 // intermediate signals
-assign lsu_adr = alu_dat;  // TODO: use ALU destination RPG data output
+assign lsu_adr = alu_sum[XLEN-1:0];
 assign lsu_wdt = gpr_rs2;
 
 // load/store unit
