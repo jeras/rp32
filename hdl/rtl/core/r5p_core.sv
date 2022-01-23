@@ -254,9 +254,8 @@ r5p_alu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (id_ctl.i.alu),
+  .ctl     (id_ctl),
   // data input/output
-  .imm     (XLEN'(id_ctl.imm32)),
   .pc      (XLEN'(if_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),

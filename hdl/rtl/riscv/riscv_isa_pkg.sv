@@ -971,8 +971,11 @@ if (|(isa.spec.base & (RV_64I | RV_128I))) begin casez (op)
   32'b0000_00??_????_????_?001_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_SX}, LS_X, WB_ALU}; end  // SLLI
   32'b0000_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_SX}, LS_X, WB_ALU}; end  // SRLI
   32'b0100_00??_????_????_?101_????_?001_0011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // SRAI
+  32'b0000_0001_????_????_?001_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_UW}, LS_X, WB_ALU}; end  // SLLIW (imm[5]!=0), reserved
   32'b0000_000?_????_????_?001_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SLL , R_UW}, LS_X, WB_ALU}; end  // SLLIW
+  32'b0000_0001_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLIW (imm[5]!=0), reserved
   32'b0000_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLIW
+  32'b0100_0001_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAIW (imm[5]!=0), reserved
   32'b0100_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IM, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAIW
   32'b0000_000?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // ADDW
   32'b0100_000?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_SW}, LS_X, WB_ALU}; end  // SUBW
