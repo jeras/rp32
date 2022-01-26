@@ -48,10 +48,13 @@ logic [XLEN-1:0] val;
 // TODO check is a separate set of constans can be used for adder based and the rest of instructions
 always_comb
 unique casez (ctl.i.alu.ai)
-  AI_R1_R2: begin in1 = rs1; in2 = rs2;              end
-  AI_R1_IM: begin in1 = rs1; in2 = XLEN'(ctl.imm32); end
-  AI_PC_IM: begin in1 = pc ; in2 = XLEN'(ctl.imm32); end
-  default : begin in1 = 'x ; in2 = 'x;               end
+  AI_R1_R2: begin in1 = rs1; in2 = rs2;                end  // R-type
+  AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.i); end  // I-type (arithmetic/logic)
+  AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.i); end  // I-type (load)
+  AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.s); end  // S-type (store)
+  AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm_i.u); end  // U-type
+  AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm_i.j); end  // J-type (jump)
+  default : begin in1 = 'x ; in2 = 'x;                 end
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,7 +68,7 @@ unique casez (ctl.i.alu.rt)
   R_UX   : op1 = (XLEN+1)'(unsigned'(in1        ));  // unsigned XLEN
   R_SW   : op1 = (XLEN+1)'(  signed'(in1[32-1:0]));  //   signed word
   R_UW   : op1 = (XLEN+1)'(unsigned'(in1[32-1:0]));  // unsigned word
-  default: op1 = (XLEN+1)'(          in1         );  //   signed XLEN
+  default: op1 = 'x;                                 //   signed XLEN
 endcase
 
 // signed/unsigned extension
@@ -75,7 +78,7 @@ unique casez (ctl.i.alu.rt)
   R_UX   : op2 = (XLEN+1)'(unsigned'(in2        ));  // unsigned XLEN
   R_SW   : op2 = (XLEN+1)'(  signed'(in2[32-1:0]));  //   signed word
   R_UW   : op2 = (XLEN+1)'(unsigned'(in2[32-1:0]));  // unsigned word
-  default: op2 = (XLEN+1)'(          in2         );  //   signed XLEN
+  default: op2 = 'x;                                 //   signed XLEN
 endcase
 
 // invert operand 2 (bit 5 of f7 segment of operand)
@@ -95,7 +98,7 @@ assign sai = ctl.imm_i.i[XLOG-1:0];
 always_comb
 unique casez (ctl.i.alu.ai)
   AI_R1_R2: sam = sar;
-  AI_R1_IM: sam = sai;
+  AI_R1_II: sam = sai;
   default : sam = 'x;
 endcase
 
@@ -106,7 +109,7 @@ unique casez (ctl.i.alu.rt)
   R_UX   : sa =         sam[XLOG-1:0] ;  // XLEN
   R_SW,
   R_UW   : sa = (XLOG)'(sam[   5-1:0]);  // word
-  default: sa =         sam[XLOG-1:0] ;  // XLEN
+  default: sa = 'x;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,7 +143,7 @@ unique casez (ctl.i.alu.rt)
   R_UX   : rd =                        val         ;  // XLEN
   R_SW,
   R_UW   : rd = {{XLEN-32{val[32-1]}}, val[32-1:0]};  // sign extended word
-  default: rd = 'x                                 ;
+  default: rd = 'x;
 endcase
 
 endmodule: r5p_alu
