@@ -23,13 +23,13 @@ module r5p_lsu #(
   output logic                 mal,  // misaligned
   output logic                 dly,  // delayed writeback enable
   // data bus (load/store)
-  output logic                 ls_req,  // write or read request
+  output logic                 ls_vld,  // write or read request
   output logic                 ls_wen,  // write enable
   output logic [AW-1:0]        ls_adr,  // address
   output logic [BW-1:0]        ls_ben,  // byte enable
   output logic [BW-1:0][8-1:0] ls_wdt,  // write data
   input  logic [BW-1:0][8-1:0] ls_rdt,  // read data
-  input  logic                 ls_ack   // write or read acknowledge
+  input  logic                 ls_rdy   // write or read acknowledge
 );
 
 // word address width
@@ -40,11 +40,11 @@ logic ls_rtr;
 logic ls_wtr;
 
 // read/write transfer
-assign ls_rtr = ls_req & ls_ack & ~ls_wen;
-assign ls_wtr = ls_req & ls_ack &  ls_wen;
+assign ls_rtr = ls_vld & ls_rdy & ~ls_wen;
+assign ls_wtr = ls_vld & ls_rdy &  ls_wen;
 
 // request
-assign ls_req = ctl.en & ~dly;
+assign ls_vld = ctl.en & ~dly;
 
 // write enable
 assign ls_wen = ctl.we;

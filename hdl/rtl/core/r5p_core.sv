@@ -36,18 +36,18 @@ module r5p_core #(
   input  logic                  clk,
   input  logic                  rst,
   // program bus (instruction fetch)
-  output logic                  if_req,
+  output logic                  if_vld,
   output logic [IAW-1:0]        if_adr,
   input  logic [IBW-1:0][8-1:0] if_rdt,
-  input  logic                  if_ack,
+  input  logic                  if_rdy,
   // data bus (load/store)
-  output logic                  ls_req,  // write or read request
+  output logic                  ls_vld,  // write or read request
   output logic                  ls_wen,  // write enable
   output logic [DAW-1:0]        ls_adr,  // address
   output logic [DBW-1:0]        ls_ben,  // byte enable
   output logic [DBW-1:0][8-1:0] ls_wdt,  // write data
   input  logic [DBW-1:0][8-1:0] ls_rdt,  // read data
-  input  logic                  ls_ack   // write or read acknowledge
+  input  logic                  ls_rdy   // write or read acknowledge
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ if (rst)  if_run <= 1'b0;
 else      if_run <= 1'b1;
 
 // request becomes active after reset
-assign if_req = if_run & ~(ls_req & ~ls_wen);
+assign if_vld = if_run & ~(ls_vld & ~ls_wen);
 
 // PC next is used as IF address
 assign if_adr = if_pcn;
@@ -123,14 +123,14 @@ assign if_adr = if_pcn;
 // instruction valid
 always_ff @ (posedge clk, posedge rst)
 if (rst)  id_vld <= 1'b0;
-else      id_vld <= (if_req & if_ack) | (id_vld & stall);
+else      id_vld <= (if_vld & if_rdy) | (id_vld & stall);
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = (if_req & ~if_ack) | (ls_req & ~ls_ack) | (ls_req & ~ls_wen);
+assign stall = (if_vld & ~if_rdy) | (ls_vld & ~ls_rdy) | (ls_vld & ~ls_wen);
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
@@ -194,7 +194,7 @@ assign if_pcs = if_pc + if_pca;
 
 // program counter next
 always_comb
-if (if_ack & id_vld) begin
+if (if_rdy & id_vld) begin
   case (id_ctl.i.pc)
     PC_PCI,
     PC_BRN : if_pcn = if_pcs;
@@ -362,13 +362,13 @@ r5p_lsu #(
   .mal     (lsu_mal),
   .dly     (lsu_dly),
   // data bus (load/store)
-  .ls_req  (ls_req),
+  .ls_vld  (ls_vld),
   .ls_wen  (ls_wen),
   .ls_adr  (ls_adr),
   .ls_ben  (ls_ben),
   .ls_wdt  (ls_wdt),
   .ls_rdt  (ls_rdt),
-  .ls_ack  (ls_ack)
+  .ls_rdy  (ls_rdy)
 );
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -69,18 +69,18 @@ r5p_core #(
   .clk     (clk),
   .rst     (rst),
   // instruction fetch
-  .if_req  (bus_if.vld),
+  .if_vld  (bus_if.vld),
   .if_adr  (bus_if.adr),
   .if_rdt  (bus_if.rdt),
-  .if_ack  (bus_if.rdy),
+  .if_rdy  (bus_if.rdy),
   // data load/store
-  .ls_req  (bus_ls.vld),
+  .ls_vld  (bus_ls.vld),
   .ls_wen  (bus_ls.wen),
   .ls_adr  (bus_ls.adr),
   .ls_ben  (bus_ls.ben),
   .ls_wdt  (bus_ls.wdt),
   .ls_rdt  (bus_ls.rdt),
-  .ls_ack  (bus_ls.rdy)
+  .ls_rdy  (bus_ls.rdy)
 );
 
 assign bus_if.wen = 1'b0;
