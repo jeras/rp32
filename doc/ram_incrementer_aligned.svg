@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="130.35136mm"
+   height="60.299999mm"
+   viewBox="0 0 130.35136 60.299999"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1-rc (1:1.1+rc+202105232036+f4db50c7c1)"
+   sodipodi:docname="ram_incrementer_alligned_only.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:snap-global="true"
+     inkscape:snap-text-baseline="true"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="201.87898"
+     inkscape:cy="581.59531"
+     inkscape:window-width="1884"
+     inkscape:window-height="2096"
+     inkscape:window-x="72"
+     inkscape:window-y="27"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     fit-margin-left="10"
+     fit-margin-right="10"
+     fit-margin-top="10"
+     fit-margin-bottom="10">
+    <inkscape:grid
+       type="xygrid"
+       id="grid9"
+       units="cm"
+       spacingx="2"
+       spacingy="2"
+       originx="1.999993e-07"
+       originy="0.14999991" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="Arrow2Lend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path986" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow2Lend-3"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path986-6" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,0.15000001)">
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:round"
+       id="rect33"
+       width="40"
+       height="40"
+       x="50"
+       y="10" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="M 10,30 H 50"
+       id="path68"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend-3)"
+       d="m 90,30 h 30"
+       id="path68-7"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.23333px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';stroke-width:0.264583"
+       x="12"
+       y="28"
+       id="text2884"><tspan
+         sodipodi:role="line"
+         id="tspan2882"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono';stroke-width:0.264583"
+         x="12"
+         y="28">addr[AW-1:0]</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.23333px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';stroke-width:0.264583"
+       x="92"
+       y="28"
+       id="text2884-5"><tspan
+         sodipodi:role="line"
+         id="tspan2882-3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono';stroke-width:0.264583"
+         x="92"
+         y="28">data[31:0]</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.23333px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';stroke-width:0.264583"
+       x="58"
+       y="30"
+       id="text2884-3-0-1"><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono';stroke-width:0.264583"
+         x="58"
+         y="30"
+         id="tspan17658-8">RAM</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono';stroke-width:0.264583"
+         x="58"
+         y="35.291664"
+         id="tspan21907">2**AW x 32 </tspan></text>
+  </g>
+</svg>
