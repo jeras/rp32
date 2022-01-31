@@ -186,7 +186,7 @@ endgenerate
 //assign if_pcb = if_pc + IAW'(id_ctl.imm);
 
 // PC addend
-assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm_i.b)
+assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm.b)
                                                  : IAW'(id_ctl.siz);
 
 // PC sum
@@ -384,12 +384,12 @@ r5p_wbu #(
   // control
   .ctl     (id_ctl),
   // write data inputs
-  .alu     (alu_dat),                // ALU output
-  .lsu     (lsu_rdt),                // LSU load
-  .pcs     (XLEN'(if_pcs)),          // PC increment
-  .imm     (XLEN'(id_ctl.imm_i.u)),  // immediate
-  .csr     (csr_rdt),                // CSR
-  .mul     (mul_dat),                // mul/div/rem
+  .alu     (alu_dat),              // ALU output
+  .lsu     (lsu_rdt),              // LSU load
+  .pcs     (XLEN'(if_pcs)),        // PC increment
+  .imm     (XLEN'(id_ctl.imm.u)),  // immediate
+  .csr     (csr_rdt),              // CSR
+  .mul     (mul_dat),              // mul/div/rem
   // GPR write back
   .wen     (wbu_wen),
   .adr     (wbu_adr),

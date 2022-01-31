@@ -297,86 +297,86 @@ const imm32_t IMM32_ILL = 'x;
 ///////////////////////////////////////////////////////////////////////////////
 
 // per instruction format type definitions
-typedef logic signed [12  -1:0] imm_i_i_t;  // 12's
-typedef logic signed [12  -1:0] imm_i_s_t;  // 12's
-typedef logic signed [12+1-1:0] imm_i_b_t;  // 13's
-typedef logic signed [32  -1:0] imm_i_u_t;  // 32's
-typedef logic signed [20    :0] imm_i_j_t;  // 21's
+typedef logic signed [12  -1:0] imm_i_t;  // 12's
+typedef logic signed [12  -1:0] imm_s_t;  // 12's
+typedef logic signed [12+1-1:0] imm_b_t;  // 13's
+typedef logic signed [32  -1:0] imm_u_t;  // 32's
+typedef logic signed [20    :0] imm_j_t;  // 21's
 
 // NOTE: there is no load format, 32-bit load instructions use the I-type
 typedef struct packed {
-  imm_i_i_t i;  // arithmetic/logic
-  imm_i_i_t l;  // load
-  imm_i_s_t s;  // store
-  imm_i_b_t b;  // branch
-  imm_i_u_t u;
-  imm_i_j_t j;
-} imm_i_t;
+  imm_i_t i;  // arithmetic/logic
+  imm_i_t l;  // load
+  imm_s_t s;  // store
+  imm_b_t b;  // branch
+  imm_u_t u;
+  imm_j_t j;
+} imm_t;
 
 // per instruction format illegal (idle) value
-const imm_i_i_t IMM_I_I_ILL = 'x;
-const imm_i_s_t IMM_I_S_ILL = 'x;
-const imm_i_b_t IMM_I_B_ILL = 'x;
-const imm_i_u_t IMM_I_U_ILL = 'x;
-const imm_i_j_t IMM_I_J_ILL = 'x;
+const imm_i_t IMM_I_ILL = 'x;
+const imm_s_t IMM_S_ILL = 'x;
+const imm_b_t IMM_B_ILL = 'x;
+const imm_u_t IMM_U_ILL = 'x;
+const imm_j_t IMM_J_ILL = 'x;
 
-const imm_i_t IMM_I_ILL = '{
-  i: IMM_I_I_ILL,
-  l: IMM_I_I_ILL,
-  s: IMM_I_S_ILL,
-  b: IMM_I_B_ILL,
-  u: IMM_I_U_ILL,
-  j: IMM_I_J_ILL
+const imm_t IMM_ILL = '{
+  i: IMM_I_ILL,
+  l: IMM_I_ILL,
+  s: IMM_S_ILL,
+  b: IMM_B_ILL,
+  u: IMM_U_ILL,
+  j: IMM_J_ILL
 };
 
 // ALU/load immediate (I-type)
-function imm_i_i_t imm_i_i_f (op32_t op);
-  imm_i_i_f = $signed({op.i.imm_11_0});
-endfunction: imm_i_i_f
+function imm_i_t imm_i_f (op32_t op);
+  imm_i_f = $signed({op.i.imm_11_0});
+endfunction: imm_i_f
 
 // store immediate (S-type)
-function imm_i_s_t imm_i_s_f (op32_t op);
-  imm_i_s_f = $signed({op.s.imm_11_5, op.s.imm_4_0});
-endfunction: imm_i_s_f
+function imm_s_t imm_s_f (op32_t op);
+  imm_s_f = $signed({op.s.imm_11_5, op.s.imm_4_0});
+endfunction: imm_s_f
 
 // branch immediate (B-type)
-function imm_i_b_t imm_i_b_f (op32_t op);
-  imm_i_b_f = $signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0});
-endfunction: imm_i_b_f
+function imm_b_t imm_b_f (op32_t op);
+  imm_b_f = $signed({op.b.imm_12, op.b.imm_11, op.b.imm_10_5, op.b.imm_4_1, 1'b0});
+endfunction: imm_b_f
 
 // ALU upper immediate (must be signed for RV64)
-function imm_i_u_t imm_i_u_f (op32_t op);
-  imm_i_u_f = $signed({op.u.imm_31_12, 12'h000});
-endfunction: imm_i_u_f
+function imm_u_t imm_u_f (op32_t op);
+  imm_u_f = $signed({op.u.imm_31_12, 12'h000});
+endfunction: imm_u_f
 
 // ALU jump immediate
-function imm_i_j_t imm_i_j_f (op32_t op);
-  imm_i_j_f = $signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0});
-endfunction: imm_i_j_f
+function imm_j_t imm_j_f (op32_t op);
+  imm_j_f = $signed({op.j.imm_20, op.j.imm_19_12, op.j.imm_11, op.j.imm_10_1, 1'b0});
+endfunction: imm_j_f
 // jump addition is done in ALU while the PC adder is used to calculate the link address
 
 // full immediate decoder
-function imm_i_t imm_i_f (op32_t op);
-  imm_i_f = '{
-    i: imm_i_i_f(op),
-    l: imm_i_i_f(op),
-    s: imm_i_s_f(op),
-    b: imm_i_b_f(op),
-    u: imm_i_u_f(op),
-    j: imm_i_j_f(op)
+function imm_t imm_f (op32_t op);
+  imm_f = '{
+    i: imm_i_f(op),
+    l: imm_i_f(op),
+    s: imm_s_f(op),
+    b: imm_b_f(op),
+    u: imm_u_f(op),
+    j: imm_j_f(op)
   };
-endfunction: imm_i_f
+endfunction: imm_f
 
 // full immediate decoder
-function imm32_t imm32_f (imm_i_t imm_i, op32_frm_t frm);
+function imm32_t imm32_f (imm_t imm, op32_frm_t frm);
   unique case (frm)
     T_R4   : imm32_f = IMM32_ILL;
     T_R    : imm32_f = IMM32_ILL;
-    T_I    : imm32_f = imm32_t'(imm_i.i);  // 12's
-    T_S    : imm32_f = imm32_t'(imm_i.s);  // 12's
-    T_B    : imm32_f = imm32_t'(imm_i.b);  // 13's
-    T_U    : imm32_f = imm32_t'(imm_i.u);  // 32's
-    T_J    : imm32_f = imm32_t'(imm_i.j);  // 21's
+    T_I    : imm32_f = imm32_t'(imm.i);  // 12's
+    T_S    : imm32_f = imm32_t'(imm.s);  // 12's
+    T_B    : imm32_f = imm32_t'(imm.b);  // 13's
+    T_U    : imm32_f = imm32_t'(imm.u);  // 32's
+    T_J    : imm32_f = imm32_t'(imm.j);  // 21's
     default: imm32_f = IMM32_ILL;
   endcase
 endfunction: imm32_f
@@ -543,61 +543,61 @@ endfunction: imm_cj_f
 
 
 // decoder for all immediate immediates
-function imm_i_i_t imm_c_i_f (op16_t op, op16_frm_t frm);
+function imm_i_t imm_c_i_f (op16_t op, op16_frm_t frm);
   unique case (frm)
     T_CI   ,
     T_CI_0 ,
-    T_CB_A : imm_c_i_f = imm_i_i_t'(imm_c_i_s_f(op));
-    T_CIW  : imm_c_i_f = imm_i_i_t'(imm_ciw_f  (op));
-    T_CI_S : imm_c_i_f = imm_i_i_t'(imm_c_i_p_f(op));
+    T_CB_A : imm_c_i_f = imm_i_t'(imm_c_i_s_f(op));
+    T_CIW  : imm_c_i_f = imm_i_t'(imm_ciw_f  (op));
+    T_CI_S : imm_c_i_f = imm_i_t'(imm_c_i_p_f(op));
     default: imm_c_i_f = 'x;
   endcase
 endfunction: imm_c_i_f
 
 // decoder for all load immediates
-function imm_i_i_t imm_c_l_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function imm_i_t imm_c_l_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   unique case (frm)
-    T_CI_L : imm_c_l_f = imm_i_i_t'(imm_cil_f(op, qlf));
-    T_CL   : imm_c_l_f = imm_i_i_t'(imm_cls_f(op, qlf));
+    T_CI_L : imm_c_l_f = imm_i_t'(imm_cil_f(op, qlf));
+    T_CL   : imm_c_l_f = imm_i_t'(imm_cls_f(op, qlf));
     default: imm_c_l_f = 'x;
   endcase
 endfunction: imm_c_l_f
 
 // decoder for all store immediates
-function imm_i_s_t imm_c_s_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function imm_s_t imm_c_s_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   unique case (frm)
-    T_CSS  : imm_c_s_f = imm_i_s_t'(imm_css_f(op, qlf));
-    T_CS   : imm_c_s_f = imm_i_s_t'(imm_cls_f(op, qlf));
+    T_CSS  : imm_c_s_f = imm_s_t'(imm_css_f(op, qlf));
+    T_CS   : imm_c_s_f = imm_s_t'(imm_cls_f(op, qlf));
     default: imm_c_s_f = 'x;
   endcase
 endfunction: imm_c_s_f
 
 // decoder for all load/store immediates
-function imm_i_i_t imm_c_ls_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function imm_i_t imm_c_ls_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   unique case (frm)
-    T_CI_L : imm_c_ls_f = imm_i_i_t'(imm_cil_f(op, qlf));
-    T_CSS  : imm_c_ls_f = imm_i_i_t'(imm_css_f(op, qlf));
+    T_CI_L : imm_c_ls_f = imm_i_t'(imm_cil_f(op, qlf));
+    T_CSS  : imm_c_ls_f = imm_i_t'(imm_css_f(op, qlf));
     T_CL   ,
-    T_CS   : imm_c_ls_f = imm_i_i_t'(imm_cls_f(op, qlf));
+    T_CS   : imm_c_ls_f = imm_i_t'(imm_cls_f(op, qlf));
     default: imm_c_ls_f = 'x;
   endcase
 endfunction: imm_c_ls_f
 
 // upper immediate (CI-type)
-function imm_i_u_t imm_c_u_f (op16_t op);
+function imm_u_t imm_c_u_f (op16_t op);
   imm_c_u_f = 32'($signed({op.ci.imm_12_12, op.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
 endfunction: imm_c_u_f
 
 
 // full immediate decoder (matching structure for base 32-bit instructions)
-function imm_i_t imm_c_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function imm_t imm_c_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   imm_c_f = '{
-    i: imm_i_i_t'(imm_c_i_f(op, frm     )),
-    l: imm_i_i_t'(imm_c_l_f(op, frm, qlf)),
-    s: imm_i_s_t'(imm_c_s_f(op, frm, qlf)),
-    b: imm_i_b_t'(imm_cb_f (op          )),
-    u:            imm_c_u_f(op          ) ,
-    j: imm_i_j_t'(imm_cj_f (op          )),
+    i: imm_i_t'(imm_c_i_f(op, frm     )),
+    l: imm_i_t'(imm_c_l_f(op, frm, qlf)),
+    s: imm_s_t'(imm_c_s_f(op, frm, qlf)),
+    b: imm_b_t'(imm_cb_f (op          )),
+    u:          imm_c_u_f(op          ) ,
+    j: imm_j_t'(imm_cj_f (op          )),
     default: 'x
   };
 endfunction: imm_c_f
@@ -964,9 +964,8 @@ typedef enum {
 typedef struct packed {
   ill_t      ill;     // illegal
   integer    siz;     // instruction size
-  imm_i_t    imm_i;   // immediate value
-//imm_c_t    imm_c;   // immediate value
-  imm32_t    imm32;   // immediate value
+  imm_t      imm;     // immediate value
+  imm32_t    i32;     // immediate value
   gpr_t      gpr;     // GPR control signals
   ctl_i_t    i;       // integer
   ctl_m_t    m;       // integer multiplication and division
@@ -988,16 +987,15 @@ typedef struct packed {
 
 // illegal (idle) value
 const ctl_t CTL_ILL = '{
-  ill   : ILL,
-  siz   : 0,
-  imm_i : IMM_I_ILL,
-//imm_c : IMM_C_ILL,
-  imm32 : IMM32_ILL,
-  gpr   : GPR_ILL,
-  i     : CTL_I_ILL,
-  m     : CTL_M_ILL,
-  csr   : CTL_CSR_ILL,
-  priv  : CTL_PRIV_ILL
+  ill  : ILL,
+  siz  : 0,
+  imm  : IMM_ILL,
+  i32  : IMM32_ILL,
+  gpr  : GPR_ILL,
+  i    : CTL_I_ILL,
+  m    : CTL_M_ILL,
+  csr  : CTL_CSR_ILL,
+  priv : CTL_PRIV_ILL
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1188,9 +1186,9 @@ endcase end
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
 if (t.ill != ILL) begin
-  t.imm_i = imm_i_f(op);
-  t.imm32 = imm32_f(t.imm_i, f);
-  t.gpr   = gpr32_f(op     , f);
+  t.imm = imm_f  (op);
+  t.i32 = imm32_f(t.imm, f);
+  t.gpr = gpr32_f(op   , f);
 end
 
 // return temporary variable
@@ -1343,9 +1341,9 @@ endcase end
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
 if (t.ill != ILL) begin
-  t.imm_i = imm_c_f(op, fi.f, fi.q);
-  t.imm32 = imm16_f(op, fi.f, fi.q);
-  t.gpr   = gpr16_f(op, fi.f);
+  t.imm = imm_c_f(op, fi.f, fi.q);
+  t.i32 = imm16_f(op, fi.f, fi.q);
+  t.gpr = gpr16_f(op, fi.f);
 end
 
 // assign temporary variable to return value

@@ -48,13 +48,13 @@ logic [XLEN-1:0] val;
 // TODO check is a separate set of constans can be used for adder based and the rest of instructions
 always_comb
 unique casez (ctl.i.alu.ai)
-  AI_R1_R2: begin in1 = rs1; in2 = rs2;                end  // R-type
-  AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.i); end  // I-type (arithmetic/logic)
-  AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.l); end  // I-type (load)
-  AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.s); end  // S-type (store)
-  AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm_i.u); end  // U-type
-  AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm_i.j); end  // J-type (jump)
-  default : begin in1 = 'x ; in2 = 'x;                 end
+  AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
+  AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
+  AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm.l); end  // I-type (load)
+  AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm.s); end  // S-type (store)
+  AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm.u); end  // U-type
+  AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm.j); end  // J-type (jump)
+  default : begin in1 = 'x ; in2 = 'x;               end
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,8 +92,8 @@ assign sum = $signed(op1) + $signed(inv ? ~op2 : op2) + $signed((XLEN+1)'(inv));
 // shifter
 ///////////////////////////////////////////////////////////////////////////////
 
-assign sar = rs2        [XLOG-1:0];
-assign sai = ctl.imm_i.i[XLOG-1:0];
+assign sar = rs2      [XLOG-1:0];
+assign sai = ctl.imm.i[XLOG-1:0];
 
 // shift ammount multiplexer
 always_comb
