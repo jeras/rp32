@@ -32,7 +32,7 @@ endfunction: csr_n
 // 32-bit instruction disassembler
 ///////////////////////////////////////////////////////////////////////////////
 
-function string disasm32 (isa_t isa, op32_t op, bit abi=1);
+function string disasm32 (isa_t isa, op32_t op, bit abi=0);
 
 ctl_t t;
 t = dec32(isa, op);
@@ -246,8 +246,8 @@ endfunction: disasm16
 
 function string disasm (isa_t isa, op32_t op, bit abi=0);
   case (opsiz(op[16-1:0]))
-    2      : disasm = disasm16(isa, op[16-1:0]);  // 16-bit C standard extension
-    4      : disasm = disasm32(isa, op[32-1:0]);  // 32-bit
+    2      : disasm = disasm16(isa, op[16-1:0], abi);  // 16-bit C standard extension
+    4      : disasm = disasm32(isa, op[32-1:0], abi);  // 32-bit
     default: disasm = $sformatf("ILLEGAL: ILEN = %dB", opsiz(op[16-1:0]));
   endcase
 endfunction: disasm

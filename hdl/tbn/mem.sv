@@ -140,7 +140,7 @@ if (DBG != "") begin: debug
       end
     end
     $write("%s (IF) %s: s.adr=0x%h dat=0x%h s.ben=0b%b", DBG, bus_if.wen ? "W" : "R", bus_if.adr, dat_if, bus_if.ben);
-    $write(" opc='%s'\n", disasm(ISA, dat_if));
+    $write(" opc='%s'\n", disasm(ISA, dat_if, .abi (1)));
   end
 
   logic [bus_ls.DW-1:0] dat_ls;
