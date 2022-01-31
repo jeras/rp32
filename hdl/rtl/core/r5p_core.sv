@@ -148,7 +148,7 @@ if (0) begin
     .XLEN    (XLEN)
   ) br (
     // control
-    .ctl     (id_ctl.i.br),
+    .ctl     (id_ctl.i.bru),
     // data
     .rs1     (gpr_rs1),
     .rs2     (gpr_rs2),

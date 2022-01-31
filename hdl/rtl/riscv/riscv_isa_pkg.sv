@@ -412,7 +412,7 @@ typedef struct packed {logic [ 2: 0] funct3; logic [12:10] imm_12_10; logic [ 2:
 typedef struct packed {logic [ 2: 0] funct3; logic [12:10] imm_12_10; logic [ 2: 0] rs1_   ; logic [ 6: 5] imm_06_05; logic [ 2: 0] rs2_; logic [1:0] opcode;} op16_cs_t ;  // Store
 typedef struct packed {logic [ 5: 0] funct6;                          logic [ 2: 0] rd_rs1_; logic [ 1: 0] func2;     logic [ 2: 0] rs2_; logic [1:0] opcode;} op16_ca_t ;  // Arithmetic
 typedef struct packed {logic [ 2: 0] funct3; logic [12:10] off_12_10; logic [ 2: 0] rs1_   ; logic [ 6: 2] off_06_02;                     logic [1:0] opcode;} op16_cb_t ;  // Branch
-typedef struct packed {logic [ 2: 0] funct3; logic [12: 2] target;                                                                        logic [1:0] opcode;} op16_cj_t ;  // Jump
+typedef struct packed {logic [ 2: 0] funct3; logic [12: 2] off_12_02;                                                                     logic [1:0] opcode;} op16_cj_t ;  // Jump
 
 // union of 16-bit instruction formats
 typedef union packed {
@@ -470,32 +470,12 @@ const op16_qlf_t T_X_X = op16_qlf_t'('x);
 // 16-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-//// per instruction format type definitions
-//typedef logic signed [12  -1:0] imm_c_l_t;   // 12's - load
-//typedef logic signed [12  -1:0] imm_c_s_t;   // 12's - store
-//typedef logic signed [12  -1:0] imm_c_ls_t;  // 12's - load/store
-//typedef logic signed [12+1-1:0] imm_c_b_t;   // 13's - branch
-//typedef logic signed [32  -1:0] imm_c_u_t;  // 32's
-//typedef logic signed [20    :0] imm_c_j_t;  // 21's
-
 // branch immediate (CB-type)
 function logic signed [8:0] imm_cb_f (op16_t op);
   logic signed [8:0] imm = '0;
   {imm[8], imm[4:3], imm[7:6], imm[2:1], imm[5]} = {op.cb.off_12_10, op.cb.off_06_02};
   return imm;
 endfunction: imm_cb_f
-
-// load immediate (I-type)
-//function logic signed [12-1:0] imm_i (op16_t op);
-//  imm_i = $signed({op.i.imm_11_0});
-//endfunction: imm_i
-
-//    T_CI  :
-//      case (qlf)
-//        T_C_S:  
-//        T_C_U:  imm16_f = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
-//        default: imm16_f = IMM32_ILL;
-//      endcase
 
 // '{sign extended (signed), 6-bit} signed immediate (CI-type)
 function logic signed [6-1:0] imm_c_i_s_f (op16_t op);
@@ -507,7 +487,7 @@ endfunction: imm_c_i_s_f
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
 function logic signed [10-1:0] imm_c_i_p_f (op16_t op);
   logic signed [10-1:0] imm = '0;
-  {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = $signed({op.ci.imm_12_12, op.ci.imm_06_02});  // C.ADDI16SP
+  {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.ADDI16SP
   return imm;
 endfunction: imm_c_i_p_f
 
@@ -553,6 +533,13 @@ function logic unsigned [12-1:0] imm_cls_f (op16_t op, op16_qlf_t qlf);
   endcase
   return imm;
 endfunction: imm_cls_f
+
+// '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
+function logic signed [12-1:0] imm_cj_f (op16_t op);
+  logic signed [12-1:0] imm = '0;
+  {imm[11], imm[4], imm[9:8], imm[10], imm[6], imm[7], imm[3:1], imm[5]} = op.cj.off_12_02;
+  return imm;
+endfunction: imm_cj_f
 
 
 // decoder for all immediate immediates
@@ -606,49 +593,50 @@ endfunction: imm_c_u_f
 function imm_i_t imm_c_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   imm_c_f = '{
     i: imm_i_i_t'(imm_c_i_f(op, frm     )),
-//    i: imm_i_i_t'(imm_c_i_s_f(op)),
     l: imm_i_i_t'(imm_c_l_f(op, frm, qlf)),
     s: imm_i_s_t'(imm_c_s_f(op, frm, qlf)),
     b: imm_i_b_t'(imm_cb_f (op          )),
     u:            imm_c_u_f(op          ) ,
-//    j: imm_i_j_f(op)
+    j: imm_i_j_t'(imm_cj_f (op          )),
     default: 'x
   };
 endfunction: imm_c_f
 
+
 // full immediate decoder
 function imm32_t imm16_f (op16_t i, op16_frm_t frm, op16_qlf_t qlf);
-  imm16_f = '0;
+  imm32_t imm = '0;
   unique case (frm)
     T_CR  ,
-    T_CR_0:  imm16_f = IMM32_ILL;
-    T_CR_L:  imm16_f = '0;
+    T_CR_0:  imm = IMM32_ILL;
+    T_CR_L:  imm = '0;
     T_CI  :
       case (qlf)
-        T_C_P:  imm16_f = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
-        T_C_S:  imm16_f = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-        T_C_U:  imm16_f = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
-        default: imm16_f = IMM32_ILL;
+        T_C_P:  imm = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+        T_C_S:  imm = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+        T_C_U:  imm = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
+        default: imm = IMM32_ILL;
       endcase
-    T_CI_0:  imm16_f = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
-    T_CI_J:  imm16_f = '0;
+    T_CI_0:  imm = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+    T_CI_J:  imm = '0;
     T_CI_S:
       case (qlf)
-        T_C_F: {imm16_f[31:10], {imm16_f[9], imm16_f[4], imm16_f[6], imm16_f[8:7], imm16_f[5]}, imm16_f[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
-        default: imm16_f = IMM32_ILL;
+        T_C_F: {imm[31:10], {imm[9], imm[4], imm[6], imm[8:7], imm[5]}, imm[3:0]} = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02, 4'h0}));  // signed immediate *16
+        default: imm = IMM32_ILL;
       endcase
-    T_CI_L:  imm16_f = imm32_t'(imm_cil_f(i, qlf));
-    T_CSS :  imm16_f = imm32_t'(imm_css_f(i, qlf));
-    T_CIW : {imm16_f[5:4], imm16_f[9:6], imm16_f[2], imm16_f[3]} = i.ciw.imm_12_05;
+    T_CI_L:  imm = imm32_t'(imm_cil_f(i, qlf));
+    T_CSS :  imm = imm32_t'(imm_css_f(i, qlf));
+    T_CIW : {imm[5:4], imm[9:6], imm[2], imm[3]} = i.ciw.imm_12_05;
     T_CL  ,
-    T_CS  :  imm16_f = imm32_t'(imm_cls_f(i, qlf));
-    T_CA  :  imm16_f = IMM32_ILL;
-    T_CB  :  imm16_f = imm32_t'(imm_cb_f (i));
-    T_CB_A:  imm16_f = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
+    T_CS  :  imm = imm32_t'(imm_cls_f(i, qlf));
+    T_CA  :  imm = IMM32_ILL;
+    T_CB  :  imm = imm32_t'(imm_cb_f (i));
+    T_CB_A:  imm = 32'($signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
     T_CJ  ,
-    T_CJ_L: {imm16_f[31:12], {imm16_f[11], imm16_f[4], imm16_f[9:8], imm16_f[10], imm16_f[6], imm16_f[7], imm16_f[3:1], imm16_f[5]}, imm16_f[0]} = 32'($signed({i.cj.target, 1'b0}));
-    default: imm16_f = IMM32_ILL;
+    T_CJ_L: {imm[31:12], {imm[11], imm[4], imm[9:8], imm[10], imm[6], imm[7], imm[3:1], imm[5]}, imm[0]} = 32'($signed({i.cj.off_12_02, 1'b0}));
+    default: imm = IMM32_ILL;
   endcase
+  return imm;
 endfunction: imm16_f
 
 ///////////////////////////////////////////////////////////////////////////////
