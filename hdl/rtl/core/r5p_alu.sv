@@ -50,7 +50,7 @@ always_comb
 unique casez (ctl.i.alu.ai)
   AI_R1_R2: begin in1 = rs1; in2 = rs2;                end  // R-type
   AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.i); end  // I-type (arithmetic/logic)
-  AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.i); end  // I-type (load)
+  AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.l); end  // I-type (load)
   AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm_i.s); end  // S-type (store)
   AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm_i.u); end  // U-type
   AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm_i.j); end  // J-type (jump)
