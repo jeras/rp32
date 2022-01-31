@@ -434,6 +434,7 @@ typedef enum {
   T_CR_0,  // Register + rs1=x0 (zero)
   T_CR_L,  // Register + rd=x1 (link)
   T_CI  ,  // Immediate
+  T_CI_0,  // Immediate + rs1=x0 (zero)
   T_CI_J,  // Immediate + jump
   T_CI_S,  // Immediate + rs1=x2 (sp)
   T_CI_L,  // Immediate + rs1=x2 (sp) Load
@@ -488,6 +489,19 @@ endfunction: imm_cb_f
 //function logic signed [12-1:0] imm_i (op16_t op);
 //  imm_i = $signed({op.i.imm_11_0});
 //endfunction: imm_i
+
+//    T_CI  :
+//      case (qlf)
+//        T_C_S:  
+//        T_C_U:  imm16_f = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
+//        default: imm16_f = IMM32_ILL;
+//      endcase
+
+// signed immediate (CI-type)
+function logic signed [6-1:0] imm_c_i_s_f (op16_t op);
+  imm_c_i_s_f = $signed({op.ci.imm_12_12, op.ci.imm_06_02});  // signed immediate
+endfunction: imm_c_i_s_f
+
 
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} load immediate (CI_L-type)
 function logic unsigned [12-1:0] imm_cil_f (op16_t op, op16_qlf_t qlf);
@@ -554,14 +568,20 @@ function imm_i_i_t imm_c_ls_f (op16_t op, op16_frm_t sel, op16_qlf_t qlf);
   endcase
 endfunction: imm_c_ls_f
 
+// upper immediate (CI-type)
+function imm_i_u_t imm_c_u_f (op16_t op);
+  imm_c_u_f = 32'($signed({op.ci.imm_12_12, op.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+endfunction: imm_c_u_f
+
+
 // full immediate decoder (matching structure for base 32-bit instructions)
 function imm_i_t imm_c_f (op16_t op, op16_frm_t sel, op16_qlf_t qlf);
   imm_c_f = '{
-//    i: imm_i_i_f(op),
-    l: imm_i_i_t'(imm_c_l_f(op, sel, qlf)),
-    s: imm_i_s_t'(imm_c_s_f(op, sel, qlf)),
-    b: imm_i_b_t'(imm_cb_f (op)),
-//    u: imm_i_u_f(op),
+    i: imm_i_i_t'(imm_c_i_s_f(op)),
+    l: imm_i_i_t'(imm_c_l_f  (op, sel, qlf)),
+    s: imm_i_s_t'(imm_c_s_f  (op, sel, qlf)),
+    b: imm_i_b_t'(imm_cb_f   (op)),
+    u:            imm_c_u_f  (op) ,
 //    j: imm_i_j_f(op)
     default: 'x
   };
@@ -581,6 +601,7 @@ function imm32_t imm16_f (op16_t i, op16_frm_t sel, op16_qlf_t qlf);
         T_C_U:  imm16_f = 32'($unsigned({i.ci.imm_12_12, i.ci.imm_06_02}));  // unsigned immediate
         default: imm16_f = IMM32_ILL;
       endcase
+    T_CI_0:  imm16_f = 32'(  $signed({i.ci.imm_12_12, i.ci.imm_06_02}));  // signed immediate
     T_CI_J:  imm16_f = '0;
     T_CI_S:
       case (qlf)
@@ -611,6 +632,7 @@ function gpr_t gpr16_f (op16_t op, op16_frm_t frm);
     T_CR_0 :  gpr16_f = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
     T_CR_L :  gpr16_f = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
     T_CI   :  gpr16_f = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_0 :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h00                 ,     'x              ,         op.ci .rd_rs1   }};
     T_CI_J :  gpr16_f = '{'{'1, '0, '0}, '{        op.cr .rd_rs1  ,     'x              ,     'x                  }};
     T_CI_S :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
     T_CI_L :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
@@ -1191,7 +1213,7 @@ t.siz = 2;
 
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
-  //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
+  //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
   16'b0000_0000_0000_0000: begin                                                                                                      end  // illegal instruction
   16'b0000_0000_000?_??00: begin fi = '{T_CIW , T_X_X}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI4SPN, nzuimm = 0
   16'b000?_????_????_??00: begin fi = '{T_CIW , T_X_X}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI4SPN
@@ -1203,8 +1225,8 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   16'b0000_????_?000_0001: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI, nzimm = 0 // TODO prevent WB
   16'b000?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI
   16'b001?_????_????_??01: begin fi = '{T_CJ_L, T_X_X}; t.ill = STD; t.i = '{PC_JMP, BXXX, '{AI_PC_IJ, AO_ADD , R_SX}, LS_X, WB_PCI}; end  // C.JAL, only RV32
-  16'b010?_0000_0???_??01: begin fi = '{T_CI  , T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LI, rd = 0
-  16'b010?_????_????_??01: begin fi = '{T_CI  , T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LI
+  16'b010?_0000_0???_??01: begin fi = '{T_CI_0, T_C_S}; t.ill = HNT; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.LI, rd = 0
+  16'b010?_????_????_??01: begin fi = '{T_CI_0, T_C_S}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.LI
   16'b0110_0001_0000_0001: begin fi = '{T_CI_S, T_C_F}; t.ill = RES; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI16SP, nzimm = 0
   16'b011?_0001_0???_??01: begin fi = '{T_CI_S, T_C_F}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, LS_X, WB_ALU}; end  // C.ADDI16SP
   16'b0110_????_?000_0001: begin fi = '{T_CI  , T_C_P}; t.ill = RES; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_IMM}; end  // C.LUI, nzimm = 0
@@ -1245,7 +1267,7 @@ endcase end
 
 // privileged mode
 if (isa.priv.M) begin casez (op)
-  //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;            ena , typ                   pc    , br  , alu        , lsu , wb    };
+  //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;            ena , typ                   pc    , br  , alu        , lsu , wb    };
   16'b1001_0000_0000_0010: begin fi = '{T_CR  , T_X_X}; t.ill = STD; t.priv = '{1'b1, PRIV_EBREAK}; t.i = '{PC_TRP, BXXX, CTL_ALU_ILL, LS_X, WB_XXX}; end  // C.EBREAK
 endcase end
 
@@ -1270,7 +1292,7 @@ endcase end
 // TODO: all RESERVERD values should be repeated here, since they are overwritten by the RV64 decoder
 // RV64 I base extension
 if (|(isa.spec.base & (RV_64I | RV_128I))) begin casez (op)
-  //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
+  //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
   16'b011?_????_????_??00: begin fi = '{T_CL  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IL, AO_ADD , R_SX}, L_DS, WB_LSU}; end  // C.LD
   16'b111?_????_????_??00: begin fi = '{T_CS  , T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IS, AO_ADD , R_SX}, S_D , WB_XXX}; end  // C.SD
   16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_D}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI, only RV32/64
@@ -1287,7 +1309,7 @@ endcase end
 
 // RV128 I base extension
 if (|(isa.spec.base & (RV_128I))) begin casez (op)
-  //  fedc_ba98_7654_3210             '{  frm ,   wdh};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
+  //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
 //16'b001?_????_????_??00: begin fi = '{T_CL  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IL, AO_ADD , R_SX}, L_QS, WB_LSU}; end  // C.LQ  // TODO: load quad encoding not supported yet
   16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, S_Q , WB_XXX}; end  // C.SQ
   16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
