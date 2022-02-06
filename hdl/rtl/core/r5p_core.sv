@@ -29,6 +29,9 @@ module r5p_core #(
   int unsigned DBW = DDW/8, // data    byte en width
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
+  // timing versus area compromises
+  bit          CFG_BRU = 1'b1,  // enable dedicated branch unit
+  bit          CFG_BRA = 1'b1,  // enable dedicated branch adder
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -59,7 +62,6 @@ logic            if_run;  // running status
 logic            if_tkn;  // taken
 logic  [IAW-1:0] if_pc;   // program counter
 logic  [IAW-1:0] if_pcn;  // program counter next
-logic  [IAW-1:0] if_pca;  // program counter addend
 logic  [IAW-1:0] if_pcs;  // program counter sum
 //logic  [IAW-1:0] if_pci;  // program counter incrementing adder
 //logic  [IAW-1:0] if_pcb;  // program counter branch adder
@@ -140,8 +142,7 @@ else begin
 end
 
 generate
-//if (CFG_BRU) begin
-if (0) begin
+if (CFG_BRU) begin: gen_bru_ena
 
   // branch ALU for checking branch conditions
   r5p_bru #(
@@ -156,7 +157,8 @@ if (0) begin
     .tkn     (if_tkn)
   );
 
-end else begin
+end: gen_bru_ena
+else begin: gen_bru_alu
 
   always_comb
   case (id_ctl.i.bru) inside
@@ -169,7 +171,7 @@ end else begin
     default: if_tkn = 'x;
   endcase
 
-end
+end: gen_bru_alu
 endgenerate
 
 // TODO: optimization parameters
@@ -185,12 +187,38 @@ endgenerate
 //assign if_pcb = if_pc + IAW'(imm32(id_op32,T_B));
 //assign if_pcb = if_pc + IAW'(id_ctl.imm);
 
-// PC addend
-assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm.b)
-                                                 : IAW'(id_ctl.siz);
+generate
+if (CFG_BRA) begin: gen_bra_add
+  // simultaneous running adders, multiplexer with a late select signal
+  // requires more adder logic improves timing
+  logic [IAW-1:0] if_pci;  // PC incrementer
+  logic [IAW-1:0] if_pcb;  // PC branch address adder
 
-// PC sum
-assign if_pcs = if_pc + if_pca;
+  // PC incrementer
+  assign if_pci = if_pc + IAW'(id_ctl.siz);
+
+  // branch address
+  assign if_pcb = if_pc + IAW'(id_ctl.imm.b);
+
+  // PC adder result multiplexer
+  assign if_pcs = (id_ctl.i.pc == PC_BRN) & if_tkn ? if_pcb
+                                                   : if_pci;
+
+end: gen_bra_add
+else begin: gen_bra_mux
+  // the same adder is shared for next and branch address
+  // least logic area
+  logic [IAW-1:0] if_pca;  // PC addend
+
+  // PC addend multiplexer
+  assign if_pca = (id_ctl.i.pc == PC_BRN) & if_tkn ? IAW'(id_ctl.imm.b)
+                                                   : IAW'(id_ctl.siz);
+
+  // PC sum
+  assign if_pcs = if_pc + if_pca;
+
+end: gen_bra_mux
+endgenerate
 
 // program counter next
 always_comb

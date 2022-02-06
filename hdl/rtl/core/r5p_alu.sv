@@ -84,7 +84,7 @@ endcase
 // invert operand 2 (bit 5 of f7 segment of operand)
 assign inv = ctl.i.alu.ao.f7_5 | (ctl.i.alu.ao ==? AO_SLT) | (ctl.i.alu.ao ==? AO_SLTU);
 
-// TODO: inversion is only needed for AI_R1_R2
+// TODO: inversion is only needed for AI_R1_R2 ???
 // adder (summation, subtraction)
 assign sum = $signed(op1) + $signed(inv ? ~op2 : op2) + $signed((XLEN+1)'(inv));
 
