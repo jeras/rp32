@@ -10,19 +10,22 @@ module r5p_bru #(
   // control
   input  bru_t            ctl,
   // data input/output
-  input  logic [XLEN-1:0] rs1,  // source register 1 / immediate
-  input  logic [XLEN-1:0] rs2,  // source register 2 / PC
+  input  logic [XLEN-1:0] rs1,  // source register 1
+  input  logic [XLEN-1:0] rs2,  // source register 2
   // status
   output logic            tkn   // taken
 );
 
-logic eq ;  // equal
+logic eq;   // equal
+logic lt;   // less then
 logic lts;  // less then   signed
 logic ltu;  // less then unsigned
 
-assign eq  =           rs1 ==           rs2 ;  // equal
-assign lts =   $signed(rs1) <   $signed(rs2);  // less then   signed
-assign ltu = $unsigned(rs1) < $unsigned(rs2);  // less then unsigned
+assign eq  = rs1          == rs2          ;  // equal
+assign lt  = rs1[XLEN-2:0] < rs2[XLEN-2:0];  // less then
+
+assign lts = (rs1[XLEN-1] == rs2[XLEN-1]) ? lt : (rs1[XLEN-1] > rs2[XLEN-1]);  // less then   signed
+assign ltu = (rs1[XLEN-1] == rs2[XLEN-1]) ? lt : (rs1[XLEN-1] < rs2[XLEN-1]);  // less then unsigned
 
 always_comb
 case (ctl) inside
