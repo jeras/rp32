@@ -1326,7 +1326,7 @@ endcase end
 if (|(isa.spec.base & (RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;       '{pc    , br  , '{ai      , ao     , rt  }, lsu , wb    };
 //16'b001?_????_????_??00: begin fi = '{T_CL  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IL, AO_ADD , R_SX}, L_QS, WB_LSU}; end  // C.LQ  // TODO: load quad encoding not supported yet
-  16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_ADD , R_SX}, S_Q , WB_XXX}; end  // C.SQ
+  16'b101?_????_????_??00: begin fi = '{T_CS  , T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_IS, AO_ADD , R_SX}, S_Q , WB_XXX}; end  // C.SQ
   16'b1000_00??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI64  // TODO: decode immediate as signed
   16'b100?_00??_????_??01: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // C.SRLI
   16'b1000_01??_?000_0001: begin fi = '{T_CB_A, T_C_Q}; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // C.SRAI64  // TODO: decode immediate as signed
