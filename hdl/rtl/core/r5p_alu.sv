@@ -52,6 +52,7 @@ if (CFG_LSA) begin: gen_lsa_ena
 
   // load/store address adders are implemented outside the ALU
   // TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
+  // NOTE: for Arty enable the AI_R1_IL line
   always_comb
   unique casez (ctl.i.alu.ai)
     AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type

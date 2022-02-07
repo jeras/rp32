@@ -30,9 +30,9 @@ module r5p_core #(
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // timing versus area compromises
-  bit          CFG_BRU = 1'b1,  // enable dedicated BRanch Unit
+  bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit
   bit          CFG_BRA = 1'b1,  // enable dedicated BRanch Adder
-  bit          CFG_LSA = 1'b1,  // enable dedicated Load/Store Adder
+  bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -277,7 +277,8 @@ r5p_gpr #(
 
 // base ALU
 r5p_alu #(
-  .XLEN    (XLEN)
+  .XLEN    (XLEN),
+  .CFG_LSA (CFG_LSA)
 ) alu (
    // system signals
   .clk     (clk),
