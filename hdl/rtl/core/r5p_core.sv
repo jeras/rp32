@@ -30,8 +30,9 @@ module r5p_core #(
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // timing versus area compromises
-  bit          CFG_BRU = 1'b1,  // enable dedicated branch unit
-  bit          CFG_BRA = 1'b1,  // enable dedicated branch adder
+  bit          CFG_BRU = 1'b1,  // enable dedicated BRanch Unit
+  bit          CFG_BRA = 1'b1,  // enable dedicated BRanch Adder
+  bit          CFG_LSA = 1'b1,  // enable dedicated Load/Store Adder
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -324,7 +325,7 @@ endgenerate
 ///////////////////////////////////////////////////////////////////////////////
 
 generate
-if (ISA.spec.ext.Zicsr) begin: csr_gen
+if (ISA.spec.ext.Zicsr) begin: gen_csr_ena
 
   r5p_csr #(
     .XLEN    (XLEN)
@@ -350,8 +351,8 @@ if (ISA.spec.ext.Zicsr) begin: csr_gen
     // TODO: debugger, ...
   );
 
-end: csr_gen
-else begin: csr_nogen
+end: gen_csr_ena
+else begin: gen_csr_byp
 
   // CSR data output
   assign csr_rdt  = '0;
@@ -359,15 +360,40 @@ else begin: csr_nogen
   assign csr_epc  = '0;
   assign csr_tvec = '0;
 
-end: csr_nogen
+end: gen_csr_byp
 endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store
 ///////////////////////////////////////////////////////////////////////////////
 
+generate
+if (CFG_LSA) begin: gen_lsa_ena
+
+  logic [XLEN-1:0] lsu_adr_ld;  // address load
+  logic [XLEN-1:0] lsu_adr_st;  // address store
+
+  // dedicated load/store adders
+  assign lsu_adr_ld = gpr_rs1 + XLEN'(id_ctl.imm.l);  // I-type (load)
+  assign lsu_adr_st = gpr_rs1 + XLEN'(id_ctl.imm.s);  // S-type (store)
+
+  always_comb
+  unique casez (id_ctl.i.alu.ai)
+    AI_R1_IL: lsu_adr = lsu_adr_ld;  // I-type (load)
+    AI_R1_IS: lsu_adr = lsu_adr_st;  // S-type (store)
+    default : lsu_adr = 'x ;
+  endcase
+
+end:gen_lsa_ena
+else begin: gen_lsa_alu
+
+  // ALU is used to calculate load/store address
+  assign lsu_adr = alu_sum[XLEN-1:0];
+
+end: gen_lsa_alu
+endgenerate
+
 // intermediate signals
-assign lsu_adr = alu_sum[XLEN-1:0];
 assign lsu_wdt = gpr_rs2;
 
 // load/store unit

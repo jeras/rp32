@@ -5,7 +5,9 @@
 import riscv_isa_pkg::*;
 
 module r5p_alu #(
-  int unsigned XLEN = 32
+  int unsigned XLEN = 32,
+  // timing versus area compromises
+  bit          CFG_LSA = 1'b1   // enable dedicated Load/Store Adder
 )(
   // system signals
   input  logic            clk,  // clock
@@ -45,17 +47,39 @@ logic [XLOG-1:0] sa;
 logic [XLEN-1:0] val;
 
 // ALU input multiplexer
-// TODO check is a separate set of constans can be used for adder based and the rest of instructions
-always_comb
-unique casez (ctl.i.alu.ai)
-  AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
-  AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-  AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm.l); end  // I-type (load)
-  AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm.s); end  // S-type (store)
-  AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm.u); end  // U-type
-  AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm.j); end  // J-type (jump)
-  default : begin in1 = 'x ; in2 = 'x;               end
-endcase
+generate
+if (CFG_LSA) begin: gen_lsa_ena
+
+  // load/store address adders are implemented outside the ALU
+  // TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
+  always_comb
+  unique casez (ctl.i.alu.ai)
+    AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
+    AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
+  //AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm.l); end  // I-type (load)
+  //AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm.s); end  // S-type (store)
+    AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm.u); end  // U-type
+    AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm.j); end  // J-type (jump)
+    default : begin in1 = 'x ; in2 = 'x;               end
+  endcase
+
+end:gen_lsa_ena
+else begin: gen_lsa_alu
+
+  // ALU is used to calculate load/store address
+  always_comb
+  unique casez (ctl.i.alu.ai)
+    AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
+    AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
+    AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm.l); end  // I-type (load)
+    AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm.s); end  // S-type (store)
+    AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm.u); end  // U-type
+    AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm.j); end  // J-type (jump)
+    default : begin in1 = 'x ; in2 = 'x;               end
+  endcase
+
+end: gen_lsa_alu
+endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // adder
