@@ -107,7 +107,7 @@ unique casez (ctl.i.alu.rt)
 endcase
 
 // invert operand 2 (bit 5 of f7 segment of operand)
-assign inv = ctl.i.alu.ao.f7_5 | (ctl.i.alu.ao ==? AO_SLT) | (ctl.i.alu.ao ==? AO_SLTU);
+assign inv = (ctl.i.alu.ao ==? AO_SUB) | (ctl.i.alu.ao ==? AO_SLT) | (ctl.i.alu.ao ==? AO_SLTU);
 
 // TODO: inversion is only needed for AI_R1_R2 ???
 // adder (summation, subtraction)
