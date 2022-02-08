@@ -38,8 +38,6 @@ logic [XLEN-0:0] op2;  // operand 2
 logic            inv;
 
 // shift ammount
-logic [XLOG-1:0] sar;  // rs2
-logic [XLOG-1:0] sai;  // immediate
 logic [XLOG-1:0] sam;  // multiplexed
 logic [XLOG-1:0] sa;
 
@@ -117,14 +115,11 @@ assign sum = $signed(op1) + $signed(inv ? ~op2 : op2) + $signed((XLEN+1)'(inv));
 // shifter
 ///////////////////////////////////////////////////////////////////////////////
 
-assign sar = rs2      [XLOG-1:0];
-assign sai = ctl.imm.i[XLOG-1:0];
-
 // shift ammount multiplexer
 always_comb
 unique casez (ctl.i.alu.ai)
-  AI_R1_R2: sam = sar;
-  AI_R1_II: sam = sai;
+  AI_R1_R2: sam = rs2      [XLOG-1:0];
+  AI_R1_II: sam = ctl.imm.i[XLOG-1:0];
   default : sam = 'x;
 endcase
 
