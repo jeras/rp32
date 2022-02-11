@@ -26,8 +26,10 @@ logic [BN-1:0]          m_dec;
 logic [BN-1:0] [DW-1:0] t_rdt;  // read data
 logic [BN-1:0]          t_rdy;  // acknowledge
 
+genvar i;
+
 generate
-for (genvar i=0; i<BN; i++) begin
+for (i=0; i<BN; i++) begin: gen_loop
   // decoder
   assign s_dec[i] = s.adr ==? AS[i];
   // forward path
@@ -39,7 +41,7 @@ for (genvar i=0; i<BN; i++) begin
   // backward path
   assign t_rdt[i] = m_dec[i] ? m[i].rdt : '0;
   assign t_rdy[i] = s_dec[i] ? m[i].rdy : '0;
-end
+end: gen_loop
 endgenerate
 
 always_comb

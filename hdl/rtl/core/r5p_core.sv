@@ -69,8 +69,6 @@ logic  [IAW-1:0] if_pcs;  // program counter sum
 logic            stall;
 
 // instruction decode
-op32_t           id_op32; // 32-bit operation code
-op16_t           id_op16; // 16-bit operation code
 ctl_t            id_ctl;  // control structure
 logic            id_vld;  // instruction valid
 
@@ -162,7 +160,7 @@ end: gen_bru_ena
 else begin: gen_bru_alu
 
   always_comb
-  case (id_ctl.i.bru) inside
+  case (id_ctl.i.bru)
     BEQ    : if_tkn = ~(|alu_sum[XLEN-1:0]);
     BNE    : if_tkn =  (|alu_sum[XLEN-1:0]);
     BLT    : if_tkn =    alu_sum[XLEN];
@@ -180,13 +178,6 @@ endgenerate
 // 2. separate adder for PC next and branch address, since mux control signal from ALU is late and is best used just before output
 // 3. a separate branch ALU with explicit [un]signed comparator instead of adder in the main ALU
 // 4. split PC adder into 12-bit immediate adder and the rest is an incrementer/decrementer, calculate both increment and decrement in advance.
-
-// program counter incrementing adder
-//assign if_pci = if_pc + IAW'(opsiz(id_op16[16-1:0]));
-
-// branch address adder
-//assign if_pcb = if_pc + IAW'(imm32(id_op32,T_B));
-//assign if_pcb = if_pc + IAW'(id_ctl.imm);
 
 generate
 if (CFG_BRA) begin: gen_bra_add
@@ -240,12 +231,32 @@ end
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-// opcode from instruction fetch
-assign id_op32 = if_rdt[4-1:0];
-assign id_op16 = if_rdt[2-1:0];
+`ifndef ALTERA_RESERVED_QIS
+generate
+if (ISA.spec.ext.C) begin: gen_d16
 
+  import riscv_isa_c_pkg::*;
+
+  // 16/32-bit instruction decoder
+  always_comb
+  case (opsiz(if_rdt[2-1:0]))
+    2      : id_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
+    4      : id_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
+    default: id_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
+  endcase
+
+end: gen_d16
+else begin: gen_d32
+
+  // 32-bit instruction decoder
+  assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
+
+end: gen_d32
+endgenerate
+`else
 // 32-bit instruction decoder
-assign id_ctl = dec(ISA, id_op32);
+assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -294,8 +305,9 @@ r5p_alu #(
   .sum     (alu_sum)
 );
 
+`ifndef ALTERA_RESERVED_QIS
 generate
-if (ISA.spec.ext.M) begin: mdu_gen
+if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
 
   // mul/div/rem unit
   r5p_mdu #(
@@ -312,19 +324,21 @@ if (ISA.spec.ext.M) begin: mdu_gen
     .rd      (mul_dat)
   );
 
-end: mdu_gen
-else begin: mdu_nogen
+end: gen_mdu
+else begin: gen_nomdu
 
   // data output
-  assign mul_dat = '0;
+  assign mul_dat = 'x;
 
-end: mdu_nogen
+end: gen_nomdu
 endgenerate
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR
 ///////////////////////////////////////////////////////////////////////////////
 
+`ifndef ALTERA_RESERVED_QIS
 generate
 if (ISA.spec.ext.Zicsr) begin: gen_csr_ena
 
@@ -356,13 +370,14 @@ end: gen_csr_ena
 else begin: gen_csr_byp
 
   // CSR data output
-  assign csr_rdt  = '0;
+  assign csr_rdt  = 'x;
   // trap handler
-  assign csr_epc  = '0;
-  assign csr_tvec = '0;
+  assign csr_epc  = 'x;
+  assign csr_tvec = 'x;
 
 end: gen_csr_byp
 endgenerate
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store

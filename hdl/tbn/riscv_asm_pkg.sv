@@ -5,6 +5,7 @@
 package riscv_asm_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_isa_c_pkg::*;
 import riscv_csr_pkg::*;
 
 ///////////////////////////////////////////////////////////////////////////////
