@@ -92,6 +92,18 @@ else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
   );
 
 end: gen_artix_gen
+else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
+
+  gpr32x32 gpr [2:1] (
+    .clock      (clk),
+    .wren       (wen),
+    .wraddress  (a_rd),
+    .data       (d_rd),
+    .rdaddress  ({a_rs2, a_rs1}),
+    .q          ({t_rs2, t_rs1})
+  );
+
+end: gen_cyclone_v
 else begin: gen_default
 
   // register file (FPGA would initialize it to all zeros)

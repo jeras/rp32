@@ -225,6 +225,33 @@ else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
   assign bus_mem[0].rdy = 1'b1;
 
 end: gen_artix_gen
+else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
+
+  rom32x4096 imem (
+    .clock      (bus_if.clk),
+    .wren       (1'b0),
+    .wraddress  ('x),
+    .data       ('x),
+    .rdaddress  (bus_if.adr[IAW-1:2]),
+    .rden       (bus_if.vld),
+    .q          (bus_if.rdt)
+  );
+
+  assign bus_if.rdy = 1'b1;
+
+  ram32x4096 dmem (
+    .clock    (bus_mem[0].clk),
+    .wren     (bus_mem[0].vld &  bus_mem[0].wen),
+    .rden     (bus_mem[0].vld & ~bus_mem[0].wen),
+    .address  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
+    .byteena  (bus_mem[0].ben),
+    .data     (bus_mem[0].wdt),
+    .q        (bus_mem[0].rdt)
+  );
+
+  assign bus_mem[0].rdy = 1'b1;
+
+end: gen_cyclone_v
 else begin: gen_default
 
   // instruction memory
