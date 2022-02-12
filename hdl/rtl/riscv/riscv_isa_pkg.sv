@@ -787,6 +787,7 @@ op32_frm_t f;  // instruction format
 
 // illegal (idle) default
 t = CTL_ILL;
+f = op32_frm_t'('x);
 
 // set instruction size
 t.siz = 4;
