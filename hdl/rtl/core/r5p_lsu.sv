@@ -114,7 +114,7 @@ lsu_f3_t       rf3;
 always_ff @ (posedge clk, posedge rst)
 if (rst) begin
   ral <= '0;
-  rf3 <= '0;
+  rf3 <= XLEN == 32 ? LW : LD;
 end else if (ls_rtr) begin
   ral <= adr[WW-1:0];
   rf3 <= ctl.f3;
