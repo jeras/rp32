@@ -227,7 +227,7 @@ typedef union packed {
 } op32_i_func3_t;
 `else
 // func3 I-type (immediate)
-typedef op32_r_func3_t op32_i_func3_t;
+typedef op32_i_func3_load_t op32_i_func3_t;
 `endif
 
 // func3 S-type (store)
@@ -961,11 +961,9 @@ endcase end
 
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
-if (t.ill != ILL) begin
-  t.imm = imm_f  (op);
-  t.i32 = imm32_f(t.imm, f);
-  t.gpr = gpr32_f(op   , f);
-end
+t.imm = imm_f  (op);
+t.i32 = imm32_f(t.imm, f);
+t.gpr = gpr32_f(op   , f);
 
 // return temporary variable
 return(t);
