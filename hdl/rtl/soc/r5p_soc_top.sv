@@ -22,7 +22,7 @@ module r5p_soc_top #(
   int unsigned IAW = 14,    // instruction address width
   int unsigned IDW = 32,    // instruction data    width
   // data bus
-  int unsigned DAW = 15,    // data address width
+  int unsigned DAW = 14,    // data address width
   int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8, // data byte en width
   // memory initialization file names
