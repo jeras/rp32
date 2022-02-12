@@ -6,7 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_soc_gpio #(
-  int unsigned GW = 32   // GPIO width
+  int unsigned GW = 32,   // GPIO width
+  bit     CFG_MIN = 1'b1  // minimalistic implementation
 )(
   // GPIO signals
   output logic [GW-1:0] gpio_o,
@@ -16,21 +17,35 @@ module r5p_soc_gpio #(
   r5p_bus_if.sub bus
 );
 
-// read input
-always_ff @(posedge bus.clk, posedge bus.rst)
-if (bus.rst) begin
-  bus.rdt <= '0;
-end else if (bus.vld & bus.rdy) begin
-  if (~bus.wen) begin
-    // read access
-    case (bus.adr[4-1:0])
-      4'h0:    bus.rdt <= gpio_o;
-      4'h4:    bus.rdt <= gpio_e;
-      4'h8:    bus.rdt <= gpio_i;
-      default: bus.rdt <= 'x;
-    endcase
+generate
+if (CFG_MIN) begin: gen_min
+
+  // minimalistic implementation
+  // only the GPIO input can be read
+  assign bus.rdt = gpio_i;
+
+end: gen_min
+else begin: gen_nrm
+
+  // normal implementation
+  // output registers and GPIO input are decoded and properly delayed
+  always_ff @(posedge bus.clk, posedge bus.rst)
+  if (bus.rst) begin
+    bus.rdt <= '0;
+  end else if (bus.vld & bus.rdy) begin
+    if (~bus.wen) begin
+      // read access
+      case (bus.adr[4-1:0])
+        4'h0:    bus.rdt <= gpio_o;
+        4'h4:    bus.rdt <= gpio_e;
+        4'h8:    bus.rdt <= gpio_i;
+        default: bus.rdt <= 'x;
+      endcase
+    end
   end
-end
+
+end: gen_nrm
+endgenerate
 
 // write output and output enable
 always_ff @(posedge bus.clk, posedge bus.rst)
