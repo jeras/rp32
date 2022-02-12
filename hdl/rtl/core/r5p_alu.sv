@@ -161,9 +161,9 @@ endcase
 always_comb
 unique casez (ctl.i.alu.rt)
   R_SX,
-  R_UX   : rd =                        val         ;  // XLEN
+  R_UX   : rd =                 val          ;  // XLEN
   R_SW,
-  R_UW   : rd = {{XLEN-32{val[32-1]}}, val[32-1:0]};  // sign extended word
+  R_UW   : rd = (XLEN)'($signed(val[32-1:0]));  // sign extended word
   default: rd = 'x;
 endcase
 
