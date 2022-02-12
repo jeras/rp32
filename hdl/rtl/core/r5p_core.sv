@@ -231,32 +231,32 @@ end
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-`ifndef ALTERA_RESERVED_QIS
-generate
-if (ISA.spec.ext.C) begin: gen_d16
-
-  import riscv_isa_c_pkg::*;
-
-  // 16/32-bit instruction decoder
-  always_comb
-  case (opsiz(if_rdt[2-1:0]))
-    2      : id_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
-    4      : id_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
-    default: id_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
-  endcase
-
-end: gen_d16
-else begin: gen_d32
+//`ifndef ALTERA_RESERVED_QIS
+//generate
+//if (ISA.spec.ext.C) begin: gen_d16
+//
+//  import riscv_isa_c_pkg::*;
+//
+//  // 16/32-bit instruction decoder
+//  always_comb
+//  case (opsiz(if_rdt[2-1:0]))
+//    2      : id_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
+//    4      : id_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
+//    default: id_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
+//  endcase
+//
+//end: gen_d16
+//else begin: gen_d32
 
   // 32-bit instruction decoder
   assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
 
-end: gen_d32
-endgenerate
-`else
-// 32-bit instruction decoder
-assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
-`endif
+//end: gen_d32
+//endgenerate
+//`else
+//// 32-bit instruction decoder
+//assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
+//`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -305,69 +305,69 @@ r5p_alu #(
   .sum     (alu_sum)
 );
 
-`ifndef ALTERA_RESERVED_QIS
-generate
-if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
-
-  // mul/div/rem unit
-  r5p_mdu #(
-    .XLEN    (XLEN)
-  ) mdu (
-    // system signals
-    .clk     (clk),
-    .rst     (rst),
-    // control
-    .ctl     (id_ctl.m),
-    // data input/output
-    .rs1     (gpr_rs1),
-    .rs2     (gpr_rs2),
-    .rd      (mul_dat)
-  );
-
-end: gen_mdu
-else begin: gen_nomdu
+//`ifndef ALTERA_RESERVED_QIS
+//generate
+//if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
+//
+//  // mul/div/rem unit
+//  r5p_mdu #(
+//    .XLEN    (XLEN)
+//  ) mdu (
+//    // system signals
+//    .clk     (clk),
+//    .rst     (rst),
+//    // control
+//    .ctl     (id_ctl.m),
+//    // data input/output
+//    .rs1     (gpr_rs1),
+//    .rs2     (gpr_rs2),
+//    .rd      (mul_dat)
+//  );
+//
+//end: gen_mdu
+//else begin: gen_nomdu
 
   // data output
   assign mul_dat = 'x;
 
-end: gen_nomdu
-endgenerate
-`endif
+//end: gen_nomdu
+//endgenerate
+//`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR
 ///////////////////////////////////////////////////////////////////////////////
 
-`ifndef ALTERA_RESERVED_QIS
-generate
-if (ISA.spec.ext.Zicsr) begin: gen_csr_ena
-
-  r5p_csr #(
-    .XLEN    (XLEN)
-  ) csr (
-    // system signals
-    .clk     (clk),
-    .rst     (rst),
-    // CSR address map union output
-    .csr_map (csr_csr),
-    // CSR control and data input/output
-    .csr_ctl (id_ctl.csr),
-    .csr_wdt (gpr_rs1),
-    .csr_rdt (csr_rdt),
-    // trap handler
-    .priv_i  (id_ctl.priv),
-    .trap_i  (id_ctl.i.pc == PC_TRP),
-  //.cause_i (CAUSE_EXC_OP_EBREAK),
-    .epc_i   (XLEN'(if_pc)),
-    .epc_o   (csr_epc ),
-    .tvec_o  (csr_tvec),
-    // hardware performance monitor
-    .event_i (r5p_hpmevent_t'(1))
-    // TODO: debugger, ...
-  );
-
-end: gen_csr_ena
-else begin: gen_csr_byp
+//`ifndef ALTERA_RESERVED_QIS
+//generate
+//if (ISA.spec.ext.Zicsr) begin: gen_csr_ena
+//
+//  r5p_csr #(
+//    .XLEN    (XLEN)
+//  ) csr (
+//    // system signals
+//    .clk     (clk),
+//    .rst     (rst),
+//    // CSR address map union output
+//    .csr_map (csr_csr),
+//    // CSR control and data input/output
+//    .csr_ctl (id_ctl.csr),
+//    .csr_wdt (gpr_rs1),
+//    .csr_rdt (csr_rdt),
+//    // trap handler
+//    .priv_i  (id_ctl.priv),
+//    .trap_i  (id_ctl.i.pc == PC_TRP),
+//  //.cause_i (CAUSE_EXC_OP_EBREAK),
+//    .epc_i   (XLEN'(if_pc)),
+//    .epc_o   (csr_epc ),
+//    .tvec_o  (csr_tvec),
+//    // hardware performance monitor
+//    .event_i (r5p_hpmevent_t'(1))
+//    // TODO: debugger, ...
+//  );
+//
+//end: gen_csr_ena
+//else begin: gen_csr_byp
 
   // CSR data output
   assign csr_rdt  = 'x;
@@ -375,9 +375,9 @@ else begin: gen_csr_byp
   assign csr_epc  = 'x;
   assign csr_tvec = 'x;
 
-end: gen_csr_byp
-endgenerate
-`endif
+//end: gen_csr_byp
+//endgenerate
+//`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store
