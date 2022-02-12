@@ -231,32 +231,32 @@ end
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-//`ifndef ALTERA_RESERVED_QIS
-//generate
-//if (ISA.spec.ext.C) begin: gen_d16
-//
-//  import riscv_isa_c_pkg::*;
-//
-//  // 16/32-bit instruction decoder
-//  always_comb
-//  case (opsiz(if_rdt[2-1:0]))
-//    2      : id_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
-//    4      : id_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
-//    default: id_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
-//  endcase
-//
-//end: gen_d16
-//else begin: gen_d32
+`ifndef ALTERA_RESERVED_QIS
+generate
+if (ISA.spec.ext.C) begin: gen_d16
+
+  import riscv_isa_c_pkg::*;
+
+  // 16/32-bit instruction decoder
+  always_comb
+  case (opsiz(if_rdt[2-1:0]))
+    2      : id_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
+    4      : id_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
+    default: id_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
+  endcase
+
+end: gen_d16
+else begin: gen_d32
 
   // 32-bit instruction decoder
   assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
 
-//end: gen_d32
-//endgenerate
-//`else
-//// 32-bit instruction decoder
-//assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
-//`endif
+end: gen_d32
+endgenerate
+`else
+// 32-bit instruction decoder
+assign id_ctl = dec32(ISA, if_rdt[4-1:0]);
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -305,34 +305,34 @@ r5p_alu #(
   .sum     (alu_sum)
 );
 
-//`ifndef ALTERA_RESERVED_QIS
-//generate
-//if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
-//
-//  // mul/div/rem unit
-//  r5p_mdu #(
-//    .XLEN    (XLEN)
-//  ) mdu (
-//    // system signals
-//    .clk     (clk),
-//    .rst     (rst),
-//    // control
-//    .ctl     (id_ctl.m),
-//    // data input/output
-//    .rs1     (gpr_rs1),
-//    .rs2     (gpr_rs2),
-//    .rd      (mul_dat)
-//  );
-//
-//end: gen_mdu
-//else begin: gen_nomdu
+`ifndef ALTERA_RESERVED_QIS
+generate
+if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
+
+  // mul/div/rem unit
+  r5p_mdu #(
+    .XLEN    (XLEN)
+  ) mdu (
+    // system signals
+    .clk     (clk),
+    .rst     (rst),
+    // control
+    .ctl     (id_ctl.m),
+    // data input/output
+    .rs1     (gpr_rs1),
+    .rs2     (gpr_rs2),
+    .rd      (mul_dat)
+  );
+
+end: gen_mdu
+else begin: gen_nomdu
 
   // data output
   assign mul_dat = 'x;
 
-//end: gen_nomdu
-//endgenerate
-//`endif
+end: gen_nomdu
+endgenerate
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR

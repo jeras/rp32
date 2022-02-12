@@ -7,7 +7,7 @@
 
 module r5p_soc_gpio #(
   int unsigned GW = 32,   // GPIO width
-  bit     CFG_MIN = 1'b1  // minimalistic implementation
+  bit     CFG_MIN = 1'b0  // minimalistic implementation
 )(
   // GPIO signals
   output logic [GW-1:0] gpio_o,

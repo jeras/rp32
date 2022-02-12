@@ -16,6 +16,12 @@ module r5p_soc_arty #(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+// local parameters
+////////////////////////////////////////////////////////////////////////////////
+
+localparam int unsigned GW = 32;
+
+///////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -26,9 +32,9 @@ logic clk;
 logic rst;
 
 // GPIO
-logic [32-1:0] gpio_o;
-logic [32-1:0] gpio_e;
-logic [32-1:0] gpio_i;
+logic [GW-1:0] gpio_o;
+logic [GW-1:0] gpio_e;
+logic [GW-1:0] gpio_i;
 
 ///////////////////////////////////////////////////////////////////////////////
 // PLL
@@ -65,7 +71,7 @@ xpm_cdc_async_rst_inst (
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_soc_top #(
-  .GW      (32),
+  .GW      (GW),
   .CHIP    (CHIP)
 ) soc (
   // system signals
@@ -101,26 +107,22 @@ xpm_cdc_array_single #(
  .INIT_SYNC_FF   (0), // DECIMAL; 0=disable simulation init values, 1=enable simulation init values
  .SIM_ASSERT_CHK (0), // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
  .SRC_INPUT_REG  (0), // DECIMAL; 0=do not register input, 1=register input
- .WIDTH         (32)  // DECIMAL; range: 1-1024
+ .WIDTH         (GW)  // DECIMAL; range: 1-1024
 ) gpio_cdc (
  .src_clk  (clk),
- .src_in   (ck_io[32-1:0]),
+ .src_in   (ck_io[GW-1:0]),
  .dest_clk (clk),
- .dest_out (gpio_i[32-1:0])
+ .dest_out (gpio_i[GW-1:0])
 );
 
 // GPIO
 generate
-for (genvar i=0; i<32; i++) begin
+for (genvar i=0; i<GW; i++) begin
   assign ck_io[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
 end
 endgenerate
 
 // unused IO
-generate
-for (genvar i=32; i<42; i++) begin
-  assign ck_io[i] = 1'bz;
-end
-endgenerate
+assign ck_io[42-1:GW] = 1'bz;
 
 endmodule: r5p_soc_arty

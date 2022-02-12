@@ -19,14 +19,17 @@ module r5p_soc_top #(
 //                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
   // instruction bus
-  int unsigned IAW = 14,    // instruction address width
+  int unsigned IAW = 14,    // instruction address width (byte address)
   int unsigned IDW = 32,    // instruction data    width
   // data bus
-  int unsigned DAW = 14,    // data address width
+  int unsigned DAW = 15,    // data address width (byte address)
   int unsigned DDW = XLEN,  // data data    width
   int unsigned DBW = DDW/8, // data byte en width
-  // memory initialization file names
-  string       IFN = "mem_if.vmem",    // instruction memory file name
+  // instruction memory size (in bytes) and initialization file name
+  int unsigned IMS = (IDW/8)*(2**IAW),
+  string       IFN = "mem_if.vmem",
+  // data memory size (in bytes)
+  int unsigned DMS = (DDW/8)*(2**DAW),
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -38,6 +41,16 @@ module r5p_soc_top #(
   output logic [GW-1:0] gpio_e,
   input  logic [GW-1:0] gpio_i
 );
+
+///////////////////////////////////////////////////////////////////////////////
+// local parameters and checks
+////////////////////////////////////////////////////////////////////////////////
+
+// in this SoC the data address space is split in half between memory and peripherals
+localparam int unsigned RAW = DAW-1;
+
+// TODO: check if instruction address bus width and instruction memory size fit
+// TODO: check if data address bus width and data memory size fit
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -157,28 +170,28 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
   // xpm_memory_spram: Single Port RAM
   // Xilinx Parameterized Macro, version 2021.2
   xpm_memory_spram #(
-    .ADDR_WIDTH_A        (DAW-$clog2(DBW)), // DECIMAL
-    .AUTO_SLEEP_TIME     (0),               // DECIMAL
-    .BYTE_WRITE_WIDTH_A  (8),               // DECIMAL
-    .CASCADE_HEIGHT      (0),               // DECIMAL
-    .ECC_MODE            ("no_ecc"),        // String
-    .MEMORY_INIT_FILE    ("none"),          // String
-    .MEMORY_INIT_PARAM   ("0"),             // String
-    .MEMORY_OPTIMIZATION ("true"),          // String
-    .MEMORY_PRIMITIVE    ("auto"),          // String
-    .MEMORY_SIZE         (8 * 2**DAW),      // DECIMAL
-    .MESSAGE_CONTROL     (0),               // DECIMAL
-    .READ_DATA_WIDTH_A   (DDW),             // DECIMAL
-    .READ_LATENCY_A      (1),               // DECIMAL
-    .READ_RESET_VALUE_A  ("0"),             // String
-    .RST_MODE_A          ("SYNC"),          // String
-    .SIM_ASSERT_CHK      (0),               // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-    .USE_MEM_INIT        (1),               // DECIMAL
-    .USE_MEM_INIT_MMI    (0),               // DECIMAL
-    .WAKEUP_TIME         ("disable_sleep"), // String
-    .WRITE_DATA_WIDTH_A  (DDW),             // DECIMAL
-    .WRITE_MODE_A        ("read_first"),    // String
-    .WRITE_PROTECT       (1)                // DECIMAL
+    .ADDR_WIDTH_A        (RAW-$clog2(DBW)),   // DECIMAL
+    .AUTO_SLEEP_TIME     (0),                 // DECIMAL
+    .BYTE_WRITE_WIDTH_A  (8),                 // DECIMAL
+    .CASCADE_HEIGHT      (0),                 // DECIMAL
+    .ECC_MODE            ("no_ecc"),          // String
+    .MEMORY_INIT_FILE    ("none"),            // String
+    .MEMORY_INIT_PARAM   ("0"),               // String
+    .MEMORY_OPTIMIZATION ("true"),            // String
+    .MEMORY_PRIMITIVE    ("auto"),            // String
+    .MEMORY_SIZE         (8 * 2**RAW),        // DECIMAL
+    .MESSAGE_CONTROL     (0),                 // DECIMAL
+    .READ_DATA_WIDTH_A   (DDW),               // DECIMAL
+    .READ_LATENCY_A      (1),                 // DECIMAL
+    .READ_RESET_VALUE_A  ("0"),               // String
+    .RST_MODE_A          ("SYNC"),            // String
+    .SIM_ASSERT_CHK      (0),                 // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+    .USE_MEM_INIT        (1),                 // DECIMAL
+    .USE_MEM_INIT_MMI    (0),                 // DECIMAL
+    .WAKEUP_TIME         ("disable_sleep"),   // String
+    .WRITE_DATA_WIDTH_A  (DDW),               // DECIMAL
+    .WRITE_MODE_A        ("read_first"),      // String
+    .WRITE_PROTECT       (1)                  // DECIMAL
   ) dmem (
     // unused control/status signals
     .injectdbiterra (1'b0),
@@ -192,7 +205,7 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .rsta   (bus_mem[0].rst),
     .ena    (bus_mem[0].vld),
     .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
-    .addra  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
+    .addra  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
     .dina   (bus_mem[0].wdt),
     .douta  (bus_mem[0].rdt)
   );
@@ -217,7 +230,7 @@ else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
     .clka   (bus_mem[0].clk),
     .ena    (bus_mem[0].vld),
     .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
-    .addra  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
+    .addra  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
     .dina   (bus_mem[0].wdt),
     .douta  (bus_mem[0].rdt)
   );
@@ -243,7 +256,7 @@ else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
     .clock    (bus_mem[0].clk),
     .wren     (bus_mem[0].vld &  bus_mem[0].wen),
     .rden     (bus_mem[0].vld & ~bus_mem[0].wen),
-    .address  (bus_mem[0].adr[DAW-1:$clog2(DBW)]),
+    .address  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
     .byteena  (bus_mem[0].ben),
     .data     (bus_mem[0].wdt),
     .q        (bus_mem[0].rdt)
@@ -266,7 +279,7 @@ else begin: gen_default
   // data memory
   r5p_soc_mem #(
   //.FN   (),
-    .AW   (DAW-1),
+    .AW   (RAW-1),
     .DW   (DDW)
   ) dmem (
     .bus  (bus_mem[0])
@@ -281,7 +294,8 @@ endgenerate
 
 // GPIO controller
 r5p_soc_gpio #(
-  .GW      (GW)
+  .GW      (GW),
+  .CFG_MIN (1'b1)
 ) soc_gpio (
   // GPIO signals
   .gpio_o  (gpio_o),
@@ -290,5 +304,11 @@ r5p_soc_gpio #(
   // bus interface
   .bus     (bus_mem[1])
 );
+
+////////////////////////////////////////////////////////////////////////////////
+// UART
+////////////////////////////////////////////////////////////////////////////////
+
+// TODO
 
 endmodule: r5p_soc_top
