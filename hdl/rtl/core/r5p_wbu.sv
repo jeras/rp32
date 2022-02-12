@@ -19,7 +19,7 @@ module r5p_wbu #(
   input  logic [XLEN-1:0] mul,
   // GPR write back
   output logic            wen,  // write enable
-  output logic [5-1:0]    adr,  // address
+  output logic [5-1:0]    adr,  // GPR address
   output logic [XLEN-1:0] dat   // data
 );
 
@@ -33,7 +33,7 @@ logic [XLEN-1:0] tmp_mul;
 logic [XLEN-1:0] tmp;
 
 // multiplexer select
-wbu_t            sel;
+wbu_t sel;
 
 // destination register write enable and address
 always_ff @(posedge clk, posedge rst)
