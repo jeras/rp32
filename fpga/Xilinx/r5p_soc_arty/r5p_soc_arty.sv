@@ -31,7 +31,7 @@ logic [32-1:0] gpio_e;
 logic [32-1:0] gpio_i;
 
 ///////////////////////////////////////////////////////////////////////////////
-// reset synchronizer
+// PLL
 ////////////////////////////////////////////////////////////////////////////////
 
 // TODO: use proper PLL
@@ -103,7 +103,7 @@ xpm_cdc_array_single #(
  .SRC_INPUT_REG  (0), // DECIMAL; 0=do not register input, 1=register input
  .WIDTH         (32)  // DECIMAL; range: 1-1024
 ) gpio_cdc (
-// .src_clk  (clk),
+ .src_clk  (clk),
  .src_in   (ck_io[32-1:0]),
  .dest_clk (clk),
  .dest_out (gpio_i[32-1:0])
