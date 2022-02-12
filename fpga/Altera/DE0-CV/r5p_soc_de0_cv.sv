@@ -5,8 +5,8 @@
 // Permission:
 //
 //   Terasic grants permission to use and modify this code for use
-//   in synthesis for all Terasic Development Boards and Altera Development 
-//   Kits made by Terasic.  Other use of this code, including the selling 
+//   in synthesis for all Terasic Development Boards and Altera Development
+//   Kits made by Terasic.  Other use of this code, including the selling
 //   ,duplication, or modification of any portion is strictly prohibited.
 //
 // Disclaimer:
@@ -15,16 +15,16 @@
 //   which illustrates how these types of functions can be implemented.
 //   It is the user's responsibility to verify their design for
 //   consistency and functionality through the use of formal
-//   verification methods.  Terasic provides no warranty regarding the use 
+//   verification methods.  Terasic provides no warranty regarding the use
 //   or functionality of this code.
 //
 // ============================================================================
-//           
+//
 //  Terasic Technologies Inc
 //  9F., No.176, Sec.2, Gongdao 5th Rd, East Dist, Hsinchu City, 30070. Taiwan
-//  
-//  
-//                     web: http://www.terasic.com/  
+//
+//
+//                     web: http://www.terasic.com/
 //                     email: support@terasic.com
 //
 // ============================================================================
@@ -57,7 +57,7 @@ module r5p_soc_de0_cv (
 `ifdef Enable_CLOCK2
       ///////// CLOCK2 "3.3-V LVTTL" /////////
       input              CLOCK2_50,
-`endif	  
+`endif
 
 `ifdef Enable_CLOCK3
       ///////// CLOCK3 "3.3-V LVTTL" /////////
@@ -67,7 +67,7 @@ module r5p_soc_de0_cv (
 `ifdef Enable_CLOCK4
       ///////// CLOCK4  "3.3-V LVTTL"  /////////
       inout              CLOCK4_50,
-`endif	  
+`endif
 `ifdef Enable_CLOCK
       ///////// CLOCK  "3.3-V LVTTL" /////////
       input              CLOCK_50,
@@ -151,7 +151,7 @@ module r5p_soc_de0_cv (
       output             VGA_HS,
       output      [3:0]  VGA_R,
       output             VGA_VS
-`endif	 
+`endif
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -210,23 +210,15 @@ r5p_soc_top #(
   .gpio_i  (gpio_i)
 );
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-logic [GW-1:0] gpio_r;
+// GPIO inputs
+assign gpio_i = GPIO_0[GW-1:0];
 
-// asynchronous input synchronization
-always_ff @(posedge clk, posedge rst)
-if (rst) begin
-  gpio_r <= '0;
-  gpio_i <= '0;
-end else begin
-  gpio_r <= GPIO_0[GW-1:0];
-  gpio_i <= gpio_r;
-end
-
-// GPIO
+// GPIO outputs
 genvar i;
 generate
 for (i=0; i<GW; i++) begin: gen_gpio

@@ -87,35 +87,10 @@ r5p_soc_top #(
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-//logic [32-1:0] gpio_r;
-//
-//// asynchronous input synchronization
-//always_ff @(posedge clk, posedge rst)
-//if (rst) begin
-//  gpio_r <= '0;
-//  gpio_i <= '0;
-//end else begin
-//  gpio_r <= ck_io[32-1:0];
-//  gpio_i <= gpio_r;
-//end
+// GPIO inputs
+assign gpio_i = ck_io[GW-1:0];
 
-// GPIO input synchronizer
-// xpm_cdc_array_single: Single-bit Array Synchronizer
-// Xilinx Parameterized Macro, version 2021.2
-xpm_cdc_array_single #(
- .DEST_SYNC_FF   (2), // DECIMAL; range: 2-10
- .INIT_SYNC_FF   (0), // DECIMAL; 0=disable simulation init values, 1=enable simulation init values
- .SIM_ASSERT_CHK (0), // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
- .SRC_INPUT_REG  (0), // DECIMAL; 0=do not register input, 1=register input
- .WIDTH         (GW)  // DECIMAL; range: 1-1024
-) gpio_cdc (
- .src_clk  (clk),
- .src_in   (ck_io[GW-1:0]),
- .dest_clk (clk),
- .dest_out (gpio_i[GW-1:0])
-);
-
-// GPIO
+// GPIO outputs
 generate
 for (genvar i=0; i<GW; i++) begin
   assign ck_io[i] = gpio_e[i] ? gpio_o[i] : 1'bz;

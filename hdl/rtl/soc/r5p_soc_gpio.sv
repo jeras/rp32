@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// GPIO controller RTL
+// GPIO controller
 //
 // NOTE: In case this module is connected to asynchronous signals,
 //       the input signals `gpio_i` require a CDC synchronizer.
@@ -7,7 +7,11 @@
 
 module r5p_soc_gpio #(
   int unsigned GW = 32,   // GPIO width
-  bit     CFG_MIN = 1'b0  // minimalistic implementation
+  // implementation details
+  bit          CFG_MIN = 1'b0,  // minimalistic implementation
+  int unsigned CFG_CDC = 2,     // implement clock domain crossing stages (0 - bypass)
+  // implementation device (ASIC/FPGA vendor/device)
+  string       CHIP = ""
 )(
   // GPIO signals
   output logic [GW-1:0] gpio_o,
@@ -17,12 +21,70 @@ module r5p_soc_gpio #(
   r5p_bus_if.sub bus
 );
 
+// read value
+logic [GW-1:0] gpio_r;
+
+////////////////////////////////////////////////////////////////////////////////
+// clock domain crossing
+////////////////////////////////////////////////////////////////////////////////
+
+generate
+if (CFG_CDC > 0) begin: gen_cdc
+
+  // GPIO input synchronizer
+  if ((CHIP == "ARTIX_XPM") || (CHIP == "ARTIX_GEN")) begin: gen_artix
+
+    // xpm_cdc_array_single: Single-bit Array Synchronizer
+    // Xilinx Parameterized Macro, version 2021.2
+    xpm_cdc_array_single #(
+     .DEST_SYNC_FF   (CFG_CDC),  // DECIMAL; range: 2-10
+     .INIT_SYNC_FF   (0),        // DECIMAL; 0=disable simulation init values, 1=enable simulation init values
+     .SIM_ASSERT_CHK (0),        // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+     .SRC_INPUT_REG  (0),        // DECIMAL; 0=do not register input, 1=register input
+     .WIDTH          (GW)        // DECIMAL; range: 1-1024
+    ) gpio_cdc (
+     .src_clk  (bus.clk),
+     .src_in   (gpio_i),
+     .dest_clk (bus.clk),
+     .dest_out (gpio_r)
+    );
+
+  end: gen_artix
+  else begin: gen_default
+
+    // temporary signal for synchronization
+    logic [CFG_CDC-2:0][GW-1:0] gpio_t;
+
+    // asynchronous input synchronization
+    always_ff @(posedge bus.clk, posedge bus.rst)
+    if (bus.rst) begin
+      {gpio_r, gpio_t} <= '0;
+    end else begin
+      {gpio_r, gpio_t} <= {gpio_t, gpio_i};
+    end
+
+  end: gen_default
+
+end: gen_cdc
+else begin: gen_nocdc
+
+  // bypass CDC code
+  assign gpio_r = gpio_i;
+
+end: gen_nocdc
+endgenerate
+
+////////////////////////////////////////////////////////////////////////////////
+// system bus access
+////////////////////////////////////////////////////////////////////////////////
+
+// read access
 generate
 if (CFG_MIN) begin: gen_min
 
   // minimalistic implementation
   // only the GPIO input can be read
-  assign bus.rdt = gpio_i;
+  assign bus.rdt = gpio_r;
 
 end: gen_min
 else begin: gen_nrm
@@ -38,7 +100,7 @@ else begin: gen_nrm
       case (bus.adr[4-1:0])
         4'h0:    bus.rdt <= gpio_o;
         4'h4:    bus.rdt <= gpio_e;
-        4'h8:    bus.rdt <= gpio_i;
+        4'h8:    bus.rdt <= gpio_r;
         default: bus.rdt <= 'x;
       endcase
     end
