@@ -43,6 +43,24 @@ The data hazard is avoided by providing a bypass
 in case the current instruction requires
 the result from the previous instruction.
 
+# Simulation
+
+The code was developed with vanilla Verilator, my aim was not to cover the SystemVerilog standard.
+The main two issue I had with Verilator were:
+1. lack of support for *unpacked structures*, so I just used packed structures everywhere, which is a bit ugly,
+2. X propagation is not simulated well, so I had to run regression tests with mapping X separately to 0 and 1.
+The CPU is passing all **I** ISA tests, the **C** decoder is also in a good shape, but I avoided using it in FPGA synthesis.
+
+# Synthesis
+
+I synthesized the code in Vivado 2021.2 (Artix), Quartus 21.1 (Cyclone V), and LatticeDiamond/SynplifyPro (EPC5), I did not test any of the FPGA builds yet, the aim was to get past tool errors. Vivado and Quartus produced apparently reasonable results. Synplify was able to parse the code without significant warnings, but synthesis optimized everything out due to constant propagation. I suspect there are some issues with don't care values (X propagation), so in the next step I plan to test with Vivado Simulator and QuestaSim/ModelSim, and probably try to run some *netlist simulations*.
+
+My main aim for `yosys` synthesis would be Sky130 PDK.
+The CPU has a 2-stage pipeline and IPC=1 (all instructions execute in a single clock cycle, without exceptions).
+The register file requires asynchronous reads, on FPGA I used distributed memories, so I had to use FPGA families which support this memory type (see above), Cyclone 10 and iCE40HX families do not support asynchonous read distributed memories.
+For Sky130 I would use [DFFRAM](https://github.com/Cloud-V/DFFRAM), the 32x32-bit words (2R1W) register file.
+Instruction and data closely coupled memories use standard ASIC/FPGA SRAM, so OpenRAM would be just fine.
+
 # TODO
 
 # Short
