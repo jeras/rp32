@@ -1,0 +1,105 @@
+////////////////////////////////////////////////////////////////////////////////
+// R5P SoC for OrangeCrab board
+// https://github.com/orangecrab-fpga
+//
+// REFERENCES:
+// file:///usr/local/diamond/3.12/docs/webhelp/eng/index.htm#page/Reference%20Guides/IPexpress%20Modules/pmi_distributed_dpram.htm#
+////////////////////////////////////////////////////////////////////////////////
+
+module r5p_soc_orange_crab #(
+  // implementation device (ASIC/FPGA vendor/device)
+  string CHIP = "EPC5"
+)(
+  // system signals
+  input  logic          clk48,  // clock 48MHz
+  input  logic          rst_n,  // reset (active low)
+  // GPIO
+  inout  wire    [12:0] gpio0   // GPIO
+);
+
+///////////////////////////////////////////////////////////////////////////////
+// local parameters
+////////////////////////////////////////////////////////////////////////////////
+
+localparam int unsigned GW = 13;
+
+///////////////////////////////////////////////////////////////////////////////
+// local signals
+////////////////////////////////////////////////////////////////////////////////
+
+// clock
+logic clk;
+
+// reset synchronizer
+logic rst;
+
+// GPIO
+logic [GW-1:0] gpio_o;
+logic [GW-1:0] gpio_e;
+logic [GW-1:0] gpio_i;
+
+///////////////////////////////////////////////////////////////////////////////
+// PLL
+////////////////////////////////////////////////////////////////////////////////
+
+// TODO: use proper PLL
+assign clk = CLK100MHZ;
+
+///////////////////////////////////////////////////////////////////////////////
+// reset synchronizer
+////////////////////////////////////////////////////////////////////////////////
+
+//logic rst_r;
+
+//always @(posedge clk, negedge ck_rst)
+//if (~ck_rst)  {rst, rst_r} <= 2'b1;
+//else          {rst, rst_r} <= {rst_r, 1'b0};
+
+// xpm_cdc_async_rst: Asynchronous Reset Synchronizer
+// Xilinx Parameterized Macro, version 2021.2
+xpm_cdc_async_rst #(
+ .DEST_SYNC_FF    (4), // DECIMAL; range: 2-10
+ .INIT_SYNC_FF    (0), // DECIMAL; 0=disable simulation init values, 1=enable simulation init values
+ .RST_ACTIVE_HIGH (1)  // DECIMAL; 0=active low reset, 1=active high reset
+)
+xpm_cdc_async_rst_inst (
+  .src_arst  (~ck_rst),
+  .dest_arst (rst),
+  .dest_clk  (clk)
+);
+
+////////////////////////////////////////////////////////////////////////////////
+// R5P SoC instance
+////////////////////////////////////////////////////////////////////////////////
+
+r5p_soc_top #(
+  .GW      (GW),
+  .CHIP    (CHIP)
+) soc (
+  // system signals
+  .clk     (clk),
+  .rst     (rst),
+  // GPIO
+  .gpio_o  (gpio_o),
+  .gpio_e  (gpio_e),
+  .gpio_i  (gpio_i)
+);
+
+////////////////////////////////////////////////////////////////////////////////
+// GPIO
+////////////////////////////////////////////////////////////////////////////////
+
+// GPIO inputs
+assign gpio_i = gpio0[GW-1:0];
+
+// GPIO outputs
+generate
+for (genvar i=0; i<GW; i++) begin
+  assign gpio0[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
+end
+endgenerate
+
+// unused IO
+//assign gpio0[12:GW] = 1'bz;
+
+endmodule: r5p_soc_orange_crab

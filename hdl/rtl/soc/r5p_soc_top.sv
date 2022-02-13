@@ -9,6 +9,7 @@ module r5p_soc_top #(
   int unsigned GW = 32,
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+`ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -18,6 +19,7 @@ module r5p_soc_top #(
 //                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
 //                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
+`endif
   // instruction bus
   int unsigned IAW = 14,    // instruction address width (byte address)
   int unsigned IDW = 32,    // instruction data    width
@@ -41,6 +43,10 @@ module r5p_soc_top #(
   output logic [GW-1:0] gpio_e,
   input  logic [GW-1:0] gpio_i
 );
+
+`ifdef SYNOPSYS_VERILOG_COMPILER
+parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // local parameters and checks
@@ -241,10 +247,12 @@ end: gen_artix_gen
 else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
 
   rom32x4096 imem (
+    // write access
     .clock      (bus_if.clk),
     .wren       (1'b0),
     .wraddress  ('x),
     .data       ('x),
+    // read access
     .rdaddress  (bus_if.adr[IAW-1:2]),
     .rden       (bus_if.vld),
     .q          (bus_if.rdt)
@@ -265,6 +273,73 @@ else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
   assign bus_mem[0].rdy = 1'b1;
 
 end: gen_cyclone_v
+else if (CHIP == "ECP5") begin: gen_ecp5
+
+  // file:///usr/local/diamond/3.12/docs/webhelp/eng/index.htm#page/Reference%20Guides/IPexpress%20Modules/pmi_ram_dp.htm#
+  pmi_ram_dp #(
+    .pmi_wr_addr_depth     (8 * 2**RAW),
+    .pmi_wr_addr_width     (RAW-$clog2(DBW)),
+    .pmi_wr_data_width     (32),
+    .pmi_rd_addr_depth     (8 * 2**RAW),
+    .pmi_rd_addr_width     (RAW-$clog2(DBW)),
+    .pmi_rd_data_width     (32),
+    .pmi_regmode           ("reg"),
+    .pmi_gsr               ("disable"),
+    .pmi_resetmode         ("sync"),
+    .pmi_optimization      ("speed"),
+    .pmi_init_file         ("imem.mem"),
+    .pmi_init_file_format  ("binary"),
+    .pmi_family            ("ECP5")
+  ) imem (
+    // write access
+    .WrClock    (bus_if.clk),
+    .WrClockEn  (1'b0),
+    .WE         (1'b0),
+    .WrAddress  ('x),
+    .Data       ('x),
+    // read access
+    .RdClock    (bus_if.clk),
+    .RdClockEn  (1'b1),
+    .Reset      (bus_mem[0].rst),
+    .RdAddress  (bus_if.adr[IAW-1:2]),
+    .Q          (bus_if.rdt)
+  );
+
+  assign bus_if.rdy = 1'b1;
+
+  // TODO: use a single port or a true dual port memory
+  pmi_ram_dp_be #(
+    .pmi_wr_addr_depth     (8 * 2**RAW),
+    .pmi_wr_addr_width     (RAW-$clog2(DBW)),
+    .pmi_wr_data_width     (32),
+    .pmi_rd_addr_depth     (8 * 2**RAW),
+    .pmi_rd_addr_width     (RAW-$clog2(DBW)),
+    .pmi_rd_data_width     (32),
+    .pmi_regmode           ("reg"),
+    .pmi_gsr               ("disable"),
+    .pmi_resetmode         ("sync"),
+    .pmi_optimization      ("speed"),
+    .pmi_init_file         ("none"),
+    .pmi_init_file_format  ("binary"),
+    .pmi_byte_size         (8),
+    .pmi_family            ("ECP5")
+  ) dmem (
+    .WrClock    (bus_mem[0].clk),
+    .WrClockEn  (bus_mem[0].vld),
+    .WE         (bus_mem[0].wen),
+    .WrAddress  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
+    .ByteEn     (bus_mem[0].ben),
+    .Data       (bus_mem[0].wdt),
+    .RdClock    (bus_mem[0].clk),
+    .RdClockEn  (bus_mem[0].vld),
+    .Reset      (bus_mem[0].rst),
+    .RdAddress  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
+    .Q          (bus_mem[0].rdt)
+  );
+ 
+  assign bus_mem[0].rdy = 1'b1;
+
+end: gen_ecp5
 else begin: gen_default
 
   // instruction memory

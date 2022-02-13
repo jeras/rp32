@@ -62,7 +62,7 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .USE_MEM_INIT            (1),              // DECIMAL
     .USE_MEM_INIT_MMI        (0),              // DECIMAL
     .WRITE_DATA_WIDTH_A      (XLEN)            // DECIMAL
-  ) xpm_memory_dpdistram_inst [2:1] (
+  ) gpr [2:1] (
     .douta   (),
     .doutb   ({t_rs2, t_rs1}),
     .addra   (a_rd),
@@ -95,15 +95,44 @@ end: gen_artix_gen
 else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
 
   gpr32x32 gpr [2:1] (
+    // write access
     .clock      (clk),
     .wren       (wen),
     .wraddress  (a_rd),
     .data       (d_rd),
+    // read access
     .rdaddress  ({a_rs2, a_rs1}),
     .q          ({t_rs2, t_rs1})
   );
 
 end: gen_cyclone_v
+else if (CHIP == "ECP5") begin: gen_ecp5
+
+  // file:///usr/local/diamond/3.12/docs/webhelp/eng/index.htm#page/Reference%20Guides/IPexpress%20Modules/pmi_distributed_dpram.htm#
+  pmi_distributed_dpram #(
+    .pmi_addr_depth       (32),
+    .pmi_addr_width       (5),
+    .pmi_data_width       (XLEN),
+    .pmi_regmode          ("noreg"),
+    .pmi_init_file        ("none"),
+    .pmi_init_file_format ("binary"),
+    .pmi_family           ("ECP5")
+  ) gpr [2:1] (
+    // write access
+    .WrClock    (clk),
+    .WrClockEn  (1'b1),
+    .WE         (wen),
+    .WrAddress  (a_rd),
+    .Data       (d_rd),
+    // read access
+    .RdClock    (clk),
+    .RdClockEn  (1'b1),
+    .Reset      (1'b0),
+    .RdAddress  ({a_rs2, a_rs1}),
+    .Q          ({t_rs2, t_rs1})
+  );
+
+end: gen_ecp5
 else begin: gen_default
 
   // register file (FPGA would initialize it to all zeros)

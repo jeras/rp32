@@ -10,6 +10,7 @@ import r5p_pkg::*;
 module r5p_core #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+`ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -19,6 +20,7 @@ module r5p_core #(
 //                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
 //                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
+`endif
   // instruction bus
   int unsigned IAW = 32,    // program address width
   int unsigned IDW = 32,    // program data    width
@@ -53,6 +55,10 @@ module r5p_core #(
   input  logic [DBW-1:0][8-1:0] ls_rdt,  // read data
   input  logic                  ls_rdy   // write or read acknowledge
 );
+
+`ifdef SYNOPSYS_VERILOG_COMPILER
+parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
+`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals

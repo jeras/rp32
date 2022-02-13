@@ -2,8 +2,11 @@
 <BaliProject version="3.2" title="ECP5" device="LFE5U-25F-6MG285C" default_implementation="Orange_Crab_r0_2">
     <Options/>
     <Implementation title="Orange_Crab_r0_2" dir="Orange_Crab_r0_2" description="Orange_Crab_r0_2" synthesis="synplify" default_strategy="Strategy1">
-        <Options def_top="r5p_soc_top" top="r5p_soc_top"/>
+        <Options VerilogStandard="System Verilog" def_top="r5p_soc_top" top="r5p_soc_top"/>
         <Source name="../../hdl/rtl/riscv/riscv_isa_pkg.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
+        <Source name="../../hdl/rtl/riscv/riscv_isa_c_pkg.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
         <Source name="../../hdl/rtl/riscv/riscv_csr_pkg.sv" type="Verilog" type_short="Verilog">
@@ -45,6 +48,9 @@
         <Source name="../../hdl/rtl/core/r5p_lsu.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
+        <Source name="../../hdl/rtl/core/r5p_wbu.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
         <Source name="../../hdl/rtl/core/r5p_core.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
@@ -54,10 +60,19 @@
         <Source name="../../hdl/rtl/soc/r5p_soc_mem.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
+        <Source name="../../hdl/rtl/soc/r5p_soc_gpio.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
         <Source name="../../hdl/rtl/soc/r5p_soc_top.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog" top_module="r5p_soc_top"/>
         </Source>
+        <Source name="r5p_soc_orange_crab.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
         <Source name="ECP5.lpf" type="Logic Preference" type_short="LPF">
+            <Options/>
+        </Source>
+        <Source name="orangecrab_r0.2.pcf" type="Power Calculator" type_short="PCF">
             <Options/>
         </Source>
         <Source name="timing.fdc" type="Synplify Design Constraints File" type_short="SDC">
