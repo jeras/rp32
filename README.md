@@ -1,3 +1,50 @@
+# R5P RISC-V Processor
+
+## Instruction decoder
+
+One of the main design aims was to create
+a reusable instruction decoder written in SystemVerilog.
+This means extensive use of SystemVerilog constructs:
+* arrays, structures, unions, and enumerations,
+* assignment patterns,
+* don't care conditions and assignments in `case` statements.
+
+Packed structures and enumerations are used to describe
+instructions formats and instruction encodings.
+The intention is to follow the ISA standard as literally as possible.
+
+Long case statements and assignment patterns are used to
+implement the instruction decoder.
+Don't care values are used in both case statement conditions and
+assignment patterns 
+
+## Pipeline
+
+The first processor using the reusable instruction decoder
+has a **2-stage pipeline** and all instructions are executed
+in a single clock cycle (**IPC=1**), without exceptions.
+
+This is achieved without impractical solutions like asynchronous memories,
+except for GPR register file, which is rather common.
+Main memories are standard ASIC/FPGA block memories.
+
+Staling during branches is avoided by placing both
+an address incrementer and a branch adder between
+the PC and the instruction memory address input.
+
+As mentioned before GPR read is done asynchronously.
+
+Staling during load instructions is avoided by
+matching the synchronous read delay with a
+write back delay for the remaining instruction,
+for example arithmetic/logic instructions.
+So all instructions write back into GPR with the same delay.
+The data hazard is avoided by providing a bypass
+in case the current instruction requires
+the result from the previous instruction.
+
+# TODO
+
 # Short
 
 ```bash
