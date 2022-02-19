@@ -107,7 +107,7 @@ typedef struct packed {
   } Extensions;
 } csr_misa_t;
 
-function csr_misa_t csr_misa_f (isa_t isa);
+function automatic csr_misa_t csr_misa_f (isa_t isa);
   // base ISA
   case (isa.spec.base)
     RV_32E : csr_misa_f.MXL = XLEN_32;
@@ -805,18 +805,18 @@ localparam csr_map_st CSR_MAP_WR = '{
 ///////////////////////////////////////////////////////////////////////////////
 
 typedef enum bit [12-1:0] {
-  csr__ustatus                        ,  // 0x000       // User status register.
-  csr__fflafs                         ,  // 0x001       // Floating-Point Accrued Exceptions.
-  csr__frm                            ,  // 0x002       // Floating-Point Dynamic Rounding Mode.
-  csr__fcsr                           ,  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
-  csr__uie                            ,  // 0x004       // User interrupt-enable register.
-  csr__utvec                          ,  // 0x005       // User trap handler base address.
-  csr__res           [12'h006:12'h03f],
-  csr__uscratch                       ,  // 0x040       // Scratch register for user trap handlers.
-  csr__uepc                           ,  // 0x041       // User exception program counter.
-  csr__ucause                         ,  // 0x042       // User trap cause.
-  csr__utval                          ,  // 0x043       // User bad address or instruction.
-  csr__uip                            ,  // 0x044       // User interrupt pending.
+  csr__ustatus                         = 12'h000,  // User status register.
+  csr__fflafs                          = 12'h001,  // Floating-Point Accrued Exceptions.
+  csr__frm                             = 12'h002,  // Floating-Point Dynamic Rounding Mode.
+  csr__fcsr                            = 12'h003,  // Floating-Point Control and Status Register (frm + fflags).
+  csr__uie                             = 12'h004,  // User interrupt-enable register.
+  csr__utvec                           = 12'h005,  // User trap handler base address.
+  csr__res           [12'h006:12'h03f]          ,
+  csr__uscratch                        = 12'h040,  // Scratch register for user trap handlers.
+  csr__uepc                            = 12'h041,  // User exception program counter.
+  csr__ucause                          = 12'h042,  // User trap cause.
+  csr__utval                           = 12'h043,  // User bad address or instruction.
+  csr__uip                             = 12'h044,  // User interrupt pending.
   csr__res           [12'h045:12'h0ff],
   csr__sstatus                        ,  // 0x100       // Supervisor status register.
   csr__res           [12'h101:12'h101],

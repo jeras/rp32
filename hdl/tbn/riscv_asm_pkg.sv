@@ -31,7 +31,7 @@ localparam string GPR_N [0:31] = '{"zero", "ra", "sp", "gp", "tp", "t0", "t1", "
 localparam string FPR_N [0:31] = '{"ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7", "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",
                                    "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"};
 
-function string gpr_n (logic [5-1:0] gpr, bit abi=1'b0);
+function automatic string gpr_n (logic [5-1:0] gpr, bit abi=1'b0);
   gpr_n = abi ? GPR_N[gpr] : $sformatf("x%0d", gpr);
 endfunction: gpr_n
 
@@ -39,7 +39,7 @@ endfunction: gpr_n
 // CSR register names
 ///////////////////////////////////////////////////////////////////////////////
 
-function string csr_n (csr_dec_t csr, bit abi=1'b0);
+function automatic string csr_n (csr_dec_t csr, bit abi=1'b0);
   csr_n = abi ? csr.name : $sformatf("0x%03x", csr);
 endfunction: csr_n
 
@@ -47,7 +47,7 @@ endfunction: csr_n
 // 32-bit instruction disassembler
 ///////////////////////////////////////////////////////////////////////////////
 
-function string disasm32 (isa_t isa, op32_t op, bit abi=0);
+function automatic string disasm32 (isa_t isa, op32_t op, bit abi=0);
 
 ctl_t t;
 t = dec32(isa, op);
@@ -99,12 +99,12 @@ casez (op)
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
 32'b????_????_????_????_?001_????_?000_1111: disasm32 = $sformatf("fence.i");
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
-32'b????_????_????_????_?001_????_?111_0011: disasm32 = $sformatf("csrrw  %s, %s, %s"    , gpr_n(t.gpr.a.rd , abi), csr_n(t.csr.adr, abi), gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?010_????_?111_0011: disasm32 = $sformatf("csrrs  %s, %s, %s"    , gpr_n(t.gpr.a.rd , abi), csr_n(t.csr.adr, abi), gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?011_????_?111_0011: disasm32 = $sformatf("csrrc  %s, %s, %s"    , gpr_n(t.gpr.a.rd , abi), csr_n(t.csr.adr, abi), gpr_n(t.gpr.a.rs1, abi));
-32'b????_????_????_????_?101_????_?111_0011: disasm32 = $sformatf("csrrwi %s, %s, 0b%05b", gpr_n(t.gpr.a.rd , abi), csr_n(t.csr.adr, abi), t.csr.imm);
-32'b????_????_????_????_?110_????_?111_0011: disasm32 = $sformatf("csrrsi %s, %s, 0b%05b", gpr_n(t.gpr.a.rd , abi), csr_n(t.csr.adr, abi), t.csr.imm);
-32'b????_????_????_????_?111_????_?111_0011: disasm32 = $sformatf("csrrci %s, %s, 0b%05b", gpr_n(t.gpr.a.rd , abi), csr_n(t.csr.adr, abi), t.csr.imm);
+32'b????_????_????_????_?001_????_?111_0011: disasm32 = $sformatf("csrrw  %s, %s, %s"    , gpr_n(t.gpr.a.rd , abi), csr_n(csr_dec_t'(t.csr.adr), abi), gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?010_????_?111_0011: disasm32 = $sformatf("csrrs  %s, %s, %s"    , gpr_n(t.gpr.a.rd , abi), csr_n(csr_dec_t'(t.csr.adr), abi), gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?011_????_?111_0011: disasm32 = $sformatf("csrrc  %s, %s, %s"    , gpr_n(t.gpr.a.rd , abi), csr_n(csr_dec_t'(t.csr.adr), abi), gpr_n(t.gpr.a.rs1, abi));
+32'b????_????_????_????_?101_????_?111_0011: disasm32 = $sformatf("csrrwi %s, %s, 0b%05b", gpr_n(t.gpr.a.rd , abi), csr_n(csr_dec_t'(t.csr.adr), abi), t.csr.imm);
+32'b????_????_????_????_?110_????_?111_0011: disasm32 = $sformatf("csrrsi %s, %s, 0b%05b", gpr_n(t.gpr.a.rd , abi), csr_n(csr_dec_t'(t.csr.adr), abi), t.csr.imm);
+32'b????_????_????_????_?111_????_?111_0011: disasm32 = $sformatf("csrrci %s, %s, 0b%05b", gpr_n(t.gpr.a.rd , abi), csr_n(csr_dec_t'(t.csr.adr), abi), t.csr.imm);
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
 32'b0000_0000_0000_0000_0000_0000_0111_0011: disasm32 = $sformatf("ecall");
 32'b0000_0000_0001_0000_0000_0000_0111_0011: disasm32 = $sformatf("ebreak");
@@ -171,7 +171,7 @@ endfunction: disasm32
 // 16-bit instruction disassembler
 ///////////////////////////////////////////////////////////////////////////////
 
-function string disasm16 (isa_t isa, op16_t op, bit abi=0);
+function automatic string disasm16 (isa_t isa, op16_t op, bit abi=0);
 
 ctl_t t;
 t = dec16(isa, op);
@@ -259,7 +259,7 @@ endfunction: disasm16
 // instruction disassembler
 ///////////////////////////////////////////////////////////////////////////////
 
-function string disasm (isa_t isa, op32_t op, bit abi=0);
+function automatic string disasm (isa_t isa, op32_t op, bit abi=0);
   case (opsiz(op[16-1:0]))
     2      : disasm = disasm16(isa, op[16-1:0], abi);  // 16-bit C standard extension
     4      : disasm = disasm32(isa, op[32-1:0], abi);  // 32-bit
