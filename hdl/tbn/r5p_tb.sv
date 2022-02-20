@@ -1,10 +1,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 // R5P testbench for core module
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright 2022 Iztok Jeras
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+///////////////////////////////////////////////////////////////////////////////
 
 module r5p_tb #(
   // RISC-V ISA
-  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+  int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -15,23 +29,50 @@ module r5p_tb #(
 //                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
   isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
   // instruction bus
-  int unsigned IAW = 22,    // instruction address width
-  int unsigned IDW = 32,    // instruction data    width
+  int unsigned IAW = 22,     // instruction address width
+  int unsigned IDW = 32,     // instruction data    width
   // data bus
-  int unsigned DAW = 22,    // data address width
-  int unsigned DDW = XLEN,  // data data    width
-  int unsigned DBW = DDW/8  // data byte en width
+  int unsigned DAW = 22,     // data address width
+  int unsigned DDW = XLEN,   // data data    width
+  int unsigned DBW = DDW/8,  // data byte en width
+  // testbench parameters
+  bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )(
+`ifdef VERILATOR
   // system signals
   input  logic clk,  // clock
   input  logic rst   // reset
+`endif
 );
 
 import riscv_asm_pkg::*;
 
+`ifndef VERILATOR
+// system signals
+logic clk = 1'b1;  // clock
+logic rst = 1'b1;  // reset
+`endif
+
 // clock period counter
 int unsigned cnt;
 bit timeout = 1'b0;
+
+////////////////////////////////////////////////////////////////////////////////
+// test sequence
+////////////////////////////////////////////////////////////////////////////////
+
+`ifndef VERILATOR
+// clock
+always #(20ns/2) clk = ~clk;
+// reset
+initial
+begin
+  repeat (8) @(posedge clk);
+  rst <= 1'b1;
+  repeat (10000) @(posedge clk);
+  $finish();
+end
+`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // DEBUG
@@ -136,6 +177,8 @@ begin
   end
 end
 
+// TODO: reorder printouts so they are in the same order as instructions.
+
 ////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
@@ -156,10 +199,8 @@ r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
-  .ISA  (ISA),
 //.FN   (),
-  .SZ   (2**IAW),
-  .DBG  ("BUS")
+  .SZ   (2**IAW)
 ) mem (
   .bus_if  (bus_if),
   .bus_ls  (bus_mem[0])
@@ -178,11 +219,25 @@ begin
   end
 end
 
-/*
-r5p_bus_mon bus_mon_if (
-  .s  (bus_if)
+// instruction fetch monitor
+r5p_bus_mon #(
+  .NAME ("IF"),
+  .MODE ("I"),
+  .ISA  (ISA),
+  .ABI  (ABI)
+) mon_if (
+  .bus  (bus_if)
 );
-*/
+
+// load/store monitor
+r5p_bus_mon #(
+  .NAME ("LS"),
+  .MODE ("D"),
+  .ISA  (ISA),
+  .ABI  (ABI)
+) mon_ls (
+  .bus  (bus_ls)
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 // controller
@@ -216,12 +271,17 @@ assign bus_mem[1].rdy = 1'b1;
 always @(posedge clk)
 if (rvmodel_halt | timeout) begin
   string fn;
+  int tmp_begin;
+  int tmp_end;
   if (rvmodel_halt)  $display("HALT");
   if (timeout     )  $display("TIMEOUT");
+  if (rvmodel_data_end < 2**IAW)  tmp_end = rvmodel_data_end;
+  else                            tmp_end = 2**IAW ;
   if ($value$plusargs("FILE_SIG=%s", fn)) begin
-    $display("Saving signature file: %s", fn);
+    $display("Saving signature file with data from 0x%08h to 0x%08h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
   //void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
-    void'(mem.write_hex(fn, int'(rvmodel_data_begin), int'(rvmodel_data_end)));
+    void'(mem.write_hex(fn, int'(rvmodel_data_begin), int'(tmp_end)));
+    $display("Saving signature file done.");
   end else begin
     $display("ERROR: signature save file argument not found.");
     $finish;

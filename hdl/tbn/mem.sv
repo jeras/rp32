@@ -16,22 +16,17 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
+import riscv_isa_pkg::*;
+import riscv_asm_pkg::*;
+
 module mem #(
-  isa_t        ISA = '{RV_64I, RV_M},
-  // number of interfaces
-  int unsigned IN  = 1,
   // 1kB by default
-  string       FN  = "",     // binary initialization file name
-  int unsigned SZ  = 2**12,  // memory size in bytes
-  // debug functionality
-  string       DBG = ""      // module name to be printed in messages, if empty debug is disabled
+  string       FN = "",    // binary initialization file name
+  int unsigned SZ = 2**12  // memory size in bytes
 )(
   r5p_bus_if.sub bus_if,   // instruction fetch
   r5p_bus_if.sub bus_ls    // load store
 );
-
-import riscv_isa_pkg::*;
-import riscv_asm_pkg::*;
 
 ////////////////////////////////////////////////////////////////////////////////
 // array definition
@@ -128,57 +123,5 @@ end
 assign bus_ls.rdy = 1'b1;
 //always @(posedge clk)
 //  bus_ls.rdy <= bus_ls.vld;
-
-////////////////////////////////////////////////////////////////////////////////
-// write/read debug printout
-////////////////////////////////////////////////////////////////////////////////
-
-generate
-if (DBG != "") begin: debug
-
-  logic [bus_if.DW-1:0] dat_if;
-
-  always @(posedge bus_if.clk)
-  if (bus_if.vld) begin
-    if (bus_if.wen) begin
-      // write access
-      for (int unsigned b=0; b<bus_if.BW; b++) begin
-        if (bus_if.ben[b])  dat_if[8*b+:8] = bus_if.wdt[8*b+:8];
-        else                dat_if[8*b+:8] = bus_if.wdt[8*b+:8];
-      end
-    end else begin
-      // read access
-      for (int unsigned b=0; b<bus_if.BW; b++) begin
-        if (bus_if.ben[b])  dat_if[8*b+:8] = mem[int'(bus_if.adr)+b];
-        else                dat_if[8*b+:8] = mem[int'(bus_if.adr)+b];
-      end
-    end
-    $write("%s (IF) %s: s.adr=0x%h dat=0x%h s.ben=0b%b", DBG, bus_if.wen ? "W" : "R", bus_if.adr, dat_if, bus_if.ben);
-    $write(" opc='%s'\n", disasm(ISA, dat_if, .abi (1)));
-  end
-
-  logic [bus_ls.DW-1:0] dat_ls;
-
-  always @(posedge bus_ls.clk)
-  if (bus_ls.vld) begin
-    if (bus_ls.wen) begin
-      // write access
-      for (int unsigned b=0; b<bus_ls.BW; b++) begin
-        if (bus_ls.ben[b])  dat_ls[8*b+:8] = bus_ls.wdt[8*b+:8];
-        else                dat_ls[8*b+:8] = bus_ls.wdt[8*b+:8];
-      end
-    end else begin
-      // read access
-      for (int unsigned b=0; b<bus_ls.BW; b++) begin
-        if (bus_ls.ben[b])  dat_ls[8*b+:8] = mem[int'(bus_ls.adr)+b];
-        else                dat_ls[8*b+:8] = mem[int'(bus_ls.adr)+b];
-      end
-    end
-    $write("%s (LS) %s: s.adr=0x%h dat=0x%h s.ben=0b%b", DBG, bus_ls.wen ? "W" : "R", bus_ls.adr, dat_ls, bus_ls.ben);
-    $write(" txt='%s'\n", dat_ls);
-  end
-
-end: debug
-endgenerate
 
 endmodule: mem
