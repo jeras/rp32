@@ -725,10 +725,10 @@ typedef struct packed {
 } ctl_csr_t;
 
 // illegal (idle) value
-/* verilator lint_off WIDTHCONCAT */
+// verilator lint_off WIDTHCONCAT
 // TODO: Verilator should not complain here
 const ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: CSR_AX, imm: IMM_X, msk: CSR_MX, op: CSR_XXX};
-/* verilator lint_on WIDTHCONCAT */
+// verilator lint_on WIDTHCONCAT
 
 ///////////////////////////////////////////////////////////////////////////////
 // illegal instruction

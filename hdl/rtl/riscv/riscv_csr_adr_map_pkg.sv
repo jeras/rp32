@@ -21,7 +21,7 @@ package riscv_csr_adr_map_pkg;
 import riscv_isa_pkg::*;
 
 // SCR address map structure
-/* verilator lint_off LITENDIAN */
+// verilator lint_off LITENDIAN
 typedef struct packed {
   csr_adr_t        ustatus      ;  // 0x000       // User status register.
   csr_adr_t        fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
@@ -239,10 +239,10 @@ localparam csr_map_t CSR_MAP_C = '{
   mimpid       :   12'hF13,
   mhartid      :   12'hF14
 };
-/* verilator lint_on LITENDIAN */
+// verilator lint_on LITENDIAN
 
 // SCR address decoder structure
-/* verilator lint_off LITENDIAN */
+// verilator lint_off LITENDIAN
 typedef struct packed {
   logic        ustatus      ;  // 0x000       // User status register.
   logic        fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
@@ -339,7 +339,7 @@ typedef struct packed {
   logic        mimpid       ;  // 0xF13       // Implementation ID.
   logic        mhartid      ;  // 0xF14       // Hardware thread ID.
 } csr_dec_t;
-/* verilator lint_on LITENDIAN */
+// verilator lint_on LITENDIAN
 
 // SCR address decoder function
 function automatic csr_dec_t csr_dec_f (input csr_adr_t adr);

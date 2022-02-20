@@ -303,8 +303,8 @@ endfunction: gpr16_f
 // If the order is not correct, an illigal instruction might be executed as normal or hint.
 
 // instruction decoder
-/* verilator lint_off CASEOVERLAP */
-/* verilator lint_off CASEINCOMPLETE */
+// verilator lint_off CASEOVERLAP
+// verilator lint_off CASEINCOMPLETE
 function automatic ctl_t dec16 (isa_t isa, op16_t op);
 
 // temporary variable used only to reduce line length
@@ -450,7 +450,7 @@ end
 dec16 = t;
 
 endfunction: dec16
-/* verilator lint_on CASEOVERLAP */
-/* verilator lint_on CASEINCOMPLETE */
+// verilator lint_on CASEOVERLAP
+// verilator lint_on CASEINCOMPLETE
 
 endpackage: riscv_isa_c_pkg

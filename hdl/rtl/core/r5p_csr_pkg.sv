@@ -317,9 +317,9 @@ localparam csr_map_st CSR_RST_S = '{
   marchid       :            CSR_RST_MARCHID       ,  // 0xF12       // Architecture ID.
   mimpid        :            CSR_RST_MIMPID        ,  // 0xF13       // Implementation ID.
   mhartid       :            CSR_RST_MHARTID       ,  // 0xF14       // Hardware thread ID.
-  /* verilator lint_off WIDTHCONCAT */
+  // verilator lint_off WIDTHCONCAT
   default    : '0
-  /* verilator lint_on WIDTHCONCAT */
+  // verilator lint_on WIDTHCONCAT
 };
 
 localparam csr_map_ut CSR_RST = CSR_RST_S;
@@ -346,9 +346,9 @@ localparam csr_map_st CSR_WEM_S = '{
   marchid       :            CSR_WEM_MARCHID       ,  // 0xF12       // Architecture ID.
   mimpid        :            CSR_WEM_MIMPID        ,  // 0xF13       // Implementation ID.
   mhartid       :            CSR_WEM_MHARTID       ,  // 0xF14       // Hardware thread ID.
-  /* verilator lint_off WIDTHCONCAT */
+  // verilator lint_off WIDTHCONCAT
   default    : '0
-  /* verilator lint_on WIDTHCONCAT */
+  // verilator lint_on WIDTHCONCAT
 };
 
 localparam csr_map_ut CSR_WEM = CSR_WEM_S;

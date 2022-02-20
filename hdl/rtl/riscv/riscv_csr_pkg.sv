@@ -33,7 +33,7 @@ typedef logic [UXLEN-1:0] logic_uxlen_t;
 // CSR address
 ///////////////////////////////////////////////////////////////////////////////
 
-// NOTE: this is defined in riscv_csr_pkg
+// NOTE: this is defined in riscv_isa_pkg
 
 ////////////////////////////////////////////////////////////////////////////////
 // common definitions
@@ -464,7 +464,7 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 // SCR address map structure
-/* verilator lint_off LITENDIAN */
+// verilator lint_off LITENDIAN
 typedef struct packed {
   // User Trap Setup
   logic                   [XLEN-1:0] ustatus      ;  // 0x000       // User status register.
@@ -629,12 +629,12 @@ typedef struct packed {
   csr_mhartid_t                      mhartid      ;  // 0xF14       // Hardware thread ID.
   logic [12'hf15:12'hfff] [XLEN-1:0] res_f15_fff  ;
 } csr_map_st;
-/* verilator lint_on LITENDIAN */
+// verilator lint_on LITENDIAN
 
 // SCR address map array
-/* verilator lint_off LITENDIAN */
+// verilator lint_off LITENDIAN
 typedef logic [0:2**12-1][XLEN-1:0] csr_map_at;
-/* verilator lint_on LITENDIAN */
+// verilator lint_on LITENDIAN
 
 // SCR address map union
 typedef union packed {
@@ -653,6 +653,7 @@ typedef union packed {
 `define WERE '0  // 0 - (WERE) Write Error, Read Error (NOTE: not a neme from the specification)
                  //            non-existent CSR, access shall raise an illegal instruction exception
 
+/*
 localparam csr_map_st CSR_MAP_WR = '{
   // 0x300       // Machine status register.
   mstatus    : '{
@@ -795,10 +796,12 @@ localparam csr_map_st CSR_MAP_WR = '{
     SSIP       : `WARL,  //  1    // supervisor-level software interrupt
     zero_00_00 : `WARL   //  0    //
   },
-  /* verilator lint_off WIDTHCONCAT */
+  // verilator lint_off WIDTHCONCAT
+  // TODO
   default    : '0
-  /* verilator lint_on WIDTHCONCAT */
+  // verilator lint_on WIDTHCONCAT
 };
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR address decoder enumeration

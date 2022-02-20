@@ -158,7 +158,7 @@ assign bus_if.wdt = 'x;
 
 localparam int unsigned AW = 5;
 
-logic [XLEN-1:0] gpr_tmp [0:2**AW-1] = '{default: '0};
+logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
 logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
 
 // hierarchical path to GPR inside RTL
