@@ -52,7 +52,9 @@ elaborate()
 # RUN_STEP: <simulate>
 simulate()
 {
-  xsim r5p_tb -key {Behavioral:sim_1:Functional:r5p_tb} -tclbatch cmd.tcl -log simulate.log
+  xsim r5p_tb -key {Behavioral:sim_1:Functional:r5p_tb} -tclbatch cmd.tcl -log simulate.log \
+  --testplusarg FILE_MEM="$TESTNAME.elf.bin" \
+  --testplusarg FILE_SIG="$TESTNAME.signature.output"
 }
 
 # STEP: setup

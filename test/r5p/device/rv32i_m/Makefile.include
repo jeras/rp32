@@ -35,5 +35,15 @@ COMPILE_TARGET=\
 	fi ;
 
 RUN_TARGET=\
-	make -C $(TARGETDIR)/../sim/verilator -f Makefile XLEN=32 \
-	FILE_MEM=$(*).elf.bin FILE_SIG=$(*).signature.output
+    if [ "$(SIMULATOR)" = "Vivado" ]; \
+	then \
+	    cd $(TARGETDIR)/../fpga/Xilinx/r5p_soc_arty/tcl/xsim/; \
+		TESTNAME=$(*) ./r5p_tb.sh; \
+		cd -; \
+	else \
+	    echo "Simulator $(SIMULATOR)"; \
+		make -C $(TARGETDIR)/../sim/verilator -f Makefile XLEN=32 FILE_MEM=$(*).elf.bin FILE_SIG=$(*).signature.output; \
+    fi
+
+#	    cd $(TARGETDIR)/../fpga/Xilinx/r5p_soc_arty/tcl/xsim/
+#		TESTNAME=$(*) $(TARGETDIR)/../fpga/Xilinx/r5p_soc_arty/tcl/xsim/r5p_tb.sh; \

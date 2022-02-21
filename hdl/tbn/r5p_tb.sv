@@ -35,6 +35,8 @@ module r5p_tb #(
   int unsigned DAW = 22,     // data address width
   int unsigned DDW = XLEN,   // data data    width
   int unsigned DBW = DDW/8,  // data byte en width
+  // memory configuration
+  string       IFN = "",     // instruction memory file name
   // testbench parameters
   bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )(
@@ -67,8 +69,8 @@ always #(20ns/2) clk = ~clk;
 // reset
 initial
 begin
-  repeat (8) @(posedge clk);
-  rst <= 1'b1;
+  repeat (4) @(posedge clk);
+  rst <= 1'b0;
   repeat (10000) @(posedge clk);
   $finish();
 end
@@ -199,7 +201,7 @@ r5p_bus_dec #(
 ////////////////////////////////////////////////////////////////////////////////
 
 mem #(
-//.FN   (),
+  .FN   (IFN),
   .SZ   (2**IAW)
 ) mem (
   .bus_if  (bus_if),
@@ -213,7 +215,7 @@ begin
   if ($value$plusargs("FILE_MEM=%s", fn)) begin
     $display("Loading file into memory: %s", fn);
     void'(mem.read_bin(fn));
-  end else begin
+  end else if (IFN == "") begin
     $display("ERROR: memory load file argument not found.");
     $finish;
   end

@@ -32,7 +32,12 @@ module mem #(
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-logic [8-1:0] mem [0:SZ-1];
+// TODO: detect Xilinx Vivado simulator instead
+`ifdef VERILATOR
+logic [8-1:0] mem [0:SZ-1];  // 4194304
+`else
+logic [8-1:0] mem [0:1757700-1];
+`endif
 
 // initialization
 initial
@@ -48,8 +53,17 @@ function int read_bin (
 );
   int code;  // status code
   int fd;    // file descriptor
+  bit [640-1:0] err;
   fd = $fopen(fn, "rb");
   code = $fread(mem, fd);
+`ifndef VERILATOR
+  if (code == 0) begin
+    code = $ferror(fd, err);
+    $display("DEBUG: read_bin: code = %d, err = %s", code, err);
+  end else begin
+    $display("DEBUG: read %dB from binary file", code);
+  end
+`endif
   $fclose(fd);
   return code;
 endfunction: read_bin
