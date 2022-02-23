@@ -502,4 +502,5 @@ set_global_assignment -name QIP_FILE ip/gpr32x32.qip
 set_global_assignment -name QIP_FILE ip/ram32x4096.qip
 set_global_assignment -name QIP_FILE ip/rom32x4096.qip
 
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

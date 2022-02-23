@@ -1,126 +1,205 @@
 [*]
-[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri May 14 18:35:35 2021
+[*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
+[*] Mon Feb  7 11:40:19 2022
 [*]
-[dumpfile] "/home/ijeras/VLSI/rp32/sim/logs/vlt_dump.fst"
-[dumpfile_mtime] "Fri May 14 18:15:53 2021"
-[dumpfile_size] 321068
-[savefile] "/home/ijeras/VLSI/rp32/sim/r5p_tb.gtkw"
-[timestart] 31809400
-[size] 1848 2096
+[dumpfile] "/home/ijeras/VLSI/rp32/sim/verilator/logs/vlt_dump.fst"
+[dumpfile_mtime] "Mon Feb  7 11:34:27 2022"
+[dumpfile_size] 379702
+[savefile] "/home/ijeras/VLSI/rp32/sim/verilator/r5p_tb.gtkw"
+[timestart] 591400
+[size] 1884 2096
 [pos] -1 -1
-*-14.917912 31880000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.781827 905200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.r5p_tb.
 [treeopen] top.r5p_tb.DUT.
+[treeopen] top.r5p_tb.DUT.gpr.
 [treeopen] top.r5p_tb.DUT.id_ctl.
-[treeopen] top.r5p_tb.DUT.id_op.
-[treeopen] top.r5p_tb.DUT.mul.
-[treeopen] top.r5p_tb.mem_if.genblk1.
-[treeopen] top.r5p_tb.mem_ls.genblk1.
+[treeopen] top.r5p_tb.DUT.id_ctl.gpr.
 [sst_width] 233
-[signals_width] 302
+[signals_width] 210
 [sst_expanded] 1
-[sst_vpaned_height] 1017
+[sst_vpaned_height] 665
 @28
-top.r5p_tb.clk
-top.r5p_tb.rst
-top.r5p_tb.if_req
-@23
-top.r5p_tb.if_adr[20:0]
-@22
-top.r5p_tb.if_rdt[31:0]
+top.r5p_tb.DUT.clk
+@800200
+-IFU
 @28
-top.r5p_tb.if_ack
-top.r5p_tb.ls_req
-top.r5p_tb.ls_wen
+top.r5p_tb.bus_if.clk
+top.r5p_tb.bus_if.rst
+top.r5p_tb.bus_if.vld
+top.r5p_tb.bus_if.wen
 @22
-top.r5p_tb.ls_adr[16:0]
-top.r5p_tb.ls_sel[3:0]
-top.r5p_tb.ls_wdt[31:0]
-top.r5p_tb.ls_rdt[31:0]
+top.r5p_tb.bus_if.adr[21:0]
+top.r5p_tb.bus_if.ben[3:0]
+top.r5p_tb.bus_if.wdt[31:0]
+top.r5p_tb.bus_if.rdt[31:0]
 @28
-top.r5p_tb.ls_ack
-top.r5p_tb.ls_ctl_req
-top.r5p_tb.ls_ctl_wen
-@22
-top.r5p_tb.ls_ctl_adr[16:0]
-top.r5p_tb.ls_ctl_sel[3:0]
-top.r5p_tb.ls_ctl_wdt[31:0]
-top.r5p_tb.ls_ctl_rdt[31:0]
+top.r5p_tb.bus_if.rdy
+@1000200
+-IFU
+@800200
+-LSU
 @28
-top.r5p_tb.ls_ctl_ack
-top.r5p_tb.ls_mem_req
-top.r5p_tb.ls_mem_wen
+top.r5p_tb.bus_ls.clk
+top.r5p_tb.bus_ls.rst
+top.r5p_tb.bus_ls.vld
+top.r5p_tb.bus_ls.wen
 @22
-top.r5p_tb.ls_mem_adr[16:0]
-top.r5p_tb.ls_mem_sel[3:0]
-top.r5p_tb.ls_mem_wdt[31:0]
-top.r5p_tb.ls_mem_rdt[31:0]
+top.r5p_tb.bus_ls.adr[21:0]
+top.r5p_tb.bus_ls.ben[3:0]
+top.r5p_tb.bus_ls.wdt[31:0]
+top.r5p_tb.bus_ls.rdt[31:0]
 @28
-top.r5p_tb.ls_mem_ack
+top.r5p_tb.bus_ls.rdy
+@1000200
+-LSU
+@24
+top.r5p_tb.DUT.id_ctl.gpr.a.rs1[4:0]
+top.r5p_tb.DUT.id_ctl.gpr.a.rs2[4:0]
 @22
-top.r5p_tb.rvmodel_data_begin[31:0]
-top.r5p_tb.rvmodel_data_end[31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[0][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[1][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[2][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[3][31:0]
+@c00022
+top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
 @28
-top.r5p_tb.rvmodel_halt
-@200
--GPR
+(0)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(1)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(2)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(3)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(4)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(5)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(6)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(7)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(8)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(9)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(10)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(11)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(12)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(13)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(14)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(15)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(16)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(17)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(18)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(19)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(20)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(21)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(22)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(23)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(24)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(25)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(26)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(27)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(28)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(29)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(30)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+(31)top.r5p_tb.DUT.gpr.gen_default.gpr[4][31:0]
+@1401200
+-group_end
+@22
+top.r5p_tb.DUT.gpr.gen_default.gpr[5][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[6][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[7][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[8][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[9][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[10][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[11][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[12][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[13][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[14][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[15][31:0]
+@c00024
+top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
 @28
-top.r5p_tb.DUT.gpr.clk
-top.r5p_tb.DUT.gpr.rst
-top.r5p_tb.DUT.gpr.e_rd
-top.r5p_tb.DUT.gpr.e_rs1
-top.r5p_tb.DUT.gpr.e_rs2
+(0)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(1)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(2)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(3)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(4)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(5)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(6)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(7)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(8)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(9)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(10)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(11)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(12)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(13)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(14)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(15)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(16)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(17)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(18)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(19)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(20)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(21)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(22)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(23)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(24)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(25)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(26)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(27)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(28)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(29)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(30)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+(31)top.r5p_tb.DUT.gpr.gen_default.gpr[16][31:0]
+@1401200
+-group_end
 @22
-top.r5p_tb.DUT.gpr.a_rd[4:0]
-top.r5p_tb.DUT.gpr.a_rs1[4:0]
-top.r5p_tb.DUT.gpr.a_rs2[4:0]
-top.r5p_tb.DUT.gpr.d_rd[31:0]
-top.r5p_tb.DUT.gpr.d_rs1[31:0]
-top.r5p_tb.DUT.gpr.d_rs2[31:0]
-top.r5p_tb.DUT.gpr.gpr(1)[31:0]
-top.r5p_tb.DUT.gpr.gpr(2)[31:0]
-top.r5p_tb.DUT.gpr.gpr(3)[31:0]
-top.r5p_tb.DUT.gpr.gpr(4)[31:0]
-top.r5p_tb.DUT.gpr.gpr(5)[31:0]
-top.r5p_tb.DUT.gpr.gpr(6)[31:0]
-top.r5p_tb.DUT.gpr.gpr(7)[31:0]
-top.r5p_tb.DUT.gpr.gpr(8)[31:0]
-top.r5p_tb.DUT.gpr.gpr(9)[31:0]
-top.r5p_tb.DUT.gpr.gpr(10)[31:0]
-top.r5p_tb.DUT.gpr.gpr(11)[31:0]
-top.r5p_tb.DUT.gpr.gpr(12)[31:0]
-top.r5p_tb.DUT.gpr.gpr(13)[31:0]
-top.r5p_tb.DUT.gpr.gpr(14)[31:0]
-top.r5p_tb.DUT.gpr.gpr(15)[31:0]
-top.r5p_tb.DUT.gpr.gpr(16)[31:0]
-top.r5p_tb.DUT.gpr.gpr(17)[31:0]
-top.r5p_tb.DUT.gpr.gpr(18)[31:0]
-top.r5p_tb.DUT.gpr.gpr(19)[31:0]
-top.r5p_tb.DUT.gpr.gpr(20)[31:0]
-top.r5p_tb.DUT.gpr.gpr(21)[31:0]
-top.r5p_tb.DUT.gpr.gpr(22)[31:0]
-top.r5p_tb.DUT.gpr.gpr(23)[31:0]
-top.r5p_tb.DUT.gpr.gpr(24)[31:0]
-top.r5p_tb.DUT.gpr.gpr(25)[31:0]
-top.r5p_tb.DUT.gpr.gpr(26)[31:0]
-top.r5p_tb.DUT.gpr.gpr(27)[31:0]
-top.r5p_tb.DUT.gpr.gpr(28)[31:0]
-top.r5p_tb.DUT.gpr.gpr(29)[31:0]
-top.r5p_tb.DUT.gpr.gpr(30)[31:0]
-top.r5p_tb.DUT.gpr.gpr(31)[31:0]
-@200
--CTL
-@420
-top.r5p_tb.DUT.mul.M1
-top.r5p_tb.DUT.mul.M8
-top.r5p_tb.DUT.mul.XW
+top.r5p_tb.DUT.gpr.gen_default.gpr[17][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[18][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[19][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[20][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[21][31:0]
+@c00023
+top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+@29
+(0)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(1)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(2)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(3)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(4)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(5)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(6)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(7)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(8)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(9)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(10)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(11)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(12)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(13)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(14)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(15)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(16)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(17)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(18)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(19)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(20)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(21)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(22)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(23)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(24)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(25)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(26)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(27)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(28)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(29)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(30)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+(31)top.r5p_tb.DUT.gpr.gen_default.gpr[22][31:0]
+@1401201
+-group_end
 @22
-top.r5p_tb.DUT.mul.div[31:0]
-top.r5p_tb.DUT.mul.rd[31:0]
-top.r5p_tb.DUT.mul.rem[31:0]
-top.r5p_tb.DUT.mul.rs1[31:0]
-top.r5p_tb.DUT.mul.rs2[31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[23][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[24][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[25][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[26][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[27][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[28][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[29][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[30][31:0]
+top.r5p_tb.DUT.gpr.gen_default.gpr[31][31:0]
 [pattern_trace] 1
 [pattern_trace] 0
