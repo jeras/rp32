@@ -85,7 +85,7 @@ assign csr_wen = csr_ctl.wen & cnv_wen;
 // TODO: define access error conditions triggering illegal instruction
 
 // CSR access illegal function
-function logic [XLEN-1:0] csr_ill_f (
+function automatic logic [XLEN-1:0] csr_ill_f (
   logic [XLEN-1:0] csr_rdt
 );
 endfunction: csr_ill_f
@@ -107,7 +107,7 @@ always_comb begin
 end
 
 // CSR write mask function
-function logic [XLEN-1:0] csr_wdt_f (
+function automatic logic [XLEN-1:0] csr_wdt_f (
   logic [XLEN-1:0] csr_rdt
 );
   unique casez (csr_ctl.op)
@@ -124,7 +124,7 @@ endfunction: csr_wdt_f
 
 // *CAUSE
 // TODO: extend with missing causes
-function csr_mcause_t cause_f (
+function automatic csr_mcause_t cause_f (
   ctl_priv_t  priv,
   isa_level_t level
 );
@@ -148,7 +148,7 @@ logic [XLEN-1:0] deleg;
 assign deleg = cause.Interrupt ? csr_map.s.mideleg : csr_map.s.medeleg;
 
 // TVEC address calculator
-function logic [XLEN-1:0] tvec_f (
+function automatic logic [XLEN-1:0] tvec_f (
   csr_mtvec_t  tvec,
   csr_mcause_t cause
 );

@@ -92,35 +92,35 @@ const op16_qlf_t T_X_X = op16_qlf_t'('x);
 ///////////////////////////////////////////////////////////////////////////////
 
 // branch immediate (CB-type)
-function logic signed [8:0] imm_cb_f (op16_t op);
+function automatic logic signed [8:0] imm_cb_f (op16_t op);
   logic signed [8:0] imm = '0;
   {imm[8], imm[4:3], imm[7:6], imm[2:1], imm[5]} = {op.cb.off_12_10, op.cb.off_06_02};
   return imm;
 endfunction: imm_cb_f
 
 // '{sign extended (signed), 6-bit} signed immediate (CI-type)
-function logic signed [6-1:0] imm_c_i_s_f (op16_t op);
+function automatic logic signed [6-1:0] imm_c_i_s_f (op16_t op);
   logic signed [6-1:0] imm = '0;
   imm = $signed({op.ci.imm_12_12, op.ci.imm_06_02});  // signed immediate
   return imm;
 endfunction: imm_c_i_s_f
 
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
-function logic signed [10-1:0] imm_c_i_p_f (op16_t op);
+function automatic logic signed [10-1:0] imm_c_i_p_f (op16_t op);
   logic signed [10-1:0] imm = '0;
   {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.ADDI16SP
   return imm;
 endfunction: imm_c_i_p_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4} load immediate (CIW-type)
-function logic unsigned [10-1:0] imm_ciw_f (op16_t op);
+function automatic logic unsigned [10-1:0] imm_ciw_f (op16_t op);
   logic unsigned [10-1:0] imm = '0;
   {imm[5:4], imm[9:6], imm[2], imm[3]} = op.ciw.imm_12_05;
   return imm;
 endfunction: imm_ciw_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} load immediate (CI_L-type)
-function logic unsigned [12-1:0] imm_cil_f (op16_t op, op16_qlf_t qlf);
+function automatic logic unsigned [12-1:0] imm_cil_f (op16_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
     T_C_W: {imm[5], {imm[4:2], imm[7:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LWSP, C.FLWSP
@@ -132,7 +132,7 @@ function logic unsigned [12-1:0] imm_cil_f (op16_t op, op16_qlf_t qlf);
 endfunction: imm_cil_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} store immediate (CSS-type)
-function logic unsigned [12-1:0] imm_css_f (op16_t op, op16_qlf_t qlf);
+function automatic logic unsigned [12-1:0] imm_css_f (op16_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
     T_C_W: {imm[5:2], imm[7:6]} = op.css.imm_12_07;  // C.SWSP, C.FSWSP
@@ -144,7 +144,7 @@ function logic unsigned [12-1:0] imm_css_f (op16_t op, op16_qlf_t qlf);
 endfunction: imm_css_f
 
 // {zero extended (unsigned), 5-bit, scaled by 4/8/16} store immediate (C[LS]-type)
-function logic unsigned [12-1:0] imm_cls_f (op16_t op, op16_qlf_t qlf);
+function automatic logic unsigned [12-1:0] imm_cls_f (op16_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
     T_C_W: {imm[5:3], imm[2], imm[  6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LW, C.SW, C.FLW, C.FSW
@@ -156,7 +156,7 @@ function logic unsigned [12-1:0] imm_cls_f (op16_t op, op16_qlf_t qlf);
 endfunction: imm_cls_f
 
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
-function logic signed [12-1:0] imm_cj_f (op16_t op);
+function automatic logic signed [12-1:0] imm_cj_f (op16_t op);
   logic signed [12-1:0] imm = '0;
   {imm[11], imm[4], imm[9:8], imm[10], imm[6], imm[7], imm[3:1], imm[5]} = op.cj.off_12_02;
   return imm;
@@ -164,7 +164,7 @@ endfunction: imm_cj_f
 
 
 // decoder for all immediate immediates
-function imm_i_t imm_c_i_f (op16_t op, op16_frm_t frm);
+function automatic imm_i_t imm_c_i_f (op16_t op, op16_frm_t frm);
   unique case (frm)
     T_CI   ,
     T_CI_0 ,
@@ -179,7 +179,7 @@ function imm_i_t imm_c_i_f (op16_t op, op16_frm_t frm);
 endfunction: imm_c_i_f
 
 // decoder for all load immediates
-function imm_i_t imm_c_l_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function automatic imm_i_t imm_c_l_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   unique case (frm)
     T_CI_L : imm_c_l_f = imm_i_t'(imm_cil_f(op, qlf));
     T_CL   : imm_c_l_f = imm_i_t'(imm_cls_f(op, qlf));
@@ -188,7 +188,7 @@ function imm_i_t imm_c_l_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
 endfunction: imm_c_l_f
 
 // decoder for all store immediates
-function imm_s_t imm_c_s_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function automatic imm_s_t imm_c_s_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   unique case (frm)
     T_CSS  : imm_c_s_f = imm_s_t'(imm_css_f(op, qlf));
     T_CS   : imm_c_s_f = imm_s_t'(imm_cls_f(op, qlf));
@@ -197,7 +197,7 @@ function imm_s_t imm_c_s_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
 endfunction: imm_c_s_f
 
 // decoder for all load/store immediates
-function imm_i_t imm_c_ls_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function automatic imm_i_t imm_c_ls_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   unique case (frm)
     T_CI_L : imm_c_ls_f = imm_i_t'(imm_cil_f(op, qlf));
     T_CSS  : imm_c_ls_f = imm_i_t'(imm_css_f(op, qlf));
@@ -208,13 +208,13 @@ function imm_i_t imm_c_ls_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
 endfunction: imm_c_ls_f
 
 // upper immediate (CI-type)
-function imm_u_t imm_c_u_f (op16_t op);
+function automatic imm_u_t imm_c_u_f (op16_t op);
   imm_c_u_f = 32'($signed({op.ci.imm_12_12, op.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
 endfunction: imm_c_u_f
 
 
 // full immediate decoder (matching structure for base 32-bit instructions)
-function imm_t imm_c_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function automatic imm_t imm_c_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   imm_c_f = '{
     i: imm_i_t'(imm_c_i_f(op, frm     )),
     l: imm_i_t'(imm_c_l_f(op, frm, qlf)),
@@ -228,7 +228,7 @@ endfunction: imm_c_f
 
 
 // full immediate decoder
-function imm32_t imm16_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
+function automatic imm32_t imm16_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   imm32_t imm = '0;
   unique case (frm)
     T_CR  ,
@@ -267,7 +267,7 @@ endfunction: imm16_f
 // 16-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function gpr_t gpr16_f (op16_t op, op16_frm_t frm);
+function automatic gpr_t gpr16_f (op16_t op, op16_frm_t frm);
   unique case (frm)     // rs1,rs2,rd                        rs1  ,                rs2  ,                rd
     T_CR   :  gpr16_f = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
     T_CR_0 :  gpr16_f = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
@@ -305,7 +305,7 @@ endfunction: gpr16_f
 // instruction decoder
 // verilator lint_off CASEOVERLAP
 // verilator lint_off CASEINCOMPLETE
-function ctl_t dec16 (isa_t isa, op16_t op);
+function automatic ctl_t dec16 (isa_t isa, op16_t op);
 
 // temporary variable used only to reduce line length
 ctl_t t;

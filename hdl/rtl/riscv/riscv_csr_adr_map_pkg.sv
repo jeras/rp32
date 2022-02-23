@@ -342,7 +342,7 @@ typedef struct packed {
 // verilator lint_on LITENDIAN
 
 // SCR address decoder function
-function csr_dec_t csr_dec_f (input csr_adr_t adr);
+function automatic csr_dec_t csr_dec_f (input csr_adr_t adr);
                             csr_dec_f.ustatus          = (adr == CSR_MAP_C.ustatus         );
                             csr_dec_f.fflafs           = (adr == CSR_MAP_C.fflafs          );
                             csr_dec_f.frm              = (adr == CSR_MAP_C.frm             );
