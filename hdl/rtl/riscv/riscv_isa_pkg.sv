@@ -161,7 +161,7 @@ typedef enum logic [3-1:0] {
 // instruction size (in bytes)
 ///////////////////////////////////////////////////////////////////////////////
 
-function automatic int unsigned opsiz (logic [16-1:0] op);
+function int unsigned opsiz (logic [16-1:0] op);
        if (op ==? 16'bxxxx_xxxx_x1111111)  opsiz = 10 + 2 * op[14:12];
   else if (op ==? 16'bxxxx_xxxx_x0111111)  opsiz = 8;
   else if (op ==? 16'bxxxx_xxxx_xx011111)  opsiz = 6;
@@ -350,34 +350,34 @@ const imm_t IMM_ILL = '{
 };
 
 // ALU/load immediate (I-type)
-function automatic imm_i_t imm_i_f (op32_i_t op);
+function imm_i_t imm_i_f (op32_i_t op);
   imm_i_f = $signed({op.imm_11_0});
 endfunction: imm_i_f
 
 // store immediate (S-type)
-function automatic imm_s_t imm_s_f (op32_s_t op);
+function imm_s_t imm_s_f (op32_s_t op);
   imm_s_f = $signed({op.imm_11_5, op.imm_4_0});
 endfunction: imm_s_f
 
 // branch immediate (B-type)
-function automatic imm_b_t imm_b_f (op32_b_t op);
+function imm_b_t imm_b_f (op32_b_t op);
   imm_b_f = $signed({op.imm_12, op.imm_11, op.imm_10_5, op.imm_4_1, 1'b0});
 endfunction: imm_b_f
 
 // ALU upper immediate (must be signed for RV64)
-function automatic imm_u_t imm_u_f (op32_u_t op);
+function imm_u_t imm_u_f (op32_u_t op);
   imm_u_f = $signed({op.imm_31_12, 12'h000});
 endfunction: imm_u_f
 
 // ALU jump immediate
-function automatic imm_j_t imm_j_f (op32_j_t op);
+function imm_j_t imm_j_f (op32_j_t op);
   imm_j_f = $signed({op.imm_20, op.imm_19_12, op.imm_11, op.imm_10_1, 1'b0});
 endfunction: imm_j_f
 // jump addition is done in ALU while the PC adder is used to calculate the link address
 
 `ifndef ALTERA_RESERVED_QIS
 // full immediate decoder
-function automatic imm_t imm_f (op32_t op);
+function imm_t imm_f (op32_t op);
   imm_f = '{
     i: imm_i_f(op),
     l: imm_i_f(op),
@@ -389,7 +389,7 @@ function automatic imm_t imm_f (op32_t op);
 endfunction: imm_f
 `else
 // full immediate decoder
-function automatic imm_t imm_f (logic [32-1:0] op);
+function imm_t imm_f (logic [32-1:0] op);
   imm_f = '{
     i: imm_i_f(op),
     l: imm_i_f(op),
@@ -402,7 +402,7 @@ endfunction: imm_f
 `endif
 
 // full immediate decoder
-function automatic imm32_t imm32_f (imm_t imm, op32_frm_t frm);
+function imm32_t imm32_f (imm_t imm, op32_frm_t frm);
   unique case (frm)
     T_R4   : imm32_f = IMM32_ILL;
     T_R    : imm32_f = IMM32_ILL;
@@ -420,7 +420,7 @@ endfunction: imm32_f
 ///////////////////////////////////////////////////////////////////////////////
 
 `ifndef ALTERA_RESERVED_QIS
-function automatic gpr_t gpr32_f (op32_t op, op32_frm_t frm);
+function gpr_t gpr32_f (op32_t op, op32_frm_t frm);
   unique case (frm)
     T_R4   : gpr32_f = GPR_ILL;
     //                    rs1,rs2, rd          rs1,      rs2,      rd
@@ -434,7 +434,7 @@ function automatic gpr_t gpr32_f (op32_t op, op32_frm_t frm);
   endcase
 endfunction: gpr32_f
 `else
-function automatic gpr_t gpr32_f (op32_r_t op, op32_frm_t frm);
+function gpr_t gpr32_f (op32_r_t op, op32_frm_t frm);
   unique case (frm)
     T_R4   : gpr32_f = GPR_ILL;
     //                    rs1,rs2, rd        rs1,    rs2,    rd
@@ -791,9 +791,9 @@ const ctl_t CTL_ILL = '{
 
 // instruction decoder
 `ifndef ALTERA_RESERVED_QIS
-function automatic ctl_t dec32 (isa_t isa, op32_t op);
+function ctl_t dec32 (isa_t isa, op32_t op);
 `else
-function automatic ctl_t dec32 (isa_t isa, logic [32-1:0] op);
+function ctl_t dec32 (isa_t isa, logic [32-1:0] op);
 `endif
 // temporary variable used only to reduce line length
 ctl_t      t;

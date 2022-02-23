@@ -107,7 +107,7 @@ typedef struct packed {
   } Extensions;
 } csr_misa_t;
 
-function automatic csr_misa_t csr_misa_f (isa_t isa);
+function csr_misa_t csr_misa_f (isa_t isa);
   // base ISA
   case (isa.spec.base)
     RV_32E : csr_misa_f.MXL = XLEN_32;
