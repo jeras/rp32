@@ -46,7 +46,7 @@ module r5p_core #(
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // timing versus area compromises
-  bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit
+  bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
   bit          CFG_BRA = 1'b1,  // enable dedicated BRanch Adder
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   // implementation device (ASIC/FPGA vendor/device)
