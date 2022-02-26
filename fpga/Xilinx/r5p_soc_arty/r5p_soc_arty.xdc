@@ -6,9 +6,14 @@
 ## Clock signal
 set_property -dict { PACKAGE_PIN E3    IOSTANDARD LVCMOS33 } [get_ports { CLK100MHZ }]; #IO_L12P_T1_MRCC_35 Sch=gclk[100]
 #create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];
-#create_clock -period 40.000 -name clk -waveform {0.000 20.000} [get_ports CLK100MHZ];  # 25MHz
-#create_clock -period 30.000 -name clk -waveform {0.000 15.000} [get_ports CLK100MHZ];  # 33MHz
-create_clock -period 20.000 -name clk -waveform {0.000 15.000} [get_ports CLK100MHZ];  # 50MHz
+#create_clock -period 100.000 -name clk -waveform {0.000 50.000} [get_ports CLK100MHZ];  #  10MHz
+#create_clock -period  40.000 -name clk -waveform {0.000 20.000} [get_ports CLK100MHZ];  #  25MHz
+#create_clock -period  30.000 -name clk -waveform {0.000 15.000} [get_ports CLK100MHZ];  #  33MHz
+create_clock -period  20.000 -name clk -waveform {0.000 10.000} [get_ports CLK100MHZ];  #  50MHz
+#create_clock -period  15.000 -name clk -waveform {0.000  7.500} [get_ports CLK100MHZ];  #  66MHz
+#create_clock -period  12.500 -name clk -waveform {0.000  6.250} [get_ports CLK100MHZ];  #  80MHz
+#create_clock -period  12.000 -name clk -waveform {0.000  6.000} [get_ports CLK100MHZ];  #  83MHz
+#create_clock -period  10.000 -name clk -waveform {0.000  5.000} [get_ports CLK100MHZ];  # 100MHz
 
 ## Switches
 #set_property -dict { PACKAGE_PIN A8    IOSTANDARD LVCMOS33 } [get_ports { sw[0] }]; #IO_L12N_T1_MRCC_16 Sch=sw[0]
