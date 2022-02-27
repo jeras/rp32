@@ -29,10 +29,13 @@ module r5p_soc_top #(
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
-//isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
-//                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
-//                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+`ifdef ENABLE_CSR
+  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
+                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+`else
   isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
+`endif
 `endif
   // instruction bus
   int unsigned IAW = 14,    // instruction address width (byte address)
@@ -136,7 +139,7 @@ r5p_bus_dec #(
 );
 
 ////////////////////////////////////////////////////////////////////////////////
-// memory
+// memory instances
 ////////////////////////////////////////////////////////////////////////////////
 
 generate

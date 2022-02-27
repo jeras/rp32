@@ -24,10 +24,13 @@ module r5p_tb #(
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
-//isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
-//                 : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
-//                            : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+`ifdef ENABLE_CSR
+  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
+                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+`else
   isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+`endif
   // instruction bus
   int unsigned IAW = 22,     // instruction address width
   int unsigned IDW = 32,     // instruction data    width
