@@ -471,7 +471,7 @@ typedef struct packed {
   logic                   [XLEN-1:0] fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
   logic                   [XLEN-1:0] frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
   logic                   [XLEN-1:0] fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
-  logic [12'h045:12'h0ff] [XLEN-1:0] res_004_0ff  ;
+  logic [12'h004:12'h0ff] [XLEN-1:0] res_004_0ff  ;
 
   // Supervisor Trap Setup
   logic                   [XLEN-1:0] sstatus      ;  // 0x100       // Supervisor status register.
@@ -801,7 +801,7 @@ typedef enum bit [12-1:0] {
   csr__fflafs                          = 12'h001,  // Floating-Point Accrued Exceptions.
   csr__frm                             = 12'h002,  // Floating-Point Dynamic Rounding Mode.
   csr__fcsr                            = 12'h003,  // Floating-Point Control and Status Register (frm + fflags).
-  csr__res           [12'h004:12'h0ff] = 12'h0ff,
+  csr__res           [12'h004:12'h0ff] = 12'h004,
   csr__sstatus                         = 12'h100,  // Supervisor status register.
   csr__res           [12'h101:12'h101] = 12'h101,
   csr__sedeleg                         = 12'h102,  // Supervisor exception delegation register.
