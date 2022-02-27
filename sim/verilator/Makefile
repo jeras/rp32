@@ -9,7 +9,8 @@ PATH_SRC=../../hdl/src
 # SystemVerilog RTL
 RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
 RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_csr_pkg.sv
+RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
+RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
 #RTL+=${PATH_RTL}/riscv_csr_adr_map_pkg.sv
 RTL+=${PATH_RTL}/core/r5p_pkg.sv
 RTL+=${PATH_RTL}/core/r5p_bru.sv
@@ -19,8 +20,9 @@ RTL+=${PATH_RTL}/core/r5p_mdu.sv
 #RTL+=${PATH_RTL}/core/r5p_fpu.sv
 RTL+=${PATH_RTL}/core/r5p_lsu.sv
 RTL+=${PATH_RTL}/core/r5p_wbu.sv
-RTL+=${PATH_RTL}/core/r5p_csr_pkg.sv
-RTL+=${PATH_RTL}/core/r5p_csr.sv
+#RTL+=${PATH_RTL}/core/r5p32_csr_pkg.sv
+#RTL+=${PATH_RTL}/core/r5p64_csr_pkg.sv
+#RTL+=${PATH_RTL}/core/r5p_csr.sv
 RTL+=${PATH_RTL}/core/r5p_core.sv
 
 # SoC files
