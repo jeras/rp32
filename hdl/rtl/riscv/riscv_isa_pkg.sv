@@ -471,15 +471,16 @@ const pc_t PC_ILL = PC_PCI;
 typedef op32_b_func3_t bru_t;
 
 // ALU input operand multiplexer
-// the encoding is not directly derived from opcode
-// branch immediates are not handled here
+// NOTE: branch immediates are not handled here
+// TODO: the encoding is not directly derived from opcode
 typedef enum logic [3-1:0] {
   AI_R1_R2 = 3'b0_00,  // GPR rs1 | GPR rs2      // R-type
   AI_R1_II = 3'b0_01,  // GPR rs1 | I-immediate  // I-type (arithmetic/logic)
   AI_R1_IL = 3'b0_10,  // GPR rs1 | L-immediate  // I-type (load)
   AI_R1_IS = 3'b0_11,  // GPR rs1 | S-immediate  // S-type (store)
   AI_PC_IU = 3'b1_10,  // PC      | U-immediate  // U-type
-  AI_PC_IJ = 3'b1_11   // PC      | J-immediate  // J-type (jump)
+  AI_PC_IJ = 3'b1_11,  // PC      | J-immediate  // J-type (jump)
+  AI_R1_RA = 3'b1_00   // GPR rs1 | GPR rs2[5:0] // A-type (shift ammount)
 } alu_in_t;
 
 // don't care value
@@ -843,9 +844,9 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   32'b0000_000?_????_????_?010_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLT , R_SX}, LS_X, WB_ALU}; end  // SLT
   32'b0000_000?_????_????_?011_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLTU, R_UX}, LS_X, WB_ALU}; end  // SLTU
   32'b0000_000?_????_????_?100_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_XOR , R_UX}, LS_X, WB_ALU}; end  // XOR
-  32'b0000_000?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLL , R_UX}, LS_X, WB_ALU}; end  // SLL
-  32'b0000_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // SRL
-  32'b0100_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // SRA
+  32'b0000_000?_????_????_?001_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SLL , R_UX}, LS_X, WB_ALU}; end  // SLL
+  32'b0000_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SRL , R_UX}, LS_X, WB_ALU}; end  // SRL
+  32'b0100_000?_????_????_?101_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SRA , R_SX}, LS_X, WB_ALU}; end  // SRA
   32'b0000_000?_????_????_?110_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_OR  , R_UX}, LS_X, WB_ALU}; end  // OR
   32'b0000_000?_????_????_?111_????_?011_0011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_AND , R_UX}, LS_X, WB_ALU}; end  // AND
   32'b????_????_????_????_?000_????_?000_1111: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_XXX}; end  // FENCE
@@ -869,9 +870,9 @@ if (|(isa.spec.base & (RV_64I | RV_128I))) begin casez (op)
   32'b0100_000?_????_????_?101_????_?001_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAIW
   32'b0000_000?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // ADDW
   32'b0100_000?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_SW}, LS_X, WB_ALU}; end  // SUBW
-  32'b0000_000?_????_????_?001_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLL , R_SW}, LS_X, WB_ALU}; end  // SLLW
-  32'b0000_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLW
-  32'b0100_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAW
+  32'b0000_000?_????_????_?001_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SLL , R_SW}, LS_X, WB_ALU}; end  // SLLW
+  32'b0000_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLW
+  32'b0100_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAW
 endcase end
 
 // TODO: encoding is not finalized, the only reference I could find was:
@@ -888,9 +889,9 @@ if (|(isa.spec.base & (RV_128I))) begin casez (op)
   32'b0100_00??_????_????_?101_????_?101_1011: begin f = T_I; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_II, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAID
   32'b0000_000?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_ADD , R_SW}, LS_X, WB_ALU}; end  // ADDD
   32'b0100_000?_????_????_?000_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SUB , R_SW}, LS_X, WB_ALU}; end  // SUBD
-  32'b0000_000?_????_????_?001_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SLL , R_UW}, LS_X, WB_ALU}; end  // SLLD
-  32'b0000_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLD
-  32'b0100_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_R2, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAD
+  32'b0000_000?_????_????_?001_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SLL , R_UW}, LS_X, WB_ALU}; end  // SLLD
+  32'b0000_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SRL , R_UW}, LS_X, WB_ALU}; end  // SRLD
+  32'b0100_000?_????_????_?101_????_?011_1011: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX, '{AI_R1_RA, AO_SRA , R_SW}, LS_X, WB_ALU}; end  // SRAD
 endcase end
 
 // RV32 M standard extension

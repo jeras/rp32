@@ -50,8 +50,9 @@ module r5p_core #(
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // timing versus area compromises
   bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
-  bit          CFG_BRA = 1'b0,  // enable dedicated BRanch Adder
+  bit          CFG_BRA = 1'b1,  // enable dedicated BRanch Adder
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
+  bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -309,7 +310,8 @@ r5p_gpr #(
 // base ALU
 r5p_alu #(
   .XLEN    (XLEN),
-  .CFG_LSA (CFG_LSA)
+  .CFG_LSA (CFG_LSA),
+  .CFG_LOM (CFG_LOM)
 ) alu (
    // system signals
   .clk     (clk),
