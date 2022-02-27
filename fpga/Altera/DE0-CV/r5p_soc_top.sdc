@@ -37,23 +37,21 @@ set_time_format -unit ns -decimal_places 3
 # Create Clock
 #**************************************************************
 
-#create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}]  # 50MHz
-
-#create_clock -name {CLOCK_SYS} -period 100.000 -waveform {0.000 50.000} [get_ports {CLOCK_50}];  #  10MHz
-#create_clock -name {CLOCK_SYS} -period  40.000 -waveform {0.000 20.000} [get_ports {CLOCK_50}];  #  25MHz
-#create_clock -name {CLOCK_SYS} -period  30.000 -waveform {0.000 15.000} [get_ports {CLOCK_50}];  #  33MHz
-#create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}];  #  50MHz
-create_clock -name {CLOCK_SYS} -period  15.000 -waveform {0.000  7.500} [get_ports {CLOCK_50}];  #  66MHz
-#create_clock -name {CLOCK_SYS} -period  12.500 -waveform {0.000  6.250} [get_ports {CLOCK_50}];  #  80MHz
-#create_clock -name {CLOCK_SYS} -period  12.000 -waveform {0.000  6.000} [get_ports {CLOCK_50}];  #  83MHz
-#create_clock -name {CLOCK_SYS} -period  10.000 -waveform {0.000  5.000} [get_ports {CLOCK_50}];  # 100MHz
-
+#create_clock -name {CLOCK_50} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}]  # 50MHz
 
 #**************************************************************
 # Create Generated Clock
 #**************************************************************
 
-
+#create_clock -name {CLOCK_SYS} -period 100.000 -waveform {0.000 50.000} [get_ports {CLOCK_50}];  #  10MHz
+#create_clock -name {CLOCK_SYS} -period  40.000 -waveform {0.000 20.000} [get_ports {CLOCK_50}];  #  25MHz
+#create_clock -name {CLOCK_SYS} -period  30.000 -waveform {0.000 15.000} [get_ports {CLOCK_50}];  #  33MHz
+create_clock -name {CLOCK_SYS} -period  25.000 -waveform {0.000 12.500} [get_ports {CLOCK_50}];  #  40MHz
+#create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}];  #  50MHz
+#create_clock -name {CLOCK_SYS} -period  15.000 -waveform {0.000  7.500} [get_ports {CLOCK_50}];  #  66MHz
+#create_clock -name {CLOCK_SYS} -period  12.500 -waveform {0.000  6.250} [get_ports {CLOCK_50}];  #  80MHz
+#create_clock -name {CLOCK_SYS} -period  12.000 -waveform {0.000  6.000} [get_ports {CLOCK_50}];  #  83MHz
+#create_clock -name {CLOCK_SYS} -period  10.000 -waveform {0.000  5.000} [get_ports {CLOCK_50}];  # 100MHz
 
 #**************************************************************
 # Set Clock Latency
@@ -65,15 +63,14 @@ create_clock -name {CLOCK_SYS} -period  15.000 -waveform {0.000  7.500} [get_por
 # Set Clock Uncertainty
 #**************************************************************
 
-set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -setup 0.100
-set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -hold  0.060
-set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -setup 0.100
-set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -hold  0.060
-set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -setup 0.100
-set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -hold  0.060
-set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -setup 0.100
-set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -hold  0.060
-
+set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -setup 0.100;
+set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -hold  0.060;
+set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -setup 0.100;
+set_clock_uncertainty -rise_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -hold  0.060;
+set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -setup 0.100;
+set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -rise_to [get_clocks {CLOCK_SYS}] -hold  0.060;
+set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -setup 0.100;
+set_clock_uncertainty -fall_from [get_clocks {CLOCK_SYS}] -fall_to [get_clocks {CLOCK_SYS}] -hold  0.060;
 
 #**************************************************************
 # Set Input Delay
