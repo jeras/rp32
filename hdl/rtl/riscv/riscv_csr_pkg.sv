@@ -466,23 +466,12 @@ typedef struct packed {
 // SCR address map structure
 // verilator lint_off LITENDIAN
 typedef struct packed {
-  // User Trap Setup
-  logic                   [XLEN-1:0] ustatus      ;  // 0x000       // User status register.
+  logic [12'h000:12'h000] [XLEN-1:0] res_000_000  ;
   // User Floating-Point CSRs
   logic                   [XLEN-1:0] fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
   logic                   [XLEN-1:0] frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
   logic                   [XLEN-1:0] fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
-  // User Trap Setup (continued)
-  logic                   [XLEN-1:0] uie          ;  // 0x004       // User interrupt-enable register.
-  logic                   [XLEN-1:0] utvec        ;  // 0x005       // User trap handler base address.
-  logic [12'h006:12'h03f] [XLEN-1:0] res_006_03f  ;
-  // User Trap Handling
-  logic                   [XLEN-1:0] uscratch     ;  // 0x040       // Scratch register for user trap handlers.
-  logic                   [XLEN-1:0] uepc         ;  // 0x041       // User exception program counter.
-  logic                   [XLEN-1:0] ucause       ;  // 0x042       // User trap cause.
-  logic                   [XLEN-1:0] utval        ;  // 0x043       // User bad address or instruction.
-  logic                   [XLEN-1:0] uip          ;  // 0x044       // User interrupt pending.
-  logic [12'h045:12'h0ff] [XLEN-1:0] res_045_0ff  ;
+  logic [12'h045:12'h0ff] [XLEN-1:0] res_004_0ff  ;
 
   // Supervisor Trap Setup
   logic                   [XLEN-1:0] sstatus      ;  // 0x100       // Supervisor status register.
@@ -650,7 +639,7 @@ typedef union packed {
 `define WPRI 'x  // x - (WPRI) Reserved Writes Preserve Values, Reads Ignore Values (should be wired to 0)
 `define WLRL '1  // 1 - (WLRL) Write/Read Only Legal Values
 `define WARL 'z  // z - (WARL) Write Any Values, Reads Legal Values (?)
-`define WERE '0  // 0 - (WERE) Write Error, Read Error (NOTE: not a neme from the specification)
+`define WERE '0  // 0 - (WERE) Write Error, Read Error (NOTE: not a name from the specification)
                  //            non-existent CSR, access shall raise an illegal instruction exception
 
 /*
@@ -808,19 +797,11 @@ localparam csr_map_st CSR_MAP_WR = '{
 ///////////////////////////////////////////////////////////////////////////////
 
 typedef enum bit [12-1:0] {
-  csr__ustatus                         = 12'h000,  // User status register.
+  csr__res           [12'h000:12'h000] = 12'h000,
   csr__fflafs                          = 12'h001,  // Floating-Point Accrued Exceptions.
   csr__frm                             = 12'h002,  // Floating-Point Dynamic Rounding Mode.
   csr__fcsr                            = 12'h003,  // Floating-Point Control and Status Register (frm + fflags).
-  csr__uie                             = 12'h004,  // User interrupt-enable register.
-  csr__utvec                           = 12'h005,  // User trap handler base address.
-  csr__res           [12'h006:12'h03f] = 12'h006,
-  csr__uscratch                        = 12'h040,  // Scratch register for user trap handlers.
-  csr__uepc                            = 12'h041,  // User exception program counter.
-  csr__ucause                          = 12'h042,  // User trap cause.
-  csr__utval                           = 12'h043,  // User bad address or instruction.
-  csr__uip                             = 12'h044,  // User interrupt pending.
-  csr__res           [12'h045:12'h0ff] = 12'h045,
+  csr__res           [12'h004:12'h0ff] = 12'h0ff,
   csr__sstatus                         = 12'h100,  // Supervisor status register.
   csr__res           [12'h101:12'h101] = 12'h101,
   csr__sedeleg                         = 12'h102,  // Supervisor exception delegation register.

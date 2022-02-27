@@ -23,17 +23,9 @@ import riscv_isa_pkg::*;
 // SCR address map structure
 // verilator lint_off LITENDIAN
 typedef struct packed {
-  csr_adr_t        ustatus      ;  // 0x000       // User status register.
   csr_adr_t        fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
   csr_adr_t        frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
   csr_adr_t        fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
-  csr_adr_t        uie          ;  // 0x004       // User interrupt-enable register.
-  csr_adr_t        utvec        ;  // 0x005       // User trap handler base address.
-  csr_adr_t        uscratch     ;  // 0x040       // Scratch register for user trap handlers.
-  csr_adr_t        uepc         ;  // 0x041       // User exception program counter.
-  csr_adr_t        ucause       ;  // 0x042       // User trap cause.
-  csr_adr_t        utval        ;  // 0x043       // User bad address or instruction.
-  csr_adr_t        uip          ;  // 0x044       // User interrupt pending.
   csr_adr_t        sstatus      ;  // 0x100       // Supervisor status register.
   csr_adr_t        sedeleg      ;  // 0x102       // Supervisor exception delegation register.
   csr_adr_t        sideleg      ;  // 0x103       // Supervisor interrupt delegation register.
@@ -121,17 +113,9 @@ typedef struct packed {
 
 // constant containing register addresses
 localparam csr_map_t CSR_MAP_C = '{
-  ustatus      :   12'h000,
   fflafs       :   12'h001,
   frm          :   12'h002,
   fcsr         :   12'h003,
-  uie          :   12'h004,
-  utvec        :   12'h005,
-  uscratch     :   12'h040,
-  uepc         :   12'h041,
-  ucause       :   12'h042,
-  utval        :   12'h043,
-  uip          :   12'h044,
   sstatus      :   12'h100,
   sedeleg      :   12'h102,
   sideleg      :   12'h103,
@@ -244,17 +228,9 @@ localparam csr_map_t CSR_MAP_C = '{
 // SCR address decoder structure
 // verilator lint_off LITENDIAN
 typedef struct packed {
-  logic        ustatus      ;  // 0x000       // User status register.
   logic        fflafs       ;  // 0x001       // Floating-Point Accrued Exceptions.
   logic        frm          ;  // 0x002       // Floating-Point Dynamic Rounding Mode.
   logic        fcsr         ;  // 0x003       // Floating-Point Control and Status Register (frm + fflags).
-  logic        uie          ;  // 0x004       // User interrupt-enable register.
-  logic        utvec        ;  // 0x005       // User trap handler base address.
-  logic        uscratch     ;  // 0x040       // Scratch register for user trap handlers.
-  logic        uepc         ;  // 0x041       // User exception program counter.
-  logic        ucause       ;  // 0x042       // User trap cause.
-  logic        utval        ;  // 0x043       // User bad address or instruction.
-  logic        uip          ;  // 0x044       // User interrupt pending.
   logic        sstatus      ;  // 0x100       // Supervisor status register.
   logic        sedeleg      ;  // 0x102       // Supervisor exception delegation register.
   logic        sideleg      ;  // 0x103       // Supervisor interrupt delegation register.
@@ -343,17 +319,9 @@ typedef struct packed {
 
 // SCR address decoder function
 function automatic csr_dec_t csr_dec_f (input csr_adr_t adr);
-                            csr_dec_f.ustatus          = (adr == CSR_MAP_C.ustatus         );
                             csr_dec_f.fflafs           = (adr == CSR_MAP_C.fflafs          );
                             csr_dec_f.frm              = (adr == CSR_MAP_C.frm             );
                             csr_dec_f.fcsr             = (adr == CSR_MAP_C.fcsr            );
-                            csr_dec_f.uie              = (adr == CSR_MAP_C.uie             );
-                            csr_dec_f.utvec            = (adr == CSR_MAP_C.utvec           );
-                            csr_dec_f.uscratch         = (adr == CSR_MAP_C.uscratch        );
-                            csr_dec_f.uepc             = (adr == CSR_MAP_C.uepc            );
-                            csr_dec_f.ucause           = (adr == CSR_MAP_C.ucause          );
-                            csr_dec_f.utval            = (adr == CSR_MAP_C.utval           );
-                            csr_dec_f.uip              = (adr == CSR_MAP_C.uip             );
                             csr_dec_f.sstatus          = (adr == CSR_MAP_C.sstatus         );
                             csr_dec_f.sedeleg          = (adr == CSR_MAP_C.sedeleg         );
                             csr_dec_f.sideleg          = (adr == CSR_MAP_C.sideleg         );
