@@ -16,11 +16,11 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-package riscv_csr_pkg;
+package rv32_csr_pkg;
 
 import riscv_isa_pkg::*;
 
-localparam int unsigned  XLEN = 64;
+localparam int unsigned  XLEN = 32;
 localparam int unsigned MXLEN = XLEN;
 localparam int unsigned SXLEN = XLEN;
 localparam int unsigned UXLEN = XLEN;
@@ -149,7 +149,6 @@ endfunction: csr_misa_f
 
 // Machine Vendor ID Register
 typedef struct packed {
-  logic [MXLEN-1:32] zero;    // **:32 //
   logic    [32-1:07] Bank;    // 31:07 //
   logic    [   6:00] Offset;  // 06:00 //
 } csr_mvendorid_t;
@@ -168,42 +167,6 @@ typedef struct packed {
 typedef struct packed {
   logic [MXLEN-1:0] Hart_ID;  //
 } csr_mhartid_t;
-
-// Machine Status Register
-typedef struct packed {
-  logic         SD        ;  // 63    // SD=((FS==11) OR (XS==11)))
-  logic [62:38] wpri_62_38;  // 62:38 //
-  // Endianness Control
-  csr_endian_t  MBE       ;  // 37    // M-mode endianness
-  csr_endian_t  SBE       ;  // 36    // S-mode endianness
-  // Base ISA Control
-  csr_xlen_t    SXL       ;  // 35:34 // S-mode XLEN
-  csr_xlen_t    UXL       ;  // 33:32 // U-mode XLEN
-  logic [31:23] wpri_31_23;  // 31:23 //
-  // Virtualization Support
-  logic         TSR       ;  // 22    // Trap SRET
-  logic         TW        ;  // 21    // Timeout Wait
-  logic         TVM       ;  // 20    // Trap Virtual Memory
-  // Memory Privilige
-  logic         MXR       ;  // 19    // Make eXecutable Readable
-  logic         SUM       ;  // 18    // permit Supervisor User Memory access
-  logic         MPRV      ;  // 17    // Modify PRiVilege
-  // Extension Context Status
-  csr_context_t XS        ;  // 16:15 // user-mode extensions context status
-  csr_context_t FS        ;  // 14:13 // floating-point context status
-  // Privilege and Global Interrupt-Enable Stack
-  isa_level_t   MPP       ;  // 12:11 // machine previous privilege mode
-  logic [10:09] wpri_10_09;  // 10: 9 //
-  logic         SPP       ;  //  8    // supervisor previous privilege mode
-  logic         MPIE      ;  //  7    // machine interrupt-enable active prior to the trap
-  csr_endian_t  UBE       ;  //  6    // U-mode endianness
-  logic         SPIE      ;  //  5    // supervisor interrupt-enable active prior to the trap
-  logic [04:04] wpri_04_04;  //  4    //
-  logic         MIE       ;  //  3    // machine global interrupt-enable
-  logic [02:02] wpri_02_02;  //  2    //
-  logic         SIE       ;  //  1    // supervisor global interrupt-enable
-  logic [00:00] wpri_00_00;  //  0    //
-} csr_mstatus_rv64_t;
 
 // Machine Status Register (low)
 typedef struct packed {
@@ -232,7 +195,7 @@ typedef struct packed {
   logic [02:02] wpri_02_02;  //  2    //
   logic         SIE       ;  //  1    // supervisor global interrupt-enable
   logic [00:00] wpri_00_00;  //  0    //
-} csr_mstatus_rv32_t;
+} csr_mstatus_t;
 
 // Machine Status Register (high)
 typedef struct packed {
@@ -241,7 +204,7 @@ typedef struct packed {
   csr_endian_t  MBE       ;  //  5    // M-mode endianness
   csr_endian_t  SBE       ;  //  4    // S-mode endianness
   logic [03:00] wpri_03_00;  //  3: 0 //
-} csr_mstatush_rv32_t;
+} csr_mstatush_t;
 
 // Machine Trap-Vector Base-Address Register
 typedef struct packed {
@@ -296,12 +259,12 @@ typedef struct packed {
 } csr_mie_t;
 
 // Hardware Performance Monitor
-typedef logic    [64-1:0] csr_mhpmcounter_t;
+typedef logic    [32-1:0] csr_mhpmcounter_t;
+typedef logic    [32-1:0] csr_mhpmcounterh_t;
 typedef logic [MXLEN-1:0] csr_mhpmevent_t;
 
 // Machine Counter-Enable Register
 typedef struct packed {
-  logic [MXLEN-1:32] zero_63_32;  // **:32 //
   logic      [31:03] HPM       ;  // 31:03 // hpmcounter[*]
   logic              IR        ;  //  2    // instret
   logic              TM        ;  //  1    // time
@@ -310,7 +273,6 @@ typedef struct packed {
 
 // Machine Counter-Inhibit Register
 typedef struct packed {
-  logic [MXLEN-1:32] zero_63_32;  // **:32 //
   logic      [31:03] HPM       ;  // 31:03 // hpmcounter[*]
   logic              IR        ;  //  2    // instret
   logic              zero_01_01;  //  1    // time (always 1'b0)
@@ -509,7 +471,7 @@ typedef struct packed {
   logic [12'h281:12'h2ff] [XLEN-1:0] res_281_2ff  ;
 
   // Machine Trap Setup
-  csr_mstatus_rv64_t                 mstatus      ;  // 0x300       // Machine status register.
+  csr_mstatus_t                      mstatus      ;  // 0x300       // Machine status register.
   csr_misa_t                         misa         ;  // 0x301       // ISA and extensions
   logic                   [XLEN-1:0] medeleg      ;  // 0x302       // Machine exception delegation register.
   logic                   [XLEN-1:0] mideleg      ;  // 0x303       // Machine interrupt delegation register.
@@ -517,7 +479,7 @@ typedef struct packed {
   csr_mtvec_t                        mtvec        ;  // 0x305       // Machine trap-handler base address.
   csr_mcounteren_t                   mcounteren   ;  // 0x306       // Machine counter enable.
   logic [12'h307:12'h30f] [XLEN-1:0] res_307_30f  ;
-  logic                   [XLEN-1:0] mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
+  csr_mstatush_t                     mstatush     ;  // 0x310       // Additional machine status register, RV32 only.
   logic [12'h311:12'h31f] [XLEN-1:0] res_311_31f  ;
   // Machine Counter Setup
   csr_mcountinhibit_t                mcountinhibit;  // 0x320       // Machine counter-inhibit register.
@@ -587,36 +549,36 @@ typedef struct packed {
   logic                   [XLEN-1:0] dscratch1    ;  // 0x7B3       // Debug scratch register 1.
   logic [12'h7b4:12'haff] [XLEN-1:0] res_7b4_aff  ;
   // Machine Counter/Timers
-  logic                   [XLEN-1:0] mcycle       ;  // 0xB00       // Machine cycle counter.
-  logic [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
-  logic                   [XLEN-1:0] minstret     ;  // 0xB02       // Machine instructions-retired counter.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounter  ;  // 0xB03:0xB1f // Machine performance-monitoring counter.
-  logic [12'hb20:12'hb7f] [XLEN-1:0] res_b20_b7f  ;
-  logic                   [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
-  logic [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
-  logic                   [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB83:0xB9F // Upper 32 bits of mhpmcounter*, RV32 only.
-  logic [12'hba0:12'hbff] [XLEN-1:0] res_ba0_bff  ;
+  logic                                [XLEN-1:0] mcycle       ;  // 0xB00       // Machine cycle counter.
+  logic              [12'hb01:12'hb01] [XLEN-1:0] res_b01_b01  ;
+  logic                                [XLEN-1:0] minstret     ;  // 0xB02       // Machine instructions-retired counter.
+  csr_mhpmcounter_t  [12'h003:12'h01f]            mhpmcounter  ;  // 0xB03:0xB1f // Machine performance-monitoring counter.
+  logic              [12'hb20:12'hb7f] [XLEN-1:0] res_b20_b7f  ;
+  logic                                [XLEN-1:0] mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
+  logic              [12'hb81:12'hb81] [XLEN-1:0] res_b81_b81  ;
+  logic                                [XLEN-1:0] minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
+  csr_mhpmcounterh_t [12'h003:12'h01f] [XLEN-1:0] mhpmcounterh ;  // 0xB83:0xB9F // Upper 32 bits of mhpmcounter*, RV32 only.
+  logic              [12'hba0:12'hbff] [XLEN-1:0] res_ba0_bff  ;
   // User Counter/Timers
-  logic                   [XLEN-1:0] cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
-  logic                   [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
-  logic                   [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
-  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03:0xC1F // Performance-monitoring counter. (3~31)
-  logic [12'hc20:12'hc7f] [XLEN-1:0] res_c20_c7f  ;
-  logic                   [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
-  logic                   [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
-  logic                   [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
-  logic [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83:0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
-  logic [12'hca0:12'he11] [XLEN-1:0] res_ca0_e11  ;
+  logic                                [XLEN-1:0] cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
+  logic                                [XLEN-1:0] time_        ;  // 0xC01       // Timer for RDTIME instruction.
+  logic                                [XLEN-1:0] instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
+  logic              [12'h003:12'h01f] [XLEN-1:0] hpmcounter   ;  // 0xC03:0xC1F // Performance-monitoring counter. (3~31)
+  logic              [12'hc20:12'hc7f] [XLEN-1:0] res_c20_c7f  ;
+  logic                                [XLEN-1:0] cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
+  logic                                [XLEN-1:0] timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
+  logic                                [XLEN-1:0] instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
+  logic              [12'h003:12'h01f] [XLEN-1:0] hpmcounterh  ;  // 0xC83:0xC9F // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
+  logic              [12'hca0:12'he11] [XLEN-1:0] res_ca0_e11  ;
   // Hypervisor Trap Handling (continued)
-  logic                   [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
-  logic [12'he13:12'hf10] [XLEN-1:0] res_e13_f10  ;
+  logic                                [XLEN-1:0] hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
+  logic              [12'he13:12'hf10] [XLEN-1:0] res_e13_f10  ;
   // Machine Information Registers
-  csr_mvendorid_t                    mvendorid    ;  // 0xF11       // Vendor ID.
-  csr_marchid_t                      marchid      ;  // 0xF12       // Architecture ID.
-  csr_mimpid_t                       mimpid       ;  // 0xF13       // Implementation ID.
-  csr_mhartid_t                      mhartid      ;  // 0xF14       // Hardware thread ID.
-  logic [12'hf15:12'hfff] [XLEN-1:0] res_f15_fff  ;
+  csr_mvendorid_t                                 mvendorid    ;  // 0xF11       // Vendor ID.
+  csr_marchid_t                                   marchid      ;  // 0xF12       // Architecture ID.
+  csr_mimpid_t                                    mimpid       ;  // 0xF13       // Implementation ID.
+  csr_mhartid_t                                   mhartid      ;  // 0xF14       // Hardware thread ID.
+  logic              [12'hf15:12'hfff] [XLEN-1:0] res_f15_fff  ;
 } csr_map_st;
 // verilator lint_on LITENDIAN
 
@@ -920,4 +882,4 @@ typedef enum bit [12-1:0] {
   csr__res           [12'hf15:12'hfff] = 12'hf15
 } csr_dec_t;
 
-endpackage: riscv_csr_pkg
+endpackage: rv32_csr_pkg

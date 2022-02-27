@@ -20,10 +20,10 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-package r5p_csr_pkg;
+package r5p32_csr_pkg;
 
 import riscv_isa_pkg::*;
-import riscv_csr_pkg::*;
+import rv32_csr_pkg::*;
 
 import r5p_pkg::*;
 
@@ -48,12 +48,10 @@ localparam csr_misa_t CSR_WEM_MISA = '0;
 // Machine Vendor ID Register
 // NOTE: JEDEC ID values are not assigned yet
 localparam csr_mvendorid_t CSR_RST_MVENDORID = '{
-   zero  : 32'h0000_0000,  // **:32 //
    Bank  : '0,             // 31:07 //
    Offset: '0              // 06:00 //
 };
 localparam csr_mvendorid_t CSR_WEM_MVENDORID = '{
-   zero  : 32'h0000_0000,  // **:32 //
    Bank  : '0,             // 31:07 //
    Offset: '0              // 06:00 //
 };
@@ -70,15 +68,40 @@ localparam csr_mimpid_t CSR_WEM_MIMPID = MXLEN'(0);
 localparam csr_mhartid_t CSR_RST_MHARTID = MXLEN'(0);
 localparam csr_mhartid_t CSR_WEM_MHARTID = MXLEN'(0);
 
-// Machine Status Register
-localparam csr_mstatus_rv64_t CSR_RST_MSTATUS = '{
+
+// Machine Status Register (low)
+typedef struct packed {
+  logic         SD        ;  // 31    // SD=((FS==11) OR (XS==11)))
+  logic [30:23] wpri_30_23;  // 20:23 //
+  // Virtualization Support
+  logic         TSR       ;  // 22    // Trap SRET
+  logic         TW        ;  // 21    // Timeout Wait
+  logic         TVM       ;  // 20    // Trap Virtual Memory
+  // Memory Privilige
+  logic         MXR       ;  // 19    // Make eXecutable Readable
+  logic         SUM       ;  // 18    // permit Supervisor User Memory access
+  logic         MPRV      ;  // 17    // Modify PRiVilege
+  // Extension Context Status
+  csr_context_t XS        ;  // 16:15 // user-mode extensions context status
+  csr_context_t FS        ;  // 14:13 // floating-point context status
+  // Privilege and Global Interrupt-Enable Stack
+  isa_level_t   MPP       ;  // 12:11 // machine previous privilege mode
+  logic [10:09] wpri_10_09;  // 10: 9 //
+  logic         SPP       ;  //  8    // supervisor previous privilege mode
+  logic         MPIE      ;  //  7    // machine interrupt-enable active prior to the trap
+  csr_endian_t  UBE       ;  //  6    // U-mode endianness
+  logic         SPIE      ;  //  5    // supervisor interrupt-enable active prior to the trap
+  logic [04:04] wpri_04_04;  //  4    //
+  logic         MIE       ;  //  3    // machine global interrupt-enable
+  logic [02:02] wpri_02_02;  //  2    //
+  logic         SIE       ;  //  1    // supervisor global interrupt-enable
+  logic [00:00] wpri_00_00;  //  0    //
+} csr_mstatus_t;
+
+
+// Machine Status Register (low)
+localparam csr_mstatus_t CSR_RST_MSTATUS = '{
   SD  : 1'b0,           // SD=((FS==11) OR (XS==11)))
-  // Endianness Control
-  MBE : ENDIAN_LITTLE,  // M-mode endianness
-  SBE : ENDIAN_LITTLE,  // S-mode endianness
-  // Base ISA Control
-  SXL : XLEN_64,        // S-mode XLEN
-  UXL : XLEN_64,        // U-mode XLEN
   // Virtualization Support
   TSR : 1'b0,           // Trap SRET
   TW  : 1'b0,           // Timeout Wait
@@ -100,14 +123,8 @@ localparam csr_mstatus_rv64_t CSR_RST_MSTATUS = '{
   SIE : 1'b0,           // supervisor global interrupt-enable
   default: '0
 };
-localparam csr_mstatus_rv64_t CSR_WEM_MSTATUS = '{
+localparam csr_mstatus_t CSR_WEM_MSTATUS = '{
   SD  :                1'b0,    // SD=((FS==11) OR (XS==11)))
-  // Endianness Control
-  MBE : csr_endian_t '(1'b0),   // M-mode endianness
-  SBE : csr_endian_t '(1'b0),   // S-mode endianness
-  // Base ISA Control
-  SXL : csr_xlen_t   '(2'b00),  // S-mode XLEN
-  UXL : csr_xlen_t   '(2'b00),  // U-mode XLEN
   // Virtualization Support
   TSR :                1'b0,    // Trap SRET
   TW  :                1'b0,    // Timeout Wait
@@ -127,6 +144,20 @@ localparam csr_mstatus_rv64_t CSR_WEM_MSTATUS = '{
   SPIE:                1'b0,    // supervisor interrupt-enable active prior to the trap
   MIE :                1'b1,    // machine global interrupt-enable
   SIE :                1'b0,    // supervisor global interrupt-enable
+  default: '0
+};
+
+// Machine Status Register High
+localparam csr_mstatush_t CSR_RST_MSTATUSH = '{
+  // Endianness Control
+  MBE : ENDIAN_LITTLE,  // M-mode endianness
+  SBE : ENDIAN_LITTLE,  // S-mode endianness
+  default: '0
+};
+localparam csr_mstatush_t CSR_WEM_MSTATUSH = '{
+  // Endianness Control
+  MBE : csr_endian_t '(1'b0),   // M-mode endianness
+  SBE : csr_endian_t '(1'b0),   // S-mode endianness
   default: '0
 };
 
@@ -300,11 +331,12 @@ localparam csr_mtval_t CSR_WEM_MTVAL = '0;
 ///////////////////////////////////////////////////////////////////////////////
 
 localparam csr_map_st CSR_RST_S = '{
-  mstatus       :            CSR_RST_MSTATUS       ,  // 0x300       // Machine status register.
+  mstatus       :            CSR_RST_MSTATUS       ,  // 0x300       // Machine status register (low).
   misa          :            CSR_RST_MISA          ,  // 0x301       // ISA and extensions
   mie           :            CSR_RST_MIE           ,  // 0x304       // Machine interrupt-enable register.
   mtvec         :            CSR_RST_MTVEC         ,  // 0x305       // Machine trap-handler base address.
   mcounteren    :            CSR_RST_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
+  mstatush      :            CSR_RST_MSTATUSH      ,  // 0x310       // Machine status register (high).
   mcountinhibit :            CSR_RST_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
   mscratch      :            CSR_RST_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
   mepc          :            CSR_RST_MEPC          ,  // 0x341       // Machine exception program counter.
@@ -329,11 +361,12 @@ localparam csr_map_ut CSR_RST = CSR_RST_S;
 ///////////////////////////////////////////////////////////////////////////////
 
 localparam csr_map_st CSR_WEM_S = '{
-  mstatus       :            CSR_WEM_MSTATUS       ,  // 0x300       // Machine status register.
+  mstatus       :            CSR_WEM_MSTATUS       ,  // 0x300       // Machine status register (low).
   misa          :            CSR_WEM_MISA          ,  // 0x301       // ISA and extensions
   mie           :            CSR_WEM_MIE           ,  // 0x304       // Machine interrupt-enable register.
   mtvec         :            CSR_WEM_MTVEC         ,  // 0x305       // Machine trap-handler base address.
   mcounteren    :            CSR_WEM_MCOUNTEREN    ,  // 0x306       // Machine counter enable.
+  mstatush      :            CSR_WEM_MSTATUSH      ,  // 0x310       // Machine status register (high).
   mcountinhibit :            CSR_WEM_MCOUNTINHIBIT ,  // 0x320       // Machine counter-inhibit register.
   mscratch      :            CSR_WEM_MSCRATCH      ,  // 0x340       // Scratch register for machine trap handlers.
   mepc          :            CSR_WEM_MEPC          ,  // 0x341       // Machine exception program counter.
@@ -353,4 +386,4 @@ localparam csr_map_st CSR_WEM_S = '{
 
 localparam csr_map_ut CSR_WEM = CSR_WEM_S;
 
-endpackage: r5p_csr_pkg
+endpackage: r5p32_csr_pkg

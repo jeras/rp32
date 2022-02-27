@@ -20,7 +20,9 @@ package riscv_asm_pkg;
 
 import riscv_isa_pkg::*;
 import riscv_isa_c_pkg::*;
-import riscv_csr_pkg::*;
+
+import rv32_csr_pkg::*;
+//import rv64_csr_pkg::*;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ABI register names

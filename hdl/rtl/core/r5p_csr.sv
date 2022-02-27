@@ -17,10 +17,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 import riscv_isa_pkg::*;
-import riscv_csr_pkg::*;
+import rv32_csr_pkg::*;
+//import rv64_csr_pkg::*;
 
 import r5p_pkg::*;
-import r5p_csr_pkg::*;
+import r5p32_csr_pkg::*;
+//import r5p64_csr_pkg::*;
 
 module r5p_csr #(
   // RISC-V ISA
