@@ -194,10 +194,7 @@ end: gen_bru_alu
 endgenerate
 
 // TODO: optimization parameters
-// 1. branch immediate direct branch type decoder (kind of obvious, but see if it beats the tool optimizations)
-// 2. separate adder for PC next and branch address, since mux control signal from ALU is late and is best used just before output
-// 3. a separate branch ALU with explicit [un]signed comparator instead of adder in the main ALU
-// 4. split PC adder into 12-bit immediate adder and the rest is an incrementer/decrementer, calculate both increment and decrement in advance.
+// split PC adder into 12-bit immediate adder and the rest is an incrementer/decrementer, calculate both increment and decrement in advance.
 
 generate
 if (CFG_BRA) begin: gen_bra_add
@@ -292,6 +289,8 @@ r5p_gpr #(
   // system signals
   .clk     (clk),
   .rst     (rst),
+  // configuration/control
+  .en0     (1'b0),
   // read/write enable
   .e_rs1   (id_ctl.gpr.e.rs1),
   .e_rs2   (id_ctl.gpr.e.rs2),

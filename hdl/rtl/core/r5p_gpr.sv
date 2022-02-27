@@ -26,6 +26,8 @@ module r5p_gpr #(
   // system signals
   input  logic            clk,  // clock
   input  logic            rst,  // reset
+  // configuration/control
+  input  logic            en0,  // enable X0 read/write access
   // read/write enable
   input  logic            e_rs1,
   input  logic            e_rs2,
@@ -46,7 +48,11 @@ logic [XLEN-1:0] t_rs1;
 logic [XLEN-1:0] t_rs2;
 
 // special handling of x0
-assign wen = e_rd & |a_rd;
+assign wen = e_rd & (|a_rd | en0);
+
+///////////////////////////////////////////////////////////////////////////////
+// register array instantiation
+///////////////////////////////////////////////////////////////////////////////
 
 generate
 if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
@@ -162,6 +168,10 @@ else begin: gen_default
 
 end: gen_default
 endgenerate
+
+///////////////////////////////////////////////////////////////////////////////
+// write back bypass
+///////////////////////////////////////////////////////////////////////////////
 
 generate
 if (WBYP) begin: gen_wb_bypass
