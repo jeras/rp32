@@ -109,8 +109,10 @@ endgenerate
 // signed/unsigned extension
 always_comb
 unique casez (ctl.i.alu.rt)
+//  R_XX,
   R_SX   : ao1 = (XLEN+1)'(  signed'(in1        ));  //   signed XLEN
   R_UX   : ao1 = (XLEN+1)'(unsigned'(in1        ));  // unsigned XLEN
+//  R_XW,
   R_SW   : ao1 = (XLEN+1)'(  signed'(in1[32-1:0]));  //   signed word
   R_UW   : ao1 = (XLEN+1)'(unsigned'(in1[32-1:0]));  // unsigned word
   default: ao1 = 'x;                                 //   signed XLEN
@@ -119,8 +121,10 @@ endcase
 // signed/unsigned extension
 always_comb
 unique casez (ctl.i.alu.rt)
+//  R_XX,
   R_SX   : ao2 = (XLEN+1)'(  signed'(in2        ));  //   signed XLEN
   R_UX   : ao2 = (XLEN+1)'(unsigned'(in2        ));  // unsigned XLEN
+//  R_XW,
   R_SW   : ao2 = (XLEN+1)'(  signed'(in2[32-1:0]));  //   signed word
   R_UW   : ao2 = (XLEN+1)'(unsigned'(in2[32-1:0]));  // unsigned word
   default: ao2 = 'x;                                 //   signed XLEN
@@ -182,8 +186,10 @@ endcase
 // shift length
 always_comb
 unique casez (ctl.i.alu.rt)
+//  R_XX,
   R_SX,
   R_UX   : sa =         sam[XLOG-1:0] ;  // XLEN
+//  R_XW,
   R_SW,
   R_UW   : sa = (XLOG)'(sam[   5-1:0]);  // word
   default: sa = 'x;
@@ -216,8 +222,10 @@ endcase
 // TODO: check if all or only adder based instructions have 32 versions
 always_comb
 unique casez (ctl.i.alu.rt)
+//  R_XX,
   R_SX,
   R_UX   : rd =                 val          ;  // XLEN
+//  R_XW,
   R_SW,
   R_UW   : rd = (XLEN)'($signed(val[32-1:0]));  // sign extended word
   default: rd = 'x;
