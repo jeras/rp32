@@ -4,7 +4,7 @@
 source ../sim/verilator/settings.sh
 
 ################################################################################
-# RP32
+# RP32 - Verilator
 ################################################################################
 
 export PATH=`pwd`/../tools/riscv32-elf-ubuntu-20.04-nightly-2021.09.21-nightlyi/riscv/bin/:$PATH
@@ -15,6 +15,12 @@ TARGETDIR=`pwd` RISCV_TARGET=r5p WORK=`pwd`/work XLEN=32 make -C ../submodules/r
 TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=32 RISCV_DEVICE=I make -C ../submodules/riscv-arch-test verify
 TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=32 RISCV_DEVICE=C make -C ../submodules/riscv-arch-test verify
 TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=32 RISCV_DEVICE=M make -C ../submodules/riscv-arch-test verify
+
+################################################################################
+# RP32 - Vivado simulator
+################################################################################
+
+SIMULATOR="Vivado" TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=32 RISCV_DEVICE=I make -C ../submodules/riscv-arch-test verify
 
 ################################################################################
 # RP64
