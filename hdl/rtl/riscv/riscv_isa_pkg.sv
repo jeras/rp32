@@ -506,24 +506,39 @@ typedef enum logic [$bits(alu_op_t)-1:0] {
   AO_AND  = {1'b?, AND }   // logic AND
 } alu_op_et;
 
+// result sizes
+typedef enum logic [2-1:0] {
+  R_X = 2'b00,  // XLEN
+  R_W = 2'b01,  // word
+  R_D = 2'b10,  // double
+  R_Q = 2'b11   // quad
+} result_size_t;
+
+// result signedness
+typedef enum logic [1-1:0] {
+  R_S = 1'b1,  //   signed
+  R_U = 1'b0   // unsigned
+} result_sign_t;
+
 // TODO: optimize enumeration against opcode
 // result type
 typedef enum logic [3-1:0] {
-  R_SX = 3'b100,  //   signed XLEN
-  R_UX = 3'b000,  // unsigned XLEN
-  R_SW = 3'b101,  //   signed word
-  R_UW = 3'b001,  // unsigned word
-  R_SD = 3'b110,  //   signed double
-  R_UD = 3'b010,  // unsigned double
-  R_SQ = 3'b111,  //   signed quad
-  R_UQ = 3'b011   // unsigned quad
+  R_SX = {R_S, R_X},  //   signed XLEN
+  R_UX = {R_U, R_X},  // unsigned XLEN
+  R_SW = {R_S, R_W},  //   signed word
+  R_UW = {R_U, R_W},  // unsigned word
+  R_SD = {R_S, R_D},  //   signed double
+  R_UD = {R_U, R_D},  // unsigned double
+  R_SQ = {R_S, R_Q},  //   signed quad
+  R_UQ = {R_U, R_Q}   // unsigned quad
 } result_t;
 
 // type don't care value
-const result_t R_XX = result_t'(3'bx00);  // XLEN
-const result_t R_XW = result_t'(3'bx01);  // word
-const result_t R_XD = result_t'(3'bx10);  // double
-const result_t R_XQ = result_t'(3'bx11);  // quad
+const result_t R_XX = result_t'({1'bx, R_X});  // XLEN
+const result_t R_XW = result_t'({1'bx, R_W});  // word
+const result_t R_XD = result_t'({1'bx, R_D});  // double
+const result_t R_XQ = result_t'({1'bx, R_Q});  // quad
+//const result_t R_X  = result_t'({1'bx, 2'bxx);  // don't care
 
 // ALU type
 // TODO: change when Verilator supports unpacked structures

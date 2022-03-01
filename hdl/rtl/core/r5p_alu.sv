@@ -67,69 +67,68 @@ logic [XLEN-1:0] val;
 // arithmetic operations
 ///////////////////////////////////////////////////////////////////////////////
 
-// ALU input multiplexer
+function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, result_sign_t sgn);
+  unique casez (sgn)
+    R_S    : extend = (XLEN+1)'(  signed'(val));  //   signed
+    R_U    : extend = (XLEN+1)'(unsigned'(val));  // unsigned
+    default: extend = 'x;
+  endcase
+endfunction: extend
+
+result_sign_t sgn;
+assign sgn = result_sign_t'(ctl.i.alu.rt[2]);
+
+// ALU input multiplexer and signed/unsigned extension
 generate
 if (CFG_LSA) begin: gen_lsa_ena
 
+  // verilator lint_off WIDTH
   // load/store address adders are implemented outside the ALU
   // TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
   // NOTE: for Arty enable the AI_R1_IL line
   always_comb
   unique casez (ctl.i.alu.ai)
-    AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
-    AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-  //AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm.l); end  // I-type (load)
-  //AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm.s); end  // S-type (store)
-    AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm.u); end  // U-type
-    AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm.j); end  // J-type (jump)
-    AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
-    AI_R1_RA: begin in1 = 'x ; in2 = 'x;               end  // A-type (shift ammount)
-    default : begin in1 = 'x ; in2 = 'x;               end
+    AI_R1_R2: unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
+        R_X    :   begin ao1 = extend(rs1        , sgn);  ao2 = extend(rs2        , sgn);  end
+        R_W    :   begin ao1 = extend(rs1[32-1:0], sgn);  ao2 = extend(rs2[32-1:0], sgn);  end
+        default:   begin ao1 = 'x;                        ao2 = 'x;                        end
+      endcase
+    AI_R1_II:      begin ao1 = extend(rs1        , sgn);  ao2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+  //AI_R1_IL:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+  //AI_R1_IS:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+    AI_PC_IU:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.u  , R_S);  end  // U-type
+    AI_PC_IJ:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+    AI_R1_RA:      begin ao1 = 'x ;                       ao2 = 'x;                        end  // A-type (shift ammount)
+    default :      begin ao1 = 'x ;                       ao2 = 'x;                        end
   endcase
+  // verilator lint_on WIDTH
 
 end:gen_lsa_ena
 else begin: gen_lsa_alu
 
+  // verilator lint_off WIDTH
   // ALU is used to calculate load/store address
   always_comb
   unique casez (ctl.i.alu.ai)
-    AI_R1_R2: begin in1 = rs1; in2 = rs2;              end  // R-type
-    AI_R1_II: begin in1 = rs1; in2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-    AI_R1_IL: begin in1 = rs1; in2 = XLEN'(ctl.imm.l); end  // I-type (load)
-    AI_R1_IS: begin in1 = rs1; in2 = XLEN'(ctl.imm.s); end  // S-type (store)
-    AI_PC_IU: begin in1 = pc ; in2 = XLEN'(ctl.imm.u); end  // U-type
-    AI_PC_IJ: begin in1 = pc ; in2 = XLEN'(ctl.imm.j); end  // J-type (jump)
-    AI_R1_RA: begin in1 = 'x ; in2 = 'x;               end  // A-type (shift ammount)
-    default : begin in1 = 'x ; in2 = 'x;               end
+    AI_R1_R2: unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
+        R_X    :   begin ao1 = extend(rs1        , sgn);  ao2 = extend(rs2        , sgn);  end
+        R_W    :   begin ao1 = extend(rs1[32-1:0], sgn);  ao2 = extend(rs2[32-1:0], sgn);  end
+        default:   begin ao1 = 'x;                        ao2 = 'x;                        end
+      endcase
+    AI_R1_II:      begin ao1 = extend(rs1        , sgn);  ao2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+    AI_R1_IL:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+    AI_R1_IS:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+    AI_PC_IU:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.u  , R_S);  end  // U-type
+    AI_PC_IJ:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+    AI_R1_RA:      begin ao1 = 'x ;                       ao2 = 'x;                        end  // A-type (shift ammount)
+    default :      begin ao1 = 'x ;                       ao2 = 'x;                        end
   endcase
+  // verilator lint_on WIDTH
 
 end: gen_lsa_alu
 endgenerate
 
-// signed/unsigned extension
-always_comb
-unique casez (ctl.i.alu.rt)
-//  R_XX,
-  R_SX   : ao1 = (XLEN+1)'(  signed'(in1        ));  //   signed XLEN
-  R_UX   : ao1 = (XLEN+1)'(unsigned'(in1        ));  // unsigned XLEN
-//  R_XW,
-  R_SW   : ao1 = (XLEN+1)'(  signed'(in1[32-1:0]));  //   signed word
-  R_UW   : ao1 = (XLEN+1)'(unsigned'(in1[32-1:0]));  // unsigned word
-  default: ao1 = 'x;                                 //   signed XLEN
-endcase
-
-// signed/unsigned extension
-always_comb
-unique casez (ctl.i.alu.rt)
-//  R_XX,
-  R_SX   : ao2 = (XLEN+1)'(  signed'(in2        ));  //   signed XLEN
-  R_UX   : ao2 = (XLEN+1)'(unsigned'(in2        ));  // unsigned XLEN
-//  R_XW,
-  R_SW   : ao2 = (XLEN+1)'(  signed'(in2[32-1:0]));  //   signed word
-  R_UW   : ao2 = (XLEN+1)'(unsigned'(in2[32-1:0]));  // unsigned word
-  default: ao2 = 'x;                                 //   signed XLEN
-endcase
-
+// TODO: check which keywords would best optimize this statement
 // invert operand 2 (bit 5 of f7 segment of operand)
 always_comb
 unique casez (ctl.i.alu.ao)
@@ -150,6 +149,8 @@ assign sum = $signed(ao1) + $signed(inv ? ~ao2 : ao2) + $signed((XLEN+1)'(inv));
 ///////////////////////////////////////////////////////////////////////////////
 
 // logical operands
+// NOTE: logical operations are not in the crytical path,
+//       therefore a dedicated input multiple does not provide much improvement
 generate
 if (CFG_LOM) begin: gen_lom_ena
 
@@ -165,8 +166,8 @@ end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
-  assign lo1 = rs1;
-  assign lo2 = in2;
+  assign lo1 = ao1[XLEN-1:0];
+  assign lo2 = ao2[XLEN-1:0];
 
 end: gen_lom_alu
 endgenerate
@@ -185,13 +186,9 @@ endcase
 
 // shift length
 always_comb
-unique casez (ctl.i.alu.rt)
-//  R_XX,
-  R_SX,
-  R_UX   : sa =         sam[XLOG-1:0] ;  // XLEN
-//  R_XW,
-  R_SW,
-  R_UW   : sa = (XLOG)'(sam[   5-1:0]);  // word
+unique casez (ctl.i.alu.rt[1:0])
+  R_X    : sa =         sam[XLOG-1:0] ;  // XLEN
+  R_W    : sa = (XLOG)'(sam[   5-1:0]);  // word
   default: sa = 'x;
 endcase
 
@@ -221,13 +218,9 @@ endcase
 // handling operations narower than XLEN
 // TODO: check if all or only adder based instructions have 32 versions
 always_comb
-unique casez (ctl.i.alu.rt)
-//  R_XX,
-  R_SX,
-  R_UX   : rd =                 val          ;  // XLEN
-//  R_XW,
-  R_SW,
-  R_UW   : rd = (XLEN)'($signed(val[32-1:0]));  // sign extended word
+unique casez (ctl.i.alu.rt[1:0])
+  R_X    : rd =                 val          ;  // XLEN
+  R_W    : rd = (XLEN)'($signed(val[32-1:0]));  // sign extended word
   default: rd = 'x;
 endcase
 
