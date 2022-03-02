@@ -44,10 +44,6 @@ localparam int unsigned XLOG = $clog2(XLEN);
 // invert operand 2
 logic            inv;
 
-// multiplexed inputs
-logic [XLEN-1:0] in1;  // input 1
-logic [XLEN-1:0] in2;  // input 2
-
 // arithmetic operands (sign extended by 1 bit)
 logic [XLEN-0:0] ao1;  // arithmetic operand 1
 logic [XLEN-0:0] ao2;  // arithmetic operand 2
@@ -129,7 +125,7 @@ end: gen_lsa_alu
 endgenerate
 
 // TODO: check which keywords would best optimize this statement
-// invert operand 2 (bit 5 of f7 segment of operand)
+// invert arithmetic operand 2 (bit 5 of f7 segment of operand)
 always_comb
 unique casez (ctl.i.alu.ao)
   AO_ADD : inv = 1'b0;
@@ -139,7 +135,6 @@ unique casez (ctl.i.alu.ao)
   default: inv = 1'bx;
 endcase
 
-// TODO: inversion is only needed for AI_R1_R2 ???
 // adder (summation, subtraction)
 assign sum = $signed(ao1) + $signed(inv ? ~ao2 : ao2) + $signed((XLEN+1)'(inv));
 //assign sum = $signed(ao1) + $signed(ao2) + $signed((XLEN+1)'(inv));
