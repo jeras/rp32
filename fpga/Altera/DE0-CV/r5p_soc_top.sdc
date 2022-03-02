@@ -43,15 +43,17 @@ set_time_format -unit ns -decimal_places 3
 # Create Generated Clock
 #**************************************************************
 
-#create_clock -name {CLOCK_SYS} -period 100.000 -waveform {0.000 50.000} [get_ports {CLOCK_50}];  #  10MHz
-#create_clock -name {CLOCK_SYS} -period  40.000 -waveform {0.000 20.000} [get_ports {CLOCK_50}];  #  25MHz
-#create_clock -name {CLOCK_SYS} -period  30.000 -waveform {0.000 15.000} [get_ports {CLOCK_50}];  #  33MHz
-create_clock -name {CLOCK_SYS} -period  25.000 -waveform {0.000 12.500} [get_ports {CLOCK_50}];  #  40MHz
-#create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}];  #  50MHz
-#create_clock -name {CLOCK_SYS} -period  15.000 -waveform {0.000  7.500} [get_ports {CLOCK_50}];  #  66MHz
-#create_clock -name {CLOCK_SYS} -period  12.500 -waveform {0.000  6.250} [get_ports {CLOCK_50}];  #  80MHz
-#create_clock -name {CLOCK_SYS} -period  12.000 -waveform {0.000  6.000} [get_ports {CLOCK_50}];  #  83MHz
-#create_clock -name {CLOCK_SYS} -period  10.000 -waveform {0.000  5.000} [get_ports {CLOCK_50}];  # 100MHz
+#create_clock -name {CLOCK_SYS} -period 100.000 -waveform {0.000 50.000} [get_ports {CLOCK_50}];  #  10.0 MHz
+#create_clock -name {CLOCK_SYS} -period  40.000 -waveform {0.000 20.000} [get_ports {CLOCK_50}];  #  25.0 MHz
+#create_clock -name {CLOCK_SYS} -period  30.000 -waveform {0.000 15.000} [get_ports {CLOCK_50}];  #  33.3 MHz
+#create_clock -name {CLOCK_SYS} -period  25.000 -waveform {0.000 12.500} [get_ports {CLOCK_50}];  #  40.0 MHz
+create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}];  #  50.0 MHz (with NO extra adders)
+#create_clock -name {CLOCK_SYS} -period  18.000 -waveform {0.000  9.000} [get_ports {CLOCK_50}];  #  55.5 MHz
+#create_clock -name {CLOCK_SYS} -period  16.000 -waveform {0.000  8.000} [get_ports {CLOCK_50}];  #  62.5 MHz
+#create_clock -name {CLOCK_SYS} -period  15.000 -waveform {0.000  7.500} [get_ports {CLOCK_50}];  #  66.6 MHz (with ALL extra adders)
+#create_clock -name {CLOCK_SYS} -period  12.500 -waveform {0.000  6.250} [get_ports {CLOCK_50}];  #  80.0 MHz
+#create_clock -name {CLOCK_SYS} -period  12.000 -waveform {0.000  6.000} [get_ports {CLOCK_50}];  #  83.3 MHz
+#create_clock -name {CLOCK_SYS} -period  10.000 -waveform {0.000  5.000} [get_ports {CLOCK_50}];  # 100.0 MHz
 
 #**************************************************************
 # Set Clock Latency
