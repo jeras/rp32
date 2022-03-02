@@ -42,7 +42,7 @@ assign lts = (rs1[XLEN-1] == rs2[XLEN-1]) ? lt : (rs1[XLEN-1] > rs2[XLEN-1]);  /
 assign ltu = (rs1[XLEN-1] == rs2[XLEN-1]) ? lt : (rs1[XLEN-1] < rs2[XLEN-1]);  // less then unsigned
 
 always_comb
-case (ctl)
+unique case (ctl)
   BEQ    : tkn =  eq ;
   BNE    : tkn = ~eq ;
   BLT    : tkn =  lts;

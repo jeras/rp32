@@ -50,7 +50,7 @@ module r5p_core #(
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // timing versus area compromises
   bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
-  bit          CFG_BRA = 1'b1,  // enable dedicated BRanch Adder
+  bit          CFG_BRA = 1'b0,  // enable dedicated BRanch Adder
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   // implementation device (ASIC/FPGA vendor/device)
@@ -182,7 +182,7 @@ end: gen_bru_ena
 else begin: gen_bru_alu
 
   always_comb
-  case (idu_ctl.i.bru)
+  unique case (idu_ctl.i.bru)
     BEQ    : ifu_tkn = ~(|alu_sum[XLEN-1:0]);
     BNE    : ifu_tkn =  (|alu_sum[XLEN-1:0]);
     BLT    : ifu_tkn =    alu_sum[XLEN];
@@ -234,7 +234,7 @@ endgenerate
 // program counter next
 always_comb
 if (if_rdy & idu_vld) begin
-  case (idu_ctl.i.pc)
+  unique case (idu_ctl.i.pc)
     PC_PCI,
     PC_BRN : ifu_pcn = ifu_pcs;
     PC_JMP : ifu_pcn = {alu_sum[IAW-1:1], 1'b0};
@@ -258,7 +258,7 @@ if (ISA.spec.ext.C) begin: gen_d16
 
   // 16/32-bit instruction decoder
   always_comb
-  case (opsiz(if_rdt[2-1:0]))
+  unique case (opsiz(if_rdt[2-1:0]))
     2      : idu_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
     4      : idu_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
     default: idu_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
