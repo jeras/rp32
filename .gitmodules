@@ -4,3 +4,6 @@
 [submodule "submodules/verilator"]
 	path = submodules/verilator
 	url = git@github.com:verilator/verilator.git
+[submodule "submodules/learn-fpga"]
+	path = submodules/learn-fpga
+	url = git@github.com:jeras/learn-fpga.git
