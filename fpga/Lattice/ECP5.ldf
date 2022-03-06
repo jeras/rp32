@@ -9,9 +9,6 @@
         <Source name="../../hdl/rtl/riscv/riscv_isa_c_pkg.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
-        <Source name="../../hdl/rtl/riscv/riscv_csr_pkg.sv" type="Verilog" type_short="Verilog">
-            <Options VerilogStandard="System Verilog"/>
-        </Source>
         <Source name="../../hdl/rtl/riscv/riscv_csr_adr_map_pkg.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
@@ -19,9 +16,6 @@
             <Options VerilogStandard="System Verilog"/>
         </Source>
         <Source name="../../hdl/rtl/core/r5p_pkg.sv" type="Verilog" type_short="Verilog">
-            <Options VerilogStandard="System Verilog"/>
-        </Source>
-        <Source name="../../hdl/rtl/core/r5p_csr_pkg.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
         <Source name="../../hdl/rtl/core/r5p_alu.sv" type="Verilog" type_short="Verilog">
