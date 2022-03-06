@@ -46,8 +46,8 @@ set_time_format -unit ns -decimal_places 3
 #create_clock -name {CLOCK_SYS} -period 100.000 -waveform {0.000 50.000} [get_ports {CLOCK_50}];  #  10.0 MHz
 #create_clock -name {CLOCK_SYS} -period  40.000 -waveform {0.000 20.000} [get_ports {CLOCK_50}];  #  25.0 MHz
 #create_clock -name {CLOCK_SYS} -period  30.000 -waveform {0.000 15.000} [get_ports {CLOCK_50}];  #  33.3 MHz
-#create_clock -name {CLOCK_SYS} -period  25.000 -waveform {0.000 12.500} [get_ports {CLOCK_50}];  #  40.0 MHz
-create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}];  #  50.0 MHz (with NO extra adders)
+#create_clock -name {CLOCK_SYS} -period  25.000 -waveform {0.000 12.500} [get_ports {CLOCK_50}];  #  40.0 MHz (with NO extra adders)
+create_clock -name {CLOCK_SYS} -period  20.000 -waveform {0.000 10.000} [get_ports {CLOCK_50}];  #  50.0 MHz
 #create_clock -name {CLOCK_SYS} -period  18.000 -waveform {0.000  9.000} [get_ports {CLOCK_50}];  #  55.5 MHz
 #create_clock -name {CLOCK_SYS} -period  16.000 -waveform {0.000  8.000} [get_ports {CLOCK_50}];  #  62.5 MHz
 #create_clock -name {CLOCK_SYS} -period  15.000 -waveform {0.000  7.500} [get_ports {CLOCK_50}];  #  66.6 MHz (with ALL extra adders)
