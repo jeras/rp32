@@ -70,36 +70,6 @@ localparam csr_mhartid_t CSR_WEM_MHARTID = MXLEN'(0);
 
 
 // Machine Status Register (low)
-typedef struct packed {
-  logic         SD        ;  // 31    // SD=((FS==11) OR (XS==11)))
-  logic [30:23] wpri_30_23;  // 20:23 //
-  // Virtualization Support
-  logic         TSR       ;  // 22    // Trap SRET
-  logic         TW        ;  // 21    // Timeout Wait
-  logic         TVM       ;  // 20    // Trap Virtual Memory
-  // Memory Privilige
-  logic         MXR       ;  // 19    // Make eXecutable Readable
-  logic         SUM       ;  // 18    // permit Supervisor User Memory access
-  logic         MPRV      ;  // 17    // Modify PRiVilege
-  // Extension Context Status
-  csr_context_t XS        ;  // 16:15 // user-mode extensions context status
-  csr_context_t FS        ;  // 14:13 // floating-point context status
-  // Privilege and Global Interrupt-Enable Stack
-  isa_level_t   MPP       ;  // 12:11 // machine previous privilege mode
-  logic [10:09] wpri_10_09;  // 10: 9 //
-  logic         SPP       ;  //  8    // supervisor previous privilege mode
-  logic         MPIE      ;  //  7    // machine interrupt-enable active prior to the trap
-  csr_endian_t  UBE       ;  //  6    // U-mode endianness
-  logic         SPIE      ;  //  5    // supervisor interrupt-enable active prior to the trap
-  logic [04:04] wpri_04_04;  //  4    //
-  logic         MIE       ;  //  3    // machine global interrupt-enable
-  logic [02:02] wpri_02_02;  //  2    //
-  logic         SIE       ;  //  1    // supervisor global interrupt-enable
-  logic [00:00] wpri_00_00;  //  0    //
-} csr_mstatus_t;
-
-
-// Machine Status Register (low)
 localparam csr_mstatus_t CSR_RST_MSTATUS = '{
   SD  : 1'b0,           // SD=((FS==11) OR (XS==11)))
   // Virtualization Support
