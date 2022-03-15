@@ -270,6 +270,18 @@ typedef struct packed {
   logic      [00:00] zero_00_00;  //  0    //
 } csr_mie_t;
 
+// Supervisor Interrupt Pending Register
+typedef struct packed {
+  logic [SXLEN-1:16] Interrupts;  // **:16 //
+  logic      [15:10] zero_15_10;  // 15:12 //
+  logic              SEIE      ;  //  9    // supervisor-level external interrupt
+  logic      [08:06] zero_08_06;  //  8    //
+  logic              STIE      ;  //  5    // supervisor-level timer interrupt
+  logic      [04:02] zero_04_02;  //  4    //
+  logic              SSIE      ;  //  1    // supervisor-level software interrupt
+  logic      [00:00] zero_00_00;  //  0    //
+} csr_sie_t;
+
 // [Machine/User] Hardware Performance Monitor
 typedef logic [XLEN-1:0] csr_hpmcounter_t;
 typedef logic [XLEN-1:0] csr_hpmevent_t;
@@ -451,9 +463,7 @@ typedef struct packed {
   logic_xlen_t                         htimedelta   ;  // 0x605       // Delta for VS/VU-mode timer.
   csr_counteren_t                      hcounteren   ;  // 0x606       // Hypervisor counter enable.
   logic_xlen_t                         htvec        ;  // 0x607       // Hypervisor guest external interrupt-enable register.
-  logic_xlen_t       [12'h608:12'h614] res_608_614  ;
-  logic_xlen_t                         htimedeltah  ;  // 0x615       // Upper 32 bits of htimedelta, RV32 only.
-  logic_xlen_t       [12'h616:12'h642] res_616_642  ;
+  logic_xlen_t       [12'h608:12'h642] res_608_642  ;
   csr_tval_t                           htval        ;  // 0x643       // Hypervisor bad guest physical address.
   logic_xlen_t                         hip          ;  // 0x644       // Hypervisor interrupt pending.
   logic_xlen_t                         hvip         ;  // 0x645       // Hypervisor virtual interrupt pending.
@@ -480,20 +490,12 @@ typedef struct packed {
   logic_xlen_t       [12'hb01:12'hb01] res_b01_b01  ;
   logic_xlen_t                         minstret     ;  // 0xB02       // Machine instructions-retired counter.
   csr_hpmcounter_t   [12'h003:12'h01f] mhpmcounter  ;  // 0xB03:0xB1F // Machine performance-monitoring counter. (3~31)
-  logic_xlen_t       [12'hb20:12'hb7f] res_b20_b7f  ;
-  logic_xlen_t                         mcycleh      ;  // 0xB80       // Upper 32 bits of mcycle, RV32 only.
-  logic_xlen_t       [12'hb81:12'hb81] res_b81_b81  ;
-  logic_xlen_t                         minstreth    ;  // 0xB82       // Upper 32 bits of minstret, RV32 only.
-  logic_xlen_t       [12'hb83:12'hbff] res_b83_bff  ;
+  logic_xlen_t       [12'hb20:12'hbff] res_b20_bff  ;
   logic_xlen_t                         cycle        ;  // 0xC00       // Cycle counter for RDCYCLE instruction.
   logic_xlen_t                         time_        ;  // 0xC01       // Timer for RDTIME instruction.
   logic_xlen_t                         instret      ;  // 0xC02       // Instructions-retired counter for RDINSTRET instruction.
   csr_hpmcounter_t   [12'h003:12'h01f] hpmcounter   ;  // 0xC03:0xC1F // Performance-monitoring counter. (3~31)
-  logic_xlen_t       [12'hc20:12'hc7f] res_c20_c7f  ;
-  logic_xlen_t                         cycleh       ;  // 0xC80       // Upper 32 bits of cycle, RV32 only.
-  logic_xlen_t                         timeh        ;  // 0xC81       // Upper 32 bits of time, RV32 only.
-  logic_xlen_t                         instreth     ;  // 0xC82       // Upper 32 bits of instret, RV32 only.
-  logic_xlen_t       [12'hc83:12'he11] res_ca0_e11  ;
+  logic_xlen_t       [12'hc20:12'he11] res_c20_e11  ;
   logic_xlen_t                         hgeip        ;  // 0xE12       // Hypervisor guest external interrupt pending.
   logic_xlen_t       [12'he13:12'hf10] res_e13_f10  ;
   csr_vendorid_t                       mvendorid    ;  // 0xF11       // Vendor ID.
@@ -777,21 +779,12 @@ typedef enum bit [12-1:0] {
   csr__res           [12'hb01:12'hb01] = 12'hb01,
   csr__minstret                        = 12'hb02,  // Machine instructions-retired counter.
   csr__mhpmcounter   [12'h003:12'h01f] = 12'hb03,  // Machine performance-monitoring counter.
-  csr__res           [12'hb20:12'hb7f] = 12'hb20,
-  csr__mcycleh                         = 12'hb80,  // Upper 32 bits of mcycle, RV32 only.
-  csr__res           [12'hb81:12'hb81] = 12'hb81,
-  csr__minstreth                       = 12'hb82,  // Upper 32 bits of minstret, RV32 only.
-  csr__res           [12'hb83:12'hb1f] = 12'hb83,
+  csr__res           [12'hb20:12'hbff] = 12'hb20,
   csr__cycle                           = 12'hc00,  // Cycle counter for RDCYCLE instruction.
   csr__time_                           = 12'hc01,  // Timer for RDTIME instruction.
   csr__instret                         = 12'hc02,  // Instructions-retired counter for RDINSTRET instruction.
   csr__hpmcounter    [12'h003:12'h01f] = 12'hc03,  // Performance-monitoring counter. (3~31)
-  csr__res           [12'hc20:12'hc7f] = 12'hc20,
-  csr__cycleh                          = 12'hc80,  // Upper 32 bits of cycle, RV32 only.
-  csr__timeh                           = 12'hc81,  // Upper 32 bits of time, RV32 only.
-  csr__instreth                        = 12'hc82,  // Upper 32 bits of instret, RV32 only.
-  csr__hpmcounterh   [12'h003:12'h01f] = 12'hc83,  // Upper 32 bits of hpmcounter*, RV32 only. (3~31)
-  csr__res           [12'hca0:12'he11] = 12'hca0,
+  csr__res           [12'hc20:12'he11] = 12'hc20,
   csr__hgeip                           = 12'he12,  // Hypervisor guest external interrupt pending.
   csr__res           [12'he13:12'hf10] = 12'he13,
   csr__mvendorid                       = 12'hf11,  // Vendor ID.
