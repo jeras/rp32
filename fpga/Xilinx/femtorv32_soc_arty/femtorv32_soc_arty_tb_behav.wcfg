@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="femtorv32_soc_arty_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="femtorv32_soc_arty_tb" />
+            <top_module name="glbl" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.566666 us"></ZoomStartTime>
+      <ZoomEndTime time="3.966667 us"></ZoomEndTime>
+      <Cursor1Time time="1.900000 us"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="276"></NameColumnWidth>
+      <ValueColumnWidth column_width="76"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="28" />
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/rst">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/gpio_o">
+      <obj_property name="ElementShortName">gpio_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/gpio_e">
+      <obj_property name="ElementShortName">gpio_e[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_e[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/gpio_i">
+      <obj_property name="ElementShortName">gpio_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_addr">
+      <obj_property name="ElementShortName">mem_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_addr[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_wdata">
+      <obj_property name="ElementShortName">mem_wdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_wdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_wmask">
+      <obj_property name="ElementShortName">mem_wmask[3:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_wmask[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_rdata">
+      <obj_property name="ElementShortName">mem_rdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">mem_rdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_rstrb">
+      <obj_property name="ElementShortName">mem_rstrb</obj_property>
+      <obj_property name="ObjectShortName">mem_rstrb</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_rbusy">
+      <obj_property name="ElementShortName">mem_rbusy</obj_property>
+      <obj_property name="ObjectShortName">mem_rbusy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/mem_wbusy">
+      <obj_property name="ElementShortName">mem_wbusy</obj_property>
+      <obj_property name="ObjectShortName">mem_wbusy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/rst_n">
+      <obj_property name="ElementShortName">rst_n</obj_property>
+      <obj_property name="ObjectShortName">rst_n</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/ck_io">
+      <obj_property name="ElementShortName">ck_io[41:0]</obj_property>
+      <obj_property name="ObjectShortName">ck_io[41:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/state">
+      <obj_property name="ElementShortName">state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state[3:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/aluBusy">
+      <obj_property name="ElementShortName">aluBusy</obj_property>
+      <obj_property name="ObjectShortName">aluBusy</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/aluShamt">
+      <obj_property name="ElementShortName">aluShamt[4:0]</obj_property>
+      <obj_property name="ObjectShortName">aluShamt[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/registerFile">
+      <obj_property name="ElementShortName">registerFile[31:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">registerFile[31:0][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/gpio_o">
+      <obj_property name="ElementShortName">gpio_o[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_o[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/gpio_e">
+      <obj_property name="ElementShortName">gpio_e[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_e[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/gpio_i">
+      <obj_property name="ElementShortName">gpio_i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_i[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/isStore">
+      <obj_property name="ElementShortName">isStore</obj_property>
+      <obj_property name="ObjectShortName">isStore</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/loadstore_addr">
+      <obj_property name="ElementShortName">loadstore_addr[15:0]</obj_property>
+      <obj_property name="ObjectShortName">loadstore_addr[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/ADDR_WIDTH">
+      <obj_property name="ElementShortName">ADDR_WIDTH[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ADDR_WIDTH[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/instr">
+      <obj_property name="ElementShortName">instr[31:2]</obj_property>
+      <obj_property name="ObjectShortName">instr[31:2]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/rs1">
+      <obj_property name="ElementShortName">rs1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rs1[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/femtorv32_soc_arty_tb/DUT/soc/cpu/rs2">
+      <obj_property name="ElementShortName">rs2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rs2[31:0]</obj_property>
+   </wvobject>
+</wave_config>
