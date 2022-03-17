@@ -1,5 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P testbench for core module
+// RISC-V testbench for core module
+// FemtoRV32 as DUT
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -124,38 +125,46 @@ r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_core #(
-  // RISC-V ISA
-  .XLEN (XLEN),
-  .ISA  (ISA),
-  // instruction bus
-  .IAW  (IAW),
-  .IDW  (IDW),
-  // data bus
-  .DAW  (DAW),
-  .DDW  (DDW)
+logic [31:0] mem_addr ;  // address bus
+logic [31:0] mem_wdata;  // data to be written
+logic  [3:0] mem_wmask;  // write mask for the 4 bytes of each word
+logic [31:0] mem_rdata;  // input lines for both data and instr
+logic        mem_rstrb;  // active to initiate memory read (used by IO)
+logic        mem_rbusy;  // asserted if memory is busy reading value
+logic        mem_wbusy;  // asserted if memory is busy writing value
+
+FemtoRV32 #(
+  .RESET_ADDR (32'h00000000),
+  .ADDR_WIDTH (IAW)
 ) DUT (
-  // system signals
-  .clk     (clk),
-  .rst     (rst),
-  // instruction fetch
-  .if_vld  (bus_if.vld),
-  .if_adr  (bus_if.adr),
-  .if_rdt  (bus_if.rdt),
-  .if_rdy  (bus_if.rdy),
-  // data load/store
-  .ls_vld  (bus_ls.vld),
-  .ls_wen  (bus_ls.wen),
-  .ls_adr  (bus_ls.adr),
-  .ls_ben  (bus_ls.ben),
-  .ls_wdt  (bus_ls.wdt),
-  .ls_rdt  (bus_ls.rdt),
-  .ls_rdy  (bus_ls.rdy)
+  .clk       ( clk),
+  .reset     (~rst),       // set to 0 to reset the processor
+  .mem_addr  (mem_addr ),  // address bus
+  .mem_wdata (mem_wdata),  // data to be written
+  .mem_wmask (mem_wmask),  // write mask for the 4 bytes of each word
+  .mem_rdata (mem_rdata),  // input lines for both data and instr
+  .mem_rstrb (mem_rstrb),  // active to initiate memory read (used by IO)
+  .mem_rbusy (mem_rbusy),  // asserted if memory is busy reading value
+  .mem_wbusy (mem_wbusy)   // asserted if memory is busy writing value
 );
 
+// instruction fetch
+assign bus_if.vld = 1'b0;
 assign bus_if.wen = 1'b0;
+assign bus_if.adr = '0;
 assign bus_if.ben = '1;
 assign bus_if.wdt = 'x;
+
+// data load/store
+assign bus_ls.vld =      |mem_wmask | mem_rstrb;
+assign bus_ls.wen =      |mem_wmask;
+assign bus_ls.adr =  IAW'(mem_addr);
+assign bus_ls.ben =       mem_wmask | {4{mem_rstrb}};
+assign bus_ls.wdt =       mem_wdata;
+
+assign mem_rdata = bus_ls.rdt;
+assign mem_rbusy = 1'b0;
+assign mem_wbusy = 1'b0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPR change log
@@ -168,7 +177,7 @@ logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
 
 // hierarchical path to GPR inside RTL
 //assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
-assign gpr_tmp = riscv_tb.DUT.gpr.gen_default.gpr;
+assign gpr_tmp = riscv_tb.DUT.registerFile;
 
 always_ff @(posedge clk)
 begin
@@ -231,7 +240,7 @@ r5p_bus_mon #(
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_if (
-  .bus  (bus_if)
+  .bus  (bus_ls)
 );
 
 // load/store monitor

@@ -11,122 +11,122 @@
 [pos] -1835 -1
 *-14.300732 2580000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
-[treeopen] top.r5p_tb.
-[treeopen] top.r5p_tb.DUT.
-[treeopen] top.r5p_tb.DUT.csr.
-[treeopen] top.r5p_tb.DUT.csr.csr_ctl.
-[treeopen] top.r5p_tb.DUT.csr.csr_map.s.
-[treeopen] top.r5p_tb.DUT.gpr.
+[treeopen] top.riscv_tb.
+[treeopen] top.riscv_tb.DUT.
+[treeopen] top.riscv_tb.DUT.csr.
+[treeopen] top.riscv_tb.DUT.csr.csr_ctl.
+[treeopen] top.riscv_tb.DUT.csr.csr_map.s.
+[treeopen] top.riscv_tb.DUT.gpr.
 [sst_width] 361
 [signals_width] 425
 [sst_expanded] 1
 [sst_vpaned_height] 998
 @28
-top.r5p_tb.clk
-top.r5p_tb.rst
+top.riscv_tb.clk
+top.riscv_tb.rst
 @420
-top.r5p_tb.cnt
+top.riscv_tb.cnt
 @22
-top.r5p_tb.rvmodel_data_begin[63:0]
-top.r5p_tb.rvmodel_data_end[63:0]
+top.riscv_tb.rvmodel_data_begin[63:0]
+top.riscv_tb.rvmodel_data_end[63:0]
 @28
-top.r5p_tb.rvmodel_halt
+top.riscv_tb.rvmodel_halt
 @22
-top.r5p_tb.DUT.if_pc[21:0]
-top.r5p_tb.DUT.csr_tvec[63:0]
+top.riscv_tb.DUT.if_pc[21:0]
+top.riscv_tb.DUT.csr_tvec[63:0]
 @800200
 -BUS IF
 @420
-top.r5p_tb.bus_if.AW
-top.r5p_tb.bus_if.DW
+top.riscv_tb.bus_if.AW
+top.riscv_tb.bus_if.DW
 @28
-top.r5p_tb.bus_if.clk
-top.r5p_tb.bus_if.rst
-top.r5p_tb.bus_if.vld
+top.riscv_tb.bus_if.clk
+top.riscv_tb.bus_if.rst
+top.riscv_tb.bus_if.vld
 @22
-top.r5p_tb.bus_if.adr[21:0]
+top.riscv_tb.bus_if.adr[21:0]
 @28
-top.r5p_tb.bus_if.wen
+top.riscv_tb.bus_if.wen
 @22
-top.r5p_tb.bus_if.ben[3:0]
-top.r5p_tb.bus_if.wdt[31:0]
-top.r5p_tb.bus_if.rdt[31:0]
+top.riscv_tb.bus_if.ben[3:0]
+top.riscv_tb.bus_if.wdt[31:0]
+top.riscv_tb.bus_if.rdt[31:0]
 @28
-top.r5p_tb.bus_if.rdy
+top.riscv_tb.bus_if.rdy
 @1000200
 -BUS IF
 @800200
 -BUS LS
 @420
-top.r5p_tb.bus_ls.AW
-top.r5p_tb.bus_ls.DW
+top.riscv_tb.bus_ls.AW
+top.riscv_tb.bus_ls.DW
 @28
-top.r5p_tb.bus_ls.clk
-top.r5p_tb.bus_ls.rst
-top.r5p_tb.bus_ls.vld
+top.riscv_tb.bus_ls.clk
+top.riscv_tb.bus_ls.rst
+top.riscv_tb.bus_ls.vld
 @22
-top.r5p_tb.bus_ls.adr[21:0]
+top.riscv_tb.bus_ls.adr[21:0]
 @28
-top.r5p_tb.bus_ls.wen
+top.riscv_tb.bus_ls.wen
 @22
-top.r5p_tb.bus_ls.ben[7:0]
-top.r5p_tb.bus_ls.wdt[63:0]
-top.r5p_tb.bus_ls.rdt[63:0]
+top.riscv_tb.bus_ls.ben[7:0]
+top.riscv_tb.bus_ls.wdt[63:0]
+top.riscv_tb.bus_ls.rdt[63:0]
 @28
-top.r5p_tb.bus_ls.rdy
+top.riscv_tb.bus_ls.rdy
 @1000200
 -BUS LS
 @800200
 -GPR regset
 @22
-top.r5p_tb.DUT.gpr.gpr[1][63:0]
-top.r5p_tb.DUT.gpr.gpr[2][63:0]
-top.r5p_tb.DUT.gpr.gpr[3][63:0]
-top.r5p_tb.DUT.gpr.gpr[4][63:0]
-top.r5p_tb.DUT.gpr.gpr[5][63:0]
-top.r5p_tb.DUT.gpr.gpr[6][63:0]
-top.r5p_tb.DUT.gpr.gpr[7][63:0]
-top.r5p_tb.DUT.gpr.gpr[8][63:0]
-top.r5p_tb.DUT.gpr.gpr[9][63:0]
-top.r5p_tb.DUT.gpr.gpr[10][63:0]
-top.r5p_tb.DUT.gpr.gpr[11][63:0]
-top.r5p_tb.DUT.gpr.gpr[12][63:0]
-top.r5p_tb.DUT.gpr.gpr[13][63:0]
-top.r5p_tb.DUT.gpr.gpr[14][63:0]
-top.r5p_tb.DUT.gpr.gpr[15][63:0]
-top.r5p_tb.DUT.gpr.gpr[16][63:0]
-top.r5p_tb.DUT.gpr.gpr[17][63:0]
-top.r5p_tb.DUT.gpr.gpr[18][63:0]
-top.r5p_tb.DUT.gpr.gpr[19][63:0]
-top.r5p_tb.DUT.gpr.gpr[20][63:0]
-top.r5p_tb.DUT.gpr.gpr[21][63:0]
-top.r5p_tb.DUT.gpr.gpr[22][63:0]
-top.r5p_tb.DUT.gpr.gpr[23][63:0]
-top.r5p_tb.DUT.gpr.gpr[24][63:0]
-top.r5p_tb.DUT.gpr.gpr[25][63:0]
-top.r5p_tb.DUT.gpr.gpr[26][63:0]
-top.r5p_tb.DUT.gpr.gpr[27][63:0]
-top.r5p_tb.DUT.gpr.gpr[28][63:0]
-top.r5p_tb.DUT.gpr.gpr[29][63:0]
-top.r5p_tb.DUT.gpr.gpr[30][63:0]
-top.r5p_tb.DUT.gpr.gpr[31][63:0]
+top.riscv_tb.DUT.gpr.gpr[1][63:0]
+top.riscv_tb.DUT.gpr.gpr[2][63:0]
+top.riscv_tb.DUT.gpr.gpr[3][63:0]
+top.riscv_tb.DUT.gpr.gpr[4][63:0]
+top.riscv_tb.DUT.gpr.gpr[5][63:0]
+top.riscv_tb.DUT.gpr.gpr[6][63:0]
+top.riscv_tb.DUT.gpr.gpr[7][63:0]
+top.riscv_tb.DUT.gpr.gpr[8][63:0]
+top.riscv_tb.DUT.gpr.gpr[9][63:0]
+top.riscv_tb.DUT.gpr.gpr[10][63:0]
+top.riscv_tb.DUT.gpr.gpr[11][63:0]
+top.riscv_tb.DUT.gpr.gpr[12][63:0]
+top.riscv_tb.DUT.gpr.gpr[13][63:0]
+top.riscv_tb.DUT.gpr.gpr[14][63:0]
+top.riscv_tb.DUT.gpr.gpr[15][63:0]
+top.riscv_tb.DUT.gpr.gpr[16][63:0]
+top.riscv_tb.DUT.gpr.gpr[17][63:0]
+top.riscv_tb.DUT.gpr.gpr[18][63:0]
+top.riscv_tb.DUT.gpr.gpr[19][63:0]
+top.riscv_tb.DUT.gpr.gpr[20][63:0]
+top.riscv_tb.DUT.gpr.gpr[21][63:0]
+top.riscv_tb.DUT.gpr.gpr[22][63:0]
+top.riscv_tb.DUT.gpr.gpr[23][63:0]
+top.riscv_tb.DUT.gpr.gpr[24][63:0]
+top.riscv_tb.DUT.gpr.gpr[25][63:0]
+top.riscv_tb.DUT.gpr.gpr[26][63:0]
+top.riscv_tb.DUT.gpr.gpr[27][63:0]
+top.riscv_tb.DUT.gpr.gpr[28][63:0]
+top.riscv_tb.DUT.gpr.gpr[29][63:0]
+top.riscv_tb.DUT.gpr.gpr[30][63:0]
+top.riscv_tb.DUT.gpr.gpr[31][63:0]
 @1000200
 -GPR regset
 @800200
 -CSR ctl
 @100000028
-top.r5p_tb.DUT.csr.csr_ctl.op[1:0]
+top.riscv_tb.DUT.csr.csr_ctl.op[1:0]
 @22
-top.r5p_tb.DUT.csr.csr_ctl.imm[4:0]
+top.riscv_tb.DUT.csr.csr_ctl.imm[4:0]
 @800200
 -adr
 @800022
-#{adr[11:0]} (0)top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0] (1)top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0] (0)top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0] (1)top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0] (0)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (1)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (2)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (3)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (4)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (5)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (6)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0] (7)top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
+#{adr[11:0]} (0)top.riscv_tb.DUT.csr.csr_ctl.adr.perm[1:0] (1)top.riscv_tb.DUT.csr.csr_ctl.adr.perm[1:0] (0)top.riscv_tb.DUT.csr.csr_ctl.adr.level[1:0] (1)top.riscv_tb.DUT.csr.csr_ctl.adr.level[1:0] (0)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (1)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (2)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (3)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (4)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (5)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (6)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0] (7)top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0]
 @100000028
-top.r5p_tb.DUT.csr.csr_ctl.adr.perm[1:0]
-top.r5p_tb.DUT.csr.csr_ctl.adr.level[1:0]
+top.riscv_tb.DUT.csr.csr_ctl.adr.perm[1:0]
+top.riscv_tb.DUT.csr.csr_ctl.adr.level[1:0]
 @22
-top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
+top.riscv_tb.DUT.csr.csr_ctl.adr.addr[7:0]
 @1001200
 -group_end
 @1000200
@@ -135,20 +135,20 @@ top.r5p_tb.DUT.csr.csr_ctl.adr.addr[7:0]
 @800200
 -ISA priv
 @29
-top.r5p_tb.DUT.csr.priv_i.ena
+top.riscv_tb.DUT.csr.priv_i.ena
 @100000029
-top.r5p_tb.DUT.csr.priv_i.typ[3:0]
+top.riscv_tb.DUT.csr.priv_i.typ[3:0]
 @1000200
 -ISA priv
 @800200
 -CSR regset
 -mtvec [305]
 @800022
-#{mtvec[63:0]} (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
+#{mtvec[63:0]} (0)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (2)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (3)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (4)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (5)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (6)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (7)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (8)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (9)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (10)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (11)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (12)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (13)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (14)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (15)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (16)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (17)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (18)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (19)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (20)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (21)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (22)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (23)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (24)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (25)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (26)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (27)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (28)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (29)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (30)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (31)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (32)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (33)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (34)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (35)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (36)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (37)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (38)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (39)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (40)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (41)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (42)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (43)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (44)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (45)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (46)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (47)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (48)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (49)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (50)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (51)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (52)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (53)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (54)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (55)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (56)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (57)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (58)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (59)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (60)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (61)top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0] (0)top.riscv_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0]
+top.riscv_tb.DUT.csr.csr_map.s.mtvec.BASE[61:0]
 @100000028
-top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
 @1001200
 -group_end
 @1000200
@@ -156,17 +156,17 @@ top.r5p_tb.DUT.csr.csr_map.s.mtvec.MODE[1:0]
 @800200
 -mscratch [340]
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mscratch.scratch[63:0]
+top.riscv_tb.DUT.csr.csr_map.s.mscratch.scratch[63:0]
 @1000200
 -mscratch [340]
 @800200
 -mepc [341]
 @800022
-#{epc[63:0]} (0)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (62)top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0] top.r5p_tb.DUT.csr.csr_map.s.mepc.zero_00_00
+#{epc[63:0]} (0)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (2)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (3)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (4)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (5)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (6)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (7)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (8)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (9)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (10)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (11)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (12)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (13)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (14)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (15)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (16)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (17)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (18)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (19)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (20)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (21)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (22)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (23)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (24)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (25)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (26)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (27)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (28)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (29)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (30)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (31)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (32)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (33)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (34)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (35)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (36)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (37)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (38)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (39)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (40)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (41)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (42)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (43)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (44)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (45)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (46)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (47)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (48)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (49)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (50)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (51)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (52)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (53)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (54)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (55)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (56)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (57)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (58)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (59)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (60)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (61)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] (62)top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0] top.riscv_tb.DUT.csr.csr_map.s.mepc.zero_00_00
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mepc.epc[62:0]
+top.riscv_tb.DUT.csr.csr_map.s.mepc.epc[62:0]
 @28
-top.r5p_tb.DUT.csr.csr_map.s.mepc.zero_00_00
+top.riscv_tb.DUT.csr.csr_map.s.mepc.zero_00_00
 @1001200
 -group_end
 @1000200
@@ -174,11 +174,11 @@ top.r5p_tb.DUT.csr.csr_map.s.mepc.zero_00_00
 @800200
 -mcause [342]
 @800022
-#{mcause[63:0]} top.r5p_tb.DUT.csr.csr_map.s.mcause.Interrupt (0)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (25)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (26)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (27)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (28)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (29)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (30)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (31)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (32)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (33)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (34)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (35)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (36)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (37)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (38)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (39)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (40)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (41)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (42)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (43)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (44)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (45)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (46)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (47)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (48)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (49)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (50)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (51)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (52)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (53)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (54)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (55)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (56)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (57)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (58)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (59)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (60)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (61)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (62)top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0]
+#{mcause[63:0]} top.riscv_tb.DUT.csr.csr_map.s.mcause.Interrupt (0)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (2)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (3)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (4)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (5)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (6)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (7)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (8)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (9)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (10)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (11)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (12)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (13)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (14)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (15)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (16)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (17)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (18)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (19)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (20)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (21)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (22)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (23)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (24)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (25)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (26)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (27)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (28)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (29)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (30)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (31)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (32)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (33)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (34)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (35)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (36)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (37)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (38)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (39)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (40)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (41)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (42)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (43)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (44)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (45)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (46)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (47)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (48)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (49)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (50)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (51)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (52)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (53)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (54)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (55)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (56)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (57)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (58)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (59)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (60)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (61)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0] (62)top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0]
 @28
-top.r5p_tb.DUT.csr.csr_map.s.mcause.Interrupt
+top.riscv_tb.DUT.csr.csr_map.s.mcause.Interrupt
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0]
+top.riscv_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0]
 @1001200
 -group_end
 @1000200
@@ -186,56 +186,56 @@ top.r5p_tb.DUT.csr.csr_map.s.mcause.Exception_Code[62:0]
 @800200
 -mtval [343]
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mtval.mtval[63:0]
+top.riscv_tb.DUT.csr.csr_map.s.mtval.mtval[63:0]
 @1000200
 -mtval [343]
 -CSR regset
 @800200
 -mstatus [300]
 @800022
-#{mstatus[63:0]} top.r5p_tb.DUT.csr.csr_map.s.mstatus.SD (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (9)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (10)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (11)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (12)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (13)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (14)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (15)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (16)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (17)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (18)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (19)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (20)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (21)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (22)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (23)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (24)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] top.r5p_tb.DUT.csr.csr_map.s.mstatus.MBE top.r5p_tb.DUT.csr.csr_map.s.mstatus.SBE (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (2)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (3)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (4)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (5)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (6)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (7)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (8)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] top.r5p_tb.DUT.csr.csr_map.s.mstatus.TSR top.r5p_tb.DUT.csr.csr_map.s.mstatus.TW top.r5p_tb.DUT.csr.csr_map.s.mstatus.TVM top.r5p_tb.DUT.csr.csr_map.s.mstatus.MXR top.r5p_tb.DUT.csr.csr_map.s.mstatus.SUM top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPRV (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.XS[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.XS[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.FS[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.FS[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0] (0)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0] (1)top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0] top.r5p_tb.DUT.csr.csr_map.s.mstatus.SPP top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.UBE top.r5p_tb.DUT.csr.csr_map.s.mstatus.SPIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_04_04 top.r5p_tb.DUT.csr.csr_map.s.mstatus.MIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_02_02 top.r5p_tb.DUT.csr.csr_map.s.mstatus.SIE top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_00_00
+#{mstatus[63:0]} top.riscv_tb.DUT.csr.csr_map.s.mstatus.SD (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (2)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (3)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (4)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (5)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (6)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (7)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (8)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (9)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (10)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (11)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (12)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (13)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (14)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (15)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (16)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (17)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (18)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (19)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (20)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (21)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (22)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (23)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] (24)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0] top.riscv_tb.DUT.csr.csr_map.s.mstatus.MBE top.riscv_tb.DUT.csr.csr_map.s.mstatus.SBE (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0] (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0] (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (2)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (3)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (4)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (5)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (6)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (7)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] (8)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0] top.riscv_tb.DUT.csr.csr_map.s.mstatus.TSR top.riscv_tb.DUT.csr.csr_map.s.mstatus.TW top.riscv_tb.DUT.csr.csr_map.s.mstatus.TVM top.riscv_tb.DUT.csr.csr_map.s.mstatus.MXR top.riscv_tb.DUT.csr.csr_map.s.mstatus.SUM top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPRV (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.XS[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.XS[1:0] (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.FS[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.FS[1:0] (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0] (0)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0] (1)top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0] top.riscv_tb.DUT.csr.csr_map.s.mstatus.SPP top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPIE top.riscv_tb.DUT.csr.csr_map.s.mstatus.UBE top.riscv_tb.DUT.csr.csr_map.s.mstatus.SPIE top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_04_04 top.riscv_tb.DUT.csr.csr_map.s.mstatus.MIE top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_02_02 top.riscv_tb.DUT.csr.csr_map.s.mstatus.SIE top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_00_00
 @28
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SD
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SD
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_62_38[24:0]
 @100000028
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.MBE
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SBE
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0]
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.MBE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SBE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SXL[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.UXL[1:0]
 @22
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_31_23[8:0]
 @28
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.TSR
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.TW
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.TVM
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.MXR
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SUM
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPRV
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.TSR
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.TW
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.TVM
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.MXR
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SUM
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPRV
 @100000028
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.XS[1:0]
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.FS[1:0]
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.XS[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.FS[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPP[1:0]
 @28
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0]
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SPP
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.MPIE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_10_09[1:0]
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SPP
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.MPIE
 @100000028
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.UBE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.UBE
 @28
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SPIE
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_04_04
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.MIE
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_02_02
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.SIE
-top.r5p_tb.DUT.csr.csr_map.s.mstatus.wpri_00_00
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SPIE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_04_04
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.MIE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_02_02
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.SIE
+top.riscv_tb.DUT.csr.csr_map.s.mstatus.wpri_00_00
 @1001200
 -group_end
 @1000200
 -mstatus [300]
 @22
-top.r5p_tb.DUT.csr.tvec[63:0]
+top.riscv_tb.DUT.csr.tvec[63:0]
 @100000028
-top.r5p_tb.DUT.csr.level[1:0]
+top.riscv_tb.DUT.csr.level[1:0]
 [pattern_trace] 1
 [pattern_trace] 0

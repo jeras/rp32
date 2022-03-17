@@ -12,7 +12,7 @@
 #include <sys/stat.h>  // mkdir
 
 // model header generated from SystemVerilog HDL code
-#include "Vr5p_tb.h"
+#include "Vriscv_tb.h"
 
 int sc_main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////
@@ -38,11 +38,11 @@ int sc_main(int argc, char **argv) {
     sc_clock        clk ("clk", 10, SC_NS, 0.5, 0, SC_NS, true);
     sc_signal<bool> rst;
 
-    // Construct the Verilated model, from inside Vr5p_tb.h
-    // Using unique_ptr is similar to "Vr5p_tb* top = new Vr5p_tb" then deleting at end
-    const std::unique_ptr<Vr5p_tb> top{new Vr5p_tb{"top"}};
+    // Construct the Verilated model, from inside Vriscv_tb.h
+    // Using unique_ptr is similar to "Vriscv_tb* top = new Vriscv_tb" then deleting at end
+    const std::unique_ptr<Vriscv_tb> top{new Vriscv_tb{"top"}};
 
-    // Attach Vr5p_tb's signals to this upper model
+    // Attach Vriscv_tb's signals to this upper model
     top->clk(clk);           // SP_PIN  (top, clk, clk);
     top->rst(rst);           // TODO add a sequence
 
@@ -70,7 +70,7 @@ int sc_main(int argc, char **argv) {
     rst = 1;
     sc_start(20, SC_NS);
     rst = 0;
-    sc_start(200000, SC_NS);
+    sc_start(2000000, SC_NS);
     //sc_start();
 
     ////////////////////////////////////////////////////////////////////////////
