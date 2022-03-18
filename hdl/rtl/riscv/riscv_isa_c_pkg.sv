@@ -442,7 +442,6 @@ endcase end
 // TODO: also handle RES/NSE
 if (t.ill != ILL) begin
   t.imm = imm_c_f(op, fi.f, fi.q);
-  t.i32 = imm16_f(op, fi.f, fi.q);
   t.gpr = gpr16_f(op, fi.f);
 end
 
