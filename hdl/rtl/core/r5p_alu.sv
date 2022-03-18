@@ -54,10 +54,9 @@ logic [XLEN-1:0] log_op2;  // logical operand 2
 // barrel shifter shift ammount
 logic [XLOG-1:0] shf_mux;  // multiplexed
 logic [XLOG-1:0] shf_sam;
-// barrel shifter results
-logic [XLEN-1:0] shf_sra;
-logic [XLEN-1:0] shf_srl;
-logic [XLEN-1:0] shf_sll;
+// bit reversed operand/result
+logic [XLEN-1:0] shf_tmp;  // operand
+logic [XLEN-1:0] shf_val;  // result
 
 // operation result
 logic [XLEN-1:0] val;
@@ -190,10 +189,23 @@ unique casez (ctl.i.alu.rt[1:0])
   default: shf_sam = 'x;
 endcase
 
-// barrel shifter
-assign shf_sra =   $signed(rs1) >>> shf_sam;
-assign shf_srl = $unsigned(rs1)  >> shf_sam;
-assign shf_sll = $unsigned(rs1)  << shf_sam;
+// bit inversion
+always_comb
+unique casez (ctl.i.alu.ao)
+  // barrel shifter
+  AO_SRA, AO_SRL : shf_tmp =     rs1  ;
+          AO_SLL : shf_tmp = {<<{rs1}};
+  default        : shf_tmp = 'x;
+endcase
+
+// combined barrel shifter for left/right shifting
+always_comb
+unique casez (ctl.i.alu.ao)
+  // barrel shifter
+  AO_SRA         : shf_val =   $signed(shf_tmp) >>> shf_sam;
+  AO_SRL, AO_SLL : shf_val = $unsigned(shf_tmp)  >> shf_sam;
+  default        : shf_val = 'x;
+endcase
 
 ///////////////////////////////////////////////////////////////////////////////
 // output multiplexer
@@ -212,9 +224,9 @@ unique casez (ctl.i.alu.ao)
   AO_OR  : val = log_op1 | log_op2;
   AO_XOR : val = log_op1 ^ log_op2;
   // barrel shifter
-  AO_SRA : val = shf_sra;
-  AO_SRL : val = shf_srl;
-  AO_SLL : val = shf_sll;
+  AO_SRA : val =     shf_val  ;
+  AO_SRL : val =     shf_val  ;
+  AO_SLL : val = {<<{shf_val}};
   default: val = 'x;
 endcase
 
