@@ -420,33 +420,33 @@ endfunction: imm32_f
 ///////////////////////////////////////////////////////////////////////////////
 
 `ifndef ALTERA_RESERVED_QIS
-function automatic gpr_t gpr32_f (op32_t op, op32_frm_t frm);
+function automatic gpr_t gpr_f (op32_t op, op32_frm_t frm);
   unique case (frm)
-    T_R4   : gpr32_f = GPR_ILL;
+    T_R4   : gpr_f = GPR_ILL;
     //                    rs1,rs2, rd          rs1,      rs2,      rd
-    T_R    : gpr32_f = '{'{'1, '1, '1}, '{op.r.rs1, op.r.rs2, op.r.rd}};
-    T_I    : gpr32_f = '{'{'1, '0, '1}, '{op.i.rs1,       'x, op.i.rd}};
-    T_S    : gpr32_f = '{'{'1, '1, '0}, '{op.s.rs1, op.s.rs2,      'x}};
-    T_B    : gpr32_f = '{'{'1, '1, '0}, '{op.b.rs1, op.b.rs2,      'x}};
-    T_U    : gpr32_f = '{'{'0, '0, '1}, '{      'x,       'x, op.u.rd}};
-    T_J    : gpr32_f = '{'{'0, '0, '1}, '{      'x,       'x, op.j.rd}};
-    default: gpr32_f = GPR_ILL;
+    T_R    : gpr_f = '{'{'1, '1, '1}, '{op.r.rs1, op.r.rs2, op.r.rd}};
+    T_I    : gpr_f = '{'{'1, '0, '1}, '{op.i.rs1,       'x, op.i.rd}};
+    T_S    : gpr_f = '{'{'1, '1, '0}, '{op.s.rs1, op.s.rs2,      'x}};
+    T_B    : gpr_f = '{'{'1, '1, '0}, '{op.b.rs1, op.b.rs2,      'x}};
+    T_U    : gpr_f = '{'{'0, '0, '1}, '{      'x,       'x, op.u.rd}};
+    T_J    : gpr_f = '{'{'0, '0, '1}, '{      'x,       'x, op.j.rd}};
+    default: gpr_f = GPR_ILL;
   endcase
-endfunction: gpr32_f
+endfunction: gpr_f
 `else
-function automatic gpr_t gpr32_f (op32_r_t op, op32_frm_t frm);
+function automatic gpr_t gpr_f (op32_r_t op, op32_frm_t frm);
   unique case (frm)
-    T_R4   : gpr32_f = GPR_ILL;
+    T_R4   : gpr_f = GPR_ILL;
     //                    rs1,rs2, rd        rs1,    rs2,    rd
-    T_R    : gpr32_f = '{'{'1, '1, '1}, '{op.rs1, op.rs2, op.rd}};
-    T_I    : gpr32_f = '{'{'1, '0, '1}, '{op.rs1,     'x, op.rd}};
-    T_S    : gpr32_f = '{'{'1, '1, '0}, '{op.rs1, op.rs2,    'x}};
-    T_B    : gpr32_f = '{'{'1, '1, '0}, '{op.rs1, op.rs2,    'x}};
-    T_U    : gpr32_f = '{'{'0, '0, '1}, '{    'x,     'x, op.rd}};
-    T_J    : gpr32_f = '{'{'0, '0, '1}, '{    'x,     'x, op.rd}};
-    default: gpr32_f = GPR_ILL;
+    T_R    : gpr_f = '{'{'1, '1, '1}, '{op.rs1, op.rs2, op.rd}};
+    T_I    : gpr_f = '{'{'1, '0, '1}, '{op.rs1,     'x, op.rd}};
+    T_S    : gpr_f = '{'{'1, '1, '0}, '{op.rs1, op.rs2,    'x}};
+    T_B    : gpr_f = '{'{'1, '1, '0}, '{op.rs1, op.rs2,    'x}};
+    T_U    : gpr_f = '{'{'0, '0, '1}, '{    'x,     'x, op.rd}};
+    T_J    : gpr_f = '{'{'0, '0, '1}, '{    'x,     'x, op.rd}};
+    default: gpr_f = GPR_ILL;
   endcase
-endfunction: gpr32_f
+endfunction: gpr_f
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -868,10 +868,12 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   32'b????_????_????_????_?000_????_?000_1111: begin f = T_R; t.ill = STD; t.i = '{PC_PCI, BXXX,   CTL_ALU_ILL             , LS_X, WB_XXX}; end  // FENCE
 endcase end
 
+
+
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
-t.imm = imm_f  (op);
-t.gpr = gpr32_f(op   , f);
+t.imm = imm_f(op);
+t.gpr = gpr_f(op   , f);
 
 // return temporary variable
 return(t);

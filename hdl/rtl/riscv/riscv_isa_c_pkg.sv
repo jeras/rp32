@@ -267,28 +267,28 @@ endfunction: imm16_f
 // 16-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-function automatic gpr_t gpr16_f (op16_t op, op16_frm_t frm);
+function automatic gpr_t gpr_c_f (op16_t op, op16_frm_t frm);
   unique case (frm)     // rs1,rs2,rd                        rs1  ,                rs2  ,                rd
-    T_CR   :  gpr16_f = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CR_0 :  gpr16_f = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
-    T_CR_J :  gpr16_f = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h00                  }};
-    T_CR_L :  gpr16_f = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
-    T_CI   :  gpr16_f = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
-    T_CI_0 :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h00                 ,     'x              ,         op.ci .rd_rs1   }};
-    T_CI_S :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
-    T_CI_L :  gpr16_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
-    T_CSS  :  gpr16_f = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,     'x                  }};
-    T_CIW  :  gpr16_f = '{'{'0, '0, '1}, '{ 5'h02                 ,     'x              , {2'b01, op.ciw.rd_     }}};
-    T_CL   :  gpr16_f = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },     'x              , {2'b01, op.cl .rd_     }}};
-    T_CS   :  gpr16_f = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},     'x                  }};
-    T_CA   :  gpr16_f = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
-    T_CB   :  gpr16_f = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};  // Branch
-    T_CB_A :  gpr16_f = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch/Arithmetic
-    T_CJ   :  gpr16_f = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'd00                  }};  // C.J   using x0, NOTE: writeback could be disabled
-    T_CJ_L :  gpr16_f = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'h01                  }};  // C.JAL using x1
-    default:  gpr16_f = '{'{'0, '0, '0}, '{    'x                 ,     'x              ,     'x                  }};
+    T_CR   :  gpr_c_f = '{'{'1, '1, '1}, '{        op.cr .rd_rs1  ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
+    T_CR_0 :  gpr_c_f = '{'{'0, '1, '1}, '{ 5'h00                 ,         op.cr .rs2  ,         op.cr .rd_rs1   }};
+    T_CR_J :  gpr_c_f = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h00                  }};
+    T_CR_L :  gpr_c_f = '{'{'1, '0, '1}, '{        op.cr .rd_rs1  ,     'x              ,  5'h01                  }};
+    T_CI   :  gpr_c_f = '{'{'1, '0, '1}, '{        op.ci .rd_rs1  ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_0 :  gpr_c_f = '{'{'1, '0, '1}, '{ 5'h00                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_S :  gpr_c_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CI_L :  gpr_c_f = '{'{'1, '0, '1}, '{ 5'h02                 ,     'x              ,         op.ci .rd_rs1   }};
+    T_CSS  :  gpr_c_f = '{'{'1, '1, '0}, '{ 5'h02                 ,         op.css.rs2  ,     'x                  }};
+    T_CIW  :  gpr_c_f = '{'{'0, '0, '1}, '{ 5'h02                 ,     'x              , {2'b01, op.ciw.rd_     }}};
+    T_CL   :  gpr_c_f = '{'{'1, '0, '1}, '{{2'b01, op.cl .rs1_   },     'x              , {2'b01, op.cl .rd_     }}};
+    T_CS   :  gpr_c_f = '{'{'1, '1, '0}, '{{2'b01, op.cs .rs1_   }, {2'b01, op.cs .rs2_},     'x                  }};
+    T_CA   :  gpr_c_f = '{'{'1, '1, '1}, '{{2'b01, op.ca .rd_rs1_}, {2'b01, op.ca .rs2_}, {2'b01, op.ca .rd_rs1_ }}};
+    T_CB   :  gpr_c_f = '{'{'1, '1, '0}, '{{2'b01, op.cb .rs1_   },  5'h00              ,     'x                  }};  // Branch
+    T_CB_A :  gpr_c_f = '{'{'1, '0, '1}, '{{2'b01, op.cb .rs1_   },     'x              , {2'b01, op.cb .rs1_    }}};  // Branch/Arithmetic
+    T_CJ   :  gpr_c_f = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'd00                  }};  // C.J   using x0, NOTE: writeback could be disabled
+    T_CJ_L :  gpr_c_f = '{'{'0, '0, '1}, '{    'x                 ,     'x              ,  5'h01                  }};  // C.JAL using x1
+    default:  gpr_c_f = '{'{'0, '0, '0}, '{    'x                 ,     'x              ,     'x                  }};
   endcase
-endfunction: gpr16_f
+endfunction: gpr_c_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // 16-bit instruction decoder
@@ -442,7 +442,7 @@ endcase end
 // TODO: also handle RES/NSE
 if (t.ill != ILL) begin
   t.imm = imm_c_f(op, fi.f, fi.q);
-  t.gpr = gpr16_f(op, fi.f);
+  t.gpr = gpr_c_f(op, fi.f);
 end
 
 // assign temporary variable to return value
