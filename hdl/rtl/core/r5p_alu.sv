@@ -41,20 +41,23 @@ module r5p_alu #(
 // logarithm of XLEN
 localparam int unsigned XLOG = $clog2(XLEN);
 
-// invert operand 2
-logic            inv;
-
 // arithmetic operands (sign extended by 1 bit)
-logic [XLEN-0:0] ao1;  // arithmetic operand 1
-logic [XLEN-0:0] ao2;  // arithmetic operand 2
+logic [XLEN-0:0] add_op1;  // arithmetic operand 1
+logic [XLEN-0:0] add_op2;  // arithmetic operand 2
+// invert operand 2
+logic            add_inv;
 
 // logical operands
-logic [XLEN-1:0] lo1;  // logical operand 1
-logic [XLEN-1:0] lo2;  // logical operand 2
+logic [XLEN-1:0] log_op1;  // logical operand 1
+logic [XLEN-1:0] log_op2;  // logical operand 2
 
 // barrel shifter shift ammount
-logic [XLOG-1:0] sam;  // multiplexed
-logic [XLOG-1:0] sa;
+logic [XLOG-1:0] shf_mux;  // multiplexed
+logic [XLOG-1:0] shf_sam;
+// barrel shifter results
+logic [XLEN-1:0] shf_sra;
+logic [XLEN-1:0] shf_srl;
+logic [XLEN-1:0] shf_sll;
 
 // operation result
 logic [XLEN-1:0] val;
@@ -85,17 +88,17 @@ if (CFG_LSA) begin: gen_lsa_ena
   always_comb
   unique casez (ctl.i.alu.ai)
     AI_R1_R2: unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-        R_X    :   begin ao1 = extend(rs1        , sgn);  ao2 = extend(rs2        , sgn);  end
-        R_W    :   begin ao1 = extend(rs1[32-1:0], sgn);  ao2 = extend(rs2[32-1:0], sgn);  end
-        default:   begin ao1 = 'x;                        ao2 = 'x;                        end
+        R_X    :   begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+        R_W    :   begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+        default:   begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
-    AI_R1_II:      begin ao1 = extend(rs1        , sgn);  ao2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-  //AI_R1_IL:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-  //AI_R1_IS:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-    AI_PC_IU:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.u  , R_S);  end  // U-type
-    AI_PC_IJ:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-    AI_R1_RA:      begin ao1 = 'x ;                       ao2 = 'x;                        end  // A-type (shift ammount)
-    default :      begin ao1 = 'x ;                       ao2 = 'x;                        end
+    AI_R1_II:      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+  //AI_R1_IL:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+  //AI_R1_IS:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+    AI_PC_IU:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
+    AI_PC_IJ:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+    AI_R1_RA:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end  // A-type (shift ammount)
+    default :      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
   endcase
   // verilator lint_on WIDTH
 
@@ -107,17 +110,17 @@ else begin: gen_lsa_alu
   always_comb
   unique casez (ctl.i.alu.ai)
     AI_R1_R2: unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-        R_X    :   begin ao1 = extend(rs1        , sgn);  ao2 = extend(rs2        , sgn);  end
-        R_W    :   begin ao1 = extend(rs1[32-1:0], sgn);  ao2 = extend(rs2[32-1:0], sgn);  end
-        default:   begin ao1 = 'x;                        ao2 = 'x;                        end
+        R_X    :   begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+        R_W    :   begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+        default:   begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
-    AI_R1_II:      begin ao1 = extend(rs1        , sgn);  ao2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-    AI_R1_IL:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-    AI_R1_IS:      begin ao1 = extend(rs1        , R_S);  ao2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-    AI_PC_IU:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.u  , R_S);  end  // U-type
-    AI_PC_IJ:      begin ao1 = extend(pc         , R_S);  ao2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-    AI_R1_RA:      begin ao1 = 'x ;                       ao2 = 'x;                        end  // A-type (shift ammount)
-    default :      begin ao1 = 'x ;                       ao2 = 'x;                        end
+    AI_R1_II:      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+    AI_R1_IL:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+    AI_R1_IS:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+    AI_PC_IU:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
+    AI_PC_IJ:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+    AI_R1_RA:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end  // A-type (shift ammount)
+    default :      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
   endcase
   // verilator lint_on WIDTH
 
@@ -128,16 +131,16 @@ endgenerate
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
 always_comb
 unique casez (ctl.i.alu.ao)
-  AO_ADD : inv = 1'b0;
+  AO_ADD : add_inv = 1'b0;
   AO_SUB ,
   AO_SLT ,
-  AO_SLTU: inv = 1'b1;
-  default: inv = 1'bx;
+  AO_SLTU: add_inv = 1'b1;
+  default: add_inv = 1'bx;
 endcase
 
 // adder (summation, subtraction)
-assign sum = $signed(ao1) + $signed(inv ? ~ao2 : ao2) + $signed((XLEN+1)'(inv));
-//assign sum = $signed(ao1) + $signed(ao2) + $signed((XLEN+1)'(inv));
+assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
+//assign sum = $signed(add_op1) + $signed(add_op2) + $signed((XLEN+1)'(add_inv));
 
 ///////////////////////////////////////////////////////////////////////////////
 // bitwise logical operations
@@ -152,17 +155,17 @@ if (CFG_LOM) begin: gen_lom_ena
   // dedicated logical operand multiplexer
   always_comb
   unique casez (ctl.i.alu.ai)
-    AI_R1_R2: begin lo1 = rs1; lo2 = rs2;              end  // R-type
-    AI_R1_II: begin lo1 = rs1; lo2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-    default : begin lo1 = 'x ; lo2 = 'x;               end
+    AI_R1_R2: begin log_op1 = rs1; log_op2 = rs2;              end  // R-type
+    AI_R1_II: begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
+    default : begin log_op1 = 'x ; log_op2 = 'x;               end
   endcase
 
 end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
-  assign lo1 = ao1[XLEN-1:0];
-  assign lo2 = ao2[XLEN-1:0];
+  assign log_op1 = add_op1[XLEN-1:0];
+  assign log_op2 = add_op2[XLEN-1:0];
 
 end: gen_lom_alu
 endgenerate
@@ -174,18 +177,23 @@ endgenerate
 // shift ammount multiplexer
 always_comb
 unique casez (ctl.i.alu.ai)
-  AI_R1_RA: sam = rs2      [XLOG-1:0];
-  AI_R1_II: sam = ctl.imm.i[XLOG-1:0];
-  default : sam = 'x;
+  AI_R1_RA: shf_mux = rs2      [XLOG-1:0];
+  AI_R1_II: shf_mux = ctl.imm.i[XLOG-1:0];
+  default : shf_mux = 'x;
 endcase
 
-// shift length
+// shift ammount length
 always_comb
 unique casez (ctl.i.alu.rt[1:0])
-  R_X    : sa =         sam[XLOG-1:0] ;  // XLEN
-  R_W    : sa = (XLOG)'(sam[   5-1:0]);  // word
-  default: sa = 'x;
+  R_X    : shf_sam =         shf_mux[XLOG-1:0] ;  // XLEN
+  R_W    : shf_sam = (XLOG)'(shf_mux[   5-1:0]);  // word
+  default: shf_sam = 'x;
 endcase
+
+// barrel shifter
+assign shf_sra =   $signed(rs1) >>> shf_sam;
+assign shf_srl = $unsigned(rs1)  >> shf_sam;
+assign shf_sll = $unsigned(rs1)  << shf_sam;
 
 ///////////////////////////////////////////////////////////////////////////////
 // output multiplexer
@@ -200,13 +208,13 @@ unique casez (ctl.i.alu.ao)
   AO_SLT ,
   AO_SLTU: val = XLEN'(sum[XLEN]);
   // bitwise logical operations
-  AO_AND : val = lo1 & lo2;
-  AO_OR  : val = lo1 | lo2;
-  AO_XOR : val = lo1 ^ lo2;
+  AO_AND : val = log_op1 & log_op2;
+  AO_OR  : val = log_op1 | log_op2;
+  AO_XOR : val = log_op1 ^ log_op2;
   // barrel shifter
-  AO_SRA : val =   $signed(rs1) >>> sa;
-  AO_SRL : val = $unsigned(rs1)  >> sa;
-  AO_SLL : val = $unsigned(rs1)  << sa;
+  AO_SRA : val = shf_sra;
+  AO_SRL : val = shf_srl;
+  AO_SLL : val = shf_sll;
   default: val = 'x;
 endcase
 
