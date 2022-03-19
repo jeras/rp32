@@ -212,8 +212,8 @@ if (CFG_BRA) begin: gen_bra_add
   assign ifu_pcb = ifu_pc + IAW'(idu_ctl.imm.b);
 
   // PC adder result multiplexer
-  assign ifu_pcs = (idu_ctl.i.pc == PC_BRN) & ifu_tkn ? ifu_pcb
-                                                      : ifu_pci;
+  assign ifu_pcs = (idu_ctl.i.opc == BRANCH) & ifu_tkn ? ifu_pcb
+                                                       : ifu_pci;
 
 end: gen_bra_add
 else begin: gen_bra_mux
@@ -222,8 +222,8 @@ else begin: gen_bra_mux
   logic [IAW-1:0] ifu_pca;  // PC addend
 
   // PC addend multiplexer
-  assign ifu_pca = (idu_ctl.i.pc == PC_BRN) & ifu_tkn ? IAW'(idu_ctl.imm.b)
-                                                      : IAW'(idu_ctl.siz);
+  assign ifu_pca = (idu_ctl.i.opc == BRANCH) & ifu_tkn ? IAW'(idu_ctl.imm.b)
+                                                       : IAW'(idu_ctl.siz);
 
   // PC sum
   assign ifu_pcs = ifu_pc + ifu_pca;
@@ -234,13 +234,13 @@ endgenerate
 // program counter next
 always_comb
 if (if_rdy & idu_vld) begin
-  unique case (idu_ctl.i.pc)
-    PC_PCI,
-    PC_BRN : ifu_pcn = ifu_pcs;
-    PC_JMP : ifu_pcn = {alu_sum[IAW-1:1], 1'b0};
-    PC_TRP : ifu_pcn = IAW'(csr_tvec);
-    PC_EPC : ifu_pcn = IAW'(csr_epc);
-    default: ifu_pcn = 'x;
+  unique case (idu_ctl.i.opc)
+    JAL    ,
+    JALR   : ifu_pcn = {alu_sum[IAW-1:1], 1'b0};
+    BRANCH : ifu_pcn = ifu_pcs;
+//  PC_TRP : ifu_pcn = IAW'(csr_tvec);
+//  PC_EPC : ifu_pcn = IAW'(csr_epc);
+    default: ifu_pcn = ifu_pcs;
   endcase
 end else begin
   ifu_pcn = ifu_pc;
@@ -417,9 +417,9 @@ if (CFG_LSA) begin: gen_lsa_ena
 
   always_comb
   unique casez (idu_ctl.i.alu.ai)
-    AI_R1_IL: lsu_adr = lsu_adr_ld;  // I-type (load)
-    AI_R1_IS: lsu_adr = lsu_adr_st;  // S-type (store)
-    default : lsu_adr = 'x ;
+    LOAD   : lsu_adr = lsu_adr_ld;  // I-type (load)
+    STORE  : lsu_adr = lsu_adr_st;  // S-type (store)
+    default: lsu_adr = 'x ;
   endcase
 
 end:gen_lsa_ena

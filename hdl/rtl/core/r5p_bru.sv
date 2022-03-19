@@ -22,7 +22,7 @@ module r5p_bru #(
   int unsigned XLEN = 32
 )(
   // control
-  input  bru_t            ctl,
+  input  op32_b_func3_et  ctl,
   // data input/output
   input  logic [XLEN-1:0] rs1,  // source register 1
   input  logic [XLEN-1:0] rs2,  // source register 2

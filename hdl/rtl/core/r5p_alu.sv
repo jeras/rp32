@@ -86,18 +86,19 @@ if (CFG_LSA) begin: gen_lsa_ena
   // NOTE: for Arty enable the AI_R1_IL line
   always_comb
   unique casez (ctl.i.alu.ai)
-    AI_R1_R2: unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
+    OP     ,
+    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
         R_X    :   begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
         R_W    :   begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
         default:   begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
-    AI_R1_II:      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-  //AI_R1_IL:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-  //AI_R1_IS:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-    AI_PC_IU:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
-    AI_PC_IJ:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-    AI_R1_RA:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end  // A-type (shift ammount)
-    default :      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
+    JALR   ,
+    OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+  //LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+  //STORE  :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+    AUIPC  :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
+    JAL    :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+    default:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
   endcase
   // verilator lint_on WIDTH
 
@@ -107,19 +108,20 @@ else begin: gen_lsa_alu
   // verilator lint_off WIDTH
   // ALU is used to calculate load/store address
   always_comb
-  unique casez (ctl.i.alu.ai)
-    AI_R1_R2: unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
+  unique casez (ctl.i.opc)
+    OP     ,
+    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
         R_X    :   begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
         R_W    :   begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
         default:   begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
-    AI_R1_II:      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-    AI_R1_IL:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-    AI_R1_IS:      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-    AI_PC_IU:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
-    AI_PC_IJ:      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-    AI_R1_RA:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end  // A-type (shift ammount)
-    default :      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
+    JALR   ,
+    OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+    LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+    STORE  :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+    AUIPC  :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
+    JAL    :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+    default:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
   endcase
   // verilator lint_on WIDTH
 
@@ -153,10 +155,10 @@ if (CFG_LOM) begin: gen_lom_ena
 
   // dedicated logical operand multiplexer
   always_comb
-  unique casez (ctl.i.alu.ai)
-    AI_R1_R2: begin log_op1 = rs1; log_op2 = rs2;              end  // R-type
-    AI_R1_II: begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-    default : begin log_op1 = 'x ; log_op2 = 'x;               end
+  unique casez (ctl.i.opc)
+    OP     : begin log_op1 = rs1; log_op2 = rs2;              end  // R-type
+    OP_IMM : begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
+    default: begin log_op1 = 'x ; log_op2 = 'x;               end
   endcase
 
 end:gen_lom_ena
@@ -173,12 +175,21 @@ endgenerate
 // barrel shifter
 ///////////////////////////////////////////////////////////////////////////////
 
+// reverse bit order
+function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
+`ifndef ALTERA_RESERVED_QIS
+  bitrev = {<<{val}};
+`else
+  for (int unsigned i=0; i<XLEN; i++)  bitrev[i] = val[XLEN-1-i];
+`endif
+endfunction: bitrev
+
 // shift ammount multiplexer
 always_comb
-unique casez (ctl.i.alu.ai)
-  AI_R1_RA: shf_mux = rs2      [XLOG-1:0];
-  AI_R1_II: shf_mux = ctl.imm.i[XLOG-1:0];
-  default : shf_mux = 'x;
+unique casez (ctl.i.opc)
+  OP     : shf_mux = rs2      [XLOG-1:0];
+  OP_IMM : shf_mux = ctl.imm.i[XLOG-1:0];
+  default: shf_mux = 'x;
 endcase
 
 // shift ammount length
@@ -193,8 +204,8 @@ endcase
 always_comb
 unique casez (ctl.i.alu.ao)
   // barrel shifter
-  AO_SRA, AO_SRL : shf_tmp =     rs1  ;
-          AO_SLL : shf_tmp = {<<{rs1}};
+  AO_SRA, AO_SRL : shf_tmp =        rs1 ;
+          AO_SLL : shf_tmp = bitrev(rs1);
   default        : shf_tmp = 'x;
 endcase
 
@@ -224,9 +235,9 @@ unique casez (ctl.i.alu.ao)
   AO_OR  : val = log_op1 | log_op2;
   AO_XOR : val = log_op1 ^ log_op2;
   // barrel shifter
-  AO_SRA : val =     shf_val  ;
-  AO_SRL : val =     shf_val  ;
-  AO_SLL : val = {<<{shf_val}};
+  AO_SRA : val =        shf_val ;
+  AO_SRL : val =        shf_val ;
+  AO_SLL : val = bitrev(shf_val);
   default: val = 'x;
 endcase
 

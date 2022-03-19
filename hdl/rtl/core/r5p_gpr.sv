@@ -22,6 +22,7 @@ module r5p_gpr #(
   bit          WBYP = 1'b0,  // write bypass
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
+  // TODO: impelemt register read enable for power reduction
 )(
   // system signals
   input  logic            clk,  // clock
