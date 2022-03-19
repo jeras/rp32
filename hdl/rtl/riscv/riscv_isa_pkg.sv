@@ -231,17 +231,17 @@ typedef enum logic [3-1:0] {
   LHU = 3'b101,  // RV32I RV64I RV128I
   LWU = 3'b110,  //       RV64I RV128I
   LDU = 3'b111   //             RV128I
-} op32_i_func3_load_t;
+} op32_l_func3_et;
 // NOTE: the RV128I instruction LQ (load quad) is under the MISC_MEM opcode
 
 `ifndef ALTERA_RESERVED_QIS
 typedef union packed {
-  op32_i_func3_load_t load;
-  op32_r_func3_et     alu ;
+  op32_l_func3_et l;
+  op32_r_func3_et r;
 } op32_i_func3_et;
 `else
 // func3 I-type (immediate)
-typedef op32_i_func3_load_t op32_i_func3_et;
+typedef op32_l_func3_et op32_i_func3_et;
 `endif
 
 // func3 S-type (store)
@@ -290,16 +290,6 @@ typedef union packed {
   op32_j_t  j ;  // Jump
 } op32_t;
 `endif
-
-///////////////////////////////////////////////////////////////////////////////
-// 32-bit immediate type
-///////////////////////////////////////////////////////////////////////////////
-
-// full sized immediate type definition
-typedef logic signed [32-1:0] imm32_t;
-
-// full sized immediate illegal (idle) value
-const imm32_t IMM32_ILL = 'x;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP immediate decoder
@@ -364,21 +354,12 @@ function automatic imm_j_t imm_j_f (op32_j_t op);
 endfunction: imm_j_f
 // jump addition is done in ALU while the PC adder is used to calculate the link address
 
+// full immediate decoder
 `ifndef ALTERA_RESERVED_QIS
-// full immediate decoder
 function automatic imm_t imm_f (op32_t op);
-  imm_f = '{
-    i: imm_i_f(op),
-    l: imm_i_f(op),
-    s: imm_s_f(op),
-    b: imm_b_f(op),
-    u: imm_u_f(op),
-    j: imm_j_f(op)
-  };
-endfunction: imm_f
 `else
-// full immediate decoder
 function automatic imm_t imm_f (logic [32-1:0] op);
+`endif
   imm_f = '{
     i: imm_i_f(op),
     l: imm_i_f(op),
@@ -388,7 +369,6 @@ function automatic imm_t imm_f (logic [32-1:0] op);
     j: imm_j_f(op)
   };
 endfunction: imm_f
-`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP GPR decoder
@@ -513,11 +493,11 @@ const alu_t CTL_ALU_ILL = '{ao: alu_op_et'('x), rt: R_XX};
 `ifndef ALTERA_RESERVED_QIS
 // load/store func3 union
 typedef union packed {
-  op32_i_func3_load_t l;
-  op32_s_func3_et     s;
+  op32_l_func3_et l;
+  op32_s_func3_et s;
 } lsu_f3_t;
 `else
-typedef op32_i_func3_load_t lsu_f3_t;
+typedef op32_l_func3_et lsu_f3_t;
 `endif
 
 // load/store type
@@ -782,7 +762,7 @@ t.siz = 4;
 
 // RV32 I base extension
 //unique casez (op)
-casez (op)
+unique casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                ill;       '{opc   , br  , '{ao     , rt  }, ls  , wb    };
   32'b0000_0000_0000_0000_0000_0000_0000_0000: begin                                                                     end  // illegal instruction
   32'b????_????_????_????_????_????_?011_0111: begin t.ill = STD; t.i = '{LUI   , BXXX,   CTL_ALU_ILL   , LS_X, WB_IMM}; end  // LUI
@@ -803,7 +783,6 @@ casez (op)
   32'b????_????_????_????_?000_????_?010_0011: begin t.ill = STD; t.i = '{STORE , BXXX, '{AO_ADD , R_SX}, S_B , WB_XXX}; end  // SB
   32'b????_????_????_????_?001_????_?010_0011: begin t.ill = STD; t.i = '{STORE , BXXX, '{AO_ADD , R_SX}, S_H , WB_XXX}; end  // SH
   32'b????_????_????_????_?010_????_?010_0011: begin t.ill = STD; t.i = '{STORE , BXXX, '{AO_ADD , R_SX}, S_W , WB_XXX}; end  // SW
-//32'b0000_0000_0000_0000_0000_0000_0001_0011: begin t.ill = STD; t.i = '{OP_IMM, BXXX,   CTL_ALU_ILL   , LS_X, WB_XXX}; end  // NOP (ADDI x0, x0, 0), 32'h000000013
   32'b????_????_????_????_?000_????_?001_0011: begin t.ill = STD; t.i = '{OP_IMM, BXXX, '{AO_ADD , R_SX}, LS_X, WB_ALU}; end  // ADDI
   32'b????_????_????_????_?010_????_?001_0011: begin t.ill = STD; t.i = '{OP_IMM, BXXX, '{AO_SLT , R_SX}, LS_X, WB_ALU}; end  // SLTI
   32'b????_????_????_????_?011_????_?001_0011: begin t.ill = STD; t.i = '{OP_IMM, BXXX, '{AO_SLTU, R_UX}, LS_X, WB_ALU}; end  // SLTIU

@@ -226,43 +226,6 @@ function automatic imm_t imm_c_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
   };
 endfunction: imm_c_f
 
-
-// full immediate decoder
-function automatic imm32_t imm16_f (op16_t op, op16_frm_t frm, op16_qlf_t qlf);
-  imm32_t imm = '0;
-  unique case (frm)
-    T_CR  ,
-    T_CR_0:  imm = IMM32_ILL;
-    T_CR_J,
-    T_CR_L:  imm = '0;
-    T_CI  :
-      case (qlf)
-        T_C_P:  imm = 32'(  $signed({op.ci.imm_12_12, op.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
-        T_C_S:  imm = 32'(  $signed({op.ci.imm_12_12, op.ci.imm_06_02}));  // signed immediate
-        T_C_U:  imm = 32'($unsigned({op.ci.imm_12_12, op.ci.imm_06_02}));  // unsigned immediate
-        default: imm = IMM32_ILL;
-      endcase
-    T_CI_0:  imm = 32'(  $signed({op.ci.imm_12_12, op.ci.imm_06_02}));  // signed immediate
-    T_CI_S:
-      case (qlf)
-        T_C_F: {imm[31:10], {imm[9], imm[4], imm[6], imm[8:7], imm[5]}, imm[3:0]} = 32'($signed({op.ci.imm_12_12, op.ci.imm_06_02, 4'h0}));  // signed immediate *16
-        default: imm = IMM32_ILL;
-      endcase
-    T_CI_L:  imm = imm32_t'(imm_cil_f(op, qlf));
-    T_CSS :  imm = imm32_t'(imm_css_f(op, qlf));
-    T_CIW : {imm[5:4], imm[9:6], imm[2], imm[3]} = op.ciw.imm_12_05;
-    T_CL  ,
-    T_CS  :  imm = imm32_t'(imm_cls_f(op, qlf));
-    T_CA  :  imm = IMM32_ILL;
-    T_CB  :  imm = imm32_t'(imm_cb_f (op));
-    T_CB_A:  imm = 32'($signed({op.ci.imm_12_12, op.ci.imm_06_02}));  // signed immediate
-    T_CJ  ,
-    T_CJ_L:  imm = imm32_t'(imm_cj_f(op));
-    default: imm = IMM32_ILL;
-  endcase
-  return imm;
-endfunction: imm16_f
-
 ///////////////////////////////////////////////////////////////////////////////
 // 16-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
