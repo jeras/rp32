@@ -729,11 +729,7 @@ ctl_t      t;
 // set instruction size
 t.siz = 4;
 
-`define DECODER_CASE
-//`ifdef DECODER_CASE
-
 // RV32 I base extension
-//unique casez (op)
 unique casez (op)
   //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                ill;       '{opc   , br  , '{ao     , rt  }, ls  };
   32'b0000_0000_0000_0000_0000_0000_0000_0000: begin                                                             end  // illegal instruction
@@ -783,16 +779,11 @@ endcase
 t.imm = imm_f(op);
 t.gpr = gpr_f(op, op32_op62_et'(op[6:2]));
 
-
-//`else
-
 // operation code
 t.i.opc = op32_op62_et'(op[6:2]);
 
 // branch unit
 t.i.bru = op32_b_func3_et'(op.b.func3);
-
-//`endif
 
 // return temporary variable
 return(t);
