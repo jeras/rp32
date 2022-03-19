@@ -85,12 +85,12 @@ if (CFG_LSA) begin: gen_lsa_ena
   // TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
   // NOTE: for Arty enable the AI_R1_IL line
   always_comb
-  unique casez (ctl.i.alu.ai)
+  unique casez (ctl.i.opc)
     OP     ,
     BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-        R_X    :   begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-        R_W    :   begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-        default:   begin add_op1 = 'x;                        add_op2 = 'x;                        end
+        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
     JALR   ,
     OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
@@ -111,9 +111,9 @@ else begin: gen_lsa_alu
   unique casez (ctl.i.opc)
     OP     ,
     BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-        R_X    :   begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-        R_W    :   begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-        default:   begin add_op1 = 'x;                        add_op2 = 'x;                        end
+        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
     JALR   ,
     OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)

@@ -219,7 +219,7 @@ typedef enum logic [3-1:0] {
   SR    = 3'b101,  // func7[5] ? SRA : SRL
   OR    = 3'b110,  //
   AND   = 3'b111   //
-} op32_r_func3_t;
+} op32_r_func3_et;
 
 // func3 I-type (load)
 typedef enum logic [3-1:0] {
@@ -237,11 +237,11 @@ typedef enum logic [3-1:0] {
 `ifndef ALTERA_RESERVED_QIS
 typedef union packed {
   op32_i_func3_load_t load;
-  op32_r_func3_t      alu ;
-} op32_i_func3_t;
+  op32_r_func3_et     alu ;
+} op32_i_func3_et;
 `else
 // func3 I-type (immediate)
-typedef op32_i_func3_load_t op32_i_func3_t;
+typedef op32_i_func3_load_t op32_i_func3_et;
 `endif
 
 // func3 S-type (store)
@@ -254,7 +254,7 @@ typedef enum logic [3-1:0] {
 //    = 3'b101,  //
 //    = 3'b110,  //
 //    = 3'b111   //
-} op32_s_func3_t;
+} op32_s_func3_et;
 
 // func3 B-type (branch)
 typedef enum logic [3-1:0] {
@@ -271,9 +271,9 @@ typedef enum logic [3-1:0] {
 
 // 32-bit instruction format structures
 typedef struct packed {logic [4:0] rs3; logic [1:0] func2;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0]     func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r4_t;  // Register 4 (floating point)
-typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; op32_r_func3_t  func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
-typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; op32_i_func3_t  func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
-typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; op32_s_func3_t  func3; logic [4:0] imm_4_0;                       op32_opcode_t opcode;} op32_s_t ;  // Store
+typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; op32_r_func3_et func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
+typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; op32_i_func3_et func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
+typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; op32_s_func3_et func3; logic [4:0] imm_4_0;                       op32_opcode_t opcode;} op32_s_t ;  // Store
 typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; op32_b_func3_et func3; logic [4:1] imm_4_1; logic [11:11] imm_11; op32_opcode_t opcode;} op32_b_t ;  // Branch
 typedef struct packed {logic [31:12] imm_31_12;                                                                              logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_u_t ;  // Upper immediate
 typedef struct packed {logic [20:20] imm_20; logic [10:1] imm_10_1; logic [11:11] imm_11; logic [19:12] imm_19_12;           logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_j_t ;  // Jump
@@ -448,8 +448,8 @@ const pc_t PC_ILL = PC_PCI;
 
 // ALU operation {func7[5], func3}
 typedef struct packed {
-  logic          f7_5;  // used for subtraction
-  op32_r_func3_t f3;
+  logic           f7_5;  // used for subtraction
+  op32_r_func3_et f3;
 } alu_op_t;
 
 // ALU operation {func7[5], func3}
@@ -514,7 +514,7 @@ const alu_t CTL_ALU_ILL = '{ao: alu_op_et'('x), rt: R_XX};
 // load/store func3 union
 typedef union packed {
   op32_i_func3_load_t l;
-  op32_s_func3_t      s;
+  op32_s_func3_et     s;
 } lsu_f3_t;
 `else
 typedef op32_i_func3_load_t lsu_f3_t;
@@ -783,8 +783,8 @@ t.siz = 4;
 // RV32 I base extension
 //unique casez (op)
 casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                ill;       '{opc   , br  , '{ai    , ao     , rt  }, ls  , wb    };
-  32'b0000_0000_0000_0000_0000_0000_0000_0000: begin                                                                               end  // illegal instruction
+  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210                ill;       '{opc   , br  , '{ao     , rt  }, ls  , wb    };
+  32'b0000_0000_0000_0000_0000_0000_0000_0000: begin                                                                     end  // illegal instruction
   32'b????_????_????_????_????_????_?011_0111: begin t.ill = STD; t.i = '{LUI   , BXXX,   CTL_ALU_ILL   , LS_X, WB_IMM}; end  // LUI
   32'b????_????_????_????_????_????_?001_0111: begin t.ill = STD; t.i = '{AUIPC , BXXX, '{AO_ADD , R_SX}, LS_X, WB_ALU}; end  // AUIPC
   32'b????_????_????_????_????_????_?110_1111: begin t.ill = STD; t.i = '{JAL   , BXXX, '{AO_ADD , R_SX}, LS_X, WB_PCI}; end  // JAL  TODO: Instruction-address-misaligned exception
@@ -839,7 +839,7 @@ t.gpr = gpr_f(op, op32_op62_et'(op[6:2]));
 t.i.opc = op32_op62_et'(op[6:2]);
 
 // branch unit
-t.i.bru = op.b.func3;
+t.i.bru = op32_b_func3_et'(op.b.func3);
 
 //`endif
 

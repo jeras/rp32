@@ -416,7 +416,7 @@ if (CFG_LSA) begin: gen_lsa_ena
   assign lsu_adr_st = gpr_rs1 + XLEN'(idu_ctl.imm.s);  // S-type (store)
 
   always_comb
-  unique casez (idu_ctl.i.alu.ai)
+  unique casez (idu_ctl.i.opc)
     LOAD   : lsu_adr = lsu_adr_ld;  // I-type (load)
     STORE  : lsu_adr = lsu_adr_st;  // S-type (store)
     default: lsu_adr = 'x ;
