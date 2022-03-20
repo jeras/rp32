@@ -177,7 +177,7 @@ begin
   // check each GPR for changes
   for (int unsigned i=0; i<32; i++) begin
     if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("Info   %s %08h -> %08h", gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
+      $display("%t, Info   %s %08h -> %08h", $time, gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
     end
   end
 end
