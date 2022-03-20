@@ -78,14 +78,14 @@ result_sign_t sgn;
 assign sgn = result_sign_t'(ctl.i.alu.rt[2]);
 
 // ALU input multiplexer and signed/unsigned extension
-generate
-if (CFG_LSA) begin: gen_lsa_ena
 
-  // verilator lint_off WIDTH
-  // load/store address adders are implemented outside the ALU
-  // TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
-  // NOTE: for Arty enable the AI_R1_IL line
-  always_comb
+// load/store address adders are implemented outside the ALU
+// TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
+// NOTE: for Arty enable the AI_R1_IL line
+
+// verilator lint_off WIDTH
+// ALU is used to calculate load/store address
+always_comb
   unique casez (ctl.i.opc)
     OP     ,
     BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
@@ -93,31 +93,8 @@ if (CFG_LSA) begin: gen_lsa_ena
         R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
         default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
       endcase
-    JALR   ,
-    OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-  //LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-  //STORE  :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-    AUIPC  :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
-    JAL    :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-    default:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
-  endcase
-  // verilator lint_on WIDTH
-
-end:gen_lsa_ena
-else begin: gen_lsa_alu
-
-  // verilator lint_off WIDTH
-  // ALU is used to calculate load/store address
-  always_comb
-  unique casez (ctl.i.opc)
 //    OP     ,
-//    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-//        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-//        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-//        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
-//      endcase
-    OP     ,
-    BRANCH :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+//    BRANCH :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
     JALR   ,
     OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
     LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
@@ -128,8 +105,27 @@ else begin: gen_lsa_alu
   endcase
   // verilator lint_on WIDTH
 
-end: gen_lsa_alu
-endgenerate
+//// verilator lint_off WIDTH
+//// ALU is used to calculate load/store address
+//always_comb
+//unique casez ({CFG_LSA, ctl.i.opc})
+//  {1'b?, OP    },
+//  {1'b?, BRANCH}: unique casez (ctl.i.alu.rt[1:0])                                                          // R-type
+//      R_X    :    begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+//      R_W    :    begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+//      default:    begin add_op1 = 'x;                        add_op2 = 'x;                        end
+//    endcase
+////{1'b1, BRANCH}: begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(rs2        , R_S);  end  // B-type (branch)
+//  {1'b?, JALR  },
+//  {1'b?, OP_IMM}: begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (jump, arithmetic/logic)
+//  {1'b0, LOAD  }: begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+//  {1'b0, STORE }: begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+//  {1'b?, AUIPC }: begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
+//  {1'b?, JAL   }: begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+//  default       : begin add_op1 = 'x ;                       add_op2 = 'x;                        end
+//endcase
+//// verilator lint_on WIDTH
+
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
@@ -145,9 +141,9 @@ unique casez (ctl.i.opc)
     endcase
   BRANCH :     add_inv = 1'b1;
   JALR   ,
-  LOAD   :     add_inv = 1'b0;
-  STORE  :     add_inv = 1'b0;
-  AUIPC  :     add_inv = 1'b0;
+  LOAD   ,
+  STORE  ,
+  AUIPC  ,
   JAL    :     add_inv = 1'b0;
   default:     add_inv = 1'bx;
 endcase
