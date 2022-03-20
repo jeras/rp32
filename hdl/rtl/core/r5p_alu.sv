@@ -21,8 +21,9 @@ import riscv_isa_pkg::*;
 module r5p_alu #(
   int unsigned XLEN = 32,
   // timing versus area compromises
-  bit          CFG_LSA = 1'b0,   // enable dedicated Load/Store Adder
-  bit          CFG_LOM = 1'b0    // enable dedicated Logical Operand Multiplexer
+  bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
+  bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
+  bit          CFG_SOM = 1'b1   // enable dedicated Shift   Operand Multiplexer
 )(
   // system signals
   input  logic            clk,  // clock
@@ -165,6 +166,7 @@ end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
+//assign log_op1 = rs1;
   assign log_op1 = add_op1[XLEN-1:0];
   assign log_op2 = add_op2[XLEN-1:0];
 
@@ -184,13 +186,25 @@ function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
 `endif
 endfunction: bitrev
 
-// shift ammount multiplexer
-always_comb
-unique casez (ctl.i.opc)
-  OP     : shf_mux = rs2      [XLOG-1:0];
-  OP_IMM : shf_mux = ctl.imm.i[XLOG-1:0];
-  default: shf_mux = 'x;
-endcase
+generate
+if (CFG_SOM) begin: gen_som_ena
+
+  // shift ammount multiplexer
+  always_comb
+  unique casez (ctl.i.opc)
+    OP     : shf_mux = rs2      [XLOG-1:0];
+    OP_IMM : shf_mux = ctl.imm.i[XLOG-1:0];
+    default: shf_mux = 'x;
+  endcase
+
+end:gen_som_ena
+else begin: gen_som_alu
+
+  // shift ammount multiplexer shared with logic
+  assign shf_mux = log_op2[XLOG-1:0];
+
+end: gen_som_alu
+endgenerate
 
 // shift ammount length
 always_comb
