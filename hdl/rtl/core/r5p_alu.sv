@@ -110,12 +110,14 @@ else begin: gen_lsa_alu
   // ALU is used to calculate load/store address
   always_comb
   unique casez (ctl.i.opc)
+//    OP     ,
+//    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
+//        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+//        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+//        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
+//      endcase
     OP     ,
-    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
-      endcase
+    BRANCH :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
     JALR   ,
     OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
     LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
@@ -132,12 +134,22 @@ endgenerate
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
 always_comb
-unique casez (ctl.i.alu.ao)
-  AO_ADD : add_inv = 1'b0;
-  AO_SUB ,
-  AO_SLT ,
-  AO_SLTU: add_inv = 1'b1;
-  default: add_inv = 1'bx;
+unique casez (ctl.i.opc)
+  OP     ,
+  OP_IMM : unique casez (ctl.i.alu.ao)
+      AO_ADD : add_inv = 1'b0;
+      AO_SUB ,
+      AO_SLT ,
+      AO_SLTU: add_inv = 1'b1;
+      default: add_inv = 1'bx;
+    endcase
+  BRANCH :     add_inv = 1'b1;
+  JALR   ,
+  LOAD   :     add_inv = 1'b0;
+  STORE  :     add_inv = 1'b0;
+  AUIPC  :     add_inv = 1'b0;
+  JAL    :     add_inv = 1'b0;
+  default:     add_inv = 1'bx;
 endcase
 
 // adder (summation, subtraction)
