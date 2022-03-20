@@ -57,21 +57,21 @@ module r5p_core #(
   string       CHIP = ""
 )(
   // system signals
-  input  logic                  clk,
-  input  logic                  rst,
+  input  logic           clk,
+  input  logic           rst,
   // program bus (instruction fetch)
-  output logic                  if_vld,
-  output logic [IAW-1:0]        if_adr,
-  input  logic [IBW-1:0][8-1:0] if_rdt,
-  input  logic                  if_rdy,
+  output logic           if_vld,
+  output logic [IAW-1:0] if_adr,
+  input  logic [IDW-1:0] if_rdt,
+  input  logic           if_rdy,
   // data bus (load/store)
-  output logic                  ls_vld,  // write or read request
-  output logic                  ls_wen,  // write enable
-  output logic [DAW-1:0]        ls_adr,  // address
-  output logic [DBW-1:0]        ls_ben,  // byte enable
-  output logic [DBW-1:0][8-1:0] ls_wdt,  // write data
-  input  logic [DBW-1:0][8-1:0] ls_rdt,  // read data
-  input  logic                  ls_rdy   // write or read acknowledge
+  output logic           ls_vld,  // write or read request
+  output logic           ls_wen,  // write enable
+  output logic [DAW-1:0] ls_adr,  // address
+  output logic [DBW-1:0] ls_ben,  // byte enable
+  output logic [DDW-1:0] ls_wdt,  // write data
+  input  logic [DDW-1:0] ls_rdt,  // read data
+  input  logic           ls_rdy   // write or read acknowledge
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
@@ -258,9 +258,9 @@ if (ISA.spec.ext.C) begin: gen_d16
 
   // 16/32-bit instruction decoder
   always_comb
-  unique case (opsiz(if_rdt[2-1:0]))
-    2      : idu_ctl = dec16(ISA, if_rdt[2-1:0]);  // 16-bit C standard extension
-    4      : idu_ctl = dec32(ISA, if_rdt[4-1:0]);  // 32-bit
+  unique case (opsiz(if_rdt[16-1:0]))
+    2      : idu_ctl = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_ctl = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
     default: idu_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
   endcase
 
@@ -268,13 +268,13 @@ end: gen_d16
 else begin: gen_d32
 
   // 32-bit instruction decoder
-  assign idu_ctl = dec32(ISA, if_rdt[4-1:0]);
+  assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
 
 end: gen_d32
 endgenerate
 `else
 // 32-bit instruction decoder
-assign idu_ctl = dec32(ISA, if_rdt[4-1:0]);
+assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
