@@ -29,13 +29,13 @@ module r5p_lsu #(
   input  logic                 clk,  // clock
   input  logic                 rst,  // reset
   // control
-  input  lsu_t                 ctl,
+  input  ctl_t                 ctl,
   // data input/output
   input  logic      [XLEN-1:0] adr,  // address
   input  logic      [XLEN-1:0] wdt,  // write data
   output logic      [XLEN-1:0] rdt,  // read data
   output logic                 mal,  // misaligned
-  output logic                 dly,  // delayed writeback enable
+  output logic                 rdy,  // ready
   // data bus (load/store)
   output logic                 ls_vld,  // write or read request
   output logic                 ls_wen,  // write enable
@@ -57,11 +57,13 @@ logic ls_wtr;
 assign ls_rtr = ls_vld & ls_rdy & ~ls_wen;
 assign ls_wtr = ls_vld & ls_rdy &  ls_wen;
 
-// request
-assign ls_vld = ctl.en & ~dly;
-
-// write enable
-assign ls_wen = ctl.we;
+// valid and write anable
+always_comb
+unique case (ctl.i.opc)
+  LOAD   : begin ls_vld = 1'b1; ls_wen = 1'b0; end
+  STORE  : begin ls_vld = 1'b1; ls_wen = 1'b1; end
+  default: begin ls_vld = 1'b0; ls_wen = 1'bx; end
+endcase
 
 // address
 assign ls_adr = {adr[AW-1:WW], WW'('0)};
@@ -69,9 +71,9 @@ assign ls_adr = {adr[AW-1:WW], WW'('0)};
 // misalignment
 // decodings for read and write access are identical
 always_comb
-if (ctl.we) begin
+if (ctl.i.lsu.we) begin
   // write access
-  unique case (ctl.f3)
+  unique case (ctl.i.lsu.f3)
     SB     : mal = 1'b0;
     SH     : mal = |adr[0:0];
     SW     : mal = |adr[1:0];
@@ -80,7 +82,7 @@ if (ctl.we) begin
   endcase
 end else begin
   // read access
-  unique case (ctl.f3)
+  unique case (ctl.i.lsu.f3)
     LB, LBU: mal = 1'b0;
     LH, LHU: mal = |adr[0:0];
     LW, LWU: mal = |adr[1:0];
@@ -93,11 +95,11 @@ end
 // TODO
 always_comb
 //for (int unsigned i=0; i<SW; i++) begin
-//  ls_ben[i] = (2**id_ctl.i.st) &
+//  ls_ben[i] = (2**id_ctl.i.lsu.i.st) &
 //end
-if (ctl.we) begin
+if (ctl.i.lsu.we) begin
   // write access
-  unique case (ctl.f3)
+  unique case (ctl.i.lsu.f3)
     SB     : ls_ben = BW'(8'b0000_0001 << adr[WW-1:0]);
     SH     : ls_ben = BW'(8'b0000_0011 << adr[WW-1:0]);
     SW     : ls_ben = BW'(8'b0000_1111 << adr[WW-1:0]);
@@ -112,7 +114,7 @@ end
 
 // write data (apply byte select mask)
 always_comb
-unique case (ctl.f3)
+unique case (ctl.i.lsu.f3)
   SB     : ls_wdt = (wdt & DW'(64'h00000000_000000ff)) << (8*adr[WW-1:0]);
   SH     : ls_wdt = (wdt & DW'(64'h00000000_0000ffff)) << (8*adr[WW-1:0]);
   SW     : ls_wdt = (wdt & DW'(64'h00000000_ffffffff)) << (8*adr[WW-1:0]);
@@ -131,7 +133,7 @@ if (rst) begin
   rf3 <= XLEN == 32 ? LW : LD;
 end else if (ls_rtr) begin
   ral <= adr[WW-1:0];
-  rf3 <= ctl.f3;
+  rf3 <= ctl.i.lsu.f3;
 end
 
 // read data (sign extend)
@@ -151,9 +153,7 @@ always_comb begin: blk_rdt
   endcase
 end: blk_rdt
 
-// access delay
-always_ff @ (posedge clk, posedge rst)
-if (rst)  dly <= 1'b0;
-else      dly <= ls_rtr;
+// system stall
+assign rdy = ls_rdy;
 
 endmodule: r5p_lsu

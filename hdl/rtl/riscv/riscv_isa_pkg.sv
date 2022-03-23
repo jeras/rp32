@@ -232,8 +232,6 @@ typedef enum logic [3-1:0] {
   BGEU = 3'b111   // greater then or equal unsigned
 } op32_b_func3_et;
 
-const op32_b_func3_et BRU_ILL = 3'bxxx;
-
 // 32-bit instruction format structures
 typedef struct packed {logic [4:0] rs3; logic [1:0] func2;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0]     func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r4_t;  // Register 4 (floating point)
 typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; op32_r_func3_et func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
@@ -443,10 +441,12 @@ typedef enum logic [$bits(lsu_t)-1:0] {
   S_D  = {1'b1, 1'b1, SD },  // store double
   S_Q  = {1'b1, 1'b1, SQ },  // store quad
   LS_X = {1'b0, 1'b?, 3'b???}   // none
-} lse_t;
+} lsu_et;
 
 // branch type is just shorter type name for the full branch func7 type
 typedef op32_b_func3_et bru_t;
+
+const bru_t BRU_ILL = bru_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures

@@ -121,7 +121,7 @@ logic [XLEN-1:0] lsu_adr;  // address
 logic [XLEN-1:0] lsu_wdt;  // write data
 logic [XLEN-1:0] lsu_rdt;  // read data
 logic            lsu_mal;  // MisALigned
-logic            lsu_dly;  // DeLaYed writeback enable
+logic            lsu_rdy;  // ready
 
 // write back unit (GPR destination register access)
 logic            wbu_wen;  // write enable
@@ -138,7 +138,7 @@ if (rst)  ifu_run <= 1'b0;
 else      ifu_run <= 1'b1;
 
 // request becomes active after reset
-assign if_vld = ifu_run & ~(ls_vld & ~ls_wen);
+assign if_vld = ifu_run;
 
 // PC next is used as IF address
 assign if_adr = ifu_pcn;
@@ -153,7 +153,7 @@ else      idu_vld <= (if_vld & if_rdy) | (idu_vld & stall);
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = (if_vld & ~if_rdy) | (ls_vld & ~ls_rdy) | (ls_vld & ~ls_wen);
+assign stall = (if_vld & ~if_rdy) | (ls_vld & ~ls_rdy);
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
@@ -446,13 +446,13 @@ r5p_lsu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (idu_ctl.i.lsu),
+  .ctl     (idu_ctl),
   // data input/output
   .adr     (lsu_adr),
   .wdt     (lsu_wdt),
   .rdt     (lsu_rdt),
   .mal     (lsu_mal),
-  .dly     (lsu_dly),
+  .rdy     (lsu_rdy),
   // data bus (load/store)
   .ls_vld  (ls_vld),
   .ls_wen  (ls_wen),
