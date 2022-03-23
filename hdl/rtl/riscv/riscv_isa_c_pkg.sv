@@ -284,6 +284,7 @@ t = CTL_ILL;
 // set instruction size
 t.siz = 2;
 
+/*
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;       '{opc   , br  , '{ao     , rt  }, lsu };
@@ -340,7 +341,7 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   16'b1001_????_????_??10: begin fi = '{T_CR  , T_X_X}; t.ill = STD; t.i = '{OP    , BXXX, '{AO_ADD , R_SX}, LS_X}; end  // C.ADD      | add rd, rd, rs2
   16'b110?_????_????_??10: begin fi = '{T_CSS , T_C_W}; t.ill = STD; t.i = '{STORE , BXXX, '{AO_ADD , R_SX}, S_W }; end  // C.SWSP     | sw rs2, offset(x2)
 endcase end
-
+*/
 /*
 // privileged mode
 if (isa.priv.M) begin casez (op)

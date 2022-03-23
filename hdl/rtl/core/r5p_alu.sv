@@ -42,6 +42,9 @@ module r5p_alu #(
 // logarithm of XLEN
 localparam int unsigned XLOG = $clog2(XLEN);
 
+// arithmetic operands multiplexer
+logic [XLEN-1:0] mux_op1;  // arithmetic operand 1
+logic [XLEN-1:0] mux_op2;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
 logic [XLEN-0:0] add_op1;  // arithmetic operand 1
 logic [XLEN-0:0] add_op2;  // arithmetic operand 2
@@ -66,16 +69,14 @@ logic [XLEN-1:0] val;
 // arithmetic operations
 ///////////////////////////////////////////////////////////////////////////////
 
-function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, result_sign_t sgn);
+function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
   unique casez (sgn)
-    R_S    : extend = (XLEN+1)'(  signed'(val));  //   signed
-    R_U    : extend = (XLEN+1)'(unsigned'(val));  // unsigned
+    1'b1   : extend = (XLEN+1)'(  signed'(val));  //   signed
+    1'b0   : extend = (XLEN+1)'(unsigned'(val));  // unsigned
     default: extend = 'x;
   endcase
 endfunction: extend
 
-result_sign_t sgn;
-assign sgn = result_sign_t'(ctl.i.alu.rt[2]);
 
 // ALU input multiplexer and signed/unsigned extension
 
@@ -85,68 +86,80 @@ assign sgn = result_sign_t'(ctl.i.alu.rt[2]);
 
 // verilator lint_off WIDTH
 // ALU is used to calculate load/store address
-always_comb
-  unique casez (ctl.i.opc)
-    OP     ,
-    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
-      endcase
-//    OP     ,
-//    BRANCH :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-    JALR   ,
-    OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-    LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-    STORE  :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-    AUIPC  :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
-    JAL    :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-    default:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
-  endcase
-  // verilator lint_on WIDTH
-
-//// verilator lint_off WIDTH
-//// ALU is used to calculate load/store address
 //always_comb
-//unique casez ({CFG_LSA, ctl.i.opc})
-//  {1'b?, OP    },
-//  {1'b?, BRANCH}: unique casez (ctl.i.alu.rt[1:0])                                                          // R-type
-//      R_X    :    begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-//      R_W    :    begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-//      default:    begin add_op1 = 'x;                        add_op2 = 'x;                        end
-//    endcase
-////{1'b1, BRANCH}: begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(rs2        , R_S);  end  // B-type (branch)
-//  {1'b?, JALR  },
-//  {1'b?, OP_IMM}: begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (jump, arithmetic/logic)
-//  {1'b0, LOAD  }: begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-//  {1'b0, STORE }: begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-//  {1'b?, AUIPC }: begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
-//  {1'b?, JAL   }: begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-//  default       : begin add_op1 = 'x ;                       add_op2 = 'x;                        end
-//endcase
-//// verilator lint_on WIDTH
+//  unique casez (ctl.i.opc)
+//    OP     ,
+//    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
+//        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+//        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
+//        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
+//      endcase
+////    OP     ,
+////    BRANCH :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
+//    JALR   ,
+//    OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
+//    LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
+//    STORE  :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
+//    AUIPC  :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
+//    JAL    :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
+//    default:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
+//  endcase
+//  // verilator lint_on WIDTH
 
+logic sgn;
+//assign sgn = result_sign_t'(ctl.i.alu.rt[2]);
+
+// verilator lint_off WIDTH
+// ALU is used to calculate load/store address
+always_comb
+unique case (ctl.i.opc)
+  OP     ,                                                  // R-type (arithmetic/logic)
+  BRANCH : begin mux_op1 = rs1;  mux_op2 = rs2      ;  end  // B-type (branch)
+  JALR   ,                                                  // I-type (jump)
+  OP_IMM : begin mux_op1 = rs1;  mux_op2 = ctl.imm.i;  end  // I-type (arithmetic/logic)
+  LOAD   : begin mux_op1 = rs1;  mux_op2 = ctl.imm.l;  end  // I-type (load)
+  STORE  : begin mux_op1 = rs1;  mux_op2 = ctl.imm.s;  end  // S-type (store)
+  AUIPC  : begin mux_op1 = pc ;  mux_op2 = ctl.imm.u;  end  // U-type
+  JAL    : begin mux_op1 = pc ;  mux_op2 = ctl.imm.j;  end  // J-type (jump)
+  default: begin mux_op1 = 'x ;  mux_op2 = 'x;         end
+endcase
+// verilator lint_on WIDTH
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
 always_comb
-unique casez (ctl.i.opc)
-  OP     ,
-  OP_IMM : unique casez (ctl.i.alu.ao)
-      AO_ADD : add_inv = 1'b0;
-      AO_SUB ,
-      AO_SLT ,
-      AO_SLTU: add_inv = 1'b1;
-      default: add_inv = 1'bx;
+unique case (ctl.i.opc)
+  OP     : unique case (ctl.i.alu.f3)
+      ADD    : begin add_inv = ctl.i.alu.f7_5; sgn = 1'b1; end
+      SLT    : begin add_inv = 1'b1; sgn = 1'b1; end
+      SLTU   : begin add_inv = 1'b1; sgn = 1'b0; end
+      default: begin add_inv = 1'bx; sgn = 1'bx; end
     endcase
-  BRANCH :     add_inv = 1'b1;
+  OP_IMM : unique case (ctl.i.alu.f3)
+      ADD    : begin add_inv = 1'b0; sgn = 1'b1; end
+      SLT    : begin add_inv = 1'b1; sgn = 1'b1; end
+      SLTU   : begin add_inv = 1'b1; sgn = 1'b0; end
+      default: begin add_inv = 1'bx; sgn = 1'bx; end
+    endcase
+  BRANCH : unique case (ctl.i.bru)
+      BEQ    ,
+      BNE    : begin add_inv = 1'b1; sgn = 1'bx; end
+      BLT    ,
+      BGE    : begin add_inv = 1'b1; sgn = 1'b1; end
+      BLTU   ,
+      BGEU   : begin add_inv = 1'b1; sgn = 1'b0; end
+      default: begin add_inv = 1'bx; sgn = 1'bx; end
+    endcase
   JALR   ,
   LOAD   ,
   STORE  ,
   AUIPC  ,
-  JAL    :     add_inv = 1'b0;
-  default:     add_inv = 1'bx;
+  JAL    : begin add_inv = 1'b0; sgn = 1'bx; end
+  default: begin add_inv = 1'bx; sgn = 1'bx; end
 endcase
+
+always add_op1 = extend(mux_op1, sgn);
+always add_op2 = extend(mux_op2, sgn);
 
 // adder (summation, subtraction)
 assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
@@ -214,30 +227,31 @@ else begin: gen_som_alu
 end: gen_som_alu
 endgenerate
 
-// shift ammount length
-always_comb
-unique casez (ctl.i.alu.rt[1:0])
-  R_X    : shf_sam =         shf_mux[XLOG-1:0] ;  // XLEN
-  R_W    : shf_sam = (XLOG)'(shf_mux[   5-1:0]);  // word
-  default: shf_sam = 'x;
-endcase
+//// shift ammount length
+//always_comb
+//unique casez (ctl.i.alu.rt[1:0])
+//  R_X    : shf_sam =         shf_mux[XLOG-1:0] ;  // XLEN
+//  R_W    : shf_sam = (XLOG)'(shf_mux[   5-1:0]);  // word
+//  default: shf_sam = 'x;
+//endcase
+assign shf_sam = shf_mux[XLOG-1:0] ;  // XLEN
 
 // bit inversion
 always_comb
-unique casez (ctl.i.alu.ao)
+unique casez (ctl.i.alu.f3)
   // barrel shifter
-  AO_SRA, AO_SRL : shf_tmp =        rs1 ;
-          AO_SLL : shf_tmp = bitrev(rs1);
-  default        : shf_tmp = 'x;
+  SR     : shf_tmp =        rs1 ;
+  SL     : shf_tmp = bitrev(rs1);
+  default: shf_tmp = 'x;
 endcase
 
 // combined barrel shifter for left/right shifting
 always_comb
-unique casez (ctl.i.alu.ao)
+unique casez (ctl.i.alu.f7_5)
   // barrel shifter
-  AO_SRA         : shf_val =   $signed(shf_tmp) >>> shf_sam;
-  AO_SRL, AO_SLL : shf_val = $unsigned(shf_tmp)  >> shf_sam;
-  default        : shf_val = 'x;
+  1'b1   : shf_val =   $signed(shf_tmp) >>> shf_sam;
+  1'b0   : shf_val = $unsigned(shf_tmp)  >> shf_sam;
+  default: shf_val = 'x;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -246,30 +260,33 @@ endcase
 
 // operations
 always_comb
-unique casez (ctl.i.alu.ao)
-  // adder based instructions
-  AO_ADD ,
-  AO_SUB : val = XLEN'(sum);
-  AO_SLT ,
-  AO_SLTU: val = XLEN'(sum[XLEN]);
-  // bitwise logical operations
-  AO_AND : val = log_op1 & log_op2;
-  AO_OR  : val = log_op1 | log_op2;
-  AO_XOR : val = log_op1 ^ log_op2;
-  // barrel shifter
-  AO_SRA : val =        shf_val ;
-  AO_SRL : val =        shf_val ;
-  AO_SLL : val = bitrev(shf_val);
+unique case (ctl.i.opc)
+  OP     ,
+  OP_IMM : unique case (ctl.i.alu.f3)
+      // adder based instructions
+      ADD : val = XLEN'(sum);
+      SLT ,
+      SLTU: val = XLEN'(sum[XLEN]);
+      // bitwise logical operations
+      AND : val = log_op1 & log_op2;
+      OR  : val = log_op1 | log_op2;
+      XOR : val = log_op1 ^ log_op2;
+      // barrel shifter
+      SR  : val =        shf_val ;
+      SL  : val = bitrev(shf_val);
+    endcase
+  AUIPC  : val = XLEN'(sum);
   default: val = 'x;
 endcase
 
-// handling operations narower than XLEN
-// TODO: check if all or only adder based instructions have 32 versions
-always_comb
-unique casez (ctl.i.alu.rt[1:0])
-  R_X    : rd =                 val          ;  // XLEN
-  R_W    : rd = (XLEN)'($signed(val[32-1:0]));  // sign extended word
-  default: rd = 'x;
-endcase
+//// handling operations narower than XLEN
+//// TODO: check if all or only adder based instructions have 32 versions
+//always_comb
+//unique casez (ctl.i.alu.rt[1:0])
+//  R_X    : rd =                 val          ;  // XLEN
+//  R_W    : rd = (XLEN)'($signed(val[32-1:0]));  // sign extended word
+//  default: rd = 'x;
+//endcase
+assign rd = val;  // XLEN
 
 endmodule: r5p_alu
