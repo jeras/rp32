@@ -143,21 +143,6 @@ typedef struct packed {
 } isa_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-// generic size type (based on AMBA statndard encoding)
-///////////////////////////////////////////////////////////////////////////////
-
-typedef enum logic [3-1:0] {
-  SZ_B = 3'b000,  //   1B - byte
-  SZ_H = 3'b001,  //   2B - half
-  SZ_W = 3'b010,  //   4B - word
-  SZ_D = 3'b011,  //   8B - double
-  SZ_Q = 3'b100,  //  16B - quad
-  SZ_5 = 3'b101,  //  32B - ?octa?
-  SZ_6 = 3'b110,  //  64B - ?hexa?
-  SZ_7 = 3'b111   // 128B
-} sz_t;
-
-///////////////////////////////////////////////////////////////////////////////
 // instruction size (in bytes)
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -169,27 +154,6 @@ function automatic int unsigned opsiz (logic [16-1:0] op);
        &&  op ==? 16'bxxxx_xxxx_xxxxxx11)  opsiz = 4;
   else                                     opsiz = 2;
 endfunction: opsiz
-
-///////////////////////////////////////////////////////////////////////////////
-// GPR control structure
-///////////////////////////////////////////////////////////////////////////////
-
-// TODO: change when Verilator supports unpacked structures
-typedef struct packed {
-  struct packed {
-    logic         rs1;  // read enable register source 1
-    logic         rs2;  // read enable register source 2
-    logic         rd;   // write enable register destination
-  } e;
-  struct packed {
-    logic [5-1:0] rs1;  // address register source 1 (read)
-    logic [5-1:0] rs2;  // address register source 2 (read)
-    logic [5-1:0] rd ;  // address register destination (write)
-  } a;
-} gpr_t;
-
-// illegal (idle) value
-const gpr_t GPR_ILL = '{e: '0, a: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction format
@@ -238,10 +202,10 @@ typedef enum logic [3-1:0] {
 typedef union packed {
   op32_l_func3_et l;
   op32_r_func3_et r;
-} op32_i_func3_et;
+} op32_i_func3_ut;
 `else
 // func3 I-type (immediate)
-typedef op32_l_func3_et op32_i_func3_et;
+typedef op32_l_func3_et op32_i_func3_ut;
 `endif
 
 // func3 S-type (store)
@@ -265,14 +229,15 @@ typedef enum logic [3-1:0] {
   BLT  = 3'b100,  // less    then            signed
   BGE  = 3'b101,  // greater then or equal   signed
   BLTU = 3'b110,  // less    then          unsigned
-  BGEU = 3'b111,  // greater then or equal unsigned
-  BXXX = 3'bxxx
+  BGEU = 3'b111   // greater then or equal unsigned
 } op32_b_func3_et;
+
+const op32_b_func3_et BRU_ILL = 3'bxxx;
 
 // 32-bit instruction format structures
 typedef struct packed {logic [4:0] rs3; logic [1:0] func2;          logic [4:0] rs2; logic [4:0] rs1; logic [2:0]     func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r4_t;  // Register 4 (floating point)
 typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; op32_r_func3_et func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
-typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; op32_i_func3_et func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
+typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; op32_i_func3_ut func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
 typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; op32_s_func3_et func3; logic [4:0] imm_4_0;                       op32_opcode_t opcode;} op32_s_t ;  // Store
 typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; op32_b_func3_et func3; logic [4:1] imm_4_1; logic [11:11] imm_11; op32_opcode_t opcode;} op32_b_t ;  // Branch
 typedef struct packed {logic [31:12] imm_31_12;                                                                              logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_u_t ;  // Upper immediate
@@ -374,6 +339,23 @@ endfunction: imm_f
 // 32-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO: change when Verilator supports unpacked structures
+typedef struct packed {
+  struct packed {
+    logic         rs1;  // read enable register source 1
+    logic         rs2;  // read enable register source 2
+    logic         rd;   // write enable register destination
+  } e;
+  struct packed {
+    logic [5-1:0] rs1;  // address register source 1 (read)
+    logic [5-1:0] rs2;  // address register source 2 (read)
+    logic [5-1:0] rd ;  // address register destination (write)
+  } a;
+} gpr_t;
+
+// illegal (idle) value
+const gpr_t GPR_ILL = '{e: '0, a: 'x};
+
 `ifndef ALTERA_RESERVED_QIS
 function automatic gpr_t gpr_f (op32_t op, op32_op62_et opc);
   unique case (opc)
@@ -414,6 +396,9 @@ endfunction: gpr_f
 // 4-level type `logic` is used for signals
 ///////////////////////////////////////////////////////////////////////////////
 
+// opcode type is just shorter type name for the full type name
+typedef op32_op62_et opc_t;
+
 // ALU operation {func7[5], func3}
 typedef struct packed {
   logic           f7_5;  // used for subtraction
@@ -421,7 +406,6 @@ typedef struct packed {
 } alu_t;
 
 const alu_t ALU_ILL = '{1'bx, op32_r_func3_et'(3'bxxx)};
-
 
 `ifndef ALTERA_RESERVED_QIS
 // load/store func3 union
@@ -461,18 +445,21 @@ typedef enum logic [$bits(lsu_t)-1:0] {
   LS_X = {1'b0, 1'b?, 3'b???}   // none
 } lse_t;
 
+// branch type is just shorter type name for the full branch func7 type
+typedef op32_b_func3_et bru_t;
+
 // control structure
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
-  op32_op62_et    opc;   // operation code
-  op32_b_func3_et bru;   // branch unit
-  alu_t           alu;   // ALU (multiplexer/operation/width)
-  lsu_t           lsu;   // load/store (enable/wrte/sign/size)
+  opc_t opc;  // operation code
+  bru_t bru;  // branch unit
+  alu_t alu;  // ALU (multiplexer/operation/width)
+  lsu_t lsu;  // load/store (enable/wrte/sign/size)
 } ctl_i_t;
 
 // NOTE: trap on illegal instruction
 // illegal (idle) value
-const ctl_i_t CTL_I_ILL = '{opc: op32_op62_et'(5'bxx_xxx), bru: BXXX, alu: ALU_ILL, lsu: LS_X};
+const ctl_i_t CTL_I_ILL = '{opc: opc_t'(5'bxx_xxx), bru: BRU_ILL, alu: ALU_ILL, lsu: LS_X};
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension
@@ -721,10 +708,10 @@ endcase
 // GPR and immediate decoders are based on instruction formats
 // TODO: also handle RES/NSE
 t.imm = imm_f(op);
-t.gpr = gpr_f(op, op32_op62_et'(op[6:2]));
+t.gpr = gpr_f(op, opc_t'(op[6:2]));
 
 // operation code
-t.i.opc = op32_op62_et'(op[6:2]);
+t.i.opc = opc_t'(op[6:2]);
 
 // branch unit
 t.i.bru = op32_b_func3_et'(op.b.func3);
