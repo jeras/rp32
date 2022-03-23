@@ -730,8 +730,14 @@ t.i.opc = op32_op62_et'(op[6:2]);
 t.i.bru = op32_b_func3_et'(op.b.func3);
 
 // ALU operation {func7[5], func3}
+`ifndef ALTERA_RESERVED_QIS
 t.i.alu.f7_5 = op.r.func7[5];
 t.i.alu.f3   = op.r.func3   ;
+`else
+t.i.alu.f7_5 = op[30];
+//t.i.alu.f3   = op32_r_func3_et'(op[14:12]);
+t.i.alu.f3   = op32_r_func3_et'(op.r.func3);
+`endif
 
 // return temporary variable
 return(t);

@@ -52,7 +52,7 @@ module r5p_core #(
   bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
   bit          CFG_BRA = 1'b0,  // enable dedicated BRanch Adder
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
-  bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
+  bit          CFG_LOM = 1'b1,  // enable dedicated Logical Operand Multiplexer
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(

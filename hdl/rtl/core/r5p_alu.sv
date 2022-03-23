@@ -48,8 +48,9 @@ logic [XLEN-1:0] mux_op2;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
 logic [XLEN-0:0] add_op1;  // arithmetic operand 1
 logic [XLEN-0:0] add_op2;  // arithmetic operand 2
-// invert operand 2
+// arithmetic operation sign.signedness
 logic            add_inv;
+logic            add_sgn;
 
 // logical operands
 logic [XLEN-1:0] log_op1;  // logical operand 1
@@ -69,6 +70,7 @@ logic [XLEN-1:0] val;
 // arithmetic operations
 ///////////////////////////////////////////////////////////////////////////////
 
+// signed/unsigned extension
 function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
   unique casez (sgn)
     1'b1   : extend = (XLEN+1)'(  signed'(val));  //   signed
@@ -77,40 +79,8 @@ function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
   endcase
 endfunction: extend
 
-
+// verilator lint_off WIDTH
 // ALU input multiplexer and signed/unsigned extension
-
-// load/store address adders are implemented outside the ALU
-// TODO: it appears commenting out the AI_R1_IL line has negative timing/area efec with Xilinx Vivado 2021.2 on Arty
-// NOTE: for Arty enable the AI_R1_IL line
-
-// verilator lint_off WIDTH
-// ALU is used to calculate load/store address
-//always_comb
-//  unique casez (ctl.i.opc)
-//    OP     ,
-//    BRANCH : unique casez (ctl.i.alu.rt[1:0])                                                  // R-type
-//        R_X    :  begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-//        R_W    :  begin add_op1 = extend(rs1[32-1:0], sgn);  add_op2 = extend(rs2[32-1:0], sgn);  end
-//        default:  begin add_op1 = 'x;                        add_op2 = 'x;                        end
-//      endcase
-////    OP     ,
-////    BRANCH :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(rs2        , sgn);  end
-//    JALR   ,
-//    OP_IMM :      begin add_op1 = extend(rs1        , sgn);  add_op2 = extend(ctl.imm.i  , sgn);  end  // I-type (arithmetic/logic)
-//    LOAD   :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.l  , R_S);  end  // I-type (load)
-//    STORE  :      begin add_op1 = extend(rs1        , R_S);  add_op2 = extend(ctl.imm.s  , R_S);  end  // S-type (store)
-//    AUIPC  :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.u  , R_S);  end  // U-type
-//    JAL    :      begin add_op1 = extend(pc         , R_S);  add_op2 = extend(ctl.imm.j  , R_S);  end  // J-type (jump)
-//    default:      begin add_op1 = 'x ;                       add_op2 = 'x;                        end
-//  endcase
-//  // verilator lint_on WIDTH
-
-logic sgn;
-//assign sgn = result_sign_t'(ctl.i.alu.rt[2]);
-
-// verilator lint_off WIDTH
-// ALU is used to calculate load/store address
 always_comb
 unique case (ctl.i.opc)
   OP     ,                                                  // R-type (arithmetic/logic)
@@ -130,40 +100,39 @@ endcase
 always_comb
 unique case (ctl.i.opc)
   OP     : unique case (ctl.i.alu.f3)
-      ADD    : begin add_inv = ctl.i.alu.f7_5; sgn = 1'b1; end
-      SLT    : begin add_inv = 1'b1; sgn = 1'b1; end
-      SLTU   : begin add_inv = 1'b1; sgn = 1'b0; end
-      default: begin add_inv = 1'bx; sgn = 1'bx; end
+      ADD    : begin add_inv = ctl.i.alu.f7_5; add_sgn = 1'b1; end
+      SLT    : begin add_inv = 1'b1; add_sgn = 1'b1; end
+      SLTU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default: begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
   OP_IMM : unique case (ctl.i.alu.f3)
-      ADD    : begin add_inv = 1'b0; sgn = 1'b1; end
-      SLT    : begin add_inv = 1'b1; sgn = 1'b1; end
-      SLTU   : begin add_inv = 1'b1; sgn = 1'b0; end
-      default: begin add_inv = 1'bx; sgn = 1'bx; end
+      ADD    : begin add_inv = 1'b0; add_sgn = 1'b1; end
+      SLT    : begin add_inv = 1'b1; add_sgn = 1'b1; end
+      SLTU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default: begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
   BRANCH : unique case (ctl.i.bru)
       BEQ    ,
-      BNE    : begin add_inv = 1'b1; sgn = 1'bx; end
+      BNE    : begin add_inv = 1'b1; add_sgn = 1'bx; end
       BLT    ,
-      BGE    : begin add_inv = 1'b1; sgn = 1'b1; end
+      BGE    : begin add_inv = 1'b1; add_sgn = 1'b1; end
       BLTU   ,
-      BGEU   : begin add_inv = 1'b1; sgn = 1'b0; end
-      default: begin add_inv = 1'bx; sgn = 1'bx; end
+      BGEU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default: begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
   JALR   ,
   LOAD   ,
   STORE  ,
   AUIPC  ,
-  JAL    : begin add_inv = 1'b0; sgn = 1'bx; end
-  default: begin add_inv = 1'bx; sgn = 1'bx; end
+  JAL    : begin add_inv = 1'b0; add_sgn = 1'bx; end
+  default: begin add_inv = 1'bx; add_sgn = 1'bx; end
 endcase
 
-always add_op1 = extend(mux_op1, sgn);
-always add_op2 = extend(mux_op2, sgn);
+always add_op1 = extend(mux_op1, add_sgn);
+always add_op2 = extend(mux_op2, add_sgn);
 
 // adder (summation, subtraction)
 assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
-//assign sum = $signed(add_op1) + $signed(add_op2) + $signed((XLEN+1)'(add_inv));
 
 ///////////////////////////////////////////////////////////////////////////////
 // bitwise logical operations
@@ -171,7 +140,9 @@ assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed(
 
 // logical operands
 // NOTE: logical operations are not in the crytical path,
-//       therefore a dedicated input multiple does not provide much improvement
+//       therefore a dedicated input multiplexer does not provide much improvement
+// NOTE: enabled is favored on Altera Quartus - Cylone V,
+//       disabled is favored on Xilinx Vivado - Artix.
 generate
 if (CFG_LOM) begin: gen_lom_ena
 
@@ -187,7 +158,6 @@ end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
-//assign log_op1 = rs1;
   assign log_op1 = add_op1[XLEN-1:0];
   assign log_op2 = add_op2[XLEN-1:0];
 
