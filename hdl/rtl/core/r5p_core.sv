@@ -48,7 +48,7 @@ module r5p_core #(
   int unsigned DBW = DDW/8, // data    byte en width
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
-  // timing versus area compromises
+  // optimizations: timing versus area compromises
   bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
   bit          CFG_BRA = 1'b0,  // enable dedicated BRanch Adder
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
@@ -448,6 +448,7 @@ r5p_lsu #(
   // control
   .ctl     (idu_ctl),
   // data input/output
+  .ill     (~ifu_run),
   .adr     (lsu_adr),
   .wdt     (lsu_wdt),
   .rdt     (lsu_rdt),

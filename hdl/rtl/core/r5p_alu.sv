@@ -20,7 +20,7 @@ import riscv_isa_pkg::*;
 
 module r5p_alu #(
   int unsigned XLEN = 32,
-  // timing versus area compromises
+  // optimizations: timing versus area compromises
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_SOM = 1'b1   // enable dedicated Shift   Operand Multiplexer
