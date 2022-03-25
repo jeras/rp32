@@ -260,6 +260,7 @@ typedef union packed {
 
 // per instruction format type definitions
 typedef logic signed [12  -1:0] imm_i_t;  // 12's
+typedef imm_i_t                 imm_l_t;  // 12's
 typedef logic signed [12  -1:0] imm_s_t;  // 12's
 typedef logic signed [12+1-1:0] imm_b_t;  // 13's
 typedef logic signed [32  -1:0] imm_u_t;  // 32's
@@ -268,15 +269,16 @@ typedef logic signed [20    :0] imm_j_t;  // 21's
 // NOTE: there is no load format, 32-bit load instructions use the I-type
 typedef struct packed {
   imm_i_t i;  // arithmetic/logic
-  imm_i_t l;  // load
+  imm_l_t l;  // load
   imm_s_t s;  // store
   imm_b_t b;  // branch
-  imm_u_t u;
-  imm_j_t j;
+  imm_u_t u;  // upper
+  imm_j_t j;  // jump
 } imm_t;
 
 // per instruction format illegal (idle) value
 const imm_i_t IMM_I_ILL = 'x;
+const imm_l_t IMM_L_ILL = 'x;
 const imm_s_t IMM_S_ILL = 'x;
 const imm_b_t IMM_B_ILL = 'x;
 const imm_u_t IMM_U_ILL = 'x;
@@ -284,7 +286,7 @@ const imm_j_t IMM_J_ILL = 'x;
 
 const imm_t IMM_ILL = '{
   i: IMM_I_ILL,
-  l: IMM_I_ILL,
+  l: IMM_L_ILL,
   s: IMM_S_ILL,
   b: IMM_B_ILL,
   u: IMM_U_ILL,
@@ -317,22 +319,6 @@ function automatic imm_j_t imm_j_f (op32_j_t op);
 endfunction: imm_j_f
 // jump addition is done in ALU while the PC adder is used to calculate the link address
 
-// full immediate decoder
-`ifndef ALTERA_RESERVED_QIS
-function automatic imm_t imm_f (op32_t op);
-`else
-function automatic imm_t imm_f (logic [32-1:0] op);
-`endif
-  imm_f = '{
-    i: imm_i_f(op),
-    l: imm_i_f(op),
-    s: imm_s_f(op),
-    b: imm_b_f(op),
-    u: imm_u_f(op),
-    j: imm_j_f(op)
-  };
-endfunction: imm_f
-
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
@@ -343,50 +329,16 @@ typedef struct packed {
     logic         rs1;  // read enable register source 1
     logic         rs2;  // read enable register source 2
     logic         rd;   // write enable register destination
-  } e;
+  } ena;
   struct packed {
     logic [5-1:0] rs1;  // address register source 1 (read)
     logic [5-1:0] rs2;  // address register source 2 (read)
     logic [5-1:0] rd ;  // address register destination (write)
-  } a;
+  } adr;
 } gpr_t;
 
 // illegal (idle) value
-const gpr_t GPR_ILL = '{e: '0, a: 'x};
-
-`ifndef ALTERA_RESERVED_QIS
-function automatic gpr_t gpr_f (op32_t op, op32_op62_et opc);
-  unique case (opc)
-    //                  rs1,rs2, rd          rs1,      rs2,      rd
-    LUI    ,
-    AUIPC  : gpr_f = '{'{'0, '0, '1}, '{      'x,       'x, op.u.rd}};
-    JAL    : gpr_f = '{'{'0, '0, '1}, '{      'x,       'x, op.j.rd}};
-    JALR   : gpr_f = '{'{'1, '0, '1}, '{op.i.rs1,       'x, op.i.rd}};
-    BRANCH : gpr_f = '{'{'1, '1, '0}, '{op.b.rs1, op.b.rs2,      'x}};
-    LOAD   : gpr_f = '{'{'1, '0, '1}, '{op.i.rs1,       'x, op.i.rd}};
-    STORE  : gpr_f = '{'{'1, '1, '0}, '{op.s.rs1, op.s.rs2,      'x}};
-    OP_IMM : gpr_f = '{'{'1, '0, '1}, '{op.i.rs1,       'x, op.i.rd}};
-    OP     : gpr_f = '{'{'1, '1, '1}, '{op.r.rs1, op.r.rs2, op.r.rd}};
-    default: gpr_f = '{'{'0, '0, '0}, '{      'x,       'x,      'x}};
-  endcase
-endfunction: gpr_f
-`else
-function automatic gpr_t gpr_f (op32_r_t op, op32_op62_et opc);
-  unique case (opc)
-    //                    rs1,rs2, rd        rs1,    rs2,    rd
-    LUI    ,
-    AUIPC  : gpr_f = '{'{'0, '0, '1}, '{    'x,     'x, op.rd}};
-    JAL    : gpr_f = '{'{'0, '0, '1}, '{    'x,     'x, op.rd}};
-    JALR   : gpr_f = '{'{'1, '0, '1}, '{op.rs1,     'x, op.rd}};
-    BRANCH : gpr_f = '{'{'1, '1, '0}, '{op.rs1, op.rs2,    'x}};
-    LOAD   : gpr_f = '{'{'1, '0, '1}, '{op.rs1,     'x, op.rd}};
-    STORE  : gpr_f = '{'{'1, '1, '0}, '{op.rs1, op.rs2,    'x}};
-    OP_IMM : gpr_f = '{'{'1, '0, '1}, '{op.rs1,     'x, op.rd}};
-    OP     : gpr_f = '{'{'1, '1, '1}, '{op.rs1, op.rs2, op.rd}};
-    default: gpr_f = '{'{'0, '0, '0}, '{    'x,     'x,    'x}};
-  endcase
-endfunction: gpr_f
-`endif
+const gpr_t GPR_ILL = '{ena: '0, adr: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
 // I base (32E, 32I, 64I, 128I)
@@ -622,7 +574,7 @@ const ctl_t CTL_ILL = '{
 `ifndef ALTERA_RESERVED_QIS
 function automatic ctl_t dec32 (isa_t isa, op32_t op);
 `else
-function automatic ctl_t dec32 (isa_t isa, logic [32-1:0] op);
+function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
 `endif
 
 // set instruction size
@@ -673,31 +625,76 @@ unique casez (op)
   default                                    : dec32.ill = ILL;  // illegal
 endcase
 
-// GPR and immediate decoders are based on instruction formats
-// TODO: also handle RES/NSE
-dec32.imm = imm_f(op);
-dec32.gpr = gpr_f(op, opc_t'(op[6:2]));
+// immediate decoder
+dec32.imm.i = imm_i_f(op);
+dec32.imm.l = imm_i_f(op);
+dec32.imm.s = imm_s_f(op);
+dec32.imm.b = imm_b_f(op);
+dec32.imm.u = imm_u_f(op);
+dec32.imm.j = imm_j_f(op);
+
+// GPR address
+`ifndef ALTERA_RESERVED_QIS
+dec32.gpr.adr = '{rs1: op.r.rs1, rs2: op.r.rs2, rd: op.r.rd};
+`else
+dec32.gpr.adr = '{rs1: op.rs1, rs2: op.rs2, rd: op.rd};
+`endif
 
 // operation code
 dec32.i.opc = opc_t'(op[6:2]);
 
+// GPR and immediate decoders are based on instruction formats
+unique case (dec32.i.opc)
+  //                        rs1,rs2, rd
+  LUI    ,
+  AUIPC  : dec32.gpr.ena = '{'0, '0, '1};
+  JAL    : dec32.gpr.ena = '{'0, '0, '1};
+  JALR   : dec32.gpr.ena = '{'1, '0, '1};
+  BRANCH : dec32.gpr.ena = '{'1, '1, '0};
+  LOAD   : dec32.gpr.ena = '{'1, '0, '1};
+  STORE  : dec32.gpr.ena = '{'1, '1, '0};
+  OP_IMM : dec32.gpr.ena = '{'1, '0, '1};
+  OP     : dec32.gpr.ena = '{'1, '1, '1};
+  default: dec32.gpr.ena = '{'0, '0, '0};
+endcase
+
 // branch unit
-dec32.i.bru = op32_b_func3_et'(op.b.func3);
+`ifndef ALTERA_RESERVED_QIS
+dec32.i.bru = op.b.func3;
+`else
+dec32.i.bru = op32_b_func3_et'(op.func3);
+`endif
 
 // ALU operation {func7[5], func3}
 `ifndef ALTERA_RESERVED_QIS
 dec32.i.alu.f7_5 = op.r.func7[5];
 dec32.i.alu.f3   = op.r.func3   ;
 `else
-dec32.i.alu.f7_5 = op[30];
-//dec32.i.alu.f3   = op32_r_func3_et'(op[14:12]);
-dec32.i.alu.f3   = op32_r_func3_et'(op.r.func3);
+dec32.i.alu.f7_5 =                  op.func7[5];
+dec32.i.alu.f3   = op32_r_func3_et'(op.func3);
 `endif
 
 // LSU operation
+`ifndef ALTERA_RESERVED_QIS
 dec32.i.lsu.l = op32_l_func3_et'(op.i.func3);
 dec32.i.lsu.s = op32_s_func3_et'(op.s.func3);
+`else
+dec32.i.lsu.l = op32_l_func3_et'(op.func3);
+dec32.i.lsu.s = op32_s_func3_et'(op.func3);
+`endif
 
 endfunction: dec32
+
+///////////////////////////////////////////////////////////////////////////////
+// 32-bit instruction encoder
+///////////////////////////////////////////////////////////////////////////////
+
+// instruction decoder
+`ifndef ALTERA_RESERVED_QIS
+function automatic op32_t enc32 (isa_t isa, ctl_t ctl);
+`else
+function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
+`endif
+endfunction: enc32
 
 endpackage: riscv_isa_pkg

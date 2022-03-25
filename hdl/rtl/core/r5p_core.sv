@@ -301,12 +301,12 @@ r5p_gpr #(
   // configuration/control
   .en0     (1'b0),
   // read/write enable
-  .e_rs1   (idu_ctl.gpr.e.rs1),
-  .e_rs2   (idu_ctl.gpr.e.rs2),
+  .e_rs1   (idu_ctl.gpr.ena.rs1),
+  .e_rs2   (idu_ctl.gpr.ena.rs2),
   .e_rd    (wbu_wen),
   // read/write address
-  .a_rs1   (idu_ctl.gpr.a.rs1),
-  .a_rs2   (idu_ctl.gpr.a.rs2),
+  .a_rs1   (idu_ctl.gpr.adr.rs1),
+  .a_rs2   (idu_ctl.gpr.adr.rs2),
   .a_rd    (wbu_adr),
   // read/write data
   .d_rs1   (gpr_rs1),

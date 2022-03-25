@@ -52,8 +52,8 @@ if (rst) begin
   adr <= 5'd0;
   sel <= op32_op62_et'('0);  // TODO: there might be a better choice
 end else begin
-  wen <= ctl.gpr.e.rd;
-  adr <= ctl.gpr.a.rd;
+  wen <= ctl.gpr.ena.rd;
+  adr <= ctl.gpr.adr.rd;
   sel <= ctl.i.opc;
 end
 
