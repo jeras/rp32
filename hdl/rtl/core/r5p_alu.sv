@@ -79,21 +79,19 @@ function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
   endcase
 endfunction: extend
 
-// verilator lint_off WIDTH
 // ALU input multiplexer and signed/unsigned extension
 always_comb
 unique case (ctl.i.opc)
-  OP     ,                                                  // R-type (arithmetic/logic)
-  BRANCH : begin mux_op1 = rs1;  mux_op2 = rs2      ;  end  // B-type (branch)
-  JALR   ,                                                  // I-type (jump)
-  OP_IMM : begin mux_op1 = rs1;  mux_op2 = ctl.imm.i;  end  // I-type (arithmetic/logic)
-  LOAD   : begin mux_op1 = rs1;  mux_op2 = ctl.imm.l;  end  // I-type (load)
-  STORE  : begin mux_op1 = rs1;  mux_op2 = ctl.imm.s;  end  // S-type (store)
-  AUIPC  : begin mux_op1 = pc ;  mux_op2 = ctl.imm.u;  end  // U-type
-  JAL    : begin mux_op1 = pc ;  mux_op2 = ctl.imm.j;  end  // J-type (jump)
-  default: begin mux_op1 = 'x ;  mux_op2 = 'x;         end
+  OP     ,                                                         // R-type (arithmetic/logic)
+  BRANCH : begin mux_op1 = rs1;  mux_op2 = rs2             ;  end  // B-type (branch)
+  JALR   ,                                                         // I-type (jump)
+  OP_IMM : begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.i);  end  // I-type (arithmetic/logic)
+  LOAD   : begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.l);  end  // I-type (load)
+  STORE  : begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.s);  end  // S-type (store)
+  AUIPC  : begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.u);  end  // U-type
+  JAL    : begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.j);  end  // J-type (jump)
+  default: begin mux_op1 = 'x ;  mux_op2 = 'x;                end
 endcase
-// verilator lint_on WIDTH
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
@@ -158,7 +156,8 @@ end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
-  assign log_op1 = add_op1[XLEN-1:0];
+  assign log_op1 = rs1;                // TODO: better on Altera Cyclone V
+//assign log_op1 = add_op1[XLEN-1:0];  // TODO: better on Xilinx Artix
   assign log_op2 = add_op2[XLEN-1:0];
 
 end: gen_lom_alu
