@@ -49,10 +49,17 @@ module r5p_core #(
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // optimizations: timing versus area compromises
-  bit          CFG_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
-  bit          CFG_BRA = 1'b0,  // enable dedicated BRanch Adder
-  bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
-  bit          CFG_LOM = 1'b1,  // enable dedicated Logical Operand Multiplexer
+  bit          CFG_BRU_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
+  bit          CFG_BRU_BRA = 1'b0,  // enable dedicated BRanch Adder
+  bit          CFG_ALU_LSA = 1'b0,  // enable dedicated Load/Store Adder
+  bit          CFG_ALU_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
+  bit          CFG_ALU_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
+  logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
+  logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
+  logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
+  logic        CFG_BEN_RD  = 1'bx,  // byte  enable for read (TODO)
+  logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
+  logic        CFG_BEN_ILL = 1'bx,  // byte  enable for illegal instruction
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -163,7 +170,7 @@ else begin
 end
 
 generate
-if (CFG_BRU) begin: gen_bru_ena
+if (CFG_BRU_BRU) begin: gen_bru_ena
 
   // branch ALU for checking branch conditions
   r5p_bru #(
@@ -199,7 +206,7 @@ endgenerate
 // split PC adder into 12-bit immediate adder and the rest is an incrementer/decrementer, calculate both increment and decrement in advance.
 
 generate
-if (CFG_BRA) begin: gen_bra_add
+if (CFG_BRU_BRA) begin: gen_bra_add
   // simultaneous running adders, multiplexer with a late select signal
   // requires more adder logic improves timing
   logic [IAW-1:0] ifu_pci;  // PC incrementer
@@ -310,8 +317,9 @@ r5p_gpr #(
 // base ALU
 r5p_alu #(
   .XLEN    (XLEN),
-  .CFG_LSA (CFG_LSA),
-  .CFG_LOM (CFG_LOM)
+  .CFG_LSA (CFG_ALU_LSA),
+  .CFG_LOM (CFG_ALU_LOM),
+  .CFG_SOM (CFG_ALU_SOM)
 ) alu (
    // system signals
   .clk     (clk),
@@ -406,7 +414,7 @@ endgenerate
 ///////////////////////////////////////////////////////////////////////////////
 
 generate
-if (CFG_LSA) begin: gen_lsa_ena
+if (CFG_ALU_LSA) begin: gen_lsa_ena
 
   logic [XLEN-1:0] lsu_adr_ld;  // address load
   logic [XLEN-1:0] lsu_adr_st;  // address store

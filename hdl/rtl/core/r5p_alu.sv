@@ -23,7 +23,7 @@ module r5p_alu #(
   // optimizations: timing versus area compromises
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
-  bit          CFG_SOM = 1'b1   // enable dedicated Shift   Operand Multiplexer
+  bit          CFG_SOM = 1'b0   // enable dedicated Shift   Operand Multiplexer
 )(
   // system signals
   input  logic            clk,  // clock
@@ -198,12 +198,6 @@ end: gen_som_alu
 endgenerate
 
 //// shift ammount length
-//always_comb
-//unique casez (ctl.i.alu.rt[1:0])
-//  R_X    : shf_sam =         shf_mux[XLOG-1:0] ;  // XLEN
-//  R_W    : shf_sam = (XLOG)'(shf_mux[   5-1:0]);  // word
-//  default: shf_sam = 'x;
-//endcase
 assign shf_sam = shf_mux[XLOG-1:0] ;  // XLEN
 
 // bit inversion
