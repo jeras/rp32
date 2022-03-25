@@ -448,7 +448,9 @@ r5p_lsu #(
   // control
   .ctl     (idu_ctl),
   // data input/output
-  .ill     (~ifu_run),
+  .run     (idu_vld),
+  .ill     (1'b0),
+//.ill     (idu_ctl.ill == ILL),
   .adr     (lsu_adr),
   .wdt     (lsu_wdt),
   .rdt     (lsu_rdt),

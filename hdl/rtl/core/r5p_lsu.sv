@@ -25,12 +25,12 @@ module r5p_lsu #(
   int unsigned DW = XLEN,  // data    width
   int unsigned BW = DW/8,  // byte en width
   // optimizations
-  logic        CFG_VLD_ILL = 1'b0,  // valid        for illegal instruction
+  logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
   logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
   logic        CFG_BEN_RD  = 1'bx,  // byte  enable for read (TODO)
   logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_ILL = 1'b0   // byte  enable for illegal instruction
+  logic        CFG_BEN_ILL = 1'bx   // byte  enable for illegal instruction
 )(
   // system signals
   input  logic             clk,  // clock
@@ -38,6 +38,7 @@ module r5p_lsu #(
   // control
   input  ctl_t             ctl,
   // data input/output
+  input  logic             run,  // illegal
   input  logic             ill,  // illegal
   input  logic  [XLEN-1:0] adr,  // address
   input  logic  [XLEN-1:0] wdt,  // write data
@@ -67,15 +68,20 @@ assign ls_wtr = ls_vld & ls_rdy &  ls_wen;
 
 // valid and write anable
 always_comb
-if (ill) begin
-  ls_vld = CFG_VLD_ILL;
-  ls_wen = CFG_WEN_ILL;
+if (run) begin
+  if (ill) begin
+    ls_vld = CFG_VLD_ILL;
+    ls_wen = CFG_WEN_ILL;
+  end else begin
+    unique case (ctl.i.opc)
+      LOAD   : begin ls_vld = 1'b1; ls_wen = 1'b0       ; end
+      STORE  : begin ls_vld = 1'b1; ls_wen = 1'b1       ; end
+      default: begin ls_vld = 1'b0; ls_wen = CFG_WEN_IDL; end
+    endcase
+  end
 end else begin
-  unique case (ctl.i.opc)
-    LOAD   : begin ls_vld = 1'b1; ls_wen = 1'b0       ; end
-    STORE  : begin ls_vld = 1'b1; ls_wen = 1'b1       ; end
-    default: begin ls_vld = 1'b0; ls_wen = CFG_WEN_IDL; end
-  endcase
+  ls_vld = 1'b0;
+  ls_wen = CFG_WEN_ILL;
 end
 
 // address
@@ -117,30 +123,22 @@ end else begin
     STORE  :
       // write access
       unique case (ctl.i.lsu.s)
-        SB     : ls_ben = BW'(8'b0000_0001 << adr[WW-1:0]);
-        SH     : ls_ben = BW'(8'b0000_0011 << adr[WW-1:0]);
-        SW     : ls_ben = BW'(8'b0000_1111 << adr[WW-1:0]);
-        SD     : ls_ben = BW'(8'b1111_1111 << adr[WW-1:0]);
+        SB     : ls_ben = 4'b0001 <<  adr[WW-1:0]      ;
+        SH     : ls_ben = 4'b0011 << {adr[WW-1:1],1'b0 };
+      //SW     : ls_ben = 4'b1111 << {adr[WW-1:2],2'b00};
+        SW     : ls_ben = 4'b1111;
+      //SD     : ls_ben = BW'(8'b1111_1111 << adr[WW-1:0]);
         default: ls_ben = '0;
       endcase
     default: ls_ben = {BW{CFG_BEN_ILL}};
   endcase
 end
 
-// write data (apply byte select mask)
-//always_comb
-//unique case (ctl.i.lsu.s)
-//  SB     : ls_wdt = (wdt & DW'(64'h00000000_000000ff)) << (8*adr[WW-1:0]);
-//  SH     : ls_wdt = (wdt & DW'(64'h00000000_0000ffff)) << (8*adr[WW-1:0]);
-//  SW     : ls_wdt = (wdt & DW'(64'h00000000_ffffffff)) << (8*adr[WW-1:0]);
-//  SD     : ls_wdt = (wdt & DW'(64'hffffffff_ffffffff)) << (8*adr[WW-1:0]);
-//  default: ls_wdt = 'x;
-//endcase
 always_comb
 unique case (ctl.i.lsu.s)
-  SB     : ls_wdt = (wdt & DW'(32'hxxxxxxff)) << (8*adr[WW-1:0]);
-  SH     : ls_wdt = (wdt & DW'(32'hxxxxffff)) << (8*adr[WW-1:0]);
-//SW     : ls_wdt = (wdt & DW'(32'hffffffff)) << (8*adr[WW-1:0]);
+  SB     : ls_wdt = (wdt & DW'(32'hxxxxxxff)) << (8* adr[WW-1:0]       );
+  SH     : ls_wdt = (wdt & DW'(32'hxxxxffff)) << (8*{adr[WW-1:1],1'b0 });
+//SW     : ls_wdt = (wdt & DW'(32'hffffffff)) << (8*{adr[WW-1:2],2'b00});
   SW     : ls_wdt = wdt;
   default: ls_wdt = 'x;
 endcase

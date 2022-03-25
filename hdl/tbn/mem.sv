@@ -21,8 +21,10 @@ import riscv_asm_pkg::*;
 
 module mem #(
   // 1kB by default
-  string       FN = "",    // binary initialization file name
-  int unsigned SZ = 2**12  // memory size in bytes
+  string       FN = "",     // binary initialization file name
+  int unsigned SZ = 2**12,  // memory size in bytes
+  // byte enable options
+  bit          CFG_BEN_RD = 1'bx
 )(
   r5p_bus_if.sub bus_if,   // instruction fetch
   r5p_bus_if.sub bus_ls    // load store
@@ -127,8 +129,8 @@ if (bus_ls.vld) begin
   end else begin
     // read access
     for (int unsigned b=0; b<bus_ls.BW; b++) begin
-      if (bus_ls.ben[b])  bus_ls.rdt[8*b+:8] <= mem[int'(bus_ls.adr)+b];
-      else                bus_ls.rdt[8*b+:8] <= 'x;
+      if (bus_ls.ben[b] ==? CFG_BEN_RD)  bus_ls.rdt[8*b+:8] <= mem[int'(bus_ls.adr)+b];
+      else                               bus_ls.rdt[8*b+:8] <= 'x;
     end
   end
 end
