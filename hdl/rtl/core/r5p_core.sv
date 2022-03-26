@@ -54,6 +54,7 @@ module r5p_core #(
   bit          CFG_ALU_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_ALU_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_ALU_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
+  bit          CFG_ALU_L4M = 1'b0,  // enable dedicated 4 to 1 Logic    Multiplexer
   logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
   logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
@@ -288,6 +289,7 @@ assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
 // execute
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO: check if access should be blocked during reset
 // general purpose registers
 r5p_gpr #(
   .AW      (ISA.spec.base.E ? 4 : 5),
@@ -319,7 +321,9 @@ r5p_alu #(
   .XLEN    (XLEN),
   .CFG_LSA (CFG_ALU_LSA),
   .CFG_LOM (CFG_ALU_LOM),
-  .CFG_SOM (CFG_ALU_SOM)
+  .CFG_SOM (CFG_ALU_SOM),
+  .CFG_L4M (CFG_ALU_L4M)
+
 ) alu (
    // system signals
   .clk     (clk),

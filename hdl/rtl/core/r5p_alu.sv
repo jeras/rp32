@@ -23,7 +23,8 @@ module r5p_alu #(
   // optimizations: timing versus area compromises
   bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
-  bit          CFG_SOM = 1'b0   // enable dedicated Shift   Operand Multiplexer
+  bit          CFG_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
+  bit          CFG_L4M = 1'b0   // enable dedicated 4 to 1 Logic    Multiplexer
 )(
   // system signals
   input  logic            clk,  // clock

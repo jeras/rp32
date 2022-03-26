@@ -338,7 +338,7 @@ typedef struct packed {
 } gpr_t;
 
 // illegal (idle) value
-const gpr_t GPR_ILL = '{ena: '0, adr: 'x};
+const gpr_t GPR_ILL = '{ena: 'x, adr: 'x};
 
 ///////////////////////////////////////////////////////////////////////////////
 // I base (32E, 32I, 64I, 128I)
@@ -379,8 +379,6 @@ typedef struct packed {
   lsu_t lsu;  // load/store (enable/wrte/sign/size)
 } ctl_i_t;
 
-// NOTE: trap on illegal instruction
-// illegal (idle) value
 const ctl_i_t CTL_I_ILL = '{opc: opc_t'(5'bxx_xxx), bru: BRU_ILL, alu: ALU_ILL, lsu: LSU_ILL};
 
 ///////////////////////////////////////////////////////////////////////////////
