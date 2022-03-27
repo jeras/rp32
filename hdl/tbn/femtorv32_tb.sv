@@ -172,8 +172,8 @@ assign mem_wbusy = 1'b0;
 
 localparam int unsigned AW = 5;
 
-logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
-logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
+logic [XLEN-1:0] gpr_tmp [2**AW-1:0];
+logic [XLEN-1:0] gpr_dly [2**AW-1:0] = '{default: '0};
 
 // hierarchical path to GPR inside RTL
 //assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
@@ -186,7 +186,7 @@ begin
   // check each GPR for changes
   for (int unsigned i=0; i<32; i++) begin
     if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("Info   %s %08h -> %08h", gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
+      $display("%t, Info   %s %08h -> %08h", $time, gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
     end
   end
 end
