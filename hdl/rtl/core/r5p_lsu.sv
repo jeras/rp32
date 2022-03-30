@@ -134,14 +134,23 @@ end else begin
   endcase
 end
 
+// write data
 always_comb
-unique case (ctl.i.lsu.s)
-  SB     : ls_wdt = (wdt & DW'(32'hxxxxxxff)) << (8* adr[WW-1:0]       );
-  SH     : ls_wdt = (wdt & DW'(32'hxxxxffff)) << (8*{adr[WW-1:1],1'b0 });
-//SW     : ls_wdt = (wdt & DW'(32'hffffffff)) << (8*{adr[WW-1:2],2'b00});
-  SW     : ls_wdt = wdt;
-  default: ls_wdt = 'x;
+case (ctl.i.lsu.s)
+  3'b000 : case (adr[1:0])
+    2'b00: ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , wdt[ 7: 0]};
+    2'b01: ls_wdt = {8'hxx     , 8'hxx     , wdt[ 7: 0], 8'hxx     };
+    2'b10: ls_wdt = {8'hxx     , wdt[ 7: 0], 8'hxx     , 8'hxx     };
+    2'b11: ls_wdt = {wdt[ 7: 0], 8'hxx     , 8'hxx     , 8'hxx     };
+  endcase
+  3'b001 : casez (adr[1])
+    1'b0 : ls_wdt = {8'hxx     , 8'hxx     , wdt[15: 8], wdt[ 7: 0]};
+    1'b1 : ls_wdt = {wdt[15: 8], wdt[ 7: 0], 8'hxx     , 8'hxx     };
+  endcase
+  3'b010 : ls_wdt = {wdt[31:24], wdt[23:16], wdt[15: 8], wdt[ 7: 0]};
+  default: ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , 8'hxx     };
 endcase
+
 
 // read alignment
 logic [WW-1:0]  ral;
