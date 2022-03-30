@@ -112,45 +112,39 @@ unique case (ctl.i.opc)
   default: mal = 1'bx;
 endcase
 
-// byte select
-// TODO
+// write data and byte select
 always_comb
 if (ill) begin
+  ls_wdt = 'x;
   ls_ben = {BW{CFG_BEN_ILL}};
 end else begin
   unique case (ctl.i.opc)
-    LOAD   : ls_ben = {BW{CFG_BEN_RD}};
+    LOAD   : begin
+        ls_wdt = 'x;
+        ls_ben = {BW{CFG_BEN_RD}};
+      end
     STORE  :
       // write access
-      unique case (ctl.i.lsu.s)
-        SB     : ls_ben = 4'b0001 <<  adr[WW-1:0]      ;
-        SH     : ls_ben = 4'b0011 << {adr[WW-1:1],1'b0 };
-      //SW     : ls_ben = 4'b1111 << {adr[WW-1:2],2'b00};
-        SW     : ls_ben = 4'b1111;
-      //SD     : ls_ben = BW'(8'b1111_1111 << adr[WW-1:0]);
-        default: ls_ben = '0;
+      case (ctl.i.lsu.s)
+        3'b000 : case (adr[1:0])
+          2'b00: begin ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , wdt[ 7: 0]}; ls_ben = 4'b0001; end
+          2'b01: begin ls_wdt = {8'hxx     , 8'hxx     , wdt[ 7: 0], 8'hxx     }; ls_ben = 4'b0010; end
+          2'b10: begin ls_wdt = {8'hxx     , wdt[ 7: 0], 8'hxx     , 8'hxx     }; ls_ben = 4'b0100; end
+          2'b11: begin ls_wdt = {wdt[ 7: 0], 8'hxx     , 8'hxx     , 8'hxx     }; ls_ben = 4'b1000; end
+        endcase
+        3'b001 : casez (adr[1])
+          1'b0 : begin ls_wdt = {8'hxx     , 8'hxx     , wdt[15: 8], wdt[ 7: 0]}; ls_ben = 4'b0011; end
+          1'b1 : begin ls_wdt = {wdt[15: 8], wdt[ 7: 0], 8'hxx     , 8'hxx     }; ls_ben = 4'b1100; end
+        endcase
+        3'b010 : begin ls_wdt = {wdt[31:24], wdt[23:16], wdt[15: 8], wdt[ 7: 0]}; ls_ben = 4'b1111; end
+        default: begin ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , 8'hxx     }; ls_ben = 4'bxxxx; end
       endcase
-    default: ls_ben = {BW{CFG_BEN_ILL}};
+    default: begin
+        ls_wdt = 'x;
+        ls_ben = {BW{CFG_BEN_IDL}};
+      end
   endcase
 end
-
-// write data
-always_comb
-case (ctl.i.lsu.s)
-  3'b000 : case (adr[1:0])
-    2'b00: ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , wdt[ 7: 0]};
-    2'b01: ls_wdt = {8'hxx     , 8'hxx     , wdt[ 7: 0], 8'hxx     };
-    2'b10: ls_wdt = {8'hxx     , wdt[ 7: 0], 8'hxx     , 8'hxx     };
-    2'b11: ls_wdt = {wdt[ 7: 0], 8'hxx     , 8'hxx     , 8'hxx     };
-  endcase
-  3'b001 : casez (adr[1])
-    1'b0 : ls_wdt = {8'hxx     , 8'hxx     , wdt[15: 8], wdt[ 7: 0]};
-    1'b1 : ls_wdt = {wdt[15: 8], wdt[ 7: 0], 8'hxx     , 8'hxx     };
-  endcase
-  3'b010 : ls_wdt = {wdt[31:24], wdt[23:16], wdt[15: 8], wdt[ 7: 0]};
-  default: ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , 8'hxx     };
-endcase
-
 
 // read alignment
 logic [WW-1:0]  ral;
@@ -177,7 +171,7 @@ always_comb begin: blk_rdt
   //LD     : rdt = DW'(  $signed(64'(tmp)));
     LBU    : rdt = DW'($unsigned( 8'(tmp)));
     LHU    : rdt = DW'($unsigned(16'(tmp)));
-    LWU    : rdt = DW'($unsigned(32'(tmp)));
+    LWU    : rdt = DW'($unsigned(32'(tmp)));  // Quartus does a better job if this line is present
   //LDU    : rdt = DW'($unsigned(64'(tmp)));
     default: rdt = 'x;
   endcase
