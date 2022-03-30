@@ -58,6 +58,11 @@ module r5p_lsu #(
 // word address width
 localparam int unsigned WW = $clog2(BW);
 
+// read/write missalignment
+logic rma;  // read  misaligned
+logic wma;  // write misaligned
+
+
 // read/write transfer
 logic ls_rtr;
 logic ls_wtr;
@@ -91,26 +96,39 @@ assign ls_adr = {adr[AW-1:WW], WW'('0)};
 // decodings for read and write access are identical
 always_comb
 unique case (ctl.i.opc)
-  LOAD   :
-    // read access
-    unique case (ctl.i.lsu.l)
-      LB, LBU: mal = 1'b0;
-      LH, LHU: mal = |adr[0:0];
-      LW, LWU: mal = |adr[1:0];
-    //LD, LDU: mal = |adr[2:0];
-      default: mal = 1'bx;
-    endcase
-  STORE  :
-    // write access
-    unique case (ctl.i.lsu.s)
-      SB     : mal = 1'b0;
-      SH     : mal = |adr[0:0];
-      SW     : mal = |adr[1:0];
-    //SD     : mal = |adr[2:0];
-      default: mal = 1'bx;
-    endcase
-  default: mal = 1'bx;
+  LOAD   : begin
+      // read access
+      unique case (ctl.i.lsu.l)
+        LB, LBU: rma = 1'b0;
+        LH, LHU: rma = |adr[0:0];
+        LW, LWU: rma = |adr[1:0];
+      //LD, LDU: rma = |adr[2:0];
+        default: rma = 1'bx;
+      endcase
+      // write access
+      wma = 1'bx;
+    end
+  STORE  : begin
+      // read access
+      rma = 1'bx;
+      // write access
+      unique case (ctl.i.lsu.s)
+        SB     : wma = 1'b0;
+        SH     : wma = |adr[0:0];
+        SW     : wma = |adr[1:0];
+      //SD     : wma = |adr[2:0];
+        default: wma = 1'bx;
+      endcase
+    end
+  default: begin
+      // read access
+      rma = 1'bx;
+      // write access
+      wma = 1'bx;
+    end
 endcase
+
+assign mal = wma | rma;
 
 // write data and byte select
 always_comb
@@ -146,36 +164,53 @@ end else begin
   endcase
 end
 
-// read alignment
-logic [WW-1:0]  ral;
-op32_l_func3_et rf3;
+// read alignment delayed signals
+logic            dly_rma;
+logic   [WW-1:0] dly_adr;
+op32_l_func3_et  dly_rf3;
+
+logic [XLEN-1:0] dly_dat;  // data
+logic   [32-1:0] dly_dtw;  // data word
+logic   [16-1:0] dly_dth;  // data half
+logic   [ 8-1:0] dly_dtb;  // data byte
 
 // read alignment
 always_ff @ (posedge clk, posedge rst)
 if (rst) begin
-  ral <= '0;
-  rf3 <= XLEN == 32 ? LW : LD;
+  dly_rma <= 1'b0;
+  dly_adr <= '0;
+  dly_rf3 <= XLEN == 32 ? LW : LD;
 end else if (ls_rtr) begin
-  ral <= adr[WW-1:0];
-  rf3 <= ctl.i.lsu.l;
+  dly_rma <= rma;
+  dly_adr <= adr[WW-1:0];
+  dly_rf3 <= ctl.i.lsu.l;
 end
 
-// read data (sign extend)
+// read data
 always_comb begin: blk_rdt
-  logic [XLEN-1:0] tmp;
-  tmp = ls_rdt >> (8*ral);
-  unique case (rf3)
-    LB     : rdt = DW'(  $signed( 8'(tmp)));
-    LH     : rdt = DW'(  $signed(16'(tmp)));
-    LW     : rdt = DW'(  $signed(32'(tmp)));
-  //LD     : rdt = DW'(  $signed(64'(tmp)));
-    LBU    : rdt = DW'($unsigned( 8'(tmp)));
-    LHU    : rdt = DW'($unsigned(16'(tmp)));
-    LWU    : rdt = DW'($unsigned(32'(tmp)));  // Quartus does a better job if this line is present
-  //LDU    : rdt = DW'($unsigned(64'(tmp)));
-    default: rdt = 'x;
-  endcase
+  // read data multiplexer
+  dly_dtw = ls_rdt[31: 0];
+  dly_dth = dly_adr[1] ? dly_dtw[31:16] : dly_dtw[15: 0];
+  dly_dtb = dly_adr[0] ? dly_dth[15: 8] : dly_dth[ 7: 0];
+  if (~dly_rma) begin
+    dly_dat = {dly_dtw[31:16], dly_dth[15: 8], dly_dtb[ 7: 0]};
+    // sign extension
+    unique case (dly_rf3)
+      LB     : rdt = DW'(  $signed( 8'(dly_dat)));
+      LH     : rdt = DW'(  $signed(16'(dly_dat)));
+      LW     : rdt = DW'(  $signed(32'(dly_dat)));
+      LBU    : rdt = DW'($unsigned( 8'(dly_dat)));
+      LHU    : rdt = DW'($unsigned(16'(dly_dat)));
+      LWU    : rdt = DW'($unsigned(32'(dly_dat)));  // Quartus does a better job if this line is present
+      default: rdt = 'x;
+    endcase
+  end else begin
+    // unalligned access
+    dly_dat = 'x;
+    rdt = 'x;
+  end
 end: blk_rdt
+
 
 // system stall
 assign rdy = ls_rdy;
