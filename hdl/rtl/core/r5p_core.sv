@@ -54,7 +54,7 @@ module r5p_core #(
   bit          CFG_ALU_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_ALU_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_ALU_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
-  bit          CFG_ALU_L4M = 1'b0,  // enable dedicated 4 to 1 Logic    Multiplexer
+  bit          CFG_ALU_L4M = 1'b1,  // enable dedicated 4 to 1 Logic    Multiplexer
   logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
   logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
