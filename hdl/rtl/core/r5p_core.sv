@@ -319,11 +319,16 @@ r5p_gpr #(
 // base ALU
 r5p_alu #(
   .XLEN    (XLEN),
-  .CFG_LSA (CFG_ALU_LSA),
+  // enable opcode
+  .CFG_BRANCH (~CFG_BRU_BRU),
+  .CFG_LOAD   (~CFG_ALU_LSA),
+  .CFG_STORE  (~CFG_ALU_LSA),
+  .CFG_AUIPC  (1'b1),
+  .CFG_JAL    (1'b1),
+  // optimizations: timing versus area compromises
   .CFG_LOM (CFG_ALU_LOM),
   .CFG_SOM (CFG_ALU_SOM),
   .CFG_L4M (CFG_ALU_L4M)
-
 ) alu (
    // system signals
   .clk     (clk),

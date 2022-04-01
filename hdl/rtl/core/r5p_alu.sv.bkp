@@ -20,13 +20,8 @@ import riscv_isa_pkg::*;
 
 module r5p_alu #(
   int unsigned XLEN = 32,
-  // enable opcode
-  bit          CFG_BRANCH = 1'b1,  // enable BRANCH
-  bit          CFG_LOAD   = 1'b1,  // enable LOAD
-  bit          CFG_STORE  = 1'b1,  // enable LOAD
-  bit          CFG_AUIPC  = 1'b1,  // enable AUIPC
-  bit          CFG_JAL    = 1'b1,  // enable JAL
   // optimizations: timing versus area compromises
+  bit          CFG_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
   bit          CFG_L4M = 1'b0   // enable dedicated 4 to 1 Logic    Multiplexer
@@ -67,7 +62,8 @@ logic [XLEN-1:0] log_val;  // logical result
 logic [XLOG-1:0] shf_mux;  // multiplexed
 logic [XLOG-1:0] shf_sam;
 // bit reversed operand/result
-logic [XLEN-1:0] shf_tmp;  // operand
+logic [XLEN-1:0] shf_op1;  // operand input
+logic [XLEN-1:0] shf_tmp;  // temporal
 logic [XLEN-1:0] shf_val;  // result
 
 // operation result
@@ -125,10 +121,10 @@ unique case (ctl.i.opc)
       BGEU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
       default: begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
-  JALR   : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  LOAD   : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  STORE  : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  AUIPC  : begin add_inv = 1'b0; add_sgn = 1'bx; end
+  JALR   ,
+  LOAD   ,
+  STORE  ,
+  AUIPC  ,
   JAL    : begin add_inv = 1'b0; add_sgn = 1'bx; end
   default: begin add_inv = 1'bx; add_sgn = 1'bx; end
 endcase
@@ -163,9 +159,9 @@ end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
-  assign log_op1 = rs1;      // TODO: better on Altera Cyclone V
-//assign log_op1 = mux_op1;  // TODO: better on Xilinx Artix
-  assign log_op2 = mux_op2;
+  assign log_op1 = rs1;                // TODO: better on Altera Cyclone V
+//assign log_op1 = add_op1[XLEN-1:0];  // TODO: better on Xilinx Artix
+  assign log_op2 = add_op2[XLEN-1:0];
 
 end: gen_lom_alu
 endgenerate
@@ -210,18 +206,18 @@ assign shf_sam = shf_mux[XLOG-1:0] ;  // XLEN
 always_comb
 unique casez (ctl.i.alu.f3)
   // barrel shifter
-  SR     : shf_tmp =        rs1 ;
-  SL     : shf_tmp = bitrev(rs1);
-  default: shf_tmp = 'x;
+  SR     : shf_op1 =        rs1 ;
+  SL     : shf_op1 = bitrev(rs1);
+  default: shf_op1 = 'x;
 endcase
 
 // combined barrel shifter for left/right shifting
 always_comb
 unique casez (ctl.i.alu.f7_5)
   // barrel shifter
-  1'b1   : shf_val =   $signed(shf_tmp) >>> shf_sam;
-  1'b0   : shf_val = $unsigned(shf_tmp)  >> shf_sam;
-  default: shf_val = 'x;
+  1'b1   : shf_tmp =   $signed(shf_op1) >>> shf_sam;
+  1'b0   : shf_tmp = $unsigned(shf_op1)  >> shf_sam;
+  default: shf_tmp = 'x;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -241,6 +237,15 @@ if (CFG_L4M) begin: gen_l4m_ena
     default: log_val = 'x;
   endcase
 
+  // bit inversion
+  always_comb
+  unique casez (ctl.i.alu.f3)
+    // barrel shifter
+    SR     : shf_val =        shf_tmp ;
+    SL     : shf_val = bitrev(shf_tmp);
+    default: shf_val = 'x;
+  endcase
+
   // operations
   always_comb
   unique case (ctl.i.opc)
@@ -255,8 +260,8 @@ if (CFG_L4M) begin: gen_l4m_ena
         OR  ,
         XOR : val = log_val;
         // barrel shifter
-        SR  : val =        shf_val ;
-        SL  : val = bitrev(shf_val);
+        SR  ,
+        SL  : val = shf_val;
       endcase
     AUIPC  : val = XLEN'(sum);
     default: val = 'x;
@@ -289,6 +294,7 @@ else begin: gen_l4m_alu
 end: gen_l4m_alu
 endgenerate
 
+// register destination
 assign rd = val;  // XLEN
 
 endmodule: r5p_alu
