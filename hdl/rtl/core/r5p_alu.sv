@@ -158,9 +158,9 @@ end:gen_lom_ena
 else begin: gen_lom_alu
 
   // shared ALU common multiplexer
-  assign log_op1 = rs1;                // TODO: better on Altera Cyclone V
-//assign log_op1 = add_op1[XLEN-1:0];  // TODO: better on Xilinx Artix
-  assign log_op2 = add_op2[XLEN-1:0];
+  assign log_op1 = rs1;      // TODO: better on Altera Cyclone V
+//assign log_op1 = mux_op1;  // TODO: better on Xilinx Artix
+  assign log_op2 = mux_op2;
 
 end: gen_lom_alu
 endgenerate
