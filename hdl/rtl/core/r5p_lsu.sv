@@ -192,23 +192,19 @@ always_comb begin: blk_rdt
   dly_dtw = ls_rdt[31: 0];
   dly_dth = dly_adr[1] ? dly_dtw[31:16] : dly_dtw[15: 0];
   dly_dtb = dly_adr[0] ? dly_dth[15: 8] : dly_dth[ 7: 0];
-  if (~dly_rma) begin
-    dly_dat = {dly_dtw[31:16], dly_dth[15: 8], dly_dtb[ 7: 0]};
-    // sign extension
-    unique case (dly_rf3)
-      LB     : rdt = DW'(  $signed( 8'(dly_dat)));
-      LH     : rdt = DW'(  $signed(16'(dly_dat)));
-      LW     : rdt = DW'(  $signed(32'(dly_dat)));
-      LBU    : rdt = DW'($unsigned( 8'(dly_dat)));
-      LHU    : rdt = DW'($unsigned(16'(dly_dat)));
-      LWU    : rdt = DW'($unsigned(32'(dly_dat)));  // Quartus does a better job if this line is present
-      default: rdt = 'x;
-    endcase
-  end else begin
-    // unalligned access
-    dly_dat = 'x;
-    rdt = 'x;
-  end
+  // read data multiplexer
+  dly_dat = {dly_dtw[31:16], dly_dth[15: 8], dly_dtb[ 7: 0]};
+  // sign extension
+  // NOTE: this is a good fit for LUT4
+  unique case (dly_rf3)
+    LB     : rdt = DW'(  $signed( 8'(dly_dat)));
+    LH     : rdt = DW'(  $signed(16'(dly_dat)));
+    LW     : rdt = DW'(  $signed(32'(dly_dat)));
+    LBU    : rdt = DW'($unsigned( 8'(dly_dat)));
+    LHU    : rdt = DW'($unsigned(16'(dly_dat)));
+    LWU    : rdt = DW'($unsigned(32'(dly_dat)));  // Quartus does a better job if this line is present
+    default: rdt = 'x;
+  endcase
 end: blk_rdt
 
 
