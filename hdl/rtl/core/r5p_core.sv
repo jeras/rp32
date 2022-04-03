@@ -305,15 +305,15 @@ r5p_gpr #(
   // read/write enable
   .e_rs1   (idu_ctl.gpr.ena.rs1),
   .e_rs2   (idu_ctl.gpr.ena.rs2),
-  .e_rd    (wbu_wen),
+  .e_rd    (        wbu_wen    ),
   // read/write address
   .a_rs1   (idu_ctl.gpr.adr.rs1),
   .a_rs2   (idu_ctl.gpr.adr.rs2),
-  .a_rd    (wbu_adr),
+  .a_rd    (        wbu_adr    ),
   // read/write data
-  .d_rs1   (gpr_rs1),
-  .d_rs2   (gpr_rs2),
-  .d_rd    (wbu_dat)
+  .d_rs1   (        gpr_rs1    ),
+  .d_rs2   (        gpr_rs2    ),
+  .d_rd    (        wbu_dat    )
 );
 
 // base ALU
@@ -499,7 +499,7 @@ r5p_wbu #(
   .alu     (alu_dat),               // ALU output
   .lsu     (lsu_rdt),               // LSU load
   .pcs     (XLEN'(ifu_pcs)),        // PC increment
-  .imm     (XLEN'(idu_ctl.imm.u)),  // immediate
+  .lui     (XLEN'(idu_ctl.imm.u)),  // upper immediate
   .csr     (csr_rdt),               // CSR
   .mul     (mul_dat),               // mul/div/rem
   // GPR write back

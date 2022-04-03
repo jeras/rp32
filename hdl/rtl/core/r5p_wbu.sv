@@ -27,12 +27,12 @@ module r5p_wbu #(
   // control structure
   input  ctl_t            ctl,
   // write data inputs
-  input  logic [XLEN-1:0] alu,
-  input  logic [XLEN-1:0] lsu,
+  input  logic [XLEN-1:0] alu,  // ALU destination register
+  input  logic [XLEN-1:0] lsu,  // LSU read data
   input  logic [XLEN-1:0] pcs,
-  input  logic [XLEN-1:0] imm,
-  input  logic [XLEN-1:0] csr,
-  input  logic [XLEN-1:0] mul,
+  input  logic [XLEN-1:0] lui,  // upper immediate
+  input  logic [XLEN-1:0] csr,  // CSR read
+  input  logic [XLEN-1:0] mul,  // mul/div/rem
   // GPR write back
   output logic            wen,  // write enable
   output logic [5-1:0]    adr,  // GPR address
@@ -69,8 +69,8 @@ end else begin
     LOAD   : tmp <=  'x;  // LSU load data
     JAL    ,
     JALR   : tmp <= pcs;  // PC increment
-    LUI    : tmp <= imm;  // immediate
-//  SYSTEM : tmp <= csr;  // CSR
+    LUI    : tmp <= lui;  // upper immediate
+//  SYSTEM : tmp <= csr;  // CSR read
 //  OP     : tmp <= mul;  // mul/div/rem
     default: tmp <=  'x;  // none
   endcase
@@ -85,8 +85,8 @@ always_comb begin
     LOAD   : dat = lsu;  // LSU load data
     JAL    ,
     JALR   : dat = tmp;  // PC increment
-    LUI    : dat = tmp;  // immediate
-//  SYSTEM : dat = tmp;  // CSR
+    LUI    : dat = tmp;  // upper immediate
+//  SYSTEM : dat = tmp;  // CSR read
 //  OP     : dat = tmp;  // mul/div/rem
     default: dat = 'x;   // none
   endcase
