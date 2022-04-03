@@ -87,6 +87,58 @@ function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
   endcase
 endfunction: extend
 
+`define ALTERA_RESERVED_QIS
+`ifdef ALTERA_RESERVED_QIS
+
+// ALU input multiplexer and signed/unsigned extension
+always_comb
+unique case (ctl.i.opc)
+  OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2             ; end else begin mux_op1 = 'x; mux_op2 = 'x; end  // R-type (arithmetic/logic)
+  BRANCH : if (CFG_BRANCH) begin mux_op1 = rs1; mux_op2 = rs2             ; end else begin mux_op1 = 'x; mux_op2 = 'x; end  // B-type (branch)
+  JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.imm.i); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // I-type (jump)
+  OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.imm.i); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // I-type (arithmetic/logic)
+  LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.imm.l); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // I-type (load)
+  STORE  : if (CFG_STORE ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.imm.s); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // S-type (store)
+  AUIPC  : if (CFG_AUIPC ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.imm.u); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // U-type
+  JAL    : if (CFG_JAL   ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.imm.j); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // J-type (jump)
+  default:                                                                           begin mux_op1 = 'x; mux_op2 = 'x; end
+endcase
+
+// TODO: check which keywords would best optimize this statement
+// invert arithmetic operand 2 (bit 5 of f7 segment of operand)
+always_comb
+unique case (ctl.i.opc)
+  OP     : if (1'b1      ) unique case (ctl.i.alu.f3)
+      ADD    :             begin add_inv = ctl.i.alu.f7_5; add_sgn = 1'b1; end
+      SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+      SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+    endcase
+  OP_IMM : if (1'b1      ) unique case (ctl.i.alu.f3)
+      ADD    :             begin add_inv = 1'b0; add_sgn = 1'b1; end
+      SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+      SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+    endcase                                                          else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  BRANCH : if (CFG_BRANCH) unique case (ctl.i.bru)
+      BEQ    ,
+      BNE    :             begin add_inv = 1'b1; add_sgn = 1'bx; end
+      BLT    ,
+      BGE    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+      BLTU   ,
+      BGEU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+    endcase                                                          else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  JALR   : if (1'b1      ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  AUIPC  : if (CFG_AUIPC ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
+  default:                                                                begin add_inv = 1'bx; add_sgn = 1'bx; end
+endcase
+
+`else  // not ALTERA_RESERVED_QIS
+
 // ALU input multiplexer and signed/unsigned extension
 always_comb
 unique case ({1'b1, ctl.i.opc})
@@ -133,6 +185,8 @@ unique case ({1'b1, ctl.i.opc})
   {CFG_JAL   , JAL   }: begin add_inv = 1'b0; add_sgn = 1'bx; end
   default             : begin add_inv = 1'bx; add_sgn = 1'bx; end
 endcase
+
+`endif  // end ALTERA_RESERVED_QIS
 
 always add_op1 = extend(mux_op1, add_sgn);
 always add_op2 = extend(mux_op2, add_sgn);
