@@ -68,7 +68,8 @@ logic [XLOG-1:0] shf_mux;  // multiplexed
 logic [XLOG-1:0] shf_sam;
 // bit reversed operand/result
 logic [XLEN-1:0] shf_tmp;  // operand
-logic [XLEN-1:0] shf_val;  // result
+(* keep = "true" *)  // this prevents the shift multiplexer from being pushed into WBU
+logic [XLEN-1:0] shf_val /* synthesis keep */;  // result
 
 // operation result
 logic [XLEN-1:0] val;
@@ -88,49 +89,49 @@ endfunction: extend
 
 // ALU input multiplexer and signed/unsigned extension
 always_comb
-unique case (ctl.i.opc)
-  OP     ,                                                         // R-type (arithmetic/logic)
-  BRANCH : begin mux_op1 = rs1;  mux_op2 = rs2             ;  end  // B-type (branch)
-  JALR   ,                                                         // I-type (jump)
-  OP_IMM : begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.i);  end  // I-type (arithmetic/logic)
-  LOAD   : begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.l);  end  // I-type (load)
-  STORE  : begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.s);  end  // S-type (store)
-  AUIPC  : begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.u);  end  // U-type
-  JAL    : begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.j);  end  // J-type (jump)
-  default: begin mux_op1 = 'x ;  mux_op2 = 'x;                end
+unique case ({1'b1, ctl.i.opc})
+  {1'b1      , OP    }: begin mux_op1 = rs1;  mux_op2 = rs2             ;  end  // R-type (arithmetic/logic)
+  {CFG_BRANCH, BRANCH}: begin mux_op1 = rs1;  mux_op2 = rs2             ;  end  // B-type (branch)
+  {1'b1      , JALR  }: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.i);  end  // I-type (jump)
+  {1'b1      , OP_IMM}: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.i);  end  // I-type (arithmetic/logic)
+  {CFG_LOAD  , LOAD  }: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.l);  end  // I-type (load)
+  {CFG_STORE , STORE }: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.s);  end  // S-type (store)
+  {CFG_AUIPC , AUIPC }: begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.u);  end  // U-type
+  {CFG_JAL   , JAL   }: begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.j);  end  // J-type (jump)
+  default             : begin mux_op1 = 'x ;  mux_op2 = 'x;                end
 endcase
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
 always_comb
-unique case (ctl.i.opc)
-  OP     : unique case (ctl.i.alu.f3)
-      ADD    : begin add_inv = ctl.i.alu.f7_5; add_sgn = 1'b1; end
-      SLT    : begin add_inv = 1'b1; add_sgn = 1'b1; end
-      SLTU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default: begin add_inv = 1'bx; add_sgn = 1'bx; end
+unique case ({1'b1, ctl.i.opc})
+  {1'b1      , OP    }: unique case (ctl.i.alu.f3)
+      ADD             : begin add_inv = ctl.i.alu.f7_5; add_sgn = 1'b1; end
+      SLT             : begin add_inv = 1'b1; add_sgn = 1'b1; end
+      SLTU            : begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default         : begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
-  OP_IMM : unique case (ctl.i.alu.f3)
-      ADD    : begin add_inv = 1'b0; add_sgn = 1'b1; end
-      SLT    : begin add_inv = 1'b1; add_sgn = 1'b1; end
-      SLTU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default: begin add_inv = 1'bx; add_sgn = 1'bx; end
+  {1'b1      , OP_IMM}: unique case (ctl.i.alu.f3)
+      ADD             : begin add_inv = 1'b0; add_sgn = 1'b1; end
+      SLT             : begin add_inv = 1'b1; add_sgn = 1'b1; end
+      SLTU            : begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default         : begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
-  BRANCH : unique case (ctl.i.bru)
-      BEQ    ,
-      BNE    : begin add_inv = 1'b1; add_sgn = 1'bx; end
-      BLT    ,
-      BGE    : begin add_inv = 1'b1; add_sgn = 1'b1; end
-      BLTU   ,
-      BGEU   : begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default: begin add_inv = 1'bx; add_sgn = 1'bx; end
+  {CFG_BRANCH, BRANCH}: unique case (ctl.i.bru)
+      BEQ             ,
+      BNE             : begin add_inv = 1'b1; add_sgn = 1'bx; end
+      BLT             ,
+      BGE             : begin add_inv = 1'b1; add_sgn = 1'b1; end
+      BLTU            ,
+      BGEU            : begin add_inv = 1'b1; add_sgn = 1'b0; end
+      default         : begin add_inv = 1'bx; add_sgn = 1'bx; end
     endcase
-  JALR   : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  LOAD   : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  STORE  : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  AUIPC  : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  JAL    : begin add_inv = 1'b0; add_sgn = 1'bx; end
-  default: begin add_inv = 1'bx; add_sgn = 1'bx; end
+  {1'b1      , JALR  }: begin add_inv = 1'b0; add_sgn = 1'bx; end
+  {CFG_LOAD  , LOAD  }: begin add_inv = 1'b0; add_sgn = 1'bx; end
+  {CFG_STORE , STORE }: begin add_inv = 1'b0; add_sgn = 1'bx; end
+  {CFG_AUIPC , AUIPC }: begin add_inv = 1'b0; add_sgn = 1'bx; end
+  {CFG_JAL   , JAL   }: begin add_inv = 1'b0; add_sgn = 1'bx; end
+  default             : begin add_inv = 1'bx; add_sgn = 1'bx; end
 endcase
 
 always add_op1 = extend(mux_op1, add_sgn);
@@ -138,6 +139,16 @@ always add_op2 = extend(mux_op2, add_sgn);
 
 // adder (summation, subtraction)
 assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
+
+//assign sum = $signed(add_op1) + (add_inv ? - $signed(add_op2) : + $signed(add_op2));
+
+//// https://docs.xilinx.com/v/u/en-US/pg120-c-addsub
+//c_addsub_0 your_instance_name (
+//  .A  ( add_op1),  // input  wire [32 : 0] A
+//  .B  ( add_op2),  // input  wire [32 : 0] B
+//  .ADD(~add_inv),  // input  wire          ADD
+//  .S  ( sum    )   // output wire [32 : 0] S
+//);
 
 ///////////////////////////////////////////////////////////////////////////////
 // bitwise logical operations
