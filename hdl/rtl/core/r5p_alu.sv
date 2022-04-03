@@ -54,7 +54,7 @@ logic [XLEN-1:0] mux_op2;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
 logic [XLEN-0:0] add_op1;  // arithmetic operand 1
 logic [XLEN-0:0] add_op2;  // arithmetic operand 2
-// arithmetic operation sign.signedness
+// arithmetic operation sign/signedness
 logic            add_inv;
 logic            add_sgn;
 
@@ -67,6 +67,7 @@ logic [XLEN-1:0] log_val;  // logical result
 logic [XLOG-1:0] shf_mux;  // multiplexed
 logic [XLOG-1:0] shf_sam;
 // bit reversed operand/result
+(* keep = "true" *)
 logic [XLEN-1:0] shf_tmp;  // operand
 (* keep = "true" *)  // this prevents the shift multiplexer from being pushed into WBU
 logic [XLEN-1:0] shf_val /* synthesis keep */;  // result
