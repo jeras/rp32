@@ -38,7 +38,9 @@ module r5p_alu #(
   input  ctl_t            ctl,
   // data input/output
   input  logic [XLEN-1:0] pc ,  // PC
+  //(* keep = "true" *)
   input  logic [XLEN-1:0] rs1,  // source register 1
+  (* keep = "true" *)
   input  logic [XLEN-1:0] rs2,  // source register 2
   output logic [XLEN-1:0] rd ,  // destination register
   // side ouputs
