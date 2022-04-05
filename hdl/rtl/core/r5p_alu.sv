@@ -285,7 +285,7 @@ endcase
 
 // combined barrel shifter for left/right shifting
 //always_comb
-//unique casez (ctl.i.alu.f7_5)
+//unique case (ctl.i.alu.f7_5)
 //  // barrel shifter
 //  1'b1   : shf_val =   $signed(shf_tmp) >>> shf_sam;
 //  1'b0   : shf_val = $unsigned(shf_tmp)  >> shf_sam;
@@ -293,33 +293,24 @@ endcase
 //endcase
 
 (* keep = "true" *)
-logic [XLEN-1:0] shf_tm1;  // operand
-(* keep = "true" *)
-logic [XLEN-1:0] shf_tm2;  // operand
+logic [XLEN-1:0] shf_tmt [0:XLOG];
+
+assign shf_tmt[0] = shf_tmp;
+
+generate
+for (genvar i=0; i<XLOG; i++) begin: gen_shf_ser
 
 always_comb
-unique casez (ctl.i.alu.f7_5)
+unique case (ctl.i.alu.f7_5)
   // barrel shifter
-  1'b1   : shf_tm1 =   $signed(shf_tmp) >>> shf_sam[1:0];
-  1'b0   : shf_tm1 = $unsigned(shf_tmp)  >> shf_sam[1:0];
-  default: shf_tm1 = 'x;
+  1'b1: shf_tmt[i+1] =   $signed(shf_tmt[i]) >>> shf_sam[i];
+  1'b0: shf_tmt[i+1] = $unsigned(shf_tmt[i])  >> shf_sam[i];
 endcase
 
-always_comb
-unique casez (ctl.i.alu.f7_5)
-  // barrel shifter
-  1'b1   : shf_tm2 =   $signed(shf_tm1) >>> {shf_sam[3:2], 2'b00};
-  1'b0   : shf_tm2 = $unsigned(shf_tm1)  >> {shf_sam[3:2], 2'b00};
-  default: shf_tm2 = 'x;
-endcase
+end: gen_shf_ser
+endgenerate
 
-always_comb
-unique casez (ctl.i.alu.f7_5)
-  // barrel shifter
-  1'b1   : shf_val =   $signed(shf_tm2) >>> {shf_sam[4], 4'b0000};
-  1'b0   : shf_val = $unsigned(shf_tm2)  >> {shf_sam[4], 4'b0000};
-  default: shf_val = 'x;
-endcase
+assign shf_val = shf_tmt[XLOG]
 
 ///////////////////////////////////////////////////////////////////////////////
 // output multiplexer
