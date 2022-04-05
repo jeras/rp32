@@ -284,11 +284,40 @@ unique casez (ctl.i.alu.f3)
 endcase
 
 // combined barrel shifter for left/right shifting
+//always_comb
+//unique casez (ctl.i.alu.f7_5)
+//  // barrel shifter
+//  1'b1   : shf_val =   $signed(shf_tmp) >>> shf_sam;
+//  1'b0   : shf_val = $unsigned(shf_tmp)  >> shf_sam;
+//  default: shf_val = 'x;
+//endcase
+
+(* keep = "true" *)
+logic [XLEN-1:0] shf_tm1;  // operand
+(* keep = "true" *)
+logic [XLEN-1:0] shf_tm2;  // operand
+
 always_comb
 unique casez (ctl.i.alu.f7_5)
   // barrel shifter
-  1'b1   : shf_val =   $signed(shf_tmp) >>> shf_sam;
-  1'b0   : shf_val = $unsigned(shf_tmp)  >> shf_sam;
+  1'b1   : shf_tm1 =   $signed(shf_tmp) >>> shf_sam[1:0];
+  1'b0   : shf_tm1 = $unsigned(shf_tmp)  >> shf_sam[1:0];
+  default: shf_tm1 = 'x;
+endcase
+
+always_comb
+unique casez (ctl.i.alu.f7_5)
+  // barrel shifter
+  1'b1   : shf_tm2 =   $signed(shf_tm1) >>> {shf_sam[3:2], 2'b00};
+  1'b0   : shf_tm2 = $unsigned(shf_tm1)  >> {shf_sam[3:2], 2'b00};
+  default: shf_tm2 = 'x;
+endcase
+
+always_comb
+unique casez (ctl.i.alu.f7_5)
+  // barrel shifter
+  1'b1   : shf_val =   $signed(shf_tm2) >>> {shf_sam[4], 4'b0000};
+  1'b0   : shf_val = $unsigned(shf_tm2)  >> {shf_sam[4], 4'b0000};
   default: shf_val = 'x;
 endcase
 
