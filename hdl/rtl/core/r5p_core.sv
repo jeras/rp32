@@ -62,7 +62,7 @@ module r5p_core #(
   logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
   logic        CFG_BEN_ILL = 1'bx,  // byte  enable for illegal instruction
   // FPGA specific optimizations
-  int unsigned CFG_SHF     = XLEN,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
+  int unsigned CFG_SHF     = 1,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(

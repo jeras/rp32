@@ -46,6 +46,7 @@ module r5p_alu #(
   input  logic [XLEN-1:0] rs2,  // source register 2
   output logic [XLEN-1:0] rd ,  // destination register
   // side ouputs
+  (* keep = "true" *)
   output logic [XLEN-0:0] sum   // summation result including overflow bit
 );
 
@@ -200,7 +201,6 @@ always add_op2 = extend(mux_op2, add_sgn);
 
 // adder (summation, subtraction)
 assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
-
 //assign sum = $signed(add_op1) + (add_inv ? - $signed(add_op2) : + $signed(add_op2));
 
 //// https://docs.xilinx.com/v/u/en-US/pg120-c-addsub
@@ -275,7 +275,8 @@ else begin: gen_som_alu
 end: gen_som_alu
 endgenerate
 
-//// shift ammount length
+// shift ammount length
+(* keep = "true" *)
 assign shf_sam = shf_mux[XLOG-1:0] ;  // XLEN
 
 // bit inversion
@@ -337,9 +338,9 @@ if (CFG_SHF == 1) begin: gen_shf_1
 end: gen_shf_1
 else if (CFG_SHF == 6) begin: gen_shf_2
 
-  (* keep = "true" *)
+  //(* keep = "true" *)
   logic signed [XLEN-0:0] shf_tm1;  // operand
-  (* keep = "true" *)
+  //(* keep = "true" *)
   logic signed [XLEN-0:0] shf_tm3;  // operand
   //(* keep = "true" *)
   logic signed [XLEN-0:0] shf_tm4;  // operand
