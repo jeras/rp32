@@ -42,8 +42,9 @@ module r5p_alu #(
   input  logic [XLEN-1:0] pc ,  // PC
   //(* keep = "true" *)
   input  logic [XLEN-1:0] rs1,  // source register 1
-  (* keep = "true" *)
+  //(* keep = "true" *)
   input  logic [XLEN-1:0] rs2,  // source register 2
+  //(* keep = "true" *)
   output logic [XLEN-1:0] rd ,  // destination register
   // side ouputs
   (* keep = "true" *)
@@ -54,7 +55,9 @@ module r5p_alu #(
 localparam int unsigned XLOG = $clog2(XLEN);
 
 // arithmetic operands multiplexer
+//(* keep = "true" *)
 logic [XLEN-1:0] mux_op1;  // arithmetic operand 1
+(* keep = "true" *)
 logic [XLEN-1:0] mux_op2;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
 logic [XLEN-0:0] add_op1;  // arithmetic operand 1
@@ -72,11 +75,11 @@ logic [XLEN-1:0] log_val;  // logical result
 logic [XLOG-1:0] shf_mux;  // multiplexed
 logic [XLOG-1:0] shf_sam;
 // bit reversed operand/result
-(* keep = "true" *)
+//(* keep = "true" *)
 logic [XLEN-1:0] shf_tmp;
 //(* keep = "true" *)
 logic signed [XLEN-0:0] shf_ext;
-(* keep = "true" *)  // this prevents the shift multiplexer from being pushed into WBU
+//(* keep = "true" *)  // this prevents the shift multiplexer from being pushed into WBU
 logic [XLEN-1:0] shf_val /* synthesis keep */;  // result
 
 // operation result
@@ -276,7 +279,7 @@ end: gen_som_alu
 endgenerate
 
 // shift ammount length
-(* keep = "true" *)
+//(* keep = "true" *)
 assign shf_sam = shf_mux[XLOG-1:0] ;  // XLEN
 
 // bit inversion
@@ -315,7 +318,7 @@ if (CFG_SHF == 1) begin: gen_shf_1
   logic signed [XLEN-0:0] shf_tm0;  // operand
   //(* keep = "true" *)
   logic signed [XLEN-0:0] shf_tm1;  // operand
-  // (* keep = "true" *)
+  //(* keep = "true" *)
   logic signed [XLEN-0:0] shf_tm2;  // operand
   //(* keep = "true" *)
   logic signed [XLEN-0:0] shf_tm3;  // operand
