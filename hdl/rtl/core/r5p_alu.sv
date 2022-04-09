@@ -26,6 +26,8 @@ module r5p_alu #(
   bit          CFG_STORE  = 1'b1,  // enable LOAD
   bit          CFG_AUIPC  = 1'b1,  // enable AUIPC
   bit          CFG_JAL    = 1'b1,  // enable JAL
+  // FPGA specific optimizations
+  int unsigned CFG_SHF    = XLEN,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
   // optimizations: timing versus area compromises
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
@@ -70,7 +72,9 @@ logic [XLOG-1:0] shf_mux;  // multiplexed
 logic [XLOG-1:0] shf_sam;
 // bit reversed operand/result
 (* keep = "true" *)
-logic [XLEN-1:0] shf_tmp;  // operand
+logic [XLEN-1:0] shf_tmp;
+//(* keep = "true" *)
+logic signed [XLEN-0:0] shf_ext;
 (* keep = "true" *)  // this prevents the shift multiplexer from being pushed into WBU
 logic [XLEN-1:0] shf_val /* synthesis keep */;  // result
 
@@ -283,34 +287,82 @@ unique casez (ctl.i.alu.f3)
   default: shf_tmp = 'x;
 endcase
 
-// combined barrel shifter for left/right shifting
-//always_comb
-//unique case (ctl.i.alu.f7_5)
-//  // barrel shifter
-//  1'b1   : shf_val =   $signed(shf_tmp) >>> shf_sam;
-//  1'b0   : shf_val = $unsigned(shf_tmp)  >> shf_sam;
-//  default: shf_val = 'x;
-//endcase
-
-(* keep = "true" *)
-logic [XLEN-1:0] shf_tmt [0:XLOG];
-
-assign shf_tmt[0] = shf_tmp;
-
-generate
-for (genvar i=0; i<XLOG; i++) begin: gen_shf_ser
-
+// sign extension to (XLEN+1)
 always_comb
 unique case (ctl.i.alu.f7_5)
-  // barrel shifter
-  1'b1: shf_tmt[i+1] =   $signed(shf_tmt[i]) >>> shf_sam[i];
-  1'b0: shf_tmt[i+1] = $unsigned(shf_tmt[i])  >> shf_sam[i];
+  1'b1   : shf_ext = (XLEN+1)'(  $signed(shf_tmp));
+  1'b0   : shf_ext = (XLEN+1)'($unsigned(shf_tmp));
 endcase
 
-end: gen_shf_ser
-endgenerate
+generate
+if (CFG_SHF == 1) begin: gen_shf_1
 
-assign shf_val = shf_tmt[XLOG]
+//(* keep = "true" *)
+//logic signed [XLEN-0:0] shf_tmt [0:XLOG-1];
+//
+//assign shf_tmt[0] = shf_tmp;
+//
+//generate
+//for (genvar i=0; i<XLOG; i++) begin: gen_shf_ser
+//  assign shf_tmt[i+1] = shf_tmi[i] >>> (shf_sam[i] << i);
+//end: gen_shf_ser
+//endgenerate
+//
+//assign shf_val = shf_tmt[XLOG][XLEN-1:0];
+
+  //(* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm0;  // operand
+  //(* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm1;  // operand
+  // (* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm2;  // operand
+  //(* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm3;  // operand
+  //(* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm4;  // operand
+
+  // 1-bit shift per stage, LUT4 optimization
+  always_comb
+  begin
+    shf_tm0 = shf_ext >>>  shf_sam[0];
+    shf_tm1 = shf_tm0 >>> {shf_sam[1], 1'b0};
+    shf_tm2 = shf_tm1 >>> {shf_sam[2], 2'b00};
+    shf_tm3 = shf_tm2 >>> {shf_sam[3], 3'b000};
+    shf_tm4 = shf_tm3 >>> {shf_sam[4], 4'b0000};
+  end
+
+  // remove sign extension from result
+  assign shf_val = shf_tm4[XLEN-1:0];
+
+end: gen_shf_1
+else if (CFG_SHF == 6) begin: gen_shf_2
+
+  (* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm1;  // operand
+  (* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm3;  // operand
+  //(* keep = "true" *)
+  logic signed [XLEN-0:0] shf_tm4;  // operand
+
+  // 2-bit shift per stage, LUT6 optimization
+  always_comb
+  begin
+    shf_tm1 = shf_ext >>>  shf_sam[1:0];
+    shf_tm3 = shf_tm1 >>> {shf_sam[3:2], 2'b00};
+    shf_tm4 = shf_tm3 >>> {shf_sam[  4], 4'b0000};
+  end
+
+  // remove sign extension from result
+  assign shf_val = shf_tm4[XLEN-1:0];
+
+end: gen_shf_2
+else begin: gen_shf
+
+  // combined barrel shifter for left/right shifting
+  assign shf_val = XLEN'($signed(shf_ext) >>> shf_sam);
+
+end: gen_shf
+endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // output multiplexer

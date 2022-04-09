@@ -61,6 +61,8 @@ module r5p_core #(
   logic        CFG_BEN_RD  = 1'bx,  // byte  enable for read (TODO)
   logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
   logic        CFG_BEN_ILL = 1'bx,  // byte  enable for illegal instruction
+  // FPGA specific optimizations
+  int unsigned CFG_SHF     = XLEN,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
@@ -325,6 +327,8 @@ r5p_alu #(
   .CFG_STORE  (~CFG_ALU_LSA),
   .CFG_AUIPC  (1'b1),
   .CFG_JAL    (1'b1),
+  // FPGA specific optimizations
+  .CFG_SHF (CFG_SHF),
   // optimizations: timing versus area compromises
   .CFG_LOM (CFG_ALU_LOM),
   .CFG_SOM (CFG_ALU_SOM),
