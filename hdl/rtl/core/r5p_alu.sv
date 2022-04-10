@@ -27,7 +27,7 @@ module r5p_alu #(
   bit          CFG_AUIPC  = 1'b1,  // enable AUIPC
   bit          CFG_JAL    = 1'b1,  // enable JAL
   // FPGA specific optimizations
-  int unsigned CFG_SHF = 1,     // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
+  int unsigned CFG_SHF    = 1,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
   // optimizations: timing versus area compromises
   bit          CFG_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
