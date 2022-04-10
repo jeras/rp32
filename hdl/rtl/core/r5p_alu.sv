@@ -272,7 +272,6 @@ end: gen_som_alu
 endgenerate
 
 // shift ammount length
-//(* keep = "true" *)
 assign shf_amm = shf_mux[XLOG-1:0] ;  // XLEN
 
 // bit inversion
@@ -293,19 +292,6 @@ endcase
 
 generate
 if (CFG_SHF == 1) begin: gen_shf_1
-
-//(* keep = "true" *)
-//logic signed [XLEN-0:0] shf_tmt [0:XLOG-1];
-//
-//assign shf_tmt[0] = shf_tmp;
-//
-//generate
-//for (genvar i=0; i<XLOG; i++) begin: gen_shf_ser
-//  assign shf_tmt[i+1] = shf_tmi[i] >>> (shf_amm[i] << i);
-//end: gen_shf_ser
-//endgenerate
-//
-//assign shf_val = shf_tmt[XLOG][XLEN-1:0];
 
   logic signed [XLEN-0:0] shf_tm0;  // operand
   logic signed [XLEN-0:0] shf_tm1;  // operand
