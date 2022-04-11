@@ -65,9 +65,6 @@ logic                   add_sgn;
 // logical operations
 logic        [XLEN-1:0] log_op1;  // logical operand 1
 logic        [XLEN-1:0] log_op2;  // logical operand 2
-logic        [XLEN-1:0] log_and;  // AND result
-logic        [XLEN-1:0] log_or ;  // OR  result
-logic        [XLEN-1:0] log_xor;  // XOR result
 logic        [XLEN-1:0] log_val;  // logical result
 
 // barrel shifter
@@ -167,26 +164,18 @@ assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed(
 // bitwise logical operations
 ///////////////////////////////////////////////////////////////////////////////
 
-// NOTE: Since 'rs1' is a mux of GPR and writeback,
-//       a shared common mux point provides better area utilization.
-
 // shared ALU common multiplexer
-assign log_op1 = rs1;      // TODO: better on Altera Cyclone V
-//assign log_op1 = mux_op1;  // TODO: better on Xilinx Artix
+assign log_op1 = rs1;
+//assign log_op1 = mux_op1;
 assign log_op2 = mux_op2;
-
-// bitwise logical operations
-assign log_and = log_op1 & log_op2;
-assign log_or  = log_op1 | log_op2;
-assign log_xor = log_op1 ^ log_op2;
 
 // this can be implemented with a single LUT4
 always_comb
 unique case (ctl.i.alu.f3)
   // bitwise logical operations
-  AND    : log_val = log_and;
-  OR     : log_val = log_or ;
-  XOR    : log_val = log_xor;
+  AND    : log_val = log_op1 & log_op2;
+  OR     : log_val = log_op1 | log_op2;
+  XOR    : log_val = log_op1 ^ log_op2;
   default: log_val = 'x;
 endcase
 
@@ -205,6 +194,7 @@ endfunction: bitrev
 
 // shift operand 1
 assign shf_op1 = rs1;
+//assign shf_op1 = mux_op1;
 
 // shift ammount length
 assign shf_amm = mux_op2[XLOG-1:0];
