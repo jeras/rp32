@@ -207,7 +207,7 @@ endfunction: bitrev
 assign shf_op1 = rs1;
 
 // shift ammount length
-assign shf_amm = mux_op2[XLOG-1:0] ;  // XLEN
+assign shf_amm = mux_op2[XLOG-1:0];
 
 // bit inversion
 always_comb
