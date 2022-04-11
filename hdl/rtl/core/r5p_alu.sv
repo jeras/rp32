@@ -94,6 +94,14 @@ function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
   endcase
 endfunction: extend
 
+//  // dedicated logical operand multiplexer
+//  always_comb
+//  unique casez (ctl.i.opc)
+//    OP     : begin log_op1 = rs1; log_op2 = rs2;              end  // R-type
+//    OP_IMM : begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
+//    default: begin log_op1 = 'x ; log_op2 = 'x;               end
+//  endcase
+
 `define ALTERA_RESERVED_QIS
 `ifdef ALTERA_RESERVED_QIS
 
@@ -214,32 +222,13 @@ assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed(
 // bitwise logical operations
 ///////////////////////////////////////////////////////////////////////////////
 
-// logical operands
-// NOTE: logical operations are not in the crytical path,
-//       therefore a dedicated input multiplexer does not provide much improvement
-// NOTE: enabled is favored on Altera Quartus - Cylone V,
-//       disabled is favored on Xilinx Vivado - Artix.
-generate
-if (CFG_LOM) begin: gen_lom_ena
+// NOTE: Since 'rs1' is a mux of GPR and writeback,
+//       a shared common mux point provides better area utilization.
 
-  // dedicated logical operand multiplexer
-  always_comb
-  unique casez (ctl.i.opc)
-    OP     : begin log_op1 = rs1; log_op2 = rs2;              end  // R-type
-    OP_IMM : begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-    default: begin log_op1 = 'x ; log_op2 = 'x;               end
-  endcase
-
-end:gen_lom_ena
-else begin: gen_lom_alu
-
-  // shared ALU common multiplexer
-  assign log_op1 = rs1;      // TODO: better on Altera Cyclone V
+// shared ALU common multiplexer
+assign log_op1 = rs1;      // TODO: better on Altera Cyclone V
 //assign log_op1 = mux_op1;  // TODO: better on Xilinx Artix
-  assign log_op2 = mux_op2;
-
-end: gen_lom_alu
-endgenerate
+assign log_op2 = mux_op2;
 
 // bitwise logical operations
 assign log_and = log_op1 & log_op2;
@@ -269,28 +258,8 @@ function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
 `endif
 endfunction: bitrev
 
-generate
-if (CFG_SOM) begin: gen_som_ena
-
-  // shift ammount multiplexer
-  always_comb
-  unique casez (ctl.i.opc)
-    OP     : shf_mux = rs2      [XLOG-1:0];
-    OP_IMM : shf_mux = ctl.imm.i[XLOG-1:0];
-    default: shf_mux = 'x;
-  endcase
-
-end:gen_som_ena
-else begin: gen_som_alu
-
-  // shift ammount multiplexer shared with logic
-  assign shf_mux = log_op2[XLOG-1:0];
-
-end: gen_som_alu
-endgenerate
-
 // shift ammount length
-assign shf_amm = shf_mux[XLOG-1:0] ;  // XLEN
+assign shf_amm = mux_op2[XLOG-1:0] ;  // XLEN
 
 // bit inversion
 always_comb
