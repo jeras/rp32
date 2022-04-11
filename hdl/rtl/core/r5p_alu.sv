@@ -52,31 +52,30 @@ module r5p_alu #(
 localparam int unsigned XLOG = $clog2(XLEN);
 
 // arithmetic operands multiplexer
-logic [XLEN-1:0] mux_op1;  // arithmetic operand 1
+logic        [XLEN-1:0] mux_op1;  // arithmetic operand 1
 (* keep = "true" *)
-logic [XLEN-1:0] mux_op2;  // arithmetic operand 2
+logic        [XLEN-1:0] mux_op2;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
 logic [XLEN-0:0] add_op1;  // arithmetic operand 1
 logic [XLEN-0:0] add_op2;  // arithmetic operand 2
 // arithmetic operation sign/signedness
-logic            add_inv;
-logic            add_sgn;
+logic                   add_inv;
+logic                   add_sgn;
 
-// logical operands
-logic [XLEN-1:0] log_op1;  // logical operand 1
-logic [XLEN-1:0] log_op2;  // logical operand 2
-logic [XLEN-1:0] log_and;  // AND result
-logic [XLEN-1:0] log_or ;  // OR  result
-logic [XLEN-1:0] log_xor;  // XOR result
-logic [XLEN-1:0] log_val;  // logical result
+// logical operations
+logic        [XLEN-1:0] log_op1;  // logical operand 1
+logic        [XLEN-1:0] log_op2;  // logical operand 2
+logic        [XLEN-1:0] log_and;  // AND result
+logic        [XLEN-1:0] log_or ;  // OR  result
+logic        [XLEN-1:0] log_xor;  // XOR result
+logic        [XLEN-1:0] log_val;  // logical result
 
 // barrel shifter shift ammount
-logic [XLOG-1:0] shf_mux;  // multiplexed
-logic [XLOG-1:0] shf_amm;
-// bit reversed operand/result
-logic [XLEN-1:0] shf_tmp;
+logic        [XLOG-1:0] shf_mux;  // multiplexed
+logic        [XLOG-1:0] shf_amm;  // shift ammount
+logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
 logic signed [XLEN-0:0] shf_ext;
-logic [XLEN-1:0] shf_val /* synthesis keep */;  // result
+logic        [XLEN-1:0] shf_val /* synthesis keep */;  // result
 
 // operation result
 logic [XLEN-1:0] val;
