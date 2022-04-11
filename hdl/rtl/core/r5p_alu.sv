@@ -65,6 +65,9 @@ logic            add_sgn;
 // logical operands
 logic [XLEN-1:0] log_op1;  // logical operand 1
 logic [XLEN-1:0] log_op2;  // logical operand 2
+logic [XLEN-1:0] log_and;  // AND result
+logic [XLEN-1:0] log_or ;  // OR  result
+logic [XLEN-1:0] log_xor;  // XOR result
 logic [XLEN-1:0] log_val;  // logical result
 
 // barrel shifter shift ammount
@@ -238,6 +241,11 @@ else begin: gen_lom_alu
 end: gen_lom_alu
 endgenerate
 
+// bitwise logical operations
+assign log_and = log_op1 & log_op2;
+assign log_or  = log_op1 | log_op2;
+assign log_xor = log_op1 ^ log_op2;
+
 ///////////////////////////////////////////////////////////////////////////////
 // barrel shifter
 ///////////////////////////////////////////////////////////////////////////////
@@ -350,9 +358,9 @@ if (CFG_L4M) begin: gen_l4m_ena
   always_comb
   unique case (ctl.i.alu.f3)
     // bitwise logical operations
-    AND    : log_val = log_op1 & log_op2;
-    OR     : log_val = log_op1 | log_op2;
-    XOR    : log_val = log_op1 ^ log_op2;
+    AND    : log_val = log_and;
+    OR     : log_val = log_or ;
+    XOR    : log_val = log_xor;
     default: log_val = 'x;
   endcase
 
@@ -390,9 +398,9 @@ else begin: gen_l4m_alu
         SLT ,
         SLTU: val = XLEN'(sum[XLEN]);
         // bitwise logical operations
-        AND : val = log_op1 & log_op2;
-        OR  : val = log_op1 | log_op2;
-        XOR : val = log_op1 ^ log_op2;
+        AND : val = log_and;
+        OR  : val = log_or ;
+        XOR : val = log_xor;
         // barrel shifter
         SR  : val =        shf_val ;
         SL  : val = bitrev(shf_val);
