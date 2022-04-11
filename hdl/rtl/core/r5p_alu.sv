@@ -54,10 +54,10 @@ localparam int unsigned XLOG = $clog2(XLEN);
 // arithmetic operands multiplexer
 logic        [XLEN-1:0] mux_op1;  // arithmetic operand 1
 (* keep = "true" *)
-logic        [XLEN-1:0] mux_op2;  // arithmetic operand 2
+logic        [XLEN-1:0] mux_op2 /* synthesis keep */;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
-logic [XLEN-0:0] add_op1;  // arithmetic operand 1
-logic [XLEN-0:0] add_op2;  // arithmetic operand 2
+logic signed [XLEN-0:0] add_op1;  // arithmetic operand 1
+logic signed [XLEN-0:0] add_op2;  // arithmetic operand 2
 // arithmetic operation sign/signedness
 logic                   add_inv;
 logic                   add_sgn;
@@ -70,8 +70,8 @@ logic        [XLEN-1:0] log_or ;  // OR  result
 logic        [XLEN-1:0] log_xor;  // XOR result
 logic        [XLEN-1:0] log_val;  // logical result
 
-// barrel shifter shift ammount
-logic        [XLOG-1:0] shf_mux;  // multiplexed
+// barrel shifter
+logic        [XLEN-1:0] shf_op1;  // shift operand 1
 logic        [XLOG-1:0] shf_amm;  // shift ammount
 logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
 logic signed [XLEN-0:0] shf_ext;
@@ -100,9 +100,6 @@ endfunction: extend
 //    OP_IMM : begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
 //    default: begin log_op1 = 'x ; log_op2 = 'x;               end
 //  endcase
-
-`define ALTERA_RESERVED_QIS
-`ifdef ALTERA_RESERVED_QIS
 
 // ALU input multiplexer and signed/unsigned extension
 always_comb
@@ -150,57 +147,6 @@ unique case (ctl.i.opc)
   JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
   default:                                                                begin add_inv = 1'bx; add_sgn = 1'bx; end
 endcase
-
-`else  // not ALTERA_RESERVED_QIS
-
-// ALU input multiplexer and signed/unsigned extension
-always_comb
-unique case ({1'b1, ctl.i.opc})
-  {1'b1      , OP    }: begin mux_op1 = rs1;  mux_op2 = rs2             ;  end  // R-type (arithmetic/logic)
-  {CFG_BRANCH, BRANCH}: begin mux_op1 = rs1;  mux_op2 = rs2             ;  end  // B-type (branch)
-  {1'b1      , JALR  }: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.i);  end  // I-type (jump)
-  {1'b1      , OP_IMM}: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.i);  end  // I-type (arithmetic/logic)
-  {CFG_LOAD  , LOAD  }: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.l);  end  // I-type (load)
-  {CFG_STORE , STORE }: begin mux_op1 = rs1;  mux_op2 = XLEN'(ctl.imm.s);  end  // S-type (store)
-  {CFG_AUIPC , AUIPC }: begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.u);  end  // U-type
-  {CFG_JAL   , JAL   }: begin mux_op1 = pc ;  mux_op2 = XLEN'(ctl.imm.j);  end  // J-type (jump)
-  default             : begin mux_op1 = 'x ;  mux_op2 = 'x;                end
-endcase
-
-// TODO: check which keywords would best optimize this statement
-// invert arithmetic operand 2 (bit 5 of f7 segment of operand)
-always_comb
-unique case ({1'b1, ctl.i.opc})
-  {1'b1      , OP    }: unique case (ctl.i.alu.f3)
-      ADD             : begin add_inv = ctl.i.alu.f7_5; add_sgn = 1'b1; end
-      SLT             : begin add_inv = 1'b1; add_sgn = 1'b1; end
-      SLTU            : begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default         : begin add_inv = 1'bx; add_sgn = 1'bx; end
-    endcase
-  {1'b1      , OP_IMM}: unique case (ctl.i.alu.f3)
-      ADD             : begin add_inv = 1'b0; add_sgn = 1'b1; end
-      SLT             : begin add_inv = 1'b1; add_sgn = 1'b1; end
-      SLTU            : begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default         : begin add_inv = 1'bx; add_sgn = 1'bx; end
-    endcase
-  {CFG_BRANCH, BRANCH}: unique case (ctl.i.bru)
-      BEQ             ,
-      BNE             : begin add_inv = 1'b1; add_sgn = 1'bx; end
-      BLT             ,
-      BGE             : begin add_inv = 1'b1; add_sgn = 1'b1; end
-      BLTU            ,
-      BGEU            : begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default         : begin add_inv = 1'bx; add_sgn = 1'bx; end
-    endcase
-  {1'b1      , JALR  }: begin add_inv = 1'b0; add_sgn = 1'bx; end
-  {CFG_LOAD  , LOAD  }: begin add_inv = 1'b0; add_sgn = 1'bx; end
-  {CFG_STORE , STORE }: begin add_inv = 1'b0; add_sgn = 1'bx; end
-  {CFG_AUIPC , AUIPC }: begin add_inv = 1'b0; add_sgn = 1'bx; end
-  {CFG_JAL   , JAL   }: begin add_inv = 1'b0; add_sgn = 1'bx; end
-  default             : begin add_inv = 1'bx; add_sgn = 1'bx; end
-endcase
-
-`endif  // end ALTERA_RESERVED_QIS
 
 always add_op1 = extend(mux_op1, add_sgn);
 always add_op2 = extend(mux_op2, add_sgn);
@@ -257,6 +203,9 @@ function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
 `endif
 endfunction: bitrev
 
+// shift operand 1
+assign shf_op1 = rs1;
+
 // shift ammount length
 assign shf_amm = mux_op2[XLOG-1:0] ;  // XLEN
 
@@ -264,8 +213,8 @@ assign shf_amm = mux_op2[XLOG-1:0] ;  // XLEN
 always_comb
 unique casez (ctl.i.alu.f3)
   // barrel shifter
-  SR     : shf_tmp =        rs1 ;
-  SL     : shf_tmp = bitrev(rs1);
+  SR     : shf_tmp =        shf_op1 ;
+  SL     : shf_tmp = bitrev(shf_op1);
   default: shf_tmp = 'x;
 endcase
 
