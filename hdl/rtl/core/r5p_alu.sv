@@ -246,6 +246,16 @@ assign log_and = log_op1 & log_op2;
 assign log_or  = log_op1 | log_op2;
 assign log_xor = log_op1 ^ log_op2;
 
+// this can be implemented with a single LUT4
+always_comb
+unique case (ctl.i.alu.f3)
+  // bitwise logical operations
+  AND    : log_val = log_and;
+  OR     : log_val = log_or ;
+  XOR    : log_val = log_xor;
+  default: log_val = 'x;
+endcase
+
 ///////////////////////////////////////////////////////////////////////////////
 // barrel shifter
 ///////////////////////////////////////////////////////////////////////////////
@@ -351,66 +361,26 @@ endgenerate
 // output multiplexer
 ///////////////////////////////////////////////////////////////////////////////
 
-generate
-if (CFG_L4M) begin: gen_l4m_ena
-
-  // this can be implemented with a single LUT4
-  always_comb
-  unique case (ctl.i.alu.f3)
-    // bitwise logical operations
-    AND    : log_val = log_and;
-    OR     : log_val = log_or ;
-    XOR    : log_val = log_xor;
-    default: log_val = 'x;
-  endcase
-
-  // operations
-  always_comb
-  unique case (ctl.i.opc)
-    OP     ,
-    OP_IMM : unique case (ctl.i.alu.f3)
-        // adder based instructions
-        ADD : val = XLEN'(sum);
-        SLT ,
-        SLTU: val = XLEN'(sum[XLEN]);
-        // bitwise logical operations
-        AND ,
-        OR  ,
-        XOR : val = log_val;
-        // barrel shifter
-        SR  : val =        shf_val ;
-        SL  : val = bitrev(shf_val);
-      endcase
-    AUIPC  : val = XLEN'(sum);
-    default: val = 'x;
-  endcase
-
-end:gen_l4m_ena
-else begin: gen_l4m_alu
-
-  // operations
-  always_comb
-  unique case (ctl.i.opc)
-    OP     ,
-    OP_IMM : unique case (ctl.i.alu.f3)
-        // adder based instructions
-        ADD : val = XLEN'(sum);
-        SLT ,
-        SLTU: val = XLEN'(sum[XLEN]);
-        // bitwise logical operations
-        AND : val = log_and;
-        OR  : val = log_or ;
-        XOR : val = log_xor;
-        // barrel shifter
-        SR  : val =        shf_val ;
-        SL  : val = bitrev(shf_val);
-      endcase
-    AUIPC  : val = XLEN'(sum);
-    default: val = 'x;
-  endcase
-
-end: gen_l4m_alu
-endgenerate
+// operations
+always_comb
+unique case (ctl.i.opc)
+  OP     ,
+  OP_IMM : unique case (ctl.i.alu.f3)
+      // adder based instructions
+      ADD : val = XLEN'(sum);
+      SLT ,
+      SLTU: val = XLEN'(sum[XLEN]);
+      // bitwise logical operations
+      AND ,
+      OR  ,
+      XOR : val = log_val;
+      // barrel shifter
+      SR  : val =        shf_val ;
+      SL  : val = bitrev(shf_val);
+    endcase
+  AUIPC  : val = XLEN'(sum);
+  default: val = 'x;
+endcase
 
 assign rd = val;  // XLEN
 
