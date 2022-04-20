@@ -7,3 +7,6 @@
 [submodule "submodules/learn-fpga"]
 	path = submodules/learn-fpga
 	url = git@github.com:jeras/learn-fpga.git
+[submodule "submodules/yosys"]
+	path = submodules/yosys
+	url = https://github.com/YosysHQ/yosys.git
