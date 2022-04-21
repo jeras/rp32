@@ -16,7 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb #(
+module riscv_tb
+  import riscv_isa_pkg::*;
+#(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)

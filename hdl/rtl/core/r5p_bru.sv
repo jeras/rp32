@@ -16,9 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::*;
-
-module r5p_bru #(
+module r5p_bru
+  import riscv_isa_pkg::*;
+#(
   int unsigned XLEN = 32
 )(
   // control

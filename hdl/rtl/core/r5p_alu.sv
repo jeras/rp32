@@ -16,9 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::*;
-
-module r5p_alu #(
+module r5p_alu
+  import riscv_isa_pkg::*;
+#(
   int unsigned XLEN = 32,
   // enable opcode
   bit          CFG_BRANCH = 1'b1,  // enable BRANCH

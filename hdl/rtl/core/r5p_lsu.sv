@@ -16,9 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::*;
-
-module r5p_lsu #(
+module r5p_lsu
+  import riscv_isa_pkg::*;
+#(
   int unsigned XLEN = 32,  // XLEN
   // data bus
   int unsigned AW = 32,    // address width

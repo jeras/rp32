@@ -16,9 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::*;
-
-module r5p_soc_top #(
+module r5p_soc_top
+  import riscv_isa_pkg::*;
+#(
   // GPIO
   int unsigned GW = 32,
   // RISC-V ISA

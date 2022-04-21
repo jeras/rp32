@@ -16,9 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::*;
-
-module r5p_wbu #(
+module r5p_wbu
+  import riscv_isa_pkg::*;
+#(
   int unsigned XLEN = 32  // XLEN width
 )(
   // system signals

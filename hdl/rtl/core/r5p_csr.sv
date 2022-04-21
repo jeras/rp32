@@ -16,15 +16,15 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-import riscv_isa_pkg::*;
-import rv32_csr_pkg::*;
-//import rv64_csr_pkg::*;
 
-import r5p_pkg::*;
-import r5p32_csr_pkg::*;
-//import r5p64_csr_pkg::*;
-
-module r5p_csr #(
+module r5p_csr
+  import riscv_isa_pkg::*;
+  import rv32_csr_pkg::*;
+  //import rv64_csr_pkg::*;
+  import r5p_pkg::*;
+  import r5p32_csr_pkg::*;
+  //import r5p64_csr_pkg::*;
+#(
   // RISC-V ISA
   int unsigned     XLEN = 32
 )(
