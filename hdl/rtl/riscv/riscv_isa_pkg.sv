@@ -147,12 +147,14 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 function automatic int unsigned opsiz (logic [16-1:0] op);
-       if (op ==? 16'bxxxx_xxxx_x1111111)  opsiz = 10 + 2 * op[14:12];
-  else if (op ==? 16'bxxxx_xxxx_x0111111)  opsiz = 8;
-  else if (op ==? 16'bxxxx_xxxx_xx011111)  opsiz = 6;
-  else if (op !=? 16'bxxxx_xxxx_xxx111xx
-       &&  op ==? 16'bxxxx_xxxx_xxxxxx11)  opsiz = 4;
-  else                                     opsiz = 2;
+priority casez (op)
+  16'b????_????_?1111111:  opsiz = 10 + 2 * op[14:12];
+  16'b????_????_?0111111:  opsiz = 8;
+  16'b????_????_??011111:  opsiz = 6;
+  16'b????_????_???111??,
+  16'b????_????_??????11:  opsiz = 4;
+  default               :  opsiz = 2;
+endcase
 endfunction: opsiz
 
 ///////////////////////////////////////////////////////////////////////////////
