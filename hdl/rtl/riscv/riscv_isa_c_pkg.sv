@@ -279,7 +279,7 @@ struct packed {
 } fi;
 
 // illegal (idle) default
-t = CTL_ILL;
+//t = CTL_ILL;
 
 // set instruction size
 t.siz = 2;

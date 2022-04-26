@@ -278,23 +278,6 @@ typedef struct packed {
   imm_j_t j;  // jump
 } imm_t;
 
-// per instruction format illegal (idle) value
-const imm_i_t IMM_I_ILL = 'x;
-const imm_l_t IMM_L_ILL = 'x;
-const imm_s_t IMM_S_ILL = 'x;
-const imm_b_t IMM_B_ILL = 'x;
-const imm_u_t IMM_U_ILL = 'x;
-const imm_j_t IMM_J_ILL = 'x;
-
-const imm_t IMM_ILL = '{
-  i: IMM_I_ILL,
-  l: IMM_L_ILL,
-  s: IMM_S_ILL,
-  b: IMM_B_ILL,
-  u: IMM_U_ILL,
-  j: IMM_J_ILL
-};
-
 // ALU/load immediate (I-type)
 function automatic imm_i_t imm_i_f (op32_i_t op);
   imm_i_f = $signed({op.imm_11_0});
@@ -339,9 +322,6 @@ typedef struct packed {
   } adr;
 } gpr_t;
 
-// illegal (idle) value
-const gpr_t GPR_ILL = '{ena: 'x, adr: 'x};
-
 ///////////////////////////////////////////////////////////////////////////////
 // I base (32E, 32I, 64I, 128I)
 // data types
@@ -357,20 +337,14 @@ typedef struct packed {
   op32_r_func3_et f3;
 } alu_t;
 
-const alu_t ALU_ILL = '{1'bx, op32_r_func3_et'(3'bxxx)};
-
 // load/store func3 union
 typedef struct packed {
   op32_l_func3_et l;
   op32_s_func3_et s;
 } lsu_t;
 
-const lsu_t LSU_ILL = '{op32_l_func3_et'('x), op32_s_func3_et'('x)};
-
 // branch type is just shorter type name for the full branch func7 type
 typedef op32_b_func3_et bru_t;
-
-const bru_t BRU_ILL = bru_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
@@ -380,8 +354,6 @@ typedef struct packed {
   alu_t alu;  // ALU (multiplexer/operation/width)
   lsu_t lsu;  // load/store (enable/wrte/sign/size)
 } ctl_i_t;
-
-const ctl_i_t CTL_I_ILL = '{opc: opc_t'(5'bxx_xxx), bru: BRU_ILL, alu: ALU_ILL, lsu: LSU_ILL};
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension
@@ -395,9 +367,6 @@ typedef enum logic [2-1:0] {
   M_REM = 2'b11   // reminder
 } muldiv_t;
 
-// don't care value
-const muldiv_t M_XXX = muldiv_t'('x);
-
 // control structure
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
@@ -405,9 +374,6 @@ typedef struct packed {
   logic [2-1:0] s12;  // sign operand 1/2 (0 - unsigned, 1 - signed)
   logic         en;   // enable
 } ctl_m_t;
-
-// illegal (idle) value
-const ctl_m_t CTL_M_ILL = '{op: M_XXX, s12: 2'bxx, en: 1'b0};
 
 ///////////////////////////////////////////////////////////////////////////////
 // privileged instructions
@@ -433,18 +399,12 @@ typedef enum logic [4-1:0] {
   PRIV_MRET   = {2'b01, LVL_M}
 } isa_priv_typ_t;
 
-// don't care value
-const isa_priv_typ_t PRIV_XXX = isa_priv_typ_t'('x);
-
 // control structure
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
   logic          ena;  // enable
   isa_priv_typ_t typ;  // type
 } ctl_priv_t;
-
-// illegal (idle) value
-const ctl_priv_t CTL_PRIV_ILL = '{ena: 1'b0, typ: PRIV_XXX};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Zicsr standard extension
@@ -458,17 +418,11 @@ typedef enum logic [2-1:0] {
   CSR_CLR = 2'b11   // clear
 } csr_op_t;
 
-// don't care value
-const csr_op_t CSR_XXX = csr_op_t'('x);
-
 // CSR mask source
 typedef enum logic [1-1:0] {
   CSR_REG = 1'b0,  // register
   CSR_IMM = 1'b1   // immediate
 } csr_msk_t;
-
-// don't care value
-const csr_msk_t CSR_MX = csr_msk_t'('x);
 
 // access permissions
 // NOTE: from privileged spec
@@ -487,14 +441,8 @@ typedef struct packed {
    logic [7:0] addr;
 } csr_adr_t;
 
-// don't care value
-const csr_adr_t CSR_AX = csr_adr_t'('x);
-
 // CSR immediate (zero extended from 5 to 32 bits
 typedef logic [5-1:0] csr_imm_t;
-
-// don't care value
-const csr_imm_t IMM_X = csr_imm_t'('x);
 
 // control structure
 // TODO: change when Verilator supports unpacked structures
@@ -506,12 +454,6 @@ typedef struct packed {
   csr_msk_t msk;  // mask
   csr_op_t  op ;  // operation
 } ctl_csr_t;
-
-// illegal (idle) value
-// verilator lint_off WIDTHCONCAT
-// TODO: Verilator should not complain here
-const ctl_csr_t CTL_CSR_ILL = '{wen: 1'b0, ren: 1'b0, adr: CSR_AX, imm: IMM_X, msk: CSR_MX, op: CSR_XXX};
-// verilator lint_on WIDTHCONCAT
 
 ///////////////////////////////////////////////////////////////////////////////
 // illegal instruction
@@ -553,18 +495,6 @@ typedef struct packed {
 //ctl_n_t    n;       // user-level interrupts
   ctl_priv_t priv;    // priviliged spec instructions
 } ctl_t;
-
-// illegal (idle) value
-const ctl_t CTL_ILL = '{
-  ill  : ILL,
-  siz  : 0,
-  imm  : IMM_ILL,
-  gpr  : GPR_ILL,
-  i    : CTL_I_ILL,
-  m    : CTL_M_ILL,
-  csr  : CTL_CSR_ILL,
-  priv : CTL_PRIV_ILL
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction decoder

@@ -270,7 +270,7 @@ if (ISA.spec.ext.C) begin: gen_d16
   unique case (opsiz(if_rdt[16-1:0]))
     2      : idu_ctl = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
     4      : idu_ctl = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
-    default: idu_ctl = CTL_ILL;                    // OP sizes above 4 bytes are not supported
+    default: idu_ctl = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
 
 end: gen_d16
