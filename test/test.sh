@@ -7,7 +7,7 @@ source ../sim/verilator/settings.sh
 # RP32 - Verilator
 ################################################################################
 
-export PATH=`pwd`/../tools/riscv32-elf-ubuntu-20.04-nightly-2021.09.21-nightlyi/riscv/bin/:$PATH
+export PATH=$PATH:`pwd`/../../riscv32-elf-ubuntu-20.04-nightly-2022.02.25-nightly/riscv/bin
 
 TARGETDIR=`pwd` RISCV_TARGET=r5p WORK=`pwd`/work XLEN=32 make -C ../submodules/riscv-arch-test clean
 TARGETDIR=`pwd` RISCV_TARGET=r5p WORK=`pwd`/work XLEN=32 make -C ../submodules/riscv-arch-test compile
