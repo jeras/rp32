@@ -44,7 +44,6 @@ module r5p_alu
   input  logic [XLEN-1:0] rs2,  // source register 2
   output logic [XLEN-1:0] rd ,  // destination register
   // side ouputs
-  (* keep = "true" *)
   output logic [XLEN-0:0] sum   // summation result including overflow bit
 );
 
@@ -53,7 +52,6 @@ localparam int unsigned XLOG = $clog2(XLEN);
 
 // arithmetic operands multiplexer
 logic        [XLEN-1:0] mux_op1;  // arithmetic operand 1
-(* keep = "true" *)
 logic        [XLEN-1:0] mux_op2 /* synthesis keep */;  // arithmetic operand 2
 // arithmetic operands (sign extended by 1 bit)
 logic signed [XLEN-0:0] add_op1;  // arithmetic operand 1
