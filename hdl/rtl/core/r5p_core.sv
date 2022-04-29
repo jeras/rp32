@@ -293,7 +293,8 @@ assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
 // TODO: check if access should be blocked during reset
 // general purpose registers
 r5p_gpr #(
-  .AW      (ISA.spec.base.E ? 4 : 5),
+//  .AW      (ISA.spec.base.E ? 4 : 5),
+  .AW      (5),
   .XLEN    (XLEN),
   .WBYP    (1'b1),
   .CHIP    (CHIP)

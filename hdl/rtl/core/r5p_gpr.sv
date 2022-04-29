@@ -157,7 +157,8 @@ end: gen_ecp5
 else begin: gen_default
 
   // register file (FPGA would initialize it to all zeros)
-  logic [XLEN-1:0] gpr [0:2**AW-1] = '{default: '0};
+//logic [XLEN-1:0] gpr [0:2**AW-1] = '{default: '0};
+  logic [XLEN-1:0] gpr [0:2**AW-1];
 
   // write access
   always_ff @(posedge clk)
