@@ -1,22 +1,39 @@
 
 plugin -i systemverilog
 
+#verilog_defines -DALTERA_RESERVED_QIS
+
 # SystemVerilog RTL
-read_systemverilog -parse ../../../hdl/rtl/riscv/riscv_isa_pkg.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_pkg.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_bru.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_gpr.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_alu.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_mdu.sv
-read_systemverilog -parse ../../../hdl/rtl/core/r5p_lsu.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_wbu.sv
-#read_systemverilog -parse ../../../hdl/rtl/core/r5p_core.sv
+read_systemverilog \
++define+ALTERA_RESERVED_QIS \
+-top r5p_soc_top \
+-parse \
+../../../hdl/rtl/riscv/riscv_isa_pkg.sv \
+../../../hdl/rtl/core/r5p_bru.sv \
+../../../hdl/rtl/core/r5p_gpr.sv \
+../../../hdl/rtl/core/r5p_alu.sv \
+../../../hdl/rtl/core/r5p_lsu.sv \
+../../../hdl/rtl/core/r5p_wbu.sv \
+../../../hdl/rtl/core/r5p_core.sv \
+../../../hdl/rtl/soc/r5p_bus_if.sv \
+../../../hdl/rtl/soc/r5p_soc_gpio.sv \
+../../../hdl/rtl/soc/r5p_bus_dec.sv \
+../../../hdl/rtl/soc/r5p_bus_arb.sv \
+../../../hdl/rtl/soc/r5p_soc_mem.sv \
+../../../hdl/rtl/soc/r5p_soc_top.sv \
+
+#synth_xilinx -top r5p_core -edif top.edif
+
+#hierarchy -top r5p_core
+
+#write_ilang
+
+#proc
+#opt
+
+#show -format ps #dot -viewer xdot
+
+#techmap; opt
 
 # SoC files
-#read_systemverilog -parse ../../../hdl/rtl/soc/r5p_bus_if.sv
-#read_systemverilog -parse ../../../hdl/rtl/soc/r5p_bus_arb.sv
-#read_systemverilog -parse ../../../hdl/rtl/soc/r5p_bus_dec.sv
-#read_systemverilog -parse ../../../hdl/rtl/soc/r5p_soc_mem.sv
-#read_systemverilog -parse ../../../hdl/rtl/soc/r5p_soc_gpio.sv
-#read_systemverilog -parse ../../../hdl/rtl/soc/r5p_soc_top.sv
 
