@@ -54,6 +54,7 @@ function automatic string disasm32 (isa_t isa, op32_t op, bit abi=0);
 ctl_t t;
 t = dec32(isa, op);
 
+// RV32 I base extension
 casez (op)
 //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
 32'b0000_0000_0000_0000_0000_0000_0001_0011: disasm32 = $sformatf("nop");
@@ -178,7 +179,7 @@ function automatic string disasm16 (isa_t isa, op16_t op, bit abi=0);
 ctl_t t;
 t = dec16(isa, op);
 
-// RV32 I base extension
+// RV32 C base extension
 if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
   16'b0000_0000_0000_0000: disasm16 = $sformatf("ILLEGAL");
@@ -234,7 +235,7 @@ if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   default: begin end
 endcase end
 
-// RV64 I base extension
+// RV64 C base extension
 if (|(isa.spec.base & (RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
   16'b011?_????_????_??00: disasm16 = $sformatf("c.ld       %s, 0x%03x (%s)", gpr_n(t.gpr.adr.rd , abi), t.imm.l, gpr_n(t.gpr.adr.rs1, abi));

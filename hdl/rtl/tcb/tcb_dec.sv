@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P: system bus decoder
+// TCB: Tightly Coupled Bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -24,8 +24,8 @@ module tcb_dec #(
   int unsigned BN = 2,     // bus number
   logic [BN-1:0] [AW-1:0] AS = '{BN{'x}}
 )(
-  tcb_if.sub s        ,  // system bus subordinate port  (master device connects here)
-  tcb_if.man m[BN-1:0]   // system bus manager     ports (slave  devices connect here)
+  tcb_if.sub s        ,  // TCB subordinate port  (manager     device connects here)
+  tcb_if.man m[BN-1:0]   // TCB manager     ports (subordinate devices connect here)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
