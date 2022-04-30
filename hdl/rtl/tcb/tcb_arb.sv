@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_bus_arb #(
+module tcb_arb #(
   // bus parameters
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data    width
@@ -47,4 +47,4 @@ module r5p_bus_arb #(
 
 // TODO: write the implementation
 
-endmodule: r5p_bus_arb
+endmodule: tcb_arb

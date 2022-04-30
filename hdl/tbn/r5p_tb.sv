@@ -118,9 +118,9 @@ end
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_bus_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
-r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
-r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
+tcb_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -190,7 +190,7 @@ end
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_bus_dec #(
+tcb_dec #(
   .AW  (DAW),
   .DW  (DDW),
   .BN  (2),                      // bus number
@@ -227,7 +227,7 @@ begin
 end
 
 // instruction fetch monitor
-r5p_bus_mon #(
+tcb_mon #(
   .NAME ("IF"),
   .MODE ("I"),
   .ISA  (ISA),
@@ -237,7 +237,7 @@ r5p_bus_mon #(
 );
 
 // load/store monitor
-r5p_bus_mon #(
+tcb_mon #(
   .NAME ("LS"),
   .MODE ("D"),
   .ISA  (ISA),

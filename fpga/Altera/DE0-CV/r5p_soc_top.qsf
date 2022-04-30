@@ -485,9 +485,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/riscv/riscv_isa_
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_soc_top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_soc_mem.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_soc_gpio.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_bus_if.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_bus_dec.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_bus_arb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/tcb/tcb_if.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/tcb/tcb_dec.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/tcb/tcb_arb.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_wbu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_pkg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_lsu.sv

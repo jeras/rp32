@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_bus_dec #(
+module tcb_dec #(
   // bus parameters
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data width
@@ -24,8 +24,8 @@ module r5p_bus_dec #(
   int unsigned BN = 2,     // bus number
   logic [BN-1:0] [AW-1:0] AS = '{BN{'x}}
 )(
-  r5p_bus_if.sub s        ,  // system bus subordinate port  (master device connects here)
-  r5p_bus_if.man m[BN-1:0]   // system bus manager     ports (slave  devices connect here)
+  tcb_if.sub s        ,  // system bus subordinate port  (master device connects here)
+  tcb_if.man m[BN-1:0]   // system bus manager     ports (slave  devices connect here)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,4 +80,4 @@ end else if (s.vld & s.rdy) begin
   m_dec <= s_dec;
 end
 
-endmodule: r5p_bus_dec
+endmodule: tcb_dec

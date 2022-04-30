@@ -52,8 +52,8 @@ localparam int unsigned RAW = AW-1;
 ////////////////////////////////////////////////////////////////////////////////
 
 // system busses
-r5p_bus_if #(.AW (AW), .DW (DW)) bus_ls        (.clk (clk), .rst (rst));
-r5p_bus_if #(.AW (AW), .DW (DW)) bus_mem [1:0] (.clk (clk), .rst (rst));
+tcb_if #(.AW (AW), .DW (DW)) bus_ls        (.clk (clk), .rst (rst));
+tcb_if #(.AW (AW), .DW (DW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // FEMTORV32 core instance
@@ -97,7 +97,7 @@ assign mem_wbusy = 1'b0;
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_bus_dec #(
+tcb_dec #(
   .AW  (AW),
   .DW  (DW),
   .BN  (2),                    // bus number

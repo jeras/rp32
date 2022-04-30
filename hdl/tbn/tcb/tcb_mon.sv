@@ -16,14 +16,14 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_bus_mon #(
+module tcb_mon #(
   string NAME = "",   // monitored bus name
   string MODE = "D",  // modes are D-data and I-instruction
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPIO names
 )(
   // system bus
-  r5p_bus_if.sub bus
+  tcb_if.sub bus
 );
 
 import riscv_asm_pkg::*;
@@ -33,7 +33,7 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
 // system bus delayed by one clock period
-r5p_bus_if #(.AW (bus.AW), .DW (bus.DW)) dly (.clk (bus.clk), .rst (bus.rst));
+tcb_if #(.AW (bus.AW), .DW (bus.DW)) dly (.clk (bus.clk), .rst (bus.rst));
 
 // log signals
 logic [bus.AW-1:0] adr;  // address
@@ -100,4 +100,4 @@ end
 
 // TODO add delay counter, statistics
 
-endmodule: r5p_bus_mon
+endmodule: tcb_mon

@@ -80,9 +80,9 @@ localparam int unsigned RAW = DAW-1;
 ////////////////////////////////////////////////////////////////////////////////
 
 // system busses
-r5p_bus_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
-r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
-r5p_bus_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
+tcb_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P core instance
@@ -127,7 +127,7 @@ assign bus_if.wdt = 'x;
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_bus_dec #(
+tcb_dec #(
   .AW  (DAW),
   .DW  (DDW),
   .BN  (2),                    // bus number

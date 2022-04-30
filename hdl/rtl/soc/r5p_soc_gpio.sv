@@ -33,7 +33,7 @@ module r5p_soc_gpio #(
   output logic [GW-1:0] gpio_e,
   input  logic [GW-1:0] gpio_i,
   // bus interface
-  r5p_bus_if.sub bus
+  tcb_if.sub bus
 );
 
 // read value

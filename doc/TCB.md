@@ -1,4 +1,12 @@
-# Native system bus
+# Tightly Coupled Bus
+
+Tightly Coupled Bus is a system bus based on FPGA/ASIC synchronous SRAM memory interfaces.
+
+Proposed names are based on:
+* Tightly Integrated Memory (TIM) used by [SiFive](https://www.sifive.com/),
+* Tightly Coupled Memory (TCM) used by [ARM](https://www.kernel.org/doc/Documentation/arm/tcm.txt),
+  [Codasip](https://codasip.com/), and [Syntacore](https://syntacore.com/),
+* Local Memory (LM) used by [Andes](http://www.andestech.com/en/risc-v-andes/)
 
 A processor native system bus is usually custom designed
 to supports exactly the features that are present in the processor itself.

@@ -23,7 +23,7 @@ module r5p_soc_mem #(
   int unsigned DW = 32,    // data width
   int unsigned BW = 32/8   // byte enable width
 )(
-  r5p_bus_if.sub bus      // instruction fetch
+  tcb_if.sub bus      // instruction fetch
 );
 
 ////////////////////////////////////////////////////////////////////////////////

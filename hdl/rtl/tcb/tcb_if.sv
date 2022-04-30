@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-interface r5p_bus_if #(
+interface tcb_if #(
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data    width
   int unsigned BW = DW/8   // benect  width
@@ -65,4 +65,4 @@ modport  sub (
   output rdy
 );
 
-endinterface: r5p_bus_if
+endinterface: tcb_if

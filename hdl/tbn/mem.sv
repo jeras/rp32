@@ -26,8 +26,8 @@ module mem #(
   // byte enable options
   bit          CFG_BEN_RD = 1'bx
 )(
-  r5p_bus_if.sub bus_if,   // instruction fetch
-  r5p_bus_if.sub bus_ls    // load store
+  tcb_if.sub bus_if,   // instruction fetch
+  tcb_if.sub bus_ls    // load store
 );
 
 ////////////////////////////////////////////////////////////////////////////////

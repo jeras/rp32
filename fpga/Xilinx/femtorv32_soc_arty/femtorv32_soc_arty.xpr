@@ -102,14 +102,14 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/rtl/soc/r5p_bus_dec.sv">
+      <File Path="$PPRDIR/../../../hdl/rtl/tcb/tcb_dec.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/rtl/soc/r5p_bus_if.sv">
+      <File Path="$PPRDIR/../../../hdl/rtl/tcb/tcb_if.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -145,7 +145,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/rtl/soc/r5p_bus_arb.sv">
+      <File Path="$PPRDIR/../../../hdl/rtl/tcb/tcb_arb.sv">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -224,7 +224,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/tbn/r5p_bus_mon.sv">
+      <File Path="$PPRDIR/../../../hdl/tbn/tcb/tcb_mon.sv">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>

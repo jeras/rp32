@@ -9,9 +9,9 @@ sv xil_defaultlib  \
 "../../../../../hdl/tbn/mem.sv" \
 "../../../../../hdl/rtl/core/r5p_alu.sv" \
 "../../../../../hdl/rtl/core/r5p_bru.sv" \
-"../../../../../hdl/rtl/soc/r5p_bus_dec.sv" \
-"../../../../../hdl/rtl/soc/r5p_bus_if.sv" \
-"../../../../../hdl/tbn/r5p_bus_mon.sv" \
+"../../../../../hdl/rtl/tcb/tcb_dec.sv" \
+"../../../../../hdl/rtl/tcb/tcb_if.sv" \
+"../../../../../hdl/tbn/tcb/tcb_mon.sv" \
 "../../../../../hdl/rtl/core/r5p_pkg.sv" \
 "../../../../../hdl/rtl/core/r5p_core.sv" \
 "../../../../../hdl/rtl/core/r5p_gpr.sv" \

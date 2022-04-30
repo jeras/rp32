@@ -2,11 +2,12 @@
 plugin -i systemverilog
 
 #verilog_defines -DALTERA_RESERVED_QIS
+#-top r5p_soc_top \
 
 # SystemVerilog RTL
 read_systemverilog \
 +define+ALTERA_RESERVED_QIS \
--top r5p_soc_top \
+-top r5p_core \
 -parse \
 ../../../hdl/rtl/riscv/riscv_isa_pkg.sv \
 ../../../hdl/rtl/core/r5p_bru.sv \
@@ -15,14 +16,14 @@ read_systemverilog \
 ../../../hdl/rtl/core/r5p_lsu.sv \
 ../../../hdl/rtl/core/r5p_wbu.sv \
 ../../../hdl/rtl/core/r5p_core.sv \
-../../../hdl/rtl/soc/r5p_bus_if.sv \
+../../../hdl/rtl/tcb/tcb_if.sv \
 ../../../hdl/rtl/soc/r5p_soc_gpio.sv \
-../../../hdl/rtl/soc/r5p_bus_dec.sv \
-../../../hdl/rtl/soc/r5p_bus_arb.sv \
+../../../hdl/rtl/tcb/tcb_dec.sv \
+../../../hdl/rtl/tcb/tcb_arb.sv \
 ../../../hdl/rtl/soc/r5p_soc_mem.sv \
 ../../../hdl/rtl/soc/r5p_soc_top.sv \
 
-#synth_xilinx -top r5p_core -edif top.edif
+synth_xilinx -top r5p_core -edif top.edif
 
 #hierarchy -top r5p_core
 
