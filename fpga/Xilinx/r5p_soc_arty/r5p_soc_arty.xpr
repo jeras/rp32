@@ -268,7 +268,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/tbn/riscv_asm_pkg.sv">
+      <File Path="$PPRDIR/../../../hdl/tbn/riscv/riscv_asm_pkg.sv">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>

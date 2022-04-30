@@ -2,7 +2,7 @@ dist_mem_gen_0.v,verilog,xil_defaultlib,../../../../r5p_soc_arty.gen/sources_1/i
 riscv_isa_pkg.sv,systemverilog,xil_defaultlib,../../../../../hdl/rtl/riscv/riscv_isa_pkg.sv,
 riscv_isa_c_pkg.sv,systemverilog,xil_defaultlib,../../../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv,
 riscv_csr_pkg.sv,systemverilog,xil_defaultlib,../../../../../hdl/rtl/riscv/riscv_csr_pkg.sv,
-riscv_asm_pkg.sv,systemverilog,xil_defaultlib,../../../../../hdl/tbn/riscv_asm_pkg.sv,
+riscv_asm_pkg.sv,systemverilog,xil_defaultlib,../../../../../hdl/tbn/riscv/riscv_asm_pkg.sv,
 mem.sv,systemverilog,xil_defaultlib,../../../../../hdl/tbn/mem.sv,
 r5p_alu.sv,systemverilog,xil_defaultlib,../../../../../hdl/rtl/core/r5p_alu.sv,
 r5p_bru.sv,systemverilog,xil_defaultlib,../../../../../hdl/rtl/core/r5p_bru.sv,

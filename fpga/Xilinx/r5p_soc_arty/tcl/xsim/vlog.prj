@@ -5,7 +5,7 @@ sv xil_defaultlib  \
 "../../../../../hdl/rtl/riscv/riscv_isa_pkg.sv" \
 "../../../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv" \
 "../../../../../hdl/rtl/riscv/riscv_csr_pkg.sv" \
-"../../../../../hdl/tbn/riscv_asm_pkg.sv" \
+"../../../../../hdl/tbn/riscv/riscv_asm_pkg.sv" \
 "../../../../../hdl/tbn/mem.sv" \
 "../../../../../hdl/rtl/core/r5p_alu.sv" \
 "../../../../../hdl/rtl/core/r5p_bru.sv" \
