@@ -39,12 +39,16 @@ function [SW-1:0] clog2 (logic [PN-1:0] val);
   end
 endfunction: clog2
 
+// report address range overlapping
+// TODO
+
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
 // decoder/multiplexer signals
 logic [PN-1:0] s_dec;
+logic [SW-1:0] s_sel;
 logic [SW-1:0] m_sel;
 
 logic [DW-1:0] t_rdt [PN-1:0];  // read data
@@ -56,19 +60,22 @@ genvar i;
 // decoder
 ////////////////////////////////////////////////////////////////////////////////
 
-// decoder one hot request
+// address range decoder into one hot vector
 generate
 for (i=0; i<PN; i++) begin: gen_dec
   assign s_dec[i] = s.adr ==? AS[i];
 end: gen_dec
 endgenerate
 
-// multiplexer integer select
+// priority encoder
+assign s_sel = clog2(s_dec);
+
+// multiplexer select
 always_ff @(posedge s.clk, posedge s.rst)
 if (s.rst) begin
   m_sel <= '0;
 end else if (s.vld & s.rdy) begin
-  m_sel <= clog2(s_dec);
+  m_sel <= s_sel;
 end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +107,7 @@ end: gen_rsp
 endgenerate
 
 // multiplexer
-assign s.rdt = t_rdt[m_sel];
-assign s.rdy = t_rdy[m_sel];
+assign s.rdt = t_rdt[m_sel];  // response phase
+assign s.rdy = t_rdy[s_sel];  // request  phase
 
 endmodule: tcb_dec
