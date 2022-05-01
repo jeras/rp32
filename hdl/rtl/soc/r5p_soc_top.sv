@@ -130,7 +130,7 @@ assign bus_if.wdt = 'x;
 tcb_dec #(
   .AW  (DAW),
   .DW  (DDW),
-  .BN  (2),                    // bus number
+  .PN  (2),                    // port number
   .AS  ({ {1'b1, 14'hxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
           {1'b0, 14'hxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
 ) ls_dec (

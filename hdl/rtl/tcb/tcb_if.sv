@@ -19,7 +19,7 @@
 interface tcb_if #(
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data    width
-  int unsigned BW = DW/8   // benect  width
+  int unsigned BW = DW/8   // byte e. width
 )(
   // system signals
   input  logic clk,  // clock

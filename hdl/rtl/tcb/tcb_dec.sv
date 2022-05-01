@@ -21,63 +21,86 @@ module tcb_dec #(
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data width
   // interconnect parameters
-  int unsigned BN = 2,     // bus number
-  logic [BN-1:0] [AW-1:0] AS = '{BN{'x}}
+  int unsigned PN = 2,     // port number
+  logic [PN-1:0] [AW-1:0] AS = '{PN{'x}}
 )(
   tcb_if.sub s        ,  // TCB subordinate port  (manager     device connects here)
-  tcb_if.man m[BN-1:0]   // TCB manager     ports (subordinate devices connect here)
+  tcb_if.man m[PN-1:0]   // TCB manager     ports (subordinate devices connect here)
 );
+
+// multiplexer select width
+localparam SW = $clog2(PN);
+
+// priority encoder
+function [SW-1:0] clog2 (logic [PN-1:0] val);
+  clog2 = 'x;  // optimization of undefined encodings
+  for (int unsigned i=0; i<PN; i++) begin
+    if (val[i])  clog2 = i[SW-1:0];
+  end
+endfunction: clog2
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-// decoder signals
-logic [BN-1:0]          s_dec;
-logic [BN-1:0]          m_dec;
+// decoder/multiplexer signals
+logic [PN-1:0] s_dec;
+logic [SW-1:0] m_sel;
 
-// temporary signals
-logic [BN-1:0] [DW-1:0] t_rdt;  // read data
-logic [BN-1:0]          t_rdy;  // acknowledge
+logic [DW-1:0] t_rdt [PN-1:0];  // read data
+logic          t_rdy [PN-1:0];  // acknowledge
 
 genvar i;
 
+////////////////////////////////////////////////////////////////////////////////
+// decoder
+////////////////////////////////////////////////////////////////////////////////
+
+// decoder one hot request
 generate
-for (i=0; i<BN; i++) begin: gen_loop
-  // decoder
+for (i=0; i<PN; i++) begin: gen_dec
   assign s_dec[i] = s.adr ==? AS[i];
-  // forward path
+end: gen_dec
+endgenerate
+
+// multiplexer integer select
+always_ff @(posedge s.clk, posedge s.rst)
+if (s.rst) begin
+  m_sel <= '0;
+end else if (s.vld & s.rdy) begin
+  m_sel <= clog2(s_dec);
+end
+
+////////////////////////////////////////////////////////////////////////////////
+// request
+////////////////////////////////////////////////////////////////////////////////
+
+// replicate request signals
+generate
+for (i=0; i<PN; i++) begin: gen_req
   assign m[i].vld = s_dec[i] ? s.vld : '0;
   assign m[i].wen = s_dec[i] ? s.wen : 'x;
   assign m[i].ben = s_dec[i] ? s.ben : 'x;
   assign m[i].adr = s_dec[i] ? s.adr : 'x;
   assign m[i].wdt = s_dec[i] ? s.wdt : 'x;
-  // backward path
-  assign t_rdt[i] = m_dec[i] ? m[i].rdt : '0;
-  assign t_rdy[i] = s_dec[i] ? m[i].rdy : '0;
-end: gen_loop
+end: gen_req
 endgenerate
 
-always_comb
-begin
-  s.rdt = '0;
-  s.rdy = '0;
-  for (int unsigned i=0; i<BN; i++) begin
-    s.rdt |= t_rdt[i];
-    s.rdy |= t_rdy[i];
-  end
-end
+////////////////////////////////////////////////////////////////////////////////
+// response
+////////////////////////////////////////////////////////////////////////////////
 
-// TODO: 
-//assign s.rdt = m.rdt.and;
-//assign s.rdy = m.rdy.and;
+// organize response signals into indexable array
+// since a dynamix index can't be used on an array of interfaces
+generate
+for (i=0; i<PN; i++) begin: gen_rsp
+  assign t_rdt[i] = m[i].rdt;
+  assign t_rdy[i] = m[i].rdy;
+end: gen_rsp
+endgenerate
 
-// copy of decoder at a bus transfer
-always_ff @(posedge s.clk, posedge s.rst)
-if (s.rst) begin
-  m_dec <= '0;
-end else if (s.vld & s.rdy) begin
-  m_dec <= s_dec;
-end
+// multiplexer
+assign s.rdt = t_rdt[m_sel];
+assign s.rdy = t_rdy[m_sel];
 
 endmodule: tcb_dec

@@ -100,7 +100,7 @@ assign mem_wbusy = 1'b0;
 tcb_dec #(
   .AW  (AW),
   .DW  (DW),
-  .BN  (2),                    // bus number
+  .PN  (2),                    // port number
   .AS  ({ {1'b1, 14'hxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
           {1'b0, 14'hxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
 ) ls_dec (

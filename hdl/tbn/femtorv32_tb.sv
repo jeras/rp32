@@ -200,7 +200,7 @@ end
 tcb_dec #(
   .AW  (DAW),
   .DW  (DDW),
-  .BN  (2),                      // bus number
+  .PN  (2),                      // port number
   .AS  ({ {2'b1x, 20'hxxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
           {2'b0x, 20'hxxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
 ) ls_dec (

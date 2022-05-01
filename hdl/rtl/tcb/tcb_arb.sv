@@ -20,14 +20,23 @@ module tcb_arb #(
   // bus parameters
   int unsigned AW = 32,    // address width
   int unsigned DW = 32,    // data    width
-  int unsigned SW = DW/8,  // benect  width
   // interconnect parameters
-  int unsigned BN = 2      // bus number
+  int unsigned PN = 2,     // port number
+  // arbitration priority mode
+  string       MD = "FX",  // "FX" - fixed priority
+                           // "RR" - round robin (TODO)
+  // port priorities (lower number is higher priority)
+  int unsigned PRI [0:PN-1] = '{0, 1}
 )(
-  tcb_if.sub s[BN-1:0],  // TCB subordinate ports (manager     devices connect here)
-  tcb_if.man m           // TCB manager     ports (subordinate device connects here)
+  tcb_if.sub s[PN-1:0],  // TCB subordinate ports (manager     devices connect here)
+  tcb_if.man m           // TCB manager     port  (subordinate device connects here)
 );
 
-// TODO: write the implementation
+// multiplexer select width
+localparam SW = $clog2(PN);
+
+////////////////////////////////////////////////////////////////////////////////
+// local signals
+////////////////////////////////////////////////////////////////////////////////
 
 endmodule: tcb_arb
