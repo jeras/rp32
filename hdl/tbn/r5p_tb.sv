@@ -31,7 +31,7 @@ module riscv_tb
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
 `else
-  isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+  isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
 `endif
   // instruction bus
   int unsigned IAW = 22,     // instruction address width
