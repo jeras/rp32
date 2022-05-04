@@ -171,7 +171,7 @@ typedef enum logic [6:2] {
 
 // base opcode map
 typedef struct packed {
-  op32_op62_et op;   //
+  op32_op62_et opc;  // base opcode
   logic [1:0]  c11;  // constant 2'b11 got
 } op32_opcode_t;
 
@@ -267,6 +267,7 @@ typedef logic signed [12  -1:0] imm_s_t;  // 12's
 typedef logic signed [12+1-1:0] imm_b_t;  // 13's
 typedef logic signed [32  -1:0] imm_u_t;  // 32's
 typedef logic signed [20    :0] imm_j_t;  // 21's
+typedef logic signed [ 6  -1:0] imm_a_t;  //  6'u
 
 // NOTE: there is no load format, 32-bit load instructions use the I-type
 typedef struct packed {
@@ -276,6 +277,7 @@ typedef struct packed {
   imm_b_t b;  // branch
   imm_u_t u;  // upper
   imm_j_t j;  // jump
+  imm_a_t a;  // shift ammount
 } imm_t;
 
 // ALU/load immediate (I-type)
@@ -304,22 +306,34 @@ function automatic imm_j_t imm_j_f (op32_j_t op);
 endfunction: imm_j_f
 // jump addition is done in ALU while the PC adder is used to calculate the link address
 
+// shift ammount immediate (I-type)
+function automatic imm_a_t imm_a_f (op32_i_t op);
+  imm_a_f = op.imm_11_0[6-1:0];
+endfunction: imm_a_f
+
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO: change when Verilator supports unpacked structures
+
+// GPR enable
 typedef struct packed {
-  struct packed {
-    logic         rs1;  // read enable register source 1
-    logic         rs2;  // read enable register source 2
-    logic         rd;   // write enable register destination
-  } ena;
-  struct packed {
-    logic [5-1:0] rs1;  // address register source 1 (read)
-    logic [5-1:0] rs2;  // address register source 2 (read)
-    logic [5-1:0] rd ;  // address register destination (write)
-  } adr;
+  logic         rd;   // write enable register destination
+  logic         rs1;  // read  enable register source 1
+  logic         rs2;  // read  enable register source 2
+} gpr_ena_t;
+
+// GPR address
+typedef struct packed {
+  logic [5-1:0] rd ;  // address register destination (write)
+  logic [5-1:0] rs1;  // address register source 1 (read)
+  logic [5-1:0] rs2;  // address register source 2 (read)
+} gpr_adr_t;
+
+typedef struct packed {
+  gpr_ena_t ena;  // enable
+  gpr_adr_t adr;  // address
 } gpr_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -507,111 +521,120 @@ function automatic ctl_t dec32 (isa_t isa, op32_t op);
 function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
 `endif
 
-// set instruction size
-dec32.siz = 4;
+  // set instruction size
+  dec32.siz = 4;
 
-// RV32 I base extension
-unique casez (op)
-  //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
-  32'b0000_0000_0000_0000_0000_0000_0000_0000: dec32.ill = ILL;  // illegal instruction
-  32'b????_????_????_????_????_????_?011_0111: dec32.ill = STD;  // LUI
-  32'b????_????_????_????_????_????_?001_0111: dec32.ill = STD;  // AUIPC
-  32'b????_????_????_????_????_????_?110_1111: dec32.ill = STD;  // JAL  TODO: Instruction-address-misaligned exception
-  32'b????_????_????_????_?000_????_?110_0111: dec32.ill = STD;  // JALR TODO: Instruction-address-misaligned exception
-  32'b????_????_????_????_?000_????_?110_0011: dec32.ill = STD;  // BEQ
-  32'b????_????_????_????_?001_????_?110_0011: dec32.ill = STD;  // BNE
-  32'b????_????_????_????_?100_????_?110_0011: dec32.ill = STD;  // BLT
-  32'b????_????_????_????_?101_????_?110_0011: dec32.ill = STD;  // BGE
-  32'b????_????_????_????_?110_????_?110_0011: dec32.ill = STD;  // BLTU
-  32'b????_????_????_????_?111_????_?110_0011: dec32.ill = STD;  // BGEU
-  32'b????_????_????_????_?000_????_?000_0011: dec32.ill = STD;  // LB
-  32'b????_????_????_????_?001_????_?000_0011: dec32.ill = STD;  // LH
-  32'b????_????_????_????_?010_????_?000_0011: dec32.ill = STD;  // LW
-  32'b????_????_????_????_?100_????_?000_0011: dec32.ill = STD;  // LBU
-  32'b????_????_????_????_?101_????_?000_0011: dec32.ill = STD;  // LHU
-  32'b????_????_????_????_?000_????_?010_0011: dec32.ill = STD;  // SB
-  32'b????_????_????_????_?001_????_?010_0011: dec32.ill = STD;  // SH
-  32'b????_????_????_????_?010_????_?010_0011: dec32.ill = STD;  // SW
-  32'b????_????_????_????_?000_????_?001_0011: dec32.ill = STD;  // ADDI
-  32'b????_????_????_????_?010_????_?001_0011: dec32.ill = STD;  // SLTI
-  32'b????_????_????_????_?011_????_?001_0011: dec32.ill = STD;  // SLTIU
-  32'b????_????_????_????_?100_????_?001_0011: dec32.ill = STD;  // XORI
-  32'b????_????_????_????_?110_????_?001_0011: dec32.ill = STD;  // ORI
-  32'b????_????_????_????_?111_????_?001_0011: dec32.ill = STD;  // ANDI
-  32'b0000_000?_????_????_?001_????_?001_0011: dec32.ill = STD;  // SLLI
-  32'b0000_000?_????_????_?101_????_?001_0011: dec32.ill = STD;  // SRLI
-  32'b0100_000?_????_????_?101_????_?001_0011: dec32.ill = STD;  // SRAI
-  32'b0000_000?_????_????_?000_????_?011_0011: dec32.ill = STD;  // ADD
-  32'b0100_000?_????_????_?000_????_?011_0011: dec32.ill = STD;  // SUB
-  32'b0000_000?_????_????_?010_????_?011_0011: dec32.ill = STD;  // SLT
-  32'b0000_000?_????_????_?011_????_?011_0011: dec32.ill = STD;  // SLTU
-  32'b0000_000?_????_????_?100_????_?011_0011: dec32.ill = STD;  // XOR
-  32'b0000_000?_????_????_?001_????_?011_0011: dec32.ill = STD;  // SLL
-  32'b0000_000?_????_????_?101_????_?011_0011: dec32.ill = STD;  // SRL
-  32'b0100_000?_????_????_?101_????_?011_0011: dec32.ill = STD;  // SRA
-  32'b0000_000?_????_????_?110_????_?011_0011: dec32.ill = STD;  // OR
-  32'b0000_000?_????_????_?111_????_?011_0011: dec32.ill = STD;  // AND
-  32'b????_????_????_????_?000_????_?000_1111: dec32.ill = STD;  // FENCE
-  default                                    : dec32.ill = ILL;  // illegal
-endcase
+  // RV32 I base extension
+  unique casez (op)
+    //  fedc_ba98_7654_3210_fedc_ba98_7654_3210
+    32'b0000_0000_0000_0000_0000_0000_0000_0000: dec32.ill = ILL;  // illegal instruction
+    32'b????_????_????_????_????_????_?011_0111: dec32.ill = STD;  // LUI
+    32'b????_????_????_????_????_????_?001_0111: dec32.ill = STD;  // AUIPC
+    32'b????_????_????_????_????_????_?110_1111: dec32.ill = STD;  // JAL  TODO: Instruction-address-misaligned exception
+    32'b????_????_????_????_?000_????_?110_0111: dec32.ill = STD;  // JALR TODO: Instruction-address-misaligned exception
+    32'b????_????_????_????_?000_????_?110_0011: dec32.ill = STD;  // BEQ
+    32'b????_????_????_????_?001_????_?110_0011: dec32.ill = STD;  // BNE
+    32'b????_????_????_????_?100_????_?110_0011: dec32.ill = STD;  // BLT
+    32'b????_????_????_????_?101_????_?110_0011: dec32.ill = STD;  // BGE
+    32'b????_????_????_????_?110_????_?110_0011: dec32.ill = STD;  // BLTU
+    32'b????_????_????_????_?111_????_?110_0011: dec32.ill = STD;  // BGEU
+    32'b????_????_????_????_?000_????_?000_0011: dec32.ill = STD;  // LB
+    32'b????_????_????_????_?001_????_?000_0011: dec32.ill = STD;  // LH
+    32'b????_????_????_????_?010_????_?000_0011: dec32.ill = STD;  // LW
+    32'b????_????_????_????_?100_????_?000_0011: dec32.ill = STD;  // LBU
+    32'b????_????_????_????_?101_????_?000_0011: dec32.ill = STD;  // LHU
+    32'b????_????_????_????_?000_????_?010_0011: dec32.ill = STD;  // SB
+    32'b????_????_????_????_?001_????_?010_0011: dec32.ill = STD;  // SH
+    32'b????_????_????_????_?010_????_?010_0011: dec32.ill = STD;  // SW
+    32'b????_????_????_????_?000_????_?001_0011: dec32.ill = STD;  // ADDI
+    32'b????_????_????_????_?010_????_?001_0011: dec32.ill = STD;  // SLTI
+    32'b????_????_????_????_?011_????_?001_0011: dec32.ill = STD;  // SLTIU
+    32'b????_????_????_????_?100_????_?001_0011: dec32.ill = STD;  // XORI
+    32'b????_????_????_????_?110_????_?001_0011: dec32.ill = STD;  // ORI
+    32'b????_????_????_????_?111_????_?001_0011: dec32.ill = STD;  // ANDI
+    32'b0000_000?_????_????_?001_????_?001_0011: dec32.ill = STD;  // SLLI
+    32'b0000_000?_????_????_?101_????_?001_0011: dec32.ill = STD;  // SRLI
+    32'b0100_000?_????_????_?101_????_?001_0011: dec32.ill = STD;  // SRAI
+    32'b0000_000?_????_????_?000_????_?011_0011: dec32.ill = STD;  // ADD
+    32'b0100_000?_????_????_?000_????_?011_0011: dec32.ill = STD;  // SUB
+    32'b0000_000?_????_????_?010_????_?011_0011: dec32.ill = STD;  // SLT
+    32'b0000_000?_????_????_?011_????_?011_0011: dec32.ill = STD;  // SLTU
+    32'b0000_000?_????_????_?100_????_?011_0011: dec32.ill = STD;  // XOR
+    32'b0000_000?_????_????_?001_????_?011_0011: dec32.ill = STD;  // SLL
+    32'b0000_000?_????_????_?101_????_?011_0011: dec32.ill = STD;  // SRL
+    32'b0100_000?_????_????_?101_????_?011_0011: dec32.ill = STD;  // SRA
+    32'b0000_000?_????_????_?110_????_?011_0011: dec32.ill = STD;  // OR
+    32'b0000_000?_????_????_?111_????_?011_0011: dec32.ill = STD;  // AND
+    32'b????_????_????_????_?000_????_?000_1111: dec32.ill = STD;  // FENCE
+    default                                    : dec32.ill = ILL;  // illegal
+  endcase
 
-// immediate decoder
-dec32.imm.i = imm_i_f(op);
-dec32.imm.l = imm_i_f(op);
-dec32.imm.s = imm_s_f(op);
-dec32.imm.b = imm_b_f(op);
-dec32.imm.u = imm_u_f(op);
-dec32.imm.j = imm_j_f(op);
+  // operation code
+  `ifndef ALTERA_RESERVED_QIS
+  dec32.i.opc = opc_t'(op[6:2]);
+  `else
+  dec32.i.opc = op.r.opcode.op;
+  `endif
 
-// GPR address
-`ifndef ALTERA_RESERVED_QIS
-dec32.gpr.adr = '{rs1: op.r.rs1, rs2: op.r.rs2, rd: op.r.rd};
-`else
-dec32.gpr.adr = '{rs1: op.rs1, rs2: op.rs2, rd: op.rd};
-`endif
+  // BRU operation
+  `ifndef ALTERA_RESERVED_QIS
+  dec32.i.bru = op.b.func3;
+  `else
+  dec32.i.bru = op32_b_func3_et'(op.func3);
+  `endif
 
-// operation code
-dec32.i.opc = opc_t'(op[6:2]);
+  // ALU operation {func7[5], func3}
+  `ifndef ALTERA_RESERVED_QIS
+  dec32.i.alu.f7_5 = op.r.func7[5];
+  dec32.i.alu.f3   = op.r.func3   ;
+  `else
+  dec32.i.alu.f7_5 =                  op.func7[5];
+  dec32.i.alu.f3   = op32_r_func3_et'(op.func3);
+  `endif
 
-// GPR and immediate decoders are based on instruction formats
-unique case (dec32.i.opc)
-  //                        rs1,rs2, rd
-  LUI    ,
-  AUIPC  : dec32.gpr.ena = '{'0, '0, '1};
-  JAL    : dec32.gpr.ena = '{'0, '0, '1};
-  JALR   : dec32.gpr.ena = '{'1, '0, '1};
-  BRANCH : dec32.gpr.ena = '{'1, '1, '0};
-  LOAD   : dec32.gpr.ena = '{'1, '0, '1};
-  STORE  : dec32.gpr.ena = '{'1, '1, '0};
-  OP_IMM : dec32.gpr.ena = '{'1, '0, '1};
-  OP     : dec32.gpr.ena = '{'1, '1, '1};
-  default: dec32.gpr.ena = '{'0, '0, '0};
-endcase
+  // LSU operation
+  `ifndef ALTERA_RESERVED_QIS
+  dec32.i.lsu.l = op32_l_func3_et'(op.i.func3);
+  dec32.i.lsu.s = op32_s_func3_et'(op.s.func3);
+  `else
+  dec32.i.lsu.l = op32_l_func3_et'(op.func3);
+  dec32.i.lsu.s = op32_s_func3_et'(op.func3);
+  `endif
 
-// branch unit
-`ifndef ALTERA_RESERVED_QIS
-dec32.i.bru = op.b.func3;
-`else
-dec32.i.bru = op32_b_func3_et'(op.func3);
-`endif
+  // GPR address
+  `ifndef ALTERA_RESERVED_QIS
+  dec32.gpr.adr = '{rd: op.r.rd, rs1: op.r.rs1, rs2: op.r.rs2};
+  `else
+  dec32.gpr.adr = '{rd: op.rd, rs1: op.rs1, rs2: op.rs2};
+  `endif
 
-// ALU operation {func7[5], func3}
-`ifndef ALTERA_RESERVED_QIS
-dec32.i.alu.f7_5 = op.r.func7[5];
-dec32.i.alu.f3   = op.r.func3   ;
-`else
-dec32.i.alu.f7_5 =                  op.func7[5];
-dec32.i.alu.f3   = op32_r_func3_et'(op.func3);
-`endif
+  // immediate decoder
+  dec32.imm.i = imm_i_f(op);
+  dec32.imm.l = imm_i_f(op);
+  dec32.imm.s = imm_s_f(op);
+  dec32.imm.b = imm_b_f(op);
+  dec32.imm.u = imm_u_f(op);
+  dec32.imm.j = imm_j_f(op);
+  dec32.imm.a = imm_a_f(op);
 
-// LSU operation
-`ifndef ALTERA_RESERVED_QIS
-dec32.i.lsu.l = op32_l_func3_et'(op.i.func3);
-dec32.i.lsu.s = op32_s_func3_et'(op.s.func3);
-`else
-dec32.i.lsu.l = op32_l_func3_et'(op.func3);
-dec32.i.lsu.s = op32_s_func3_et'(op.func3);
-`endif
+  // GPR decoder is based on opcode
+  `ifndef ALTERA_RESERVED_QIS
+  unique case (opc_t'(op[6:2]))
+  `else
+  unique case (opc_t'(op.r.opcode.op))
+  `endif
+    //                         rd,rs1,rs2
+    LUI    ,
+    AUIPC  : dec32.gpr.ena = '{'1, '0, '0};
+    JAL    : dec32.gpr.ena = '{'1, '0, '0};
+    JALR   : dec32.gpr.ena = '{'1, '1, '0};
+    BRANCH : dec32.gpr.ena = '{'0, '1, '1};
+    LOAD   : dec32.gpr.ena = '{'1, '1, '0};
+    STORE  : dec32.gpr.ena = '{'0, '1, '1};
+    OP_IMM : dec32.gpr.ena = '{'1, '1, '0};
+    OP     : dec32.gpr.ena = '{'1, '1, '1};
+    default: dec32.gpr.ena = '{'0, '0, '0};
+  endcase
 
 endfunction: dec32
 
@@ -619,12 +642,107 @@ endfunction: dec32
 // 32-bit instruction encoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// instruction decoder
 `ifndef ALTERA_RESERVED_QIS
 function automatic op32_t enc32 (isa_t isa, ctl_t ctl);
 `else
 function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
 `endif
+
+  // idle 
+  logic IDL = 1'b0;
+
+  op32_r_t t_op    ;
+  op32_i_t t_op_imm;
+  op32_i_t t_load  ;
+  op32_s_t t_store ;
+  op32_b_t t_branch;
+  op32_j_t t_jal   ;
+  op32_i_t t_jalr  ;
+  op32_u_t t_lui   ;
+  op32_u_t t_auipc ;
+
+  // OP
+  t_op    .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_op    .func7     = '{5: ctl.i.alu.f7_5, default: IDL};
+  t_op    .func3     = ctl.i.alu.f3;
+  t_op    .rs2       = ctl.gpr.adr.rs2;
+  t_op    .rs1       = ctl.gpr.adr.rs1;
+  t_op    .rd        = ctl.gpr.adr.rd;
+
+  // OP_IMM
+  t_op_imm.opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  case (ctl.i.alu.f3)
+    SR, SL :  t_op_imm.imm_11_0 = {IDL, ctl.i.alu.f7_5, {4{IDL}}, ctl.imm.a};
+    default:  t_op_imm.imm_11_0 = ctl.imm.i;
+  endcase
+  t_op_imm.func3     = ctl.i.alu.f3;
+  t_op_imm.rs1       = ctl.gpr.adr.rs1;
+  t_op_imm.rd        = ctl.gpr.adr.rd;
+
+  // LOAD
+  t_load  .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_load  .imm_11_0  = ctl.imm.l;
+  t_load  .func3     = ctl.i.alu.f3;
+  t_load  .rs1       = ctl.gpr.adr.rs1;
+  t_load  .rd        = ctl.gpr.adr.rd;
+
+  // STORE
+  t_store .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_store .func3     = ctl.i.lsu.s;
+  t_store .imm_11_5  = ctl.imm.s[11:5];
+  t_store .imm_4_0   = ctl.imm.s[4:0];
+  t_store .rs2       = ctl.gpr.adr.rs2;
+  t_store .rs1       = ctl.gpr.adr.rs1;
+
+  // BRANCH
+  t_branch.opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_branch.imm_12    = ctl.imm.b[12];
+  t_branch.imm_11    = ctl.imm.b[11];
+  t_branch.imm_10_5  = ctl.imm.b[10:5];
+  t_branch.imm_4_1   = ctl.imm.b[4:1];
+  t_branch.func3     = ctl.i.bru;
+  t_branch.rs2       = ctl.gpr.adr.rs2;
+  t_branch.rs1       = ctl.gpr.adr.rs1;
+
+  // JAL
+  t_jal   .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_jal   .imm_20    = ctl.imm.j[20];
+  t_jal   .imm_10_1  = ctl.imm.j[10:1];
+  t_jal   .imm_11    = ctl.imm.j[11];
+  t_jal   .imm_19_12 = ctl.imm.j[19:12];
+  t_jal   .rd        = ctl.gpr.adr.rd;
+
+  // JALR
+  t_jalr  .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_jalr  .imm_11_0  = ctl.imm.i;
+  t_jalr  .func3     = '0;
+  t_jalr  .rs1       = ctl.gpr.adr.rs1;
+  t_jalr  .rd        = ctl.gpr.adr.rd;
+
+  // LUI
+  t_lui   .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_lui   .imm_31_12 = ctl.imm.u[31:12];
+  t_lui   .rd        = ctl.gpr.adr.rd;
+
+  // AUIPC
+  t_auipc .opcode    = '{opc: ctl.i.opc, c11: 2'b11};
+  t_auipc .imm_31_12 = ctl.imm.u[31:12];
+  t_auipc .rd        = ctl.gpr.adr.rd;
+
+  // multiplexer
+  unique case (ctl.i.opc)
+    OP     : enc32 = t_op    ;
+    OP_IMM : enc32 = t_op_imm;
+    LOAD   : enc32 = t_load  ;
+    STORE  : enc32 = t_store ;
+    BRANCH : enc32 = t_branch;
+    JAL    : enc32 = t_jal   ;
+    JALR   : enc32 = t_jalr  ;
+    LUI    : enc32 = t_lui   ;
+    AUIPC  : enc32 = t_auipc ;
+    default: enc32 = '0;
+  endcase
+
 endfunction: enc32
 
 endpackage: riscv_isa_pkg

@@ -279,6 +279,13 @@ else begin: gen_d32
   // 32-bit instruction decoder
   assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
 
+// enc32 debug code
+//  ctl_t  idu_dec;
+//  logic [32-1:0] idu_enc;
+//  assign idu_dec = dec32(ISA, if_rdt[32-1:0]);
+//  assign idu_enc = enc32(ISA, idu_dec);
+//  assign idu_ctl = dec32(ISA, idu_enc);
+
 end: gen_d32
 endgenerate
 `else
