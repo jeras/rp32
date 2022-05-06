@@ -50,11 +50,11 @@ always_ff @(posedge clk, posedge rst)
 if (rst) begin
   wen <= 1'b0;
   adr <= 5'd0;
-  sel <= op32_op62_et'('0);  // TODO: there might be a better choice
+  sel <= opc_t'('0);  // TODO: there might be a better choice
 end else begin
   wen <= ctl.gpr.ena.rd;
   adr <= ctl.gpr.adr.rd;
-  sel <= ctl.i.opc;
+  sel <= ctl.opc;
 end
 
 // pre multiplexer
@@ -62,7 +62,7 @@ always_ff @(posedge clk, posedge rst)
 if (rst) begin
   tmp <= '0;
 end else begin
-  unique case (ctl.i.opc)
+  unique case (ctl.opc)
     AUIPC  ,
     OP     ,
     OP_IMM : tmp <= alu;  // ALU output

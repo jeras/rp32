@@ -191,7 +191,7 @@ end: gen_bru_ena
 else begin: gen_bru_alu
 
   always_comb
-  unique case (idu_ctl.i.bru)
+  unique case (idu_ctl.bru.fn3)
     BEQ    : ifu_tkn = ~(|alu_sum[XLEN-1:0]);
     BNE    : ifu_tkn =  (|alu_sum[XLEN-1:0]);
     BLT    : ifu_tkn =    alu_sum[XLEN];
@@ -231,8 +231,8 @@ else begin: gen_bra_mux
   logic [IAW-1:0] ifu_pca;  // PC addend
 
   // PC addend multiplexer
-  assign ifu_pca = (idu_ctl.i.opc == BRANCH) & ifu_tkn ? IAW'(idu_ctl.imm.b)
-                                                       : IAW'(idu_ctl.siz);
+  assign ifu_pca = (idu_ctl.opc == BRANCH) & ifu_tkn ? IAW'(idu_ctl.bru.imm)
+                                                     : IAW'(idu_ctl.siz);
 
   // PC sum
   assign ifu_pcs = ifu_pc + ifu_pca;
@@ -243,7 +243,7 @@ endgenerate
 // program counter next
 always_comb
 if (if_rdy & idu_vld) begin
-  unique case (idu_ctl.i.opc)
+  unique case (idu_ctl.opc)
     JAL    ,
     JALR   : ifu_pcn = {alu_sum[IAW-1:1], 1'b0};
     BRANCH : ifu_pcn = ifu_pcs;
@@ -443,7 +443,7 @@ if (CFG_ALU_LSA) begin: gen_lsa_ena
   assign lsu_adr_st = gpr_rs1 + XLEN'(idu_ctl.imm.s);  // S-type (store)
 
   always_comb
-  unique casez (idu_ctl.i.opc)
+  unique casez (idu_ctl.opc)
     LOAD   : lsu_adr = lsu_adr_ld;  // I-type (load)
     STORE  : lsu_adr = lsu_adr_st;  // S-type (store)
     default: lsu_adr = 'x ;
@@ -506,12 +506,12 @@ r5p_wbu #(
   // control
   .ctl     (idu_ctl),
   // write data inputs
-  .alu     (alu_dat),               // ALU output
-  .lsu     (lsu_rdt),               // LSU load
-  .pcs     (XLEN'(ifu_pcs)),        // PC increment
-  .lui     (XLEN'(idu_ctl.imm.u)),  // upper immediate
-  .csr     (csr_rdt),               // CSR
-  .mul     (mul_dat),               // mul/div/rem
+  .alu     (alu_dat),                 // ALU output
+  .lsu     (lsu_rdt),                 // LSU load
+  .pcs     (XLEN'(ifu_pcs)),          // PC increment
+  .lui     (XLEN'(idu_ctl.uiu.imm)),  // upper immediate
+  .csr     (csr_rdt),                 // CSR
+  .mul     (mul_dat),                 // mul/div/rem
   // GPR write back
   .wen     (wbu_wen),
   .adr     (wbu_adr),

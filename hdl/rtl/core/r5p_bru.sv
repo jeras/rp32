@@ -22,7 +22,7 @@ module r5p_bru
   int unsigned XLEN = 32
 )(
   // control
-  input  op32_b_func3_et  ctl,
+  input  ctl_t            ctl,
   // data input/output
   input  logic [XLEN-1:0] rs1,  // source register 1
   input  logic [XLEN-1:0] rs2,  // source register 2
@@ -42,7 +42,7 @@ assign lts = (rs1[XLEN-1] == rs2[XLEN-1]) ? lt : (rs1[XLEN-1] > rs2[XLEN-1]);  /
 assign ltu = (rs1[XLEN-1] == rs2[XLEN-1]) ? lt : (rs1[XLEN-1] < rs2[XLEN-1]);  // less then unsigned
 
 always_comb
-unique case (ctl)
+unique case (ctl.bru.fn3)
   BEQ    : tkn =  eq ;
   BNE    : tkn = ~eq ;
   BLT    : tkn =  lts;

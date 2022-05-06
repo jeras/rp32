@@ -25,7 +25,7 @@ module r5p_mdu
   input  logic            clk,  // clock
   input  logic            rst,  // reset
   // control
-  input  ctl_m_t          ctl,
+  input  ctl_t            ctl,
   // data input/output
   input  logic [XLEN-1:0] rs1,  // source register 1
   input  logic [XLEN-1:0] rs2,  // source register 2
@@ -48,7 +48,7 @@ logic                 [XLEN-1:0] rem;
 // NOTE:
 // for signed*unsigned multiplication to work in Verilog,
 // the first operand must be sign extended to the LHS (result) width
-
+/*
 // multiplication
 always_comb
 case (ctl.s12) inside
@@ -103,5 +103,5 @@ logic   signed [2*XLEN-1:0] mul64s;
 
 assign mul64u =   $signed(rs1) * $unsigned(rs2);
 assign mul64s =   $signed(rs1) * $unsigned(rs2);
-
+*/
 endmodule: r5p_mdu

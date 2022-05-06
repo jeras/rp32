@@ -78,7 +78,7 @@ if (run) begin
     ls_vld = CFG_VLD_ILL;
     ls_wen = CFG_WEN_ILL;
   end else begin
-    unique case (ctl.i.opc)
+    unique case (ctl.opc)
       LOAD   : begin ls_vld = 1'b1; ls_wen = 1'b0       ; end
       STORE  : begin ls_vld = 1'b1; ls_wen = 1'b1       ; end
       default: begin ls_vld = 1'b0; ls_wen = CFG_WEN_IDL; end
@@ -95,10 +95,10 @@ assign ls_adr = {adr[AW-1:WW], WW'('0)};
 // misalignment
 // decodings for read and write access are identical
 always_comb
-unique case (ctl.i.opc)
+unique case (ctl.opc)
   LOAD   : begin
       // read access
-      unique case (ctl.i.lsu.l)
+      unique case (ctl.ldu.fn3)
         LB, LBU: rma = 1'b0;
         LH, LHU: rma = |adr[0:0];
         LW, LWU: rma = |adr[1:0];
@@ -112,7 +112,7 @@ unique case (ctl.i.opc)
       // read access
       rma = 1'bx;
       // write access
-      unique case (ctl.i.lsu.s)
+      unique case (ctl.stu.fn3)
         SB     : wma = 1'b0;
         SH     : wma = |adr[0:0];
         SW     : wma = |adr[1:0];
@@ -136,25 +136,25 @@ if (ill) begin
   ls_wdt = 'x;
   ls_ben = {BW{CFG_BEN_ILL}};
 end else begin
-  unique case (ctl.i.opc)
+  unique case (ctl.opc)
     LOAD   : begin
         ls_wdt = 'x;
         ls_ben = {BW{CFG_BEN_RD}};
       end
     STORE  :
       // write access
-      case (ctl.i.lsu.s)
-        3'b000 : case (adr[1:0])
+      case (ctl.stu.fn3)
+        SB : case (adr[1:0])
           2'b00: begin ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , wdt[ 7: 0]}; ls_ben = 4'b0001; end
           2'b01: begin ls_wdt = {8'hxx     , 8'hxx     , wdt[ 7: 0], 8'hxx     }; ls_ben = 4'b0010; end
           2'b10: begin ls_wdt = {8'hxx     , wdt[ 7: 0], 8'hxx     , 8'hxx     }; ls_ben = 4'b0100; end
           2'b11: begin ls_wdt = {wdt[ 7: 0], 8'hxx     , 8'hxx     , 8'hxx     }; ls_ben = 4'b1000; end
         endcase
-        3'b001 : casez (adr[1])
+        SH : casez (adr[1])
           1'b0 : begin ls_wdt = {8'hxx     , 8'hxx     , wdt[15: 8], wdt[ 7: 0]}; ls_ben = 4'b0011; end
           1'b1 : begin ls_wdt = {wdt[15: 8], wdt[ 7: 0], 8'hxx     , 8'hxx     }; ls_ben = 4'b1100; end
         endcase
-        3'b010 : begin ls_wdt = {wdt[31:24], wdt[23:16], wdt[15: 8], wdt[ 7: 0]}; ls_ben = 4'b1111; end
+        SW :     begin ls_wdt = {wdt[31:24], wdt[23:16], wdt[15: 8], wdt[ 7: 0]}; ls_ben = 4'b1111; end
         default: begin ls_wdt = {8'hxx     , 8'hxx     , 8'hxx     , 8'hxx     }; ls_ben = 4'bxxxx; end
       endcase
     default: begin
@@ -167,7 +167,7 @@ end
 // read alignment delayed signals
 logic            dly_rma;
 logic   [WW-1:0] dly_adr;
-op32_l_func3_et  dly_rf3;
+fn3_ldu_et       dly_fn3;
 
 logic [XLEN-1:0] dly_dat;  // data
 logic   [32-1:0] dly_dtw;  // data word
@@ -179,11 +179,11 @@ always_ff @ (posedge clk, posedge rst)
 if (rst) begin
   dly_rma <= 1'b0;
   dly_adr <= '0;
-  dly_rf3 <= XLEN == 32 ? LW : LD;
+  dly_fn3 <= XLEN == 32 ? LW : LD;
 end else if (ls_rtr) begin
   dly_rma <= rma;
   dly_adr <= adr[WW-1:0];
-  dly_rf3 <= ctl.i.lsu.l;
+  dly_fn3 <= ctl.ldu.fn3;
 end
 
 // read data
@@ -196,7 +196,7 @@ always_comb begin: blk_rdt
   dly_dat = {dly_dtw[31:16], dly_dth[15: 8], dly_dtb[ 7: 0]};
   // sign extension
   // NOTE: this is a good fit for LUT4
-  unique case (dly_rf3)
+  unique case (dly_fn3)
     LB     : rdt = DW'(  $signed( 8'(dly_dat)));
     LH     : rdt = DW'(  $signed(16'(dly_dat)));
     LW     : rdt = DW'(  $signed(32'(dly_dat)));
@@ -206,7 +206,6 @@ always_comb begin: blk_rdt
     default: rdt = 'x;
   endcase
 end: blk_rdt
-
 
 // system stall
 assign rdy = ls_rdy;
