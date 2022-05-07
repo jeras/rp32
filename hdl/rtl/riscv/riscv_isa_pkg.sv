@@ -335,7 +335,6 @@ typedef struct packed {
   logic      f75;  // used for subtraction and arithmetic/logic shifts
   fn3_alu_et fn3;  // func3
   imm_i_t    imm;  // immediate
-  imm_a_t    amm;  // shift ammount
 } ctl_alu_t;
 
 // load unit
@@ -609,7 +608,6 @@ function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
   dec32.alu.fn3 = fn3_alu_et'(op  .func3)  ;
   `endif
   dec32.alu.imm = imm_i_f(op);
-  dec32.alu.amm = imm_a_f(op);
 
   // load unit
   `ifndef ALTERA_RESERVED_QIS
@@ -669,7 +667,7 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
   // OP_IMM
   t_op_imm.opcode    = '{opc: ctl.opc, c11: 2'b11};
   case (ctl.alu.fn3)
-    SR, SL :  t_op_imm.imm_11_0 = {IDL, ctl.alu.f75, {4{IDL}}, ctl.alu.amm};
+    SR, SL :  t_op_imm.imm_11_0 = {IDL, ctl.alu.f75, {4{IDL}}, ctl.alu.imm[6-1:0]};
     default:  t_op_imm.imm_11_0 = ctl.alu.imm;
   endcase
   t_op_imm.func3     = ctl.alu.fn3;
