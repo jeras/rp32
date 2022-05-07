@@ -561,9 +561,9 @@ function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
 
   // operation code
   `ifndef ALTERA_RESERVED_QIS
-  dec32.opc = opc_t'(op[6:2]);
+  dec32.opc = op.r.opcode.opc;
   `else
-  dec32.opc = op.r.opcode.op;
+  dec32.opc = opc_t'(op[6:2]);
   `endif
 
   // GPR address
@@ -575,9 +575,9 @@ function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
 
   // GPR decoder is based on opcode
   `ifndef ALTERA_RESERVED_QIS
-  unique case (opc_t'(op[6:2]))
+  unique case (opc_t'(op.r.opcode.opc))
   `else
-  unique case (opc_t'(op.r.opcode.op))
+  unique case (opc_t'(op[6:2]))
   `endif
     //                         rd,rs1,rs2
     LUI    ,

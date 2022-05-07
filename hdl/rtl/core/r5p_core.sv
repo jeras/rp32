@@ -179,7 +179,7 @@ if (CFG_BRU_BRU) begin: gen_bru_ena
     .XLEN    (XLEN)
   ) br (
     // control
-    .ctl     (idu_ctl.i.bru),
+    .ctl     (idu_ctl.bru.fn3),
     // data
     .rs1     (gpr_rs1),
     .rs2     (gpr_rs2),
@@ -218,11 +218,11 @@ if (CFG_BRU_BRA) begin: gen_bra_add
   assign ifu_pci = ifu_pc + IAW'(idu_ctl.siz);
 
   // branch address
-  assign ifu_pcb = ifu_pc + IAW'(idu_ctl.imm.b);
+  assign ifu_pcb = ifu_pc + IAW'(idu_ctl.bru.imm);
 
   // PC adder result multiplexer
-  assign ifu_pcs = (idu_ctl.i.opc == BRANCH) & ifu_tkn ? ifu_pcb
-                                                       : ifu_pci;
+  assign ifu_pcs = (idu_ctl.opc == BRANCH) & ifu_tkn ? ifu_pcb
+                                                     : ifu_pci;
 
 end: gen_bra_add
 else begin: gen_bra_mux
@@ -439,8 +439,8 @@ if (CFG_ALU_LSA) begin: gen_lsa_ena
   logic [XLEN-1:0] lsu_adr_st;  // address store
 
   // dedicated load/store adders
-  assign lsu_adr_ld = gpr_rs1 + XLEN'(idu_ctl.imm.l);  // I-type (load)
-  assign lsu_adr_st = gpr_rs1 + XLEN'(idu_ctl.imm.s);  // S-type (store)
+  assign lsu_adr_ld = gpr_rs1 + XLEN'(idu_ctl.ldu.imm);  // I-type (load)
+  assign lsu_adr_st = gpr_rs1 + XLEN'(idu_ctl.stu.imm);  // S-type (store)
 
   always_comb
   unique casez (idu_ctl.opc)
