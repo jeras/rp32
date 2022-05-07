@@ -174,6 +174,8 @@ endgenerate
 // write back bypass
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO: write a debug version, where ==? operator is used on read enable to catch more issues
+
 generate
 if (WBYP) begin: gen_wb_bypass
 
