@@ -48,37 +48,11 @@ typedef union packed {
   op16_cj_t  cj ;  // Jump
 } op16_t;
 
-// enumeration of 16-bit instruction formats
-// appendix defines GPR access special cases
-typedef enum {
-  T_CR  ,  // Register
-  T_CR_0,  // Register + rs1=x0 (zero)
-  T_CR_J,  // Register + rd=x0 (link)
-  T_CR_L,  // Register + rd=x1 (link)
-  T_CI  ,  // Immediate
-  T_CI_0,  // Immediate + rs1=x0 (zero)
-  T_CI_S,  // Immediate + rs1=x2 (sp)
-  T_CI_L,  // Immediate + rs1=x2 (sp) Load
-  T_CSS ,  // Stack-relative Store
-  T_CIW ,  // Wide Immediate
-  T_CL  ,  // Load
-  T_CS  ,  // Store
-  T_CA  ,  // Arithmetic
-  T_CB  ,  // Branch (branches)
-  T_CB_A,  // Branch/Arithmetic (shifts)
-  T_CJ  ,  // Jump + rd=x0 (zero)
-  T_CJ_L   // Jump + rd=x1 (link)
-} op16_frm_t;
-
 // immediate decoder qualifiers
 typedef enum {
   T_C_W,  // word   sized load/store
   T_C_D,  // double sized load/store
-  T_C_Q,  // quad   sized load/store
-  T_C_P,  // signed upper immediate, for C.LUI instruction (12-bit Page sized shift)
-  T_C_S,  // signed       immediate, for ADDI  instruction
-  T_C_U,  // unsigned     immediate, for shift instruction
-  T_C_F   // signed       immediate, scaled *16 for C.ADDI16SP instruction
+  T_C_Q   // quad   sized load/store
 } op16_qlf_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -93,16 +67,16 @@ function automatic logic signed [8:0] imm_cb_f (op16_t op);
 endfunction: imm_cb_f
 
 // '{sign extended (signed), 6-bit} signed immediate (CI-type)
-function automatic logic signed [6-1:0] imm_c_i_s_f (op16_t op);
-  imm_c_i_s_f = $signed({op.ci.imm_12_12, op.ci.imm_06_02});  // signed immediate
-endfunction: imm_c_i_s_f
+function automatic logic signed [6-1:0] imm_ci_f (op16_t op);
+  imm_ci_f = $signed({op.ci.imm_12_12, op.ci.imm_06_02});  // signed immediate
+endfunction: imm_ci_f
 
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
-function automatic logic signed [10-1:0] imm_c_i_p_f (op16_t op);
+function automatic logic signed [10-1:0] imm_cip_f (op16_t op);
   logic signed [10-1:0] imm = '0;
   {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.ADDI16SP
   return imm;
-endfunction: imm_c_i_p_f
+endfunction: imm_cip_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4} load immediate (CIW-type)
 function automatic logic unsigned [10-1:0] imm_ciw_f (op16_t op);
@@ -206,25 +180,25 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   16'b010?_????_????_??00: t = '{ill: STD, opc: LOAD  , gpr: '{3'b110, '{rqd_, rq_1, 'x  }}, ldu: '{         fn3: LW  , imm: imm_l_t'(imm_cls_f(op, T_C_W))}, default: 'x};  // C.LW       | lw rd', offset(rs1')
   16'b100?_????_????_??00: t = '{ill: RES,                                                                                                                    default: 'x};  // Reserved
   16'b110?_????_????_??00: t = '{ill: STD, opc: STORE , gpr: '{3'b011, '{'x  , rq_1, rq_2}}, stu: '{         fn3: SW  , imm: imm_s_t'(imm_cls_f(op, T_C_W))}, default: 'x};  // C.SW       | sw rs2', offset(rs1')
-  16'b0000_0000_0000_0001: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.NOP      | rd=x0, nzimm=0
-  16'b000?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.NOP      | rd=x0, nzimm≠0
-  16'b0000_????_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.ADDI     | nzimm=0 // TODO prevent WB
-  16'b000?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.ADDI     | addi rd, rd, nzimm
-//16'b001?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: '{3'b100, '{5'd1, 'x  , 'x  }}, '{ 'x, 'x };  fi = '{T_CJ_L, T_X_X};  // C.JAL      | jal x1, offset | only RV32
-  16'b010?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd0, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.LI       | rd=x0
-  16'b010?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd0, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.LI       | addi rd, x0, imm
-  16'b0110_0001_0000_0001: t = '{ill: RES, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_p_f(op     ))}, default: 'x};  // C.ADDI16SP | nzimm=0
-  16'b011?_0001_0???_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_c_i_p_f(op     ))}, default: 'x};  // C.ADDI16SP | addi x2, x2, nzimm
+  16'b0000_0000_0000_0001: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.NOP      | rd=x0, nzimm=0
+  16'b000?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.NOP      | rd=x0, nzimm≠0
+  16'b0000_????_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.ADDI     | nzimm=0 // TODO prevent WB
+  16'b000?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.ADDI     | addi rd, rd, nzimm
+  16'b001?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: '{3'b100, '{5'd1, 'x  , 'x  }}, jmp: '{default: 'x,        jmp: imm_j_t'(imm_cj_f   (op     ))}, default: 'x};  // C.JAL      | jal x1, offset | only RV32
+  16'b010?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd0, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.LI       | rd=x0
+  16'b010?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd0, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.LI       | addi rd, x0, imm
+  16'b0110_0001_0000_0001: t = '{ill: RES, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_cip_f(op     ))}, default: 'x};  // C.ADDI16SP | nzimm=0
+  16'b011?_0001_0???_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, alu: '{f75: '0, fn3: ADD , imm: imm_i_t'(imm_cip_f(op     ))}, default: 'x};  // C.ADDI16SP | addi x2, x2, nzimm
   16'b0110_????_?000_0001: t = '{ill: RES, opc: LUI   , gpr: '{3'b110, '{r_d1, 'x  , 'x  }}, uiu: '{                    imm:          imm_c_u_f  (op     ) }, default: 'x};  // C.LUI      | nzimm=0
   16'b011?_0000_0???_??01: t = '{ill: HNT, opc: LUI   , gpr: '{3'b110, '{r_d1, 'x  , 'x  }}, uiu: '{                    imm:          imm_c_u_f  (op     ) }, default: 'x};  // C.LUI      | rd=x0
   16'b011?_????_????_??01: t = '{ill: STD, opc: LUI   , gpr: '{3'b110, '{r_d1, 'x  , 'x  }}, uiu: '{                    imm:          imm_c_u_f  (op     ) }, default: 'x};  // C.LUI      | lui rd, nzimm
-  16'b1001_00??_????_??01: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: SR  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SRLI     | shamt[5]=1           | only RV32
-  16'b1000_00??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: SR  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SRLI     | shamt=0              | only RV32/64
-  16'b100?_00??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: SR  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SRLI     | srli rd', rd', shamt | only RV32/64
-  16'b1001_01??_?000_0001: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '1, fn3: SR  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SRAI     | shamt[5]=1           | only RV32
-  16'b1000_01??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '1, fn3: SR  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SRAI     | shamt=0              | only RV32/64
-  16'b100?_01??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '1, fn3: SR  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SRAI     | srai rd', rd', shamt | only RV32/64
-  16'b100?_10??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: AND , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.ANDI     | andi rd', rd', imm
+  16'b1001_00??_????_??01: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: SR  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SRLI     | shamt[5]=1           | only RV32
+  16'b1000_00??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: SR  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SRLI     | shamt=0              | only RV32/64
+  16'b100?_00??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: SR  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SRLI     | srli rd', rd', shamt | only RV32/64
+  16'b1001_01??_?000_0001: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '1, fn3: SR  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SRAI     | shamt[5]=1           | only RV32
+  16'b1000_01??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '1, fn3: SR  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SRAI     | shamt=0              | only RV32/64
+  16'b100?_01??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '1, fn3: SR  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SRAI     | srai rd', rd', shamt | only RV32/64
+  16'b100?_10??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{f75: '0, fn3: AND , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.ANDI     | andi rd', rd', imm
   16'b1000_11??_?00?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{f75: '1, fn3: ADD , imm: 'x                            }, default: 'x};  // C.SUB      | sub rd', rd', rs2'
   16'b1000_11??_?01?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{f75: '0, fn3: XOR , imm: 'x                            }, default: 'x};  // C.XOR      | xor rd', rd', rs2'
   16'b1000_11??_?10?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{f75: '0, fn3: OR  , imm: 'x                            }, default: 'x};  // C.OR       | or  rd', rd', rs2'
@@ -233,21 +207,21 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   16'b1001_11??_?01?_??01: t = '{ill: RES,                                                                                                                    default: 'x};  // RES (only RV64/128)
   16'b1001_11??_?10?_??01: t = '{ill: RES,                                                                                                                    default: 'x};  // Reserved
   16'b1001_11??_?11?_??01: t = '{ill: RES,                                                                                                                    default: 'x};  // Reserved
-//  16'b101?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: '{3'b100, '{5'd0, 'x  , 'x  }},  t.i = '{'x, 'x }; fi = '{T_CJ  , T_X_X};  // C.J        | jal x0, offset
+  16'b101?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: '{3'b100, '{5'd0, 'x  , 'x  }}, jmp: '{default: 'x,        jmp: imm_j_t'(imm_cj_f   (op     ))}, default: 'x};  // C.J        | jal x0, offset
   16'b110?_????_????_??01: t = '{ill: STD, opc: BRANCH, gpr: '{3'b011, '{'x  , rqd1, 5'd0}}, bru: '{         fn3: BEQ , imm: imm_b_t'(imm_cb_f   (op     ))}, default: 'x};  // C.BEQZ     | beq rs1', x0, offset
   16'b111?_????_????_??01: t = '{ill: STD, opc: BRANCH, gpr: '{3'b011, '{'x  , rqd1, 5'd0}}, bru: '{         fn3: BNE , imm: imm_b_t'(imm_cb_f   (op     ))}, default: 'x};  // C.BNEZ     | bne rs1', x0, offset
-  16'b0001_????_????_??10: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SLLI     | shamt[5]=1     | only RV32
-  16'b0000_0000_0000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SLLI     | shamt=0, rd=x0
-  16'b0000_????_?000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SLLI     | shamt=0
-  16'b000?_0000_0???_??10: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SLLI     |          rd=x0
-  16'b000?_????_????_??10: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_c_i_s_f(op     ))}, default: 'x};  // C.SLLI     | slli rd, rd, shamt
+  16'b0001_????_????_??10: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SLLI     | shamt[5]=1     | only RV32
+  16'b0000_0000_0000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SLLI     | shamt=0, rd=x0
+  16'b0000_????_?000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SLLI     | shamt=0
+  16'b000?_0000_0???_??10: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SLLI     |          rd=x0
+  16'b000?_????_????_??10: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{f75: 'x, fn3: SL  , imm: imm_i_t'(imm_ci_f(op     ))}, default: 'x};  // C.SLLI     | slli rd, rd, shamt
   16'b010?_0000_0???_??10: t = '{ill: RES, opc: LOAD  , gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, ldu: '{         fn3: LW  , imm: imm_l_t'(imm_cil_f(op, T_C_W))}, default: 'x};  // C.LWSP     | rd=x0
   16'b010?_????_????_??10: t = '{ill: STD, opc: LOAD  , gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, ldu: '{         fn3: LW  , imm: imm_l_t'(imm_cil_f(op, T_C_W))}, default: 'x};  // C.LWSP     | lw rd, offset(x2)
   16'b1000_0000_0000_0010: t = '{ill: RES, opc: JALR  , gpr: '{3'b110, '{5'd0, r_d1, 'x  }}, jmp: '{                    default: 'x                        }, default: 'x};  // C.JR       | rs1=x0
   16'b1000_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: '{3'b110, '{5'd0, r_d1, 'x  }}, jmp: '{                    default: 'x                        }, default: 'x};  // C.JR       | jalr x0, 0(rs1)
   16'b1000_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: '{3'b101, '{r_d1, 5'd0, r__2}}, alu: '{f75: '0, fn3: ADD , imm: 'x                            }, default: 'x};  // C.MV       | rd=x0, rs2≠x0
   16'b1000_????_????_??10: t = '{ill: STD, opc: OP    , gpr: '{3'b101, '{r_d1, 5'd0, r__2}}, alu: '{f75: '0, fn3: ADD , imm: 'x                            }, default: 'x};  // C.MV       | add rd, x0, rs2
-////16'b1001_0000_0000_0010: t = '{ill: STD, opc: OP    , gpr:                                 alu: '{         fn3: 'x   , imm:   fi = '{T_CR  , T_X_X};  // C.EBREAK   | rs2=x0
+//16'b1001_0000_0000_0010: t = '{ill: STD, opc: OP    , gpr:                                 alu: '{         fn3: 'x   , imm:   fi = '{T_CR  , T_X_X};  // C.EBREAK   | rs2=x0
   16'b1001_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: '{3'b110, '{5'd1, r_d1, 'x  }}, jmp: '{                    default: 'x                        }, default: 'x};  // C.JALR     | jalr x1, 0(rs1)
   16'b1001_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: '{3'b111, '{r_d1, r_d1, r__2}}, alu: '{f75: '0, fn3: ADD , imm: 'x                            }, default: 'x};  // C.ADD      | rs2≠x0, rd=x0
   16'b1001_????_????_??10: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{r_d1, r_d1, r__2}}, alu: '{f75: '0, fn3: ADD , imm: 'x                            }, default: 'x};  // C.ADD      | add rd, rd, rs2
