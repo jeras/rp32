@@ -264,13 +264,24 @@ end
 generate
 if (ISA.spec.ext.C) begin: gen_d16
 
+  ctl_t          idu_dec;
+  (* keep = "true" *)
+  logic [32-1:0] idu_enc;
+
   // 16/32-bit instruction decoder
   always_comb
   unique case (opsiz(if_rdt[16-1:0]))
-    2      : idu_ctl = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_ctl = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
-    default: idu_ctl = 'x;                          // OP sizes above 4 bytes are not supported
+    2      : idu_dec = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_dec = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
+    default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
+
+  assign idu_enc = enc32(ISA, idu_dec);
+  always_comb
+  begin
+    idu_ctl     = dec32(ISA, idu_enc);
+    idu_ctl.siz = idu_dec.siz;
+  end
 
 end: gen_d16
 else begin: gen_d32
@@ -291,13 +302,25 @@ endgenerate
 //  // 32-bit instruction decoder
 //  assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
 
+  ctl_t          idu_dec;
+  logic [32-1:0] idu_enc;
+
   // 16/32-bit instruction decoder
   always_comb
   unique case (opsiz(if_rdt[16-1:0]))
-    2      : idu_ctl = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_ctl = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
-    default: idu_ctl = 'x;                          // OP sizes above 4 bytes are not supported
+    2      : idu_dec = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_dec = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
+    default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
+
+  assign idu_enc = enc32(ISA, idu_dec);
+//  (* keep = "true" *)
+  always_comb
+  begin
+    idu_ctl     = dec32(ISA, idu_enc);
+    idu_ctl.siz = idu_dec.siz;
+  end
+
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
