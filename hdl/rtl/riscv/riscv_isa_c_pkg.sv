@@ -35,6 +35,7 @@ typedef struct packed {logic [ 5: 0] funct6;                          logic [ 2:
 typedef struct packed {logic [ 2: 0] funct3; logic [12:10] off_12_10; logic [ 2: 0] rd_rs1_; logic [ 6: 2] off_06_02;                     logic [1:0] opcode;} op16_cb_t ;  // Branch/Arithmetic
 typedef struct packed {logic [ 2: 0] funct3; logic [12: 2] off_12_02;                                                                     logic [1:0] opcode;} op16_cj_t ;  // Jump
 
+`ifndef ALTERA_RESERVED_QIS
 // union of 16-bit instruction formats
 typedef union packed {
   op16_cr_t  cr ;  // Register
@@ -47,6 +48,7 @@ typedef union packed {
   op16_cb_t  cb ;  // Branch/Arithmetic
   op16_cj_t  cj ;  // Jump
 } op16_t;
+`endif
 
 // immediate decoder qualifiers
 typedef enum {
@@ -59,79 +61,79 @@ typedef enum {
 // 16-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// branch immediate (CB-type)
-function automatic logic signed [8:0] imm_cb_f (op16_t op);
-  logic signed [8:0] imm = '0;
-  {imm[8], imm[4:3], imm[7:6], imm[2:1], imm[5]} = {op.cb.off_12_10, op.cb.off_06_02};
-  return imm;
-endfunction: imm_cb_f
-
 // '{sign extended (signed), 6-bit} signed immediate (CI-type)
-function automatic logic signed [6-1:0] imm_ci_f (op16_t op);
-  imm_ci_f = $signed({op.ci.imm_12_12, op.ci.imm_06_02});  // signed immediate
+function automatic logic signed [6-1:0] imm_ci_f (op16_ci_t op);
+  imm_ci_f = $signed({op.imm_12_12, op.imm_06_02});  // signed immediate
 endfunction: imm_ci_f
 
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
-function automatic logic signed [10-1:0] imm_cip_f (op16_t op);
+function automatic logic signed [10-1:0] imm_cip_f (op16_ci_t op);
   logic signed [10-1:0] imm = '0;
-  {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.ADDI16SP
+  {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = {op.imm_12_12, op.imm_06_02};  // C.ADDI16SP
   return imm;
 endfunction: imm_cip_f
 
-// '{zero extended (unsigned), 6-bit, scaled by 4} load immediate (CIW-type)
-function automatic logic unsigned [10-1:0] imm_ciw_f (op16_t op);
-  logic unsigned [10-1:0] imm = '0;
-  {imm[5:4], imm[9:6], imm[2], imm[3]} = op.ciw.imm_12_05;
-  return imm;
-endfunction: imm_ciw_f
-
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} load immediate (CI_L-type)
-function automatic logic unsigned [12-1:0] imm_cil_f (op16_t op, op16_qlf_t qlf);
+function automatic logic unsigned [12-1:0] imm_cil_f (op16_ci_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
-    T_C_W: {imm[5], {imm[4:2], imm[7:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LWSP, C.FLWSP
-    T_C_D: {imm[5], {imm[4:3], imm[8:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LDSP, C.FLDSP
-    T_C_Q: {imm[5], {imm[4:4], imm[9:6]}} = {op.ci.imm_12_12, op.ci.imm_06_02};  // C.LQSP
+    T_C_W: {imm[5], {imm[4:2], imm[7:6]}} = {op.imm_12_12, op.imm_06_02};  // C.LWSP, C.FLWSP
+    T_C_D: {imm[5], {imm[4:3], imm[8:6]}} = {op.imm_12_12, op.imm_06_02};  // C.LDSP, C.FLDSP
+    T_C_Q: {imm[5], {imm[4:4], imm[9:6]}} = {op.imm_12_12, op.imm_06_02};  // C.LQSP
     default: imm = 'x;
   endcase
   return imm;
 endfunction: imm_cil_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} store immediate (CSS-type)
-function automatic logic unsigned [12-1:0] imm_css_f (op16_t op, op16_qlf_t qlf);
+function automatic logic unsigned [12-1:0] imm_css_f (op16_css_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
-    T_C_W: {imm[5:2], imm[7:6]} = op.css.imm_12_07;  // C.SWSP, C.FSWSP
-    T_C_D: {imm[5:3], imm[8:6]} = op.css.imm_12_07;  // C.SDSP, C.FSDSP
-    T_C_Q: {imm[5:4], imm[9:6]} = op.css.imm_12_07;  // C.SQSP
+    T_C_W: {imm[5:2], imm[7:6]} = op.imm_12_07;  // C.SWSP, C.FSWSP
+    T_C_D: {imm[5:3], imm[8:6]} = op.imm_12_07;  // C.SDSP, C.FSDSP
+    T_C_Q: {imm[5:4], imm[9:6]} = op.imm_12_07;  // C.SQSP
     default: imm = 'x;
   endcase
   return imm;
 endfunction: imm_css_f
 
+// '{zero extended (unsigned), 6-bit, scaled by 4} load immediate (CIW-type)
+function automatic logic unsigned [10-1:0] imm_ciw_f (op16_ciw_t op);
+  logic unsigned [10-1:0] imm = '0;
+  {imm[5:4], imm[9:6], imm[2], imm[3]} = op.imm_12_05;
+  return imm;
+endfunction: imm_ciw_f
+
 // '{zero extended (unsigned), 5-bit, scaled by 4/8/16} store immediate (C[LS]-type)
-function automatic logic unsigned [12-1:0] imm_cls_f (op16_t op, op16_qlf_t qlf);
+function automatic logic unsigned [12-1:0] imm_cls_f (op16_cl_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
-    T_C_W: {imm[5:3], imm[2], imm[  6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LW, C.SW, C.FLW, C.FSW
-    T_C_D: {imm[5:3],         imm[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LD, C.SD, C.FLD, C.FSD
-    T_C_Q: {imm[5:4], imm[8], imm[7:6]} = {op.cl.imm_12_10, op.cl.imm_06_05};  // C.LQ, C.SQ
+    T_C_W: {imm[5:3], imm[2], imm[  6]} = {op.imm_12_10, op.imm_06_05};  // C.LW, C.SW, C.FLW, C.FSW
+    T_C_D: {imm[5:3],         imm[7:6]} = {op.imm_12_10, op.imm_06_05};  // C.LD, C.SD, C.FLD, C.FSD
+    T_C_Q: {imm[5:4], imm[8], imm[7:6]} = {op.imm_12_10, op.imm_06_05};  // C.LQ, C.SQ
     default: imm = 'x;
   endcase
   return imm;
 endfunction: imm_cls_f
 
+// branch immediate (CB-type)
+function automatic logic signed [8:0] imm_cb_f (op16_cb_t op);
+  logic signed [8:0] imm = '0;
+  {imm[8], imm[4:3], imm[7:6], imm[2:1], imm[5]} = {op.off_12_10, op.off_06_02};
+  return imm;
+endfunction: imm_cb_f
+
 // '{sign extended (signed), 11-bit, scaled by 2} jump immediate (CJ-type)
-function automatic logic signed [12-1:0] imm_cj_f (op16_t op);
+function automatic logic signed [12-1:0] imm_cj_f (op16_cj_t op);
   logic signed [12-1:0] imm;
-  {imm[11], imm[4], imm[9:8], imm[10], imm[6], imm[7], imm[3:1], imm[5]} = op.cj.off_12_02;
+  {imm[11], imm[4], imm[9:8], imm[10], imm[6], imm[7], imm[3:1], imm[5]} = op.off_12_02;
   imm[0] = 1'b0;
   return imm;
 endfunction: imm_cj_f
 
 // upper immediate (CI-type)
-function automatic imm_u_t imm_ciu_f (op16_t op);
-  imm_ciu_f = 32'($signed({op.ci.imm_12_12, op.ci.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+function automatic imm_u_t imm_ciu_f (op16_ci_t op);
+  imm_ciu_f = 32'($signed({op.imm_12_12, op.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
 endfunction: imm_ciu_f
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,27 +151,41 @@ endfunction: imm_ciu_f
 // instruction decoder
 // verilator lint_off CASEOVERLAP
 // verilator lint_off CASEINCOMPLETE
+
+`ifndef ALTERA_RESERVED_QIS
 function automatic ctl_t dec16 (isa_t isa, op16_t op);
+`else
+function automatic ctl_t dec16 (isa_t isa, logic [16-1:0] op);
+`endif
 
-// temporary variable used only to reduce line length
-ctl_t t = 'x;
+  // temporary variable used only to reduce line length
+  ctl_t t = 'x;
 
-// GPR configurations
-// the name is constructed as {r (register), _/q (quarter), d (destination), s1/2 (source 1/2)}
-logic [5-1:0] r_d1;  //
-logic [5-1:0] r__2;  //
-logic [5-1:0] rqd_;  //
-logic [5-1:0] rq_1;  //
-logic [5-1:0] rq_2;  //
-logic [5-1:0] rqd1;  //
+  // GPR configurations
+  // the name is constructed as {r (register), _/q (quarter), d (destination), s1/2 (source 1/2)}
+  logic [5-1:0] r_d1;  //
+  logic [5-1:0] r__2;  //
+  logic [5-1:0] rqd_;  //
+  logic [5-1:0] rq_1;  //
+  logic [5-1:0] rq_2;  //
+  logic [5-1:0] rqd1;  //
   
-// GPR configurations
-r_d1 =         op.cr .rd_rs1  ;  // |CR|CI|   |   |  |  |  |  | types
-r__2 =         op.cr .   rs2  ;  // |CR|  |CSS|   |  |  |  |  | types
-rqd_ = {2'b01, op.ciw.rd_    };  // |  |  |   |CIW|CL|  |  |  | types
-rq_1 = {2'b01, op.cl .   rs1_};  // |  |  |   |   |CL|CS|  |  | types
-rq_2 = {2'b01, op.cs .   rs2_};  // |  |  |   |   |  |CS|CA|  | types
-rqd1 = {2'b01, op.ca .rd_rs1_};  // |  |  |   |   |  |  |CA|CB| types
+  `ifndef ALTERA_RESERVED_QIS
+  // GPR configurations
+  r_d1 =         op.cr .rd_rs1  ;  // |CR|CI|   |   |  |  |  |  | types
+  r__2 =         op.cr .   rs2  ;  // |CR|  |CSS|   |  |  |  |  | types
+  rqd_ = {2'b01, op.ciw.rd_    };  // |  |  |   |CIW|CL|  |  |  | types
+  rq_1 = {2'b01, op.cl .   rs1_};  // |  |  |   |   |CL|CS|  |  | types
+  rq_2 = {2'b01, op.cs .   rs2_};  // |  |  |   |   |  |CS|CA|  | types
+  rqd1 = {2'b01, op.ca .rd_rs1_};  // |  |  |   |   |  |  |CA|CB| types
+  `else
+  r_d1 =         op[11: 7] ;  // |CR|CI|   |   |  |  |  |  | types
+  r__2 =         op[ 6: 2] ;  // |CR|  |CSS|   |  |  |  |  | types
+  rqd_ = {2'b01, op[ 4: 2]};  // |  |  |   |CIW|CL|  |  |  | types
+  rq_1 = {2'b01, op[ 9: 7]};  // |  |  |   |   |CL|CS|  |  | types
+  rq_2 = {2'b01, op[ 4: 2]};  // |  |  |   |   |  |CS|CA|  | types
+  rqd1 = {2'b01, op[ 9: 7]};  // |  |  |   |   |  |  |CA|CB| types
+  `endif
 
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)

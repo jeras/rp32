@@ -18,6 +18,7 @@
 
   //import r5p_pkg::*;
   //import riscv_csr_pkg::*;
+  import riscv_isa_c_pkg::*;
 module r5p_core
   import riscv_isa_pkg::*;
 #(
@@ -263,8 +264,6 @@ end
 generate
 if (ISA.spec.ext.C) begin: gen_d16
 
-  import riscv_isa_c_pkg::*;
-
   // 16/32-bit instruction decoder
   always_comb
   unique case (opsiz(if_rdt[16-1:0]))
@@ -289,8 +288,16 @@ else begin: gen_d32
 end: gen_d32
 endgenerate
 `else
-// 32-bit instruction decoder
-assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
+//  // 32-bit instruction decoder
+//  assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
+
+  // 16/32-bit instruction decoder
+  always_comb
+  unique case (opsiz(if_rdt[16-1:0]))
+    2      : idu_ctl = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_ctl = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
+    default: idu_ctl = 'x;                          // OP sizes above 4 bytes are not supported
+  endcase
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
