@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P: GPIO controller
+// TCB interface GPIO controller
 //
 // NOTE: In case this module is connected to asynchronous signals,
 //       the input signals `gpio_i` require a CDC synchronizer.
@@ -20,7 +20,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_soc_gpio #(
+module tcb_gpio #(
   int unsigned GW = 32,   // GPIO width
   // implementation details
   bit          CFG_MIN = 1'b0,  // minimalistic implementation
@@ -32,7 +32,7 @@ module r5p_soc_gpio #(
   output logic [GW-1:0] gpio_o,
   output logic [GW-1:0] gpio_e,
   input  logic [GW-1:0] gpio_i,
-  // bus interface
+  // system bus interface
   tcb_if.sub bus
 );
 
@@ -143,4 +143,4 @@ end
 // controller response is immediate
 assign bus.rdy = 1'b1;
 
-endmodule: r5p_soc_gpio
+endmodule: tcb_gpio

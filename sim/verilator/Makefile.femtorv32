@@ -17,8 +17,9 @@ RTL+=../../submodules/learn-fpga/FemtoRV/RTL/PROCESSOR/femtorv32_quark.v
 RTL+=${PATH_RTL}/tcb/tcb_if.sv
 RTL+=${PATH_RTL}/tcb/tcb_arb.sv
 RTL+=${PATH_RTL}/tcb/tcb_dec.sv
+#RTL+=${PATH_RTL}/soc/tcb_gpio.sv
+RTL+=${PATH_RTL}/soc/tcb_uart.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
-RTL+=${PATH_RTL}/soc/r5p_soc_gpio.sv
 RTL+=${PATH_RTL}/soc/femtorv32_soc_top.sv
 
 # SystemVerilog bench (Test SV)

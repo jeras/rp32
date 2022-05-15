@@ -245,11 +245,11 @@ endgenerate
 ////////////////////////////////////////////////////////////////////////////////
 
 // GPIO controller
-r5p_soc_gpio #(
+tcb_gpio #(
   .GW      (GW),
   .CFG_MIN (1'b1),
   .CHIP    (CHIP)
-) soc_gpio (
+) gpio (
   // GPIO signals
   .gpio_o  (gpio_o),
   .gpio_e  (gpio_e),

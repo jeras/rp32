@@ -29,8 +29,9 @@ RTL+=${PATH_RTL}/core/r5p_core.sv
 RTL+=${PATH_RTL}/tcb/tcb_if.sv
 RTL+=${PATH_RTL}/tcb/tcb_arb.sv
 RTL+=${PATH_RTL}/tcb/tcb_dec.sv
+RTL+=${PATH_RTL}/soc/tcb_gpio.sv
+#RTL+=${PATH_RTL}/soc/tcb_uart.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
-RTL+=${PATH_RTL}/soc/r5p_soc_gpio.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_top.sv
 
 # SystemVerilog bench (Test SV)
@@ -67,9 +68,9 @@ VFLAGS += -sc --exe
 # Optimize
 VFLAGS += -O2
 # optimize for speed or maximize finding X assign issues
-VFLAGS += --x-assign fast
+#VFLAGS += --x-assign fast
 #VFLAGS += --x-assign 0
-#VFLAGS += --x-assign 1
+VFLAGS += --x-assign 1
 #VFLAGS += --x-assign unique
 # Warn abount lint issues; may not want this on less solid designs
 #VFLAGS += -Wall

@@ -39,24 +39,27 @@ tcb_if #(.AW (bus.AW), .DW (bus.DW)) dly (.clk (bus.clk), .rst (bus.rst));
 logic [bus.AW-1:0] adr;  // address
 logic [bus.BW-1:0] ben;  // byte enable
 logic [bus.DW-1:0] dat;  // data
+logic              err;  // error
 
 // delayed signals
 always_ff @(posedge bus.clk, posedge bus.rst)
 if (bus.rst) begin
   dly.vld <= '0;
   dly.wen <= 'x;
-  dly.ben <= 'x;
   dly.adr <= 'x;
+  dly.ben <= 'x;
   dly.wdt <= 'x;
   dly.rdt <= 'x;
+  dly.err <= 'x;
   dly.rdy <= 'x;
 end else begin
   dly.vld <= bus.vld;
   dly.wen <= bus.wen;
-  dly.ben <= bus.ben;
   dly.adr <= bus.adr;
+  dly.ben <= bus.ben;
   dly.wdt <= bus.wdt;
   dly.rdt <= bus.rdt;
+  dly.err <= bus.err;
   dly.rdy <= bus.rdy;
 end
 
@@ -78,20 +81,22 @@ if (dly.vld & dly.rdy) begin
   // write/read direction
   if (dly.wen) begin
     dir = "W";
-    ben = dly.ben;
     adr = dly.adr;
+    ben = dly.ben;
     dat = dly.wdt;
+    err = bus.err;
   end else begin
     dir = "R";
-    ben = dly.ben;
     adr = dly.adr;
+    ben = dly.ben;
     dat = bus.rdt;
+    err = bus.err;
   end
   // data/instruction
   if (MODE == "D")  txt = $sformatf("%s", dat);
   if (MODE == "I")  txt = disasm(ISA, dat, ABI);
   // log printout
-  $display("%s: %s adr=0x%h dat=0x%h ben=0b%b, txt=\"%s\"", NAME, dir, adr, dat, ben, txt);
+  $display("%s: %s adr=0x%h ben=0b%b dat=0x%h err=%b, txt=\"%s\"", NAME, dir, adr, ben, dat, err, txt);
 end
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -33,6 +33,7 @@ logic [AW-1:0] adr;  // address
 logic [BW-1:0] ben;  // byte enable
 logic [DW-1:0] wdt;  // write data
 logic [DW-1:0] rdt;  // read data
+logic          err;  // error
 logic          rdy;  // ready
 
 // manager
@@ -47,6 +48,7 @@ modport  man (
   output ben,
   output wdt,
   input  rdt,
+  input  err,
   input  rdy
 );
 
@@ -62,6 +64,7 @@ modport  sub (
   input  ben,
   input  wdt,
   output rdt,
+  output err,
   output rdy
 );
 

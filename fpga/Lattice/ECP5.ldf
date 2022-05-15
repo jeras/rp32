@@ -54,7 +54,10 @@
         <Source name="../../hdl/rtl/soc/r5p_soc_mem.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
-        <Source name="../../hdl/rtl/soc/r5p_soc_gpio.sv" type="Verilog" type_short="Verilog">
+        <Source name="../../hdl/rtl/soc/tcb_gpio.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
+        <Source name="../../hdl/rtl/soc/tcb_uart.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
         <Source name="../../hdl/rtl/soc/r5p_soc_top.sv" type="Verilog" type_short="Verilog">
