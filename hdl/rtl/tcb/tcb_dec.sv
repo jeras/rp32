@@ -52,6 +52,7 @@ logic [SW-1:0] s_sel;
 logic [SW-1:0] m_sel;
 
 logic [DW-1:0] t_rdt [PN-1:0];  // read data
+logic          t_err [PN-1:0];  // error
 logic          t_rdy [PN-1:0];  // acknowledge
 
 genvar i;
@@ -102,12 +103,14 @@ endgenerate
 generate
 for (i=0; i<PN; i++) begin: gen_rsp
   assign t_rdt[i] = m[i].rdt;
+  assign t_err[i] = m[i].err;
   assign t_rdy[i] = m[i].rdy;
 end: gen_rsp
 endgenerate
 
 // multiplexer
 assign s.rdt = t_rdt[m_sel];  // response phase
+assign s.err = t_err[m_sel];  // response phase
 assign s.rdy = t_rdy[s_sel];  // request  phase
 
 endmodule: tcb_dec

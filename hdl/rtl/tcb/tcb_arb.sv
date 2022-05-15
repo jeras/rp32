@@ -117,6 +117,7 @@ assign m.wdt = t_wdt[s_sel];
 generate
 for (i=0; i<PN; i++) begin: gen_rsp
   assign s[i].rdt = (m_sel == i[SW-1:0]) ? m.rdt : 'x;  // response phase
+  assign s[i].err = (m_sel == i[SW-1:0]) ? m.err : 'x;  // response phase
   assign s[i].rdy = (s_sel == i[SW-1:0]) ? m.rdy : '0;  // request  phase
 end: gen_rsp
 endgenerate
