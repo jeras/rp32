@@ -10,3 +10,6 @@
 [submodule "submodules/yosys"]
 	path = submodules/yosys
 	url = https://github.com/YosysHQ/yosys.git
+[submodule "submodules/tcb"]
+	path = submodules/tcb
+	url = https://github.com/jeras/TCB.git
