@@ -16,12 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module tcb_man #(
-  string NAME = "",   // monitored bus name
-  string MODE = "D",  // modes are D-data and I-instruction
-  isa_t  ISA,
-  bit    ABI = 1'b1   // enable ABI translation for GPIO names
-)(
+module tcb_man (
   // system bus
   tcb_if.man bus
 );
@@ -32,12 +27,12 @@ module tcb_man #(
 
 // request
 task automatic req (
-  input  logic              wen;  // write enable
-  input  logic [bus.AW-1:0] adr;  // address
-  input  logic [bus.BW-1:0] ben;  // byte enable
-  input  logic [bus.DW-1:0] wdt;  // write data
-  output logic [bus.DW-1:0] rdt;  // read data
-  output logic              err;  // error
+  input  logic              wen,  // write enable
+  input  logic [bus.AW-1:0] adr,  // address
+  input  logic [bus.BW-1:0] ben,  // byte enable
+  input  logic [bus.DW-1:0] wdt,  // write data
+  output logic [bus.DW-1:0] rdt,  // read data
+  output logic              err   // error
 );
   bus.vld <= 1'b1;
   bus.wen <= wen;

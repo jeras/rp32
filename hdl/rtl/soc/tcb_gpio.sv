@@ -143,4 +143,7 @@ end
 // controller response is immediate
 assign bus.rdy = 1'b1;
 
+// there are no error cases
+assign bus.err = 1'b0;
+
 endmodule: tcb_gpio

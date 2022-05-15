@@ -16,12 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module tcb_sub #(
-  string NAME = "",   // monitored bus name
-  string MODE = "D",  // modes are D-data and I-instruction
-  isa_t  ISA,
-  bit    ABI = 1'b1   // enable ABI translation for GPIO names
-)(
+module tcb_sub (
   // system bus
   tcb_if.sub bus
 );
