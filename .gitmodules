@@ -12,4 +12,4 @@
 	url = https://github.com/YosysHQ/yosys.git
 [submodule "submodules/tcb"]
 	path = submodules/tcb
-	url = https://github.com/jeras/TCB.git
+	url = git@github.com:jeras/TCB.git
