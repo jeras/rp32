@@ -16,11 +16,11 @@ read_systemverilog \
 ../../../hdl/rtl/core/r5p_lsu.sv \
 ../../../hdl/rtl/core/r5p_wbu.sv \
 ../../../hdl/rtl/core/r5p_core.sv \
-../../../hdl/rtl/tcb/tcb_if.sv \
-../../../hdl/rtl/soc/tcb_gpio.sv \
-../../../hdl/rtl/soc/tcb_uart.sv \
-../../../hdl/rtl/tcb/tcb_dec.sv \
-../../../hdl/rtl/tcb/tcb_arb.sv \
+../../../submodules/tcb/hdl/rtl/tcb_if.sv \
+../../../submodules/tcb/hdl/rtl/tcb_dec.sv \
+../../../submodules/tcb/hdl/rtl/tcb_arb.sv \
+../../../submodules/tcb/hdl/rtl/tcb_gpio.sv \
+../../../submodules/tcb/hdl/rtl/tcb_uart.sv \
 ../../../hdl/rtl/soc/r5p_soc_mem.sv \
 ../../../hdl/rtl/soc/r5p_soc_top.sv \
 

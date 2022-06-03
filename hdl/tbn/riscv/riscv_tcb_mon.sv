@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// TCB: Tightly Coupled Bus monitor
+// TCB: Tightly Coupled Bus monitorwith RISC-V support
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,7 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module tcb_mon #(
+module riscv_tcb_mon
+  import riscv_isa_pkg::*;
+#(
   string NAME = "",   // monitored bus name
   string MODE = "D",  // modes are D-data and I-instruction
   isa_t  ISA,
@@ -105,4 +107,4 @@ end
 
 // TODO add delay counter, statistics
 
-endmodule: tcb_mon
+endmodule: riscv_tcb_mon
