@@ -35,8 +35,11 @@ PATH_TCB=../../submodules/tcb/hdl/
 RTL+=${PATH_TCB}/rtl/tcb_if.sv
 RTL+=${PATH_TCB}/rtl/tcb_arb.sv
 RTL+=${PATH_TCB}/rtl/tcb_dec.sv
-RTL+=${PATH_TCB}/rtl/tcb_gpio.sv
-RTL+=${PATH_TCB}/rtl/tcb_uart.sv
+RTL+=${PATH_TCB}/rtl/gpio/tcb_gpio.sv
+RTL+=${PATH_TCB}/rtl/uart/tcb_uart_ser.sv
+RTL+=${PATH_TCB}/rtl/uart/tcb_uart_des.sv
+RTL+=${PATH_TCB}/rtl/uart/tcb_uart_fifo.sv
+RTL+=${PATH_TCB}/rtl/uart/tcb_uart.sv
 
 # SoC files
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
