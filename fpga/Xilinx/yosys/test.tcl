@@ -10,6 +10,7 @@ read_systemverilog \
 -top r5p_core \
 -parse \
 ../../../hdl/rtl/riscv/riscv_isa_pkg.sv \
+../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv \
 ../../../hdl/rtl/core/r5p_bru.sv \
 ../../../hdl/rtl/core/r5p_gpr.sv \
 ../../../hdl/rtl/core/r5p_alu.sv \
