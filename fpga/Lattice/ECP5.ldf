@@ -24,13 +24,19 @@
         <Source name="../../hdl/rtl/core/r5p_bru.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
+        <Source name="../../submodules/tcb/hdl/rtl/tcb_if.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
         <Source name="../../submodules/tcb/hdl/rtl/tcb_arb.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
         <Source name="../../submodules/tcb/hdl/rtl/tcb_dec.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
-        <Source name="../../submodules/tcb/hdl/rtl/tcb_if.sv" type="Verilog" type_short="Verilog">
+        <Source name="../../submodules/tcb/hdl/rtl/tcb_reg.sv" type="Verilog" type_short="Verilog">
+            <Options VerilogStandard="System Verilog"/>
+        </Source>
+        <Source name="../../submodules/tcb/hdl/rtl/tcb_err.sv" type="Verilog" type_short="Verilog">
             <Options VerilogStandard="System Verilog"/>
         </Source>
         <Source name="../../hdl/rtl/core/r5p_csr.sv" type="Verilog" type_short="Verilog" excluded="TRUE">

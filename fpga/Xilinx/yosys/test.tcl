@@ -20,6 +20,8 @@ read_systemverilog \
 ../../../submodules/tcb/hdl/rtl/tcb_if.sv \
 ../../../submodules/tcb/hdl/rtl/tcb_dec.sv \
 ../../../submodules/tcb/hdl/rtl/tcb_arb.sv \
+../../../submodules/tcb/hdl/rtl/tcb_reg.sv \
+../../../submodules/tcb/hdl/rtl/tcb_err.sv \
 ../../../submodules/tcb/hdl/rtl/gpio/tcb_gpio.sv \
 ../../../submodules/tcb/hdl/rtl/uart/tcb_uart_ser.sv \
 ../../../submodules/tcb/hdl/rtl/uart/tcb_uart_des.sv \

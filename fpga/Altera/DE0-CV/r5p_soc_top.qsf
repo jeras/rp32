@@ -499,6 +499,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/u
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_if.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_dec.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_arb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_reg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_err.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_wbu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_pkg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_lsu.sv

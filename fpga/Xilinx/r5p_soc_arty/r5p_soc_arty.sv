@@ -26,7 +26,10 @@ module r5p_soc_arty #(
   input  logic          CLK100MHZ,  // clock
   input  logic          ck_rst,     // reset (active low)
   // GPIO
-  inout  wire  [42-1:0] ck_io
+  inout  wire  [42-1:0] ck_io,
+  // UART
+  output wire           uart_rxd_out,
+  input  wire           uart_txd_in
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,16 +88,19 @@ xpm_cdc_async_rst_inst (
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_soc_top #(
-  .GW      (GW),
-  .CHIP    (CHIP)
+  .GW        (GW),
+  .CHIP      (CHIP)
 ) soc (
   // system signals
-  .clk     (clk),
-  .rst     (rst),
+  .clk       (clk),
+  .rst       (rst),
   // GPIO
-  .gpio_o  (gpio_o),
-  .gpio_e  (gpio_e),
-  .gpio_i  (gpio_i)
+  .gpio_o    (gpio_o),
+  .gpio_e    (gpio_e),
+  .gpio_i    (gpio_i),
+  // UART
+  .uart_txd  (uart_rxd_out),
+  .uart_rxd  (uart_txd_in )
 );
 
 ////////////////////////////////////////////////////////////////////////////////
