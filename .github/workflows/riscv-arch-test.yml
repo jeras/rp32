@@ -13,6 +13,11 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  CCACHE_COMPRESS: 1
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_LIMIT_MULTIPLE: 0.95
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
@@ -24,21 +29,25 @@ jobs:
       fail-fast: false
       matrix:
         xlen:
-#        - 32
-        - 64
+        - 32
+#        - 64
         device:
         - I
         - C
-        - M
-        - privilege
-        - Zifencei
+#        - M
+#        - privilege
+#        - Zifencei
     name: "RISC-V Compatibility Check"
+
+    env:
+      CACHE_BASE_KEY: test-${{ matrix.xlen }}-${{ matrix.device }}
+      CCACHE_MAXSIZE: 64M # Per build matrix entry (2160M in total)
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: "repository checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
 
