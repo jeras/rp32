@@ -54,7 +54,7 @@ jobs:
           sudo apt install libsystemc
 
       - name: 'Add Verilator docker image'
-        uses: verilator/verilator:stable
+        uses: iztokjeras/verilator:latest
 
 #      - name: "Setup Verilator"
 #        run: |
