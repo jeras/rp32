@@ -49,6 +49,13 @@ jobs:
           tar -xzf riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
           ls -al riscv
 
+      - name: "Install SystemC Ubuntu package"
+        run: |
+          sudo apt install libsystemc
+
+      - name: 'Add Verilator docker image'
+        uses: verilator/verilator:stable
+
 #      - name: "Setup Verilator"
 #        run: |
 #          sudo apt install libsystemc
@@ -56,7 +63,6 @@ jobs:
 #          sudo dpkg -i verilator_4.204-0sifive3_amd64.deb
 
       - name: 'Run RISC-V Architecture Tests'
-        uses: verilator/verilator:stable
         env:
           RISCV_TARGET: r5p
           XLEN:         ${{ matrix.xlen }}
