@@ -42,6 +42,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache $CCACHE_DIR
+        uses: actions/cache@v2
+        env:
+          CACHE_KEY: ${{ env.CACHE_BASE_KEY }}-ccache
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ env.CACHE_KEY }}-${{ github.sha }}
+          restore-keys: |
+            ${{ env.CACHE_KEY }}-
+
       - name: "Setup RISC-V GCC"
         run: |
           mkdir riscv
@@ -54,7 +64,7 @@ jobs:
           sudo apt install libsystemc
 
       - name: 'Add Verilator docker image'
-        uses: iztokjeras/verilator:latest
+        uses: docker://iztokjeras/verilator:latest
 
 #      - name: "Setup Verilator"
 #        run: |
