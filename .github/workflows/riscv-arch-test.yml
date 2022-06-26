@@ -47,6 +47,7 @@ jobs:
       # variables used by Verilator build scripts
       CI_BUILD_STAGE_NAME: build
       CI_RUNS_ON: ubuntu-22.04
+      CI_M32: 0
       # Ccache variables
       CACHE_BASE_KEY: test-${{ matrix.xlen }}-${{ matrix.device }}
       CCACHE_MAXSIZE: 64M # Per build matrix entry (2160M in total)
