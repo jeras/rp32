@@ -72,7 +72,7 @@ jobs:
 
       - name: "Setup RISC-V GCC"
         run: |
-          wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2021.09.16/riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
+          wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2022.06.10/riscv32-elf-ubuntu-20.04-nightly-2022.06.10-nightly.tar.gz
           tar -xzf riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
           ls -la riscv
 
@@ -106,4 +106,5 @@ jobs:
           ls -la riscv/bin
           echo $PATH
           cd test
+          TARGETDIR=`pwd` WORK=`pwd`/work RISCV_TARGET=r5p XLEN=32 RISCV_DEVICE=I make -C ../submodules/riscv-arch-test verify
           TARGETDIR=`pwd` WORK=`pwd`/work make -C ../submodules/riscv-arch-test verify
