@@ -82,39 +82,6 @@ end
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
-// DEBUG
-////////////////////////////////////////////////////////////////////////////////
-
-initial begin
-  $display("==========================================");
-  $display("ISA                  : %p", ISA                  );
-  $display("ISA.spec             : %b", ISA.spec             );
-  $display("ISA.spec.base        : %b", ISA.spec.base        );
-  $display("ISA.spec.ext         : %b", ISA.spec.ext         );
-  $display("ISA.spec.ext.M       : %b", ISA.spec.ext.M       );
-  $display("ISA.spec.ext.A       : %b", ISA.spec.ext.A       );
-  $display("ISA.spec.ext.F       : %b", ISA.spec.ext.F       );
-  $display("ISA.spec.ext.D       : %b", ISA.spec.ext.D       );
-  $display("ISA.spec.ext.Zicsr   : %b", ISA.spec.ext.Zicsr   );
-  $display("ISA.spec.ext.Zifencei: %b", ISA.spec.ext.Zifencei);
-  $display("ISA.spec.ext.Q       : %b", ISA.spec.ext.Q       );
-  $display("ISA.spec.ext.L       : %b", ISA.spec.ext.L       );
-  $display("ISA.spec.ext.C       : %b", ISA.spec.ext.C       );
-  $display("ISA.spec.ext.B       : %b", ISA.spec.ext.B       );
-  $display("ISA.spec.ext.J       : %b", ISA.spec.ext.J       );
-  $display("ISA.spec.ext.T       : %b", ISA.spec.ext.T       );
-  $display("ISA.spec.ext.P       : %b", ISA.spec.ext.P       );
-  $display("ISA.spec.ext.V       : %b", ISA.spec.ext.V       );
-  $display("ISA.spec.ext.N       : %b", ISA.spec.ext.N       );
-  $display("ISA.spec.ext.H       : %b", ISA.spec.ext.H       );
-  $display("ISA.spec.ext.S       : %b", ISA.spec.ext.S       );
-  $display("ISA.spec.ext.Zam     : %b", ISA.spec.ext.Zam     );
-  $display("ISA.spec.ext.Ztso    : %b", ISA.spec.ext.Ztso    );
-  $display("ISA.priv             : %b", ISA.priv             );
-  $display("==========================================");
-end
-
-////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -160,33 +127,6 @@ assign bus_if.ben = '1;
 assign bus_if.wdt = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
-// GPR change log
-////////////////////////////////////////////////////////////////////////////////
-
-localparam int unsigned AW = 5;
-
-logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
-logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
-
-// hierarchical path to GPR inside RTL
-//assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
-assign gpr_tmp = riscv_tb.DUT.gpr.gen_default.gpr;
-
-always_ff @(posedge clk)
-begin
-  // delayed copy of all GPR
-  gpr_dly <= gpr_tmp;
-  // check each GPR for changes
-  for (int unsigned i=0; i<32; i++) begin
-    if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("%t, Info   %s %08h -> %08h", $time, gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
-    end
-  end
-end
-
-// TODO: reorder printouts so they are in the same order as instructions.
-
-////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -225,26 +165,6 @@ begin
     $finish;
   end
 end
-
-// instruction fetch monitor
-riscv_tcb_mon #(
-  .NAME ("IF"),
-  .MODE ("I"),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_if (
-  .bus  (bus_if)
-);
-
-// load/store monitor
-riscv_tcb_mon #(
-  .NAME ("LS"),
-  .MODE ("D"),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_ls (
-  .bus  (bus_ls)
-);
 
 ////////////////////////////////////////////////////////////////////////////////
 // controller
@@ -305,8 +225,82 @@ final begin
 end
 
 ////////////////////////////////////////////////////////////////////////////////
-// timeout
+// Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
+
+`ifdef VERBOSE
+
+initial begin
+  $display("==========================================");
+  $display("ISA                  : %p", ISA                  );
+  $display("ISA.spec             : %b", ISA.spec             );
+  $display("ISA.spec.base        : %b", ISA.spec.base        );
+  $display("ISA.spec.ext         : %b", ISA.spec.ext         );
+  $display("ISA.spec.ext.M       : %b", ISA.spec.ext.M       );
+  $display("ISA.spec.ext.A       : %b", ISA.spec.ext.A       );
+  $display("ISA.spec.ext.F       : %b", ISA.spec.ext.F       );
+  $display("ISA.spec.ext.D       : %b", ISA.spec.ext.D       );
+  $display("ISA.spec.ext.Zicsr   : %b", ISA.spec.ext.Zicsr   );
+  $display("ISA.spec.ext.Zifencei: %b", ISA.spec.ext.Zifencei);
+  $display("ISA.spec.ext.Q       : %b", ISA.spec.ext.Q       );
+  $display("ISA.spec.ext.L       : %b", ISA.spec.ext.L       );
+  $display("ISA.spec.ext.C       : %b", ISA.spec.ext.C       );
+  $display("ISA.spec.ext.B       : %b", ISA.spec.ext.B       );
+  $display("ISA.spec.ext.J       : %b", ISA.spec.ext.J       );
+  $display("ISA.spec.ext.T       : %b", ISA.spec.ext.T       );
+  $display("ISA.spec.ext.P       : %b", ISA.spec.ext.P       );
+  $display("ISA.spec.ext.V       : %b", ISA.spec.ext.V       );
+  $display("ISA.spec.ext.N       : %b", ISA.spec.ext.N       );
+  $display("ISA.spec.ext.H       : %b", ISA.spec.ext.H       );
+  $display("ISA.spec.ext.S       : %b", ISA.spec.ext.S       );
+  $display("ISA.spec.ext.Zam     : %b", ISA.spec.ext.Zam     );
+  $display("ISA.spec.ext.Ztso    : %b", ISA.spec.ext.Ztso    );
+  $display("ISA.priv             : %b", ISA.priv             );
+  $display("==========================================");
+end
+
+localparam int unsigned AW = 5;
+
+logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
+logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
+
+// hierarchical path to GPR inside RTL
+//assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
+assign gpr_tmp = riscv_tb.DUT.gpr.gen_default.gpr;
+
+// GPR change log
+always_ff @(posedge clk)
+begin
+  // delayed copy of all GPR
+  gpr_dly <= gpr_tmp;
+  // check each GPR for changes
+  for (int unsigned i=0; i<32; i++) begin
+    if (gpr_dly[i] != gpr_tmp[i]) begin
+      $display("%t, Info   %s %08h -> %08h", $time, gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
+    end
+  end
+end
+// TODO: reorder printouts so they are in the same order as instructions.
+
+// instruction fetch monitor
+riscv_tcb_mon #(
+  .NAME ("IF"),
+  .MODE ("I"),
+  .ISA  (ISA),
+  .ABI  (ABI)
+) mon_if (
+  .bus  (bus_if)
+);
+
+// load/store monitor
+riscv_tcb_mon #(
+  .NAME ("LS"),
+  .MODE ("D"),
+  .ISA  (ISA),
+  .ABI  (ABI)
+) mon_ls (
+  .bus  (bus_ls)
+);
 
 // time counter
 always_ff @(posedge clk, posedge rst)
@@ -320,13 +314,6 @@ end
 //always @(posedge clk)
 //if (cnt > 5000)  timeout <= 1'b1;
 
-////////////////////////////////////////////////////////////////////////////////
-// waveforms
-////////////////////////////////////////////////////////////////////////////////
-
-//initial begin
-//  $dumpfile("riscv_tb.vcd");
-//  $dumpvars(0, riscv_tb);
-//end
+`endif
 
 endmodule: riscv_tb

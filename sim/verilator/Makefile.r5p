@@ -86,7 +86,7 @@ VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
 #VFLAGS += -MMD
 # Optimize
-VFLAGS += -O2
+VFLAGS += -O3
 # optimize for speed or maximize finding X assign issues
 VFLAGS += --x-assign fast
 #VFLAGS += --x-assign 0
@@ -94,9 +94,6 @@ VFLAGS += --x-assign fast
 #VFLAGS += --x-assign unique
 # Warn abount lint issues; may not want this on less solid designs
 #VFLAGS += -Wall
-# Make waveforms
-VFLAGS += --trace-fst
-VFLAGS += --trace-structs
 # Check SystemVerilog assertions
 VFLAGS += --assert
 # Generate coverage analysis
@@ -105,6 +102,12 @@ VFLAGS += --assert
 #VFLAGS += --debug
 # Add this trace to get a backtrace in gdb
 #VFLAGS += --gdbbt
+
+# Make waveforms
+#ifdef TRACE
+VFLAGS += --trace-fst
+VFLAGS += --trace-structs
+#endif
 
 ################################################################################
 # Verilog macros
@@ -126,7 +129,9 @@ PAR += -GXLEN=${XLEN}
 ################################################################################
 
 ARG+= +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ifdef TRACE
 ARG+= +trace
+endif
 
 ################################################################################
 #
