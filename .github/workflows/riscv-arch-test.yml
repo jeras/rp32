@@ -102,6 +102,8 @@ jobs:
           RISCV_DEVICE: ${{ matrix.device }}
         run: |
           export PATH=`pwd`/riscv/bin/:$PATH
-          export PATH=`pwd`/riscv/bin/:$PATH
+          export PATH=`pwd`/submodules/verilator/bin/:$PATH
+          ls -la riscv/bin
+          echo $PATH
           cd test
           TARGETDIR=`pwd` WORK=`pwd`/work make -C ../submodules/riscv-arch-test verify
