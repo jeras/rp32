@@ -191,14 +191,14 @@ end
 ////////////////////////////////////////////////////////////////////////////////
 
 tcb_dec #(
-  .AW  (DAW),
-  .DW  (DDW),
-  .PN  (2),                      // port number
-  .AS  ({ {2'b1x, 20'hxxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
-          {2'b0x, 20'hxxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
+  .AW   (DAW),
+  .DW   (DDW),
+  .PN   (2),                      // port number
+  .AS   ({ {2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
+           {2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
 ) ls_dec (
-  .s  (bus_ls      ),
-  .m  (bus_mem[1:0])
+  .sub  (bus_ls      ),
+  .man  (bus_mem[1:0])
 );
 
 ////////////////////////////////////////////////////////////////////////////////
