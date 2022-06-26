@@ -2,12 +2,19 @@
 # HDL source files
 ################################################################################
 
+VERILATOR?=verilator
+VERILATOR_COVERAGE?=verilator_coverage
+
+################################################################################
+# HDL source files
+################################################################################
+
 PATH_RTL=../../hdl/rtl
 PATH_TBN=../../hdl/tbn
 PATH_SRC=../../hdl/src
 
 # R5P files
-PATH_R5P=../../hdl/
+PATH_R5P=../../hdl
 
 # SystemVerilog RTL
 RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
@@ -128,14 +135,14 @@ ARG+= +trace
 all: sim
 
 lint: ${HDL}
-	verilator --lint-only ${HDL} --top ${TOP}
+	${VERILATOR} --lint-only ${HDL} --top ${TOP}
 
 verilate: ${HDL} ${TSC}
-	verilator $(VFLAGS) ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
+	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
 
 compile: verilate
 	make -j 4 -C obj_dir -f V${TOP}.mk
 
 sim: compile
 	obj_dir/V${TOP} ${ARG}
-#	verilator_coverage --annotate logs/annotated logs/coverage.dat
+#	${VERILATOR_COVERAGE} --annotate logs/annotated logs/coverage.dat
