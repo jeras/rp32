@@ -102,6 +102,6 @@ jobs:
           RISCV_DEVICE: ${{ matrix.device }}
         run: |
           export PATH=`pwd`/riscv/bin/:$PATH
-          source ../sim/verilator/settings.sh
+          source sim/verilator/settings.sh
           cd test
           TARGETDIR=`pwd` WORK=`pwd`/work make -C ../submodules/riscv-arch-test verify
