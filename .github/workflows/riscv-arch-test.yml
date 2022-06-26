@@ -73,7 +73,7 @@ jobs:
       - name: "Setup RISC-V GCC"
         run: |
           wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2022.06.10/riscv32-elf-ubuntu-20.04-nightly-2022.06.10-nightly.tar.gz
-          tar -xzf riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
+          tar -xzf riscv32-elf-ubuntu-20.04-nightly-2022.06.10-nightly.tar.gz
           ls -la riscv
 
       - name: Install dependencies and build Verilator
