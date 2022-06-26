@@ -14,6 +14,10 @@ on:
   workflow_dispatch:
 
 env:
+  # variables used by Verilator build scripts
+  CI_OS_NAME: linux
+  CI_BUILD_STAGE_NAME: build
+  # Ccache variables
   CCACHE_COMPRESS: 1
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_LIMIT_MULTIPLE: 0.95
@@ -24,7 +28,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +44,10 @@ jobs:
     name: "RISC-V Compatibility Check"
 
     env:
+      # variables used by Verilator build scripts
+      CI_BUILD_STAGE_NAME: build
+      CI_RUNS_ON: ubuntu-22.04
+      # Ccache variables
       CACHE_BASE_KEY: test-${{ matrix.xlen }}-${{ matrix.device }}
       CCACHE_MAXSIZE: 64M # Per build matrix entry (2160M in total)
 
@@ -66,15 +74,21 @@ jobs:
           mkdir riscv
           wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2021.09.16/riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
           tar -xzf riscv64-elf-ubuntu-20.04-nightly-2021.09.16-nightly.tar.gz
-          ls -al riscv
+          ls -la riscv
 
-      - name: "Install SystemC Ubuntu package"
-        run: |
-          sudo apt install libsystemc
+      - name: Install packages for build
+        run: ./ci/ci-install.bash
 
-      - name: 'Add Verilator docker image'
-        uses: docker://iztokjeras/verilator:latest
+      - name: Build
+        run: ./ci/ci-script.bash
 
+#      - name: "Install SystemC and Verilator"
+#        run: |
+#          sudo apt install libsystemc
+#
+#      - name: 'Add Verilator docker image'
+#        uses: docker://iztokjeras/verilator:latest
+#
 #      - name: "Setup Verilator"
 #        run: |
 #          sudo apt install libsystemc
