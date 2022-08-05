@@ -13,3 +13,6 @@
 [submodule "submodules/tcb"]
 	path = submodules/tcb
 	url = git@github.com:jeras/TCB.git
+[submodule "submodules/yosys-uhdm-plugin-integration"]
+	path = submodules/yosys-uhdm-plugin-integration
+	url = https://github.com/antmicro/yosys-uhdm-plugin-integration.git
