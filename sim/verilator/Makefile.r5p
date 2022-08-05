@@ -36,10 +36,11 @@ RTL+=${PATH_RTL}/core/r5p_wbu.sv
 RTL+=${PATH_RTL}/core/r5p_core.sv
 
 # TCB files
-PATH_TCB=../../submodules/tcb/hdl/
+PATH_TCB=../../submodules/tcb/hdl
 
 # SystemVerilog RTL
 RTL+=${PATH_TCB}/rtl/tcb_if.sv
+RTL+=${PATH_TCB}/rtl/tcb_pas.sv
 RTL+=${PATH_TCB}/rtl/tcb_arb.sv
 RTL+=${PATH_TCB}/rtl/tcb_dec.sv
 RTL+=${PATH_TCB}/rtl/tcb_reg.sv
@@ -51,6 +52,7 @@ RTL+=${PATH_TCB}/rtl/uart/tcb_uart_fifo.sv
 RTL+=${PATH_TCB}/rtl/uart/tcb_uart.sv
 
 # SoC files
+RTL+=${PATH_RTL}/soc/tcb_dec_3sp.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_top.sv
 
