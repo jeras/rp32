@@ -95,9 +95,9 @@ localparam int unsigned RAW = DAW-1;
 ////////////////////////////////////////////////////////////////////////////////
 
 // system busses
-tcb_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [2:0] (.clk (clk), .rst (rst));
+tcb_if #(.AW (IAW), .DW (IDW)) bus_if          (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_ls          (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [3-1:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P core instance
