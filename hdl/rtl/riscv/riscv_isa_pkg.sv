@@ -178,7 +178,7 @@ typedef struct packed {
 } op32_opcode_t;
 
 // func3 arithetic/logic unit (R/I-type)
-typedef enum fn3_t {
+typedef enum logic [$bits(fn3_t)-1:0] {
   ADD   = 3'b000,  // func7[5] ? SUB : ADD
   SL    = 3'b001,  //
   SLT   = 3'b010,  //
@@ -190,7 +190,7 @@ typedef enum fn3_t {
 } fn3_alu_et;
 
 // func3 load unit (I-type)
-typedef enum fn3_t {
+typedef enum logic [$bits(fn3_t)-1:0] {
   LB  = 3'b000,  // RV32I RV64I RV128I
   LH  = 3'b001,  // RV32I RV64I RV128I
   LW  = 3'b010,  // RV32I RV64I RV128I
@@ -203,7 +203,7 @@ typedef enum fn3_t {
 // NOTE: the RV128I instruction LQ (load quad) is under the MISC_MEM opcode
 
 // func3 store (S-type)
-typedef enum fn3_t {
+typedef enum logic [$bits(fn3_t)-1:0] {
   SB  = 3'b000,  // RV32I RV64I RV128I
   SH  = 3'b001,  // RV32I RV64I RV128I
   SW  = 3'b010,  // RV32I RV64I RV128I
@@ -215,7 +215,7 @@ typedef enum fn3_t {
 } fn3_stu_et;
 
 // func3 branch (B-type)
-typedef enum fn3_t {
+typedef enum logic [$bits(fn3_t)-1:0] {
   BEQ  = 3'b000,  //     equal
   BNE  = 3'b001,  // not equal
 //     = 3'b010,
@@ -365,7 +365,7 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 // func3 multiply/divide/reminder
-typedef enum logic [3-1:0] {
+typedef enum logic [$bits(fn3_t)-1:0] {
   MUL    = 3'b000,  // multiply
   MULH   = 3'b001,  // multiply high
   MULHSU = 3'b010,  // multiply high signed/unsigned
@@ -412,7 +412,7 @@ typedef struct packed {
 ///////////////////////////////////////////////////////////////////////////////
 
 // func3 CSR unit
-typedef enum fn3_t {
+typedef enum logic [$bits(fn3_t)-1:0] {
 //       = 3'b000,  //
   CSRRW  = 3'b001,  //
   CSRRS  = 3'b010,  //
