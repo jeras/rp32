@@ -157,7 +157,11 @@ end: gen_ecp5
 else begin: gen_default
 
   // register file (FPGA would initialize it to all zeros)
+`ifdef LANGUAGE_UNSUPPORTED_ARRAY_ASSIGNMENT_PATTERN
+  logic [XLEN-1:0] gpr [0:2**AW-1];
+`else
   logic [XLEN-1:0] gpr [0:2**AW-1] = '{default: '0};
+`endif
 
   // write access
   always_ff @(posedge clk)

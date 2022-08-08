@@ -22,7 +22,8 @@ module tcb_dec_3sp #(
   int unsigned DW = 32,    // data width
   // interconnect parameters
   int unsigned PN = 3,     // port number (do not change)
-  logic [PN-1:0] [AW-1:0] AS = PN'('x)
+  logic [PN-1:0] [AW-1:0] ADR = PN'('0),  // address
+  logic [PN-1:0] [AW-1:0] MSK = PN'('1)   // mask
 )(
   tcb_if.sub sub ,  // TCB subordinate port  (manager     device connects here)
   tcb_if.man man0,  // TCB manager     ports (subordinate devices connect here)
@@ -92,11 +93,9 @@ logic          tmp_rdy [PN-1:0];  // acknowledge
 ////////////////////////////////////////////////////////////////////////////////
 
 // address range decoder into one hot vector
-generate
-for (i=0; i<PN; i++) begin: gen_dec
-  assign sub_dec[i] = sub.adr ==? AS[i];
-end: gen_dec
-endgenerate
+assign sub_dec[0] = (sub.adr & MSK[0]) == (ADR[0] & MSK[0]);
+assign sub_dec[1] = (sub.adr & MSK[1]) == (ADR[1] & MSK[1]);
+assign sub_dec[2] = (sub.adr & MSK[2]) == (ADR[2] & MSK[2]);
 
 // priority encoder
 assign sub_sel = clog2(sub_dec);

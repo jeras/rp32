@@ -18,7 +18,6 @@
 
   //import r5p_pkg::*;
   //import riscv_csr_pkg::*;
-  import riscv_isa_i_pkg::*;
   import riscv_isa_c_pkg::*;
 module r5p_core
   import riscv_isa_pkg::*;
@@ -32,9 +31,9 @@ module r5p_core
   isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
 `else
-  isa_t        ISA = '{spec: RV32I, priv: MODES_NONE},
+  isa_t ISA = '{spec: RV32I, priv: MODES_NONE},
 `endif
 `endif
   // instruction bus
@@ -68,94 +67,86 @@ module r5p_core
   // system signals
   input  logic           clk,
   input  logic           rst,
-  // program bus (instruction fetch)
-  output logic           if_vld,
-  output logic [IAW-1:0] if_adr,
-  input  logic [IDW-1:0] if_rdt,
-  input  logic           if_rdy,
   // data bus (load/store)
-  output logic           ls_vld,  // write or read request
-  output logic           ls_wen,  // write enable
-  output logic [DAW-1:0] ls_adr,  // address
-  output logic [DBW-1:0] ls_ben,  // byte enable
-  output logic [DDW-1:0] ls_wdt,  // write data
-  input  logic [DDW-1:0] ls_rdt,  // read data
-  input  logic           ls_rdy   // write or read acknowledge
+  output logic           bus_vld,  // write or read request
+  output logic           bus_wen,  // write enable
+  output logic [DAW-1:0] bus_adr,  // address
+  output logic [DBW-1:0] bus_ben,  // byte enable
+  output logic [DDW-1:0] bus_wdt,  // write data
+  input  logic [DDW-1:0] bus_rdt,  // read data
+  input  logic           bus_rdy   // write or read acknowledge
 );
 
-`ifdef SYNOPSYS_VERILOG_COMPILER
-parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
-`endif
-
 ///////////////////////////////////////////////////////////////////////////////
-// local signals
+// definitions
 ///////////////////////////////////////////////////////////////////////////////
 
-// instruction fetch
-logic            ifu_run;  // running status
-logic            ifu_tkn;  // taken
-logic  [IAW-1:0] ifu_pc;   // program counter
-logic  [IAW-1:0] ifu_pcn;  // program counter next
-logic  [IAW-1:0] ifu_pcs;  // program counter sum
-logic            stall;
-
-// instruction decode
-ctl_t            idu_ctl;  // control structure
-logic            idu_vld;  // instruction valid
-
-// GPR read
-logic [XLEN-1:0] gpr_rs1;  // register source 1
-logic [XLEN-1:0] gpr_rs2;  // register source 2
-
-// ALU
-logic [XLEN-1:0] alu_dat;  // register destination
-logic [XLEN-0:0] alu_sum;  // summation result including overflow bit
-
-// MUL/DIV/REM
-logic [XLEN-1:0] mul_dat;  // multiplier unit outpLENt
-
-// CSR
-logic [XLEN-1:0] csr_rdt;  // read  data
-
-// CSR address map union
-`ifdef VERILATOR
-//csr_map_ut       csr_csr;
-`endif
-
-logic [XLEN-1:0] csr_tvec;
-logic [XLEN-1:0] csr_epc ;
-
-// load/sore unit temporary signals
-logic [XLEN-1:0] lsu_adr;  // address
-logic [XLEN-1:0] lsu_wdt;  // write data
-logic [XLEN-1:0] lsu_rdt;  // read data
-logic            lsu_mal;  // MisALigned
-logic            lsu_rdy;  // ready
-
-// write back unit (GPR destination register access)
-logic            wbu_wen;  // write enable
-logic    [5-1:0] wbu_adr;  // address
-logic [XLEN-1:0] wbu_dat;  // data
+// state machine enumerations
+typedef enum logic [4-1:0] {
+  // Phase | Description |
+//  IDL,  // Idle, only active after reset
+  IFE,  // Instruction fetch
+  RS1,  // Read register source 1
+  RS2,  // Read register source 1
+  MLD,  // Memory load
+  MST,  // Memory store
+  EXE,  // Execute
+  RWB   // Register Write-back
+} fsm_et;
 
 ///////////////////////////////////////////////////////////////////////////////
-// instruction fetch
+// FSM
 ///////////////////////////////////////////////////////////////////////////////
 
-// start running after reset
-always_ff @ (posedge clk, posedge rst)
-if (rst)  ifu_run <= 1'b0;
-else      ifu_run <= 1'b1;
-
-// request becomes active after reset
-assign if_vld = ifu_run;
-
-// PC next is used as IF address
-assign if_adr = ifu_pcn;
-
-// instruction valid
-always_ff @ (posedge clk, posedge rst)
-if (rst)  idu_vld <= 1'b0;
-else      idu_vld <= (if_vld & if_rdy) | (idu_vld & stall);
+always_ff @(posedge clk, posedge rst)
+if (rst) begin
+  // program counter
+  ifu_pc  <= IAW'(PC0);
+  // system bus
+  bus_vld <= '0;
+  bus_wen <= '0;
+  bus_adr <= IAW'(PC0);
+  bus_ben <= '0;
+  bus_wdt <= '0;
+end else begin
+  unique case (state)
+    PH0: begin
+      // instruction fetch
+      // program counter increment
+      ifu_pc  <= IAW'(PC0);
+      // preparing for instruction fetch
+      state   <= IFD;
+      bus_vld <= 1'b1;
+      bus_wen <= 1'b1;
+      bus_adr <= ifu_pc;
+    //bus_ben <= '1;
+    //bus_wdt <= '0;
+    end
+    RS1: begin
+      // preparing for instruction fetch
+      state   <= IFD;
+      bus_vld <= 1'b1;
+      bus_wen <= 1'b1;
+      bus_adr <= PC0;
+    //bus_ben <= '1;
+    //bus_wdt <= '0;
+    end
+    BNE    : ifu_tkn =  (|alu_sum[XLEN-1:0]);
+    BLT    : ifu_tkn =    alu_sum[XLEN];
+    BGE    : ifu_tkn = ~  alu_sum[XLEN];
+    BLTU   : ifu_tkn =    alu_sum[XLEN];
+    BGEU   : ifu_tkn = ~  alu_sum[XLEN];
+    default: ifu_tkn = 'x;
+    RWB: begin
+      // preparing for instruction fetch
+      bus_vld <= 1'b1;
+      bus_wen <= 1'b1;
+      bus_adr <= PC0;
+    //bus_ben <= '1;
+    //bus_wdt <= '0;
+    end
+  endcase
+end
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter

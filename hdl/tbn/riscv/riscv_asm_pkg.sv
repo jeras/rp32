@@ -19,6 +19,8 @@
 package riscv_asm_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_priv_pkg::*;
+import riscv_isa_i_pkg::*;
 import riscv_isa_c_pkg::*;
 
 import rv32_csr_pkg::*;

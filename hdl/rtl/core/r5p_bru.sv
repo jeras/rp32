@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_bru
-  import riscv_isa_pkg::*;
+  import riscv_isa_i_pkg::*;
 #(
   int unsigned XLEN = 32
 )(

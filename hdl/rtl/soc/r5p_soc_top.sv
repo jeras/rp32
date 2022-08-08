@@ -37,11 +37,9 @@ module r5p_soc_top
   isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
-                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
-                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
 `else
-  isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
 `endif
 ///////////////////////////////////////////////////////////////////////////////
@@ -142,6 +140,27 @@ assign bus_if.wdt = 'x;
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifdef LANGUAGE_UNSUPPORTED_INTERFACE_ARRAY_PORT
+
+tcb_dec_3sp #(
+  .AW  (DAW),
+  .DW  (DDW),
+  .PN  (3),   // port number
+  .ADR ({ {1'b1, 14'b00_0000_0100_0000} ,   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
+          {1'b1, 14'b00_0000_0000_0000} ,   // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
+          {1'b0, 14'b00_0000_0000_0000} }), // 0x00_0000 ~ 0x1f_ffff - data memory
+  .MSK ({ {1'b1, 14'b00_0000_0100_0000} ,   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
+          {1'b1, 14'b00_0000_0100_0000} ,   // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
+          {1'b1, 14'b00_0000_0000_0000} })  // 0x00_0000 ~ 0x1f_ffff - data memory
+) ls_dec (
+  .sub  (bus_ls      ),
+  .man0 (bus_mem[0]),
+  .man1 (bus_mem[1]),
+  .man2 (bus_mem[2])
+);
+
+`else
+
 tcb_dec #(
   .AW  (DAW),
   .DW  (DDW),
@@ -153,6 +172,8 @@ tcb_dec #(
   .sub  (bus_ls      ),
   .man  (bus_mem[2:0])
 );
+
+`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory instances

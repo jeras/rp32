@@ -18,6 +18,8 @@ PATH_R5P=../../hdl
 
 # SystemVerilog RTL
 RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
+RTL+=${PATH_RTL}/riscv/riscv_priv_pkg.sv
+RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
 RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv

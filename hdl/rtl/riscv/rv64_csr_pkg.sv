@@ -19,6 +19,7 @@
 package rv64_csr_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_priv_pkg::*;
 
 localparam int unsigned  XLEN = 64;
 localparam int unsigned MXLEN = XLEN;
@@ -34,7 +35,7 @@ typedef logic [UXLEN-1:0] logic_uxlen_t;
 // CSR address
 ///////////////////////////////////////////////////////////////////////////////
 
-// NOTE: this is defined in riscv_isa_pkg
+// NOTE: this is defined in riscv_priv_pkg
 
 ////////////////////////////////////////////////////////////////////////////////
 // common definitions

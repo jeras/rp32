@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// RISC-V ISA C extension (based on isa spec)
+// RISC-V ISA C extension package (based on ISA spec)
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,9 +16,14 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
+`ifdef ALTERA_RESERVED_QIS
+`define LANGUAGE_UNSUPPORTED_UNION
+`endif
+
 package riscv_isa_c_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_isa_i_pkg::*;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 16-bit compressed instruction format
@@ -35,7 +40,7 @@ typedef struct packed {logic [ 5: 0] funct6;                          logic [ 2:
 typedef struct packed {logic [ 2: 0] funct3; logic [12:10] off_12_10; logic [ 2: 0] rd_rs1_; logic [ 6: 2] off_06_02;                     logic [1:0] opcode;} op16_cb_t ;  // Branch/Arithmetic
 typedef struct packed {logic [ 2: 0] funct3; logic [12: 2] off_12_02;                                                                     logic [1:0] opcode;} op16_cj_t ;  // Jump
 
-`ifndef ALTERA_RESERVED_QIS
+`ifndef LANGUAGE_UNSUPPORTED_UNION
 // union of 16-bit instruction formats
 typedef union packed {
   op16_cr_t  cr ;  // Register
@@ -152,7 +157,7 @@ endfunction: imm_ciu_f
 // verilator lint_off CASEOVERLAP
 // verilator lint_off CASEINCOMPLETE
 
-`ifndef ALTERA_RESERVED_QIS
+`ifndef LANGUAGE_UNSUPPORTED_UNION
 function automatic ctl_t dec16 (isa_t isa, op16_t op);
 `else
 function automatic ctl_t dec16 (isa_t isa, logic [16-1:0] op);
@@ -170,7 +175,7 @@ function automatic ctl_t dec16 (isa_t isa, logic [16-1:0] op);
   logic [5-1:0] rq_2;  //
   logic [5-1:0] rqd1;  //
   
-  `ifndef ALTERA_RESERVED_QIS
+  `ifndef LANGUAGE_UNSUPPORTED_UNION
   // GPR configurations
   r_d1 =         op.cr .rd_rs1  ;  // |CR|CI|   |   |  |  |  |  | types
   r__2 =         op.cr .   rs2  ;  // |CR|  |CSS|   |  |  |  |  | types

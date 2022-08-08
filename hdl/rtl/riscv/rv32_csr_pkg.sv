@@ -19,6 +19,7 @@
 package rv32_csr_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_priv_pkg::*;
 
 localparam int unsigned  XLEN = 32;
 localparam int unsigned MXLEN = XLEN;

@@ -1,4 +1,4 @@
-# R5P-1MEM processor
+# R5P Mouse processor
 
 The main feature of this processor is storing GPR
 in the same memory as instructions and data,
@@ -23,7 +23,8 @@ Examples of such memories can be an XIP SPI Flash
 or a SDRAM/DDR/... memory controller.
 
 Performance aside, this processor can still take full advantage
-of the RISC-V toolchain compared to a fully custom solution.
+of the RISC-V toolchain compared to a fully custom solution,
+which would also require a custom toolchain.
 
 ## Instruction execution phases
 
@@ -31,15 +32,25 @@ Phases have a similar meaning as pipeline stages,
 but the the word stage is not used,
 since there is no pipelining parallelism.
 
+| Phase | Description |
+|-------|-------------|
+| IFD   | Instruction fetch and decode (partial). |
+| RS1   | Read register source 1. |
+| RS2   | Read register source 1. |
+| MLD   | Memory load. |
+| MST   | Memory store. |
+| EXE   | Execute. |
+| RWB   | Register Write-back. |
+
 For a simplified overview, there are 4 phases,
 not all 4 phases are needed in each instruction.
 
-| phase     | address      | read data   | data buffer | write data     | description |
-|-----------|--------------|-------------|-------------|----------------|-------------|
-| fe        | PC           |             |             |                | instruction fetch |
-| rs1/wb    | rs1 addr.    | instr. op.  |             |       ALU data | read register source 1 or upper immediate write-back |
-| rs2/ld,ex | rs2/ld addr. | rs1 data    | instr. op.  |                | read register source 2 or memory load, execute |
-| st/wb,ex  | st/rd addr.  | rs2/ld data | rs1 data    | st/ld/ALU data | store or write-back destination register, execute |
+| phase       | address      | read data   | data buffer | write data     | description |
+|-------------|--------------|-------------|-------------|----------------|-------------|
+| IFD         | PC           |             |             |                | instruction fetch |
+| RS1/RWB     | rs1 addr.    | instr. op.  |             |       ALU data | read register source 1 or upper immediate write-back |
+| RS2/MLD,EXE | rs2/ld addr. | rs1 data    | instr. op.  |                | read register source 2 or memory load, execute |
+| MST/RWB,EXE | st/rd addr.  | rs2/ld data | rs1 data    | st/ld/ALU data | store or write-back destination register, execute |
 
 The buffer contains a copy of the read data bus on the previous cycle.
 

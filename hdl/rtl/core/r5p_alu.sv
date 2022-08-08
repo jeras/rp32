@@ -16,8 +16,12 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
+`ifdef ALTERA_RESERVED_QIS
+`define LANGUAGE_UNSUPPORTED_STREAM_OPERATOR
+`endif
+
 module r5p_alu
-  import riscv_isa_pkg::*;
+  import riscv_isa_i_pkg::*;
 #(
   int unsigned XLEN = 32,
   // enable opcode
@@ -183,10 +187,10 @@ endcase
 
 // reverse bit order
 function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
-`ifndef ALTERA_RESERVED_QIS
-  bitrev = {<<{val}};
-`else
+`ifdef LANGUAGE_UNSUPPORTED_STREAM_OPERATOR
   for (int unsigned i=0; i<XLEN; i++)  bitrev[i] = val[XLEN-1-i];
+`else
+  bitrev = {<<{val}};
 `endif
 endfunction: bitrev
 
