@@ -7,7 +7,10 @@ plugin -i systemverilog
 
 # SystemVerilog RTL
 read_systemverilog \
--top r5p_wbu \
++define+LANGUAGE_UNSUPPORTED_UNION \
++define+LANGUAGE_UNSUPPORTED_STREAM_OPERATOR \
++define+LANGUAGE_UNSUPPORTED_INTERFACE_ARRAY_PORT \
+-top r5p_core \
 -parse \
 ../../../hdl/rtl/riscv/riscv_isa_pkg.sv \
 ../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv \
@@ -18,7 +21,7 @@ read_systemverilog \
 ../../../hdl/rtl/core/r5p_wbu.sv \
 ../../../hdl/rtl/core/r5p_core.sv \
 
-synth_xilinx -top r5p_wbu -edif top.edif
+synth_xilinx -top r5p_core -edif top.edif
 
 #hierarchy -top r5p_core
 
