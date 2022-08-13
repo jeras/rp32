@@ -69,18 +69,20 @@ module r5p_core
   input  logic           clk,
   input  logic           rst,
   // program bus (instruction fetch)
-  output logic           if_vld,
-  output logic [IAW-1:0] if_adr,
-  input  logic [IDW-1:0] if_rdt,
-  input  logic           if_rdy,
+  output logic           ifb_vld,  // valid
+  output logic [IAW-1:0] ifb_adr,  // address
+  input  logic [IDW-1:0] ifb_rdt,  // read data
+  input  logic           ifb_err,  // error
+  input  logic           ifb_rdy,  // ready
   // data bus (load/store)
-  output logic           ls_vld,  // write or read request
-  output logic           ls_wen,  // write enable
-  output logic [DAW-1:0] ls_adr,  // address
-  output logic [DBW-1:0] ls_ben,  // byte enable
-  output logic [DDW-1:0] ls_wdt,  // write data
-  input  logic [DDW-1:0] ls_rdt,  // read data
-  input  logic           ls_rdy   // write or read acknowledge
+  output logic           lsb_vld,  // valid
+  output logic           lsb_wen,  // write enable
+  output logic [DAW-1:0] lsb_adr,  // address
+  output logic [DBW-1:0] lsb_ben,  // byte enable
+  output logic [DDW-1:0] lsb_wdt,  // write data
+  input  logic [DDW-1:0] lsb_rdt,  // read data
+  input  logic           lsb_err,  // error
+  input  logic           lsb_rdy   // ready
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
@@ -147,22 +149,22 @@ if (rst)  ifu_run <= 1'b0;
 else      ifu_run <= 1'b1;
 
 // request becomes active after reset
-assign if_vld = ifu_run;
+assign ifb_vld = ifu_run;
 
 // PC next is used as IF address
-assign if_adr = ifu_pcn;
+assign ifb_adr = ifu_pcn;
 
 // instruction valid
 always_ff @ (posedge clk, posedge rst)
 if (rst)  idu_vld <= 1'b0;
-else      idu_vld <= (if_vld & if_rdy) | (idu_vld & stall);
+else      idu_vld <= (ifb_vld & ifb_rdy) | (idu_vld & stall);
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = (if_vld & ~if_rdy) | (ls_vld & ~ls_rdy);
+assign stall = (ifb_vld & ~ifb_rdy) | (lsb_vld & ~lsb_rdy);
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
@@ -242,7 +244,7 @@ endgenerate
 
 // program counter next
 always_comb
-if (if_rdy & idu_vld) begin
+if (ifb_rdy & idu_vld) begin
   unique case (idu_ctl.opc)
     JAL    ,
     JALR   : ifu_pcn = {alu_sum[IAW-1:1], 1'b0};
@@ -269,9 +271,9 @@ if (ISA.spec.ext.C) begin: gen_d16
 
   // 16/32-bit instruction decoder
   always_comb
-  unique case (opsiz(if_rdt[16-1:0]))
-    2      : idu_dec = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_dec = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
+  unique case (opsiz(ifb_rdt[16-1:0]))
+    2      : idu_dec = dec16(ISA, ifb_rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_dec = dec32(ISA, ifb_rdt[32-1:0]);  // 32-bit
     default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
 
@@ -286,12 +288,12 @@ end: gen_d16
 else begin: gen_d32
 
   // 32-bit instruction decoder
-  assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
+  assign idu_ctl = dec32(ISA, ifb_rdt[32-1:0]);
 
 // enc32 debug code
 //  ctl_t  idu_dec;
 //  logic [32-1:0] idu_enc;
-//  assign idu_dec = dec32(ISA, if_rdt[32-1:0]);
+//  assign idu_dec = dec32(ISA, ifb_rdt[32-1:0]);
 //  assign idu_enc = enc32(ISA, idu_dec);
 //  assign idu_ctl = dec32(ISA, idu_enc);
 
@@ -299,16 +301,16 @@ end: gen_d32
 endgenerate
 `else
 //  // 32-bit instruction decoder
-//  assign idu_ctl = dec32(ISA, if_rdt[32-1:0]);
+//  assign idu_ctl = dec32(ISA, ifb_rdt[32-1:0]);
 
   ctl_t          idu_dec;
   logic [32-1:0] idu_enc;
 
   // 16/32-bit instruction decoder
   always_comb
-  unique case (opsiz(if_rdt[16-1:0]))
-    2      : idu_dec = dec16(ISA, if_rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_dec = dec32(ISA, if_rdt[32-1:0]);  // 32-bit
+  unique case (opsiz(ifb_rdt[16-1:0]))
+    2      : idu_dec = dec16(ISA, ifb_rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_dec = dec32(ISA, ifb_rdt[32-1:0]);  // 32-bit
     default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
 
@@ -513,13 +515,14 @@ r5p_lsu #(
   .mal     (lsu_mal),
   .rdy     (lsu_rdy),
   // data bus (load/store)
-  .ls_vld  (ls_vld),
-  .ls_wen  (ls_wen),
-  .ls_adr  (ls_adr),
-  .ls_ben  (ls_ben),
-  .ls_wdt  (ls_wdt),
-  .ls_rdt  (ls_rdt),
-  .ls_rdy  (ls_rdy)
+  .lsb_vld (lsb_vld),
+  .lsb_wen (lsb_wen),
+  .lsb_adr (lsb_adr),
+  .lsb_ben (lsb_ben),
+  .lsb_wdt (lsb_wdt),
+  .lsb_rdt (lsb_rdt),
+  .lsb_err (lsb_err),
+  .lsb_rdy (lsb_rdy)
 );
 
 ///////////////////////////////////////////////////////////////////////////////

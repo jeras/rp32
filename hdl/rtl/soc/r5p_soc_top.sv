@@ -95,7 +95,10 @@ localparam int unsigned RAW = DAW-1;
 // system busses
 tcb_if #(.AW (IAW), .DW (IDW)) bus_if          (.clk (clk), .rst (rst));
 tcb_if #(.AW (DAW), .DW (DDW)) bus_ls          (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [3-1:0] (.clk (clk), .rst (rst));
+//tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [3-1:0] (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_mem_0 (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_mem_1 (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus_mem_2 (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P core instance
@@ -118,18 +121,20 @@ r5p_core #(
   .clk     (clk),
   .rst     (rst),
   // instruction fetch
-  .if_vld  (bus_if.vld),
-  .if_adr  (bus_if.adr),
-  .if_rdt  (bus_if.rdt),
-  .if_rdy  (bus_if.rdy),
+  .ifb_vld (bus_if.vld),
+  .ifb_adr (bus_if.adr),
+  .ifb_rdt (bus_if.rdt),
+  .ifb_err (bus_if.err),
+  .ifb_rdy (bus_if.rdy),
   // data load/store
-  .ls_vld  (bus_ls.vld),
-  .ls_wen  (bus_ls.wen),
-  .ls_adr  (bus_ls.adr),
-  .ls_ben  (bus_ls.ben),
-  .ls_wdt  (bus_ls.wdt),
-  .ls_rdt  (bus_ls.rdt),
-  .ls_rdy  (bus_ls.rdy)
+  .lsb_vld (bus_ls.vld),
+  .lsb_wen (bus_ls.wen),
+  .lsb_adr (bus_ls.adr),
+  .lsb_ben (bus_ls.ben),
+  .lsb_wdt (bus_ls.wdt),
+  .lsb_rdt (bus_ls.rdt),
+  .lsb_err (bus_ls.err),
+  .lsb_rdy (bus_ls.rdy)
 );
 
 assign bus_if.wen = 1'b0;
@@ -152,11 +157,11 @@ tcb_dec_3sp #(
   .MSK ({ {1'b1, 14'b00_0000_0100_0000} ,   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
           {1'b1, 14'b00_0000_0100_0000} ,   // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
           {1'b1, 14'b00_0000_0000_0000} })  // 0x00_0000 ~ 0x1f_ffff - data memory
-) ls_dec (
+) lsb_dec (
   .sub  (bus_ls      ),
-  .man0 (bus_mem[0]),
-  .man1 (bus_mem[1]),
-  .man2 (bus_mem[2])
+  .man0 (bus_mem_0),
+  .man1 (bus_mem_1),
+  .man2 (bus_mem_2)
 );
 
 `else
@@ -168,7 +173,7 @@ tcb_dec #(
   .AS  ({ {1'b1, 14'bxx_xxxx_x1xx_xxxx} ,   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
           {1'b1, 14'bxx_xxxx_x0xx_xxxx} ,   // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
           {1'b0, 14'bxx_xxxx_xxxx_xxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
-) ls_dec (
+) lsb_dec (
   .sub  (bus_ls      ),
   .man  (bus_mem[2:0])
 );
@@ -261,16 +266,16 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .sleep          (1'b0),
     .regcea         (1'b1),
     // system bus
-    .clka   (bus_mem[0].clk),
-    .rsta   (bus_mem[0].rst),
-    .ena    (bus_mem[0].vld),
-    .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
-    .addra  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
-    .dina   (bus_mem[0].wdt),
-    .douta  (bus_mem[0].rdt)
+    .clka   (bus_mem_0.clk),
+    .rsta   (bus_mem_0.rst),
+    .ena    (bus_mem_0.vld),
+    .wea    (bus_mem_0.ben & {DBW{bus_mem_0.wen}}),
+    .addra  (bus_mem_0.adr[RAW-1:$clog2(DBW)]),
+    .dina   (bus_mem_0.wdt),
+    .douta  (bus_mem_0.rdt)
   );
 
-  assign bus_mem[0].rdy = 1'b1;
+  assign bus_mem_0.rdy = 1'b1;
 
 end: gen_artix_xpm
 else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
@@ -287,15 +292,15 @@ else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
   assign bus_if.rdy = 1'b1;
 
   blk_mem_gen_0 dmem (
-    .clka   (bus_mem[0].clk),
-    .ena    (bus_mem[0].vld),
-    .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
-    .addra  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
-    .dina   (bus_mem[0].wdt),
-    .douta  (bus_mem[0].rdt)
+    .clka   (bus_mem_0.clk),
+    .ena    (bus_mem_0.vld),
+    .wea    (bus_mem_0.ben & {DBW{bus_mem_0.wen}}),
+    .addra  (bus_mem_0.adr[RAW-1:$clog2(DBW)]),
+    .dina   (bus_mem_0.wdt),
+    .douta  (bus_mem_0.rdt)
   );
 
-  assign bus_mem[0].rdy = 1'b1;
+  assign bus_mem_0.rdy = 1'b1;
 
 end: gen_artix_gen
 else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
@@ -315,16 +320,16 @@ else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
   assign bus_if.rdy = 1'b1;
 
   ram32x4096 dmem (
-    .clock    (bus_mem[0].clk),
-    .wren     (bus_mem[0].vld &  bus_mem[0].wen),
-    .rden     (bus_mem[0].vld & ~bus_mem[0].wen),
-    .address  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
-    .byteena  (bus_mem[0].ben),
-    .data     (bus_mem[0].wdt),
-    .q        (bus_mem[0].rdt)
+    .clock    (bus_mem_0.clk),
+    .wren     (bus_mem_0.vld &  bus_mem_0.wen),
+    .rden     (bus_mem_0.vld & ~bus_mem_0.wen),
+    .address  (bus_mem_0.adr[RAW-1:$clog2(DBW)]),
+    .byteena  (bus_mem_0.ben),
+    .data     (bus_mem_0.wdt),
+    .q        (bus_mem_0.rdt)
   );
 
-  assign bus_mem[0].rdy = 1'b1;
+  assign bus_mem_0.rdy = 1'b1;
 
 end: gen_cyclone_v
 else if (CHIP == "ECP5") begin: gen_ecp5
@@ -354,7 +359,7 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     // read access
     .RdClock    (bus_if.clk),
     .RdClockEn  (1'b1),
-    .Reset      (bus_mem[0].rst),
+    .Reset      (bus_mem_0.rst),
     .RdAddress  (bus_if.adr[IAW-1:2]),
     .Q          (bus_if.rdt)
   );
@@ -378,20 +383,20 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     .pmi_byte_size         (8),
     .pmi_family            ("ECP5")
   ) dmem (
-    .WrClock    (bus_mem[0].clk),
-    .WrClockEn  (bus_mem[0].vld),
-    .WE         (bus_mem[0].wen),
-    .WrAddress  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
-    .ByteEn     (bus_mem[0].ben),
-    .Data       (bus_mem[0].wdt),
-    .RdClock    (bus_mem[0].clk),
-    .RdClockEn  (bus_mem[0].vld),
-    .Reset      (bus_mem[0].rst),
-    .RdAddress  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
-    .Q          (bus_mem[0].rdt)
+    .WrClock    (bus_mem_0.clk),
+    .WrClockEn  (bus_mem_0.vld),
+    .WE         (bus_mem_0.wen),
+    .WrAddress  (bus_mem_0.adr[RAW-1:$clog2(DBW)]),
+    .ByteEn     (bus_mem_0.ben),
+    .Data       (bus_mem_0.wdt),
+    .RdClock    (bus_mem_0.clk),
+    .RdClockEn  (bus_mem_0.vld),
+    .Reset      (bus_mem_0.rst),
+    .RdAddress  (bus_mem_0.adr[RAW-1:$clog2(DBW)]),
+    .Q          (bus_mem_0.rdt)
   );
  
-  assign bus_mem[0].rdy = 1'b1;
+  assign bus_mem_0.rdy = 1'b1;
 
 end: gen_ecp5
 else begin: gen_default
@@ -411,7 +416,7 @@ else begin: gen_default
     .AW   (RAW-1),
     .DW   (DDW)
   ) dmem (
-    .bus  (bus_mem[0])
+    .bus  (bus_mem_0)
   );
 
 end: gen_default
@@ -435,14 +440,14 @@ if (ENA_GPIO) begin: gen_gpio
     .gpio_e  (gpio_e),
     .gpio_i  (gpio_i),
     // bus interface
-    .bus     (bus_mem[1])
+    .bus     (bus_mem_1)
   );
 
 end: gen_gpio
 else begin: gen_gpio_err
 
   // error response
-  tcb_err gpio_err (.bus (bus_mem[1]));
+  tcb_err gpio_err (.bus (bus_mem_1));
 
   // GPIO signals
   assign gpio_o = '0;
@@ -480,14 +485,14 @@ if (ENA_UART) begin: gen_uart
     .uart_txd (uart_txd),
     .uart_rxd (uart_rxd),
     // system bus interface
-    .bus      (bus_mem[2])
+    .bus      (bus_mem_2)
   );
 
 end: gen_uart
 else begin: gen_uart_err
 
   // error response
-  tcb_err uart_err (.bus (bus_mem[2]));
+  tcb_err uart_err (.bus (bus_mem_2));
 
   // GPIO signals
   assign uart_txd = 1'b1;

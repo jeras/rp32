@@ -39,9 +39,41 @@ module tcb_dec_3sp #(
 
 tcb_if #(.AW (AW), .DW (DW)) man [PN-1:0] (.clk (sub.clk), .rst (sub.rst));
 
-tcb_pas pas0 (.sub (man0), .man (man[0]));
-tcb_pas pas1 (.sub (man1), .man (man[1]));
-tcb_pas pas2 (.sub (man2), .man (man[2]));
+//tcb_pas pas0 (.sub (man0), .man (man[0]));
+//tcb_pas pas1 (.sub (man1), .man (man[1]));
+//tcb_pas pas2 (.sub (man2), .man (man[2]));
+
+assign man[0].vld = man0.vld;
+assign man[0].wen = man0.wen;
+assign man[0].ben = man0.ben;
+assign man[0].adr = man0.adr;
+assign man[0].wdt = man0.wdt;
+
+assign man0.rdt = man[0].rdt;
+assign man0.err = man[0].err;
+assign man0.rdy = man[0].rdy;
+
+
+assign man[1].vld = man1.vld;
+assign man[1].wen = man1.wen;
+assign man[1].ben = man1.ben;
+assign man[1].adr = man1.adr;
+assign man[1].wdt = man1.wdt;
+
+assign man1.rdt = man[1].rdt;
+assign man1.err = man[1].err;
+assign man1.rdy = man[1].rdy;
+
+
+assign man[2].vld = man2.vld;
+assign man[2].wen = man2.wen;
+assign man[2].ben = man2.ben;
+assign man[2].adr = man2.adr;
+assign man[2].wdt = man2.wdt;
+
+assign man2.rdt = man[2].rdt;
+assign man2.err = man[2].err;
+assign man2.rdy = man[2].rdy;
 
 ////////////////////////////////////////////////////////////////////////////////
 // parameter validation
@@ -63,14 +95,6 @@ endgenerate
 
 // multiplexer select width
 localparam SW = $clog2(PN);
-
-// priority encoder
-function [SW-1:0] clog2 (logic [PN-1:0] val);
-  clog2 = 'x;  // optimization of undefined encodings
-  for (int unsigned i=0; i<PN; i++) begin
-    if (val[i])  clog2 = i[SW-1:0];
-  end
-endfunction: clog2
 
 // report address range overlapping
 // TODO
@@ -98,7 +122,23 @@ assign sub_dec[1] = (sub.adr & MSK[1]) == (ADR[1] & MSK[1]);
 assign sub_dec[2] = (sub.adr & MSK[2]) == (ADR[2] & MSK[2]);
 
 // priority encoder
+
+function [SW-1:0] clog2 (logic [PN-1:0] val);
+  clog2 = 'x;  // optimization of undefined encodings
+  for (int unsigned i=0; i<PN; i++) begin
+    if (val[i])  clog2 = i[SW-1:0];
+  end
+endfunction: clog2
+
 assign sub_sel = clog2(sub_dec);
+
+//always_comb
+//case (sub_dec)
+//  3'b001 : sub_sel = 2'd0;
+//  3'b010 : sub_sel = 2'd1;
+//  3'b100 : sub_sel = 2'd2;
+//  default: sub_sel = 2'dx;
+//endcase
 
 // multiplexer select
 always_ff @(posedge sub.clk, posedge sub.rst)
