@@ -36,7 +36,7 @@ module riscv_tb #(
   int unsigned IAW = 22,     // instruction address width
   int unsigned IDW = 32,     // instruction data    width
   // data bus
-  int unsigned DAW = 22,     // data address width
+  int unsigned DAW = 32,     // data address width
   int unsigned DDW = XLEN,   // data data    width
   int unsigned DBW = DDW/8,  // data byte en width
   // memory configuration
@@ -81,45 +81,16 @@ end
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
-// DEBUG
-////////////////////////////////////////////////////////////////////////////////
-
-initial begin
-  $display("==========================================");
-  $display("ISA                  : %p", ISA                  );
-  $display("ISA.spec             : %b", ISA.spec             );
-  $display("ISA.spec.base        : %b", ISA.spec.base        );
-  $display("ISA.spec.ext         : %b", ISA.spec.ext         );
-  $display("ISA.spec.ext.M       : %b", ISA.spec.ext.M       );
-  $display("ISA.spec.ext.A       : %b", ISA.spec.ext.A       );
-  $display("ISA.spec.ext.F       : %b", ISA.spec.ext.F       );
-  $display("ISA.spec.ext.D       : %b", ISA.spec.ext.D       );
-  $display("ISA.spec.ext.Zicsr   : %b", ISA.spec.ext.Zicsr   );
-  $display("ISA.spec.ext.Zifencei: %b", ISA.spec.ext.Zifencei);
-  $display("ISA.spec.ext.Q       : %b", ISA.spec.ext.Q       );
-  $display("ISA.spec.ext.L       : %b", ISA.spec.ext.L       );
-  $display("ISA.spec.ext.C       : %b", ISA.spec.ext.C       );
-  $display("ISA.spec.ext.B       : %b", ISA.spec.ext.B       );
-  $display("ISA.spec.ext.J       : %b", ISA.spec.ext.J       );
-  $display("ISA.spec.ext.T       : %b", ISA.spec.ext.T       );
-  $display("ISA.spec.ext.P       : %b", ISA.spec.ext.P       );
-  $display("ISA.spec.ext.V       : %b", ISA.spec.ext.V       );
-  $display("ISA.spec.ext.N       : %b", ISA.spec.ext.N       );
-  $display("ISA.spec.ext.H       : %b", ISA.spec.ext.H       );
-  $display("ISA.spec.ext.S       : %b", ISA.spec.ext.S       );
-  $display("ISA.spec.ext.Zam     : %b", ISA.spec.ext.Zam     );
-  $display("ISA.spec.ext.Ztso    : %b", ISA.spec.ext.Ztso    );
-  $display("ISA.priv             : %b", ISA.priv             );
-  $display("==========================================");
-end
-
-////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
+tcb_if #(.AW (DAW), .DW (DDW)) bus           (.clk (clk), .rst (rst));
 tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
+
+// internal state signals
+logic dbg_ifu;  // indicator of instruction fetch
+logic dbg_lsu;  // indicator of load/store
+logic dbg_gpr;  // indicator of GPR access
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -127,28 +98,27 @@ tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
 r5p_mouse #(
   .RST_ADR (32'h0000_0000),
-  .GPR_ADR (32'h0000_0000)
+  .GPR_ADR (32'h001f_ff80)
 ) cpu (
   // system signals
   .clk     (clk),
   .rst     (rst),
+`ifdef DEBUG
+  // internal state signals
+  .dbg_ifu (dbg_ifu),
+  .dbg_lsu (dbg_ifu),
+  .dbg_gpr (dbg_gpr),
+`endif
   // TCL system bus (shared by instruction/load/store)
-  .bus_vld (bus_ls.vld),
-  .bus_wen (bus_ls.wen),
-  .bus_adr (bus_ls.adr),
-  .bus_ben (bus_ls.ben),
-  .bus_wdt (bus_ls.wdt),
-  .bus_rdt (bus_ls.rdt),
-  .bus_err (bus_ls.err),
-  .bus_rdy (bus_ls.rdy)
+  .bus_vld (bus.vld),
+  .bus_wen (bus.wen),
+  .bus_adr (bus.adr),
+  .bus_ben (bus.ben),
+  .bus_wdt (bus.wdt),
+  .bus_rdt (bus.rdt),
+  .bus_err (bus.err),
+  .bus_rdy (bus.rdy)
 );
-
-// instruction fetch
-assign bus_if.vld = 1'b0;
-assign bus_if.wen = 1'b0;
-assign bus_if.adr = '0;
-assign bus_if.ben = '1;
-assign bus_if.wdt = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPR change log
@@ -187,10 +157,10 @@ tcb_dec #(
   .AW  (DAW),
   .DW  (DDW),
   .PN  (2),                      // port number
-  .AS  ({ {2'b1x, 20'hxxxxx} ,   // 0x00_0000 ~ 0x1f_ffff - data memory
-          {2'b0x, 20'hxxxxx} })  // 0x20_0000 ~ 0x2f_ffff - controller
-) ls_dec (
-  .sub  (bus_ls      ),
+  .AS  ({ {10'd0, 2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
+          {10'd0, 2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
+) dec (
+  .sub  (bus),
   .man  (bus_mem[1:0])
 );
 
@@ -198,12 +168,11 @@ tcb_dec #(
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-mem #(
+tcb_mem_1p #(
   .FN   (IFN),
   .SZ   (2**IAW)
 ) mem (
-  .bus_if  (bus_if),
-  .bus_ls  (bus_mem[0])
+  .bus  (bus_mem[0])
 );
 
 // memory initialization file is provided at runtime
@@ -220,23 +189,23 @@ begin
 end
 
 // instruction fetch monitor
-riscv_tcb_mon #(
+tcb_mon_riscv #(
   .NAME ("IF"),
   .MODE ("I"),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_if (
-  .bus  (bus_ls)
+  .bus  (bus)
 );
 
 // load/store monitor
-riscv_tcb_mon #(
+tcb_mon_riscv #(
   .NAME ("LS"),
   .MODE ("D"),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_ls (
-  .bus  (bus_ls)
+  .bus  (bus)
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -310,8 +279,8 @@ end else begin
 end
 
 // timeout
-//always @(posedge clk)
-//if (cnt > 5000)  timeout <= 1'b1;
+always @(posedge clk)
+if (cnt > 16)  timeout <= 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // waveforms

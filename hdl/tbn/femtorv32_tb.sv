@@ -234,7 +234,7 @@ begin
 end
 
 // instruction fetch monitor
-riscv_tcb_mon #(
+tcb_mon_riscv #(
   .NAME ("IF"),
   .MODE ("I"),
   .ISA  (ISA),
@@ -244,7 +244,7 @@ riscv_tcb_mon #(
 );
 
 // load/store monitor
-riscv_tcb_mon #(
+tcb_mon_riscv #(
   .NAME ("LS"),
   .MODE ("D"),
   .ISA  (ISA),
