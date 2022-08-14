@@ -103,10 +103,10 @@ r5p_mouse #(
   // system signals
   .clk     (clk),
   .rst     (rst),
-`ifdef DEBUG
+`ifdef TCB_DEBUG
   // internal state signals
   .dbg_ifu (dbg_ifu),
-  .dbg_lsu (dbg_ifu),
+  .dbg_lsu (dbg_lsu),
   .dbg_gpr (dbg_gpr),
 `endif
   // TCL system bus (shared by instruction/load/store)
@@ -191,20 +191,14 @@ end
 // instruction fetch monitor
 tcb_mon_riscv #(
   .NAME ("IF"),
-  .MODE ("I"),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_if (
-  .bus  (bus)
-);
-
-// load/store monitor
-tcb_mon_riscv #(
-  .NAME ("LS"),
-  .MODE ("D"),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_ls (
+  // debug mode enable (must be active with VALID)
+  .dbg_ifu (dbg_ifu),
+  .dbg_lsu (dbg_lsu),
+  .dbg_gpr (dbg_gpr),
+  // system bus
   .bus  (bus)
 );
 

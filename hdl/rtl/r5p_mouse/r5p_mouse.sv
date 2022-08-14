@@ -23,7 +23,7 @@ module r5p_mouse #(
   // system signals
   input  logic          clk,
   input  logic          rst,
-`ifdef DEBUG
+`ifdef TCB_DEBUG
   // internal state signals
   output logic          dbg_ifu,  // indicator of instruction fetch
   output logic          dbg_lsu,  // indicator of load/store
@@ -120,7 +120,8 @@ logic          [32-1:0] inw_buf;  // inw_bufuction word buffer
 // decoder
 logic           [5-1:0] bus_opc;  // OP code (from bus read data)
 logic           [5-1:0] dec_opc;  // OP code (from buffer)
-logic           [5-1:0] dec_rd ;  // GPR `rd`  address
+logic           [5-1:0] bus_rd ;  // GPR `rd`  address (from bus read data)
+logic           [5-1:0] dec_rd ;  // GPR `rd`  address (from buffer)
 logic           [5-1:0] bus_rs1;  // GPR `rs1` address (from bus read data)
 logic           [5-1:0] dec_rs1;  // GPR `rs1` address (from buffer)
 logic           [5-1:0] dec_rs2;  // GPR `rs2` address
@@ -159,7 +160,8 @@ assign bus_trn = bus_vld & bus_rdy;
 ///////////////////////////////////////////////////////////////////////////////
 
 // GPR address
-assign dec_rd  = inw_buf[11: 7];  // decoder GPR `rd`  address
+assign bus_rd  = bus_rdt[11: 7];  // decoder GPR `rd`  address (from bus read data)
+assign dec_rd  = inw_buf[11: 7];  // decoder GPR `rd`  address (from buffer)
 assign bus_rs1 = bus_rdt[19:15];  // decoder GPR `rs1` address (from bus read data)
 assign dec_rs1 = inw_buf[19:15];  // decoder GPR `rs1` address (from buffer)
 assign dec_rs2 = inw_buf[24:20];  // decoder GPR `rs2` address
@@ -284,7 +286,7 @@ begin
           ctl_nxt = PH0;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
           bus_ben = '1;
           bus_wdt = bus_imu;
         end
@@ -399,7 +401,7 @@ end
 // debug code
 ///////////////////////////////////////////////////////////////////////////////
 
-`ifdef DEBUG
+`ifdef TCB_DEBUG
 // internal state signals
 assign dbg_ifu = ctl_fsm == PH0;
 assign dbg_lsu = ~(dbg_ifu | dbg_gpr);

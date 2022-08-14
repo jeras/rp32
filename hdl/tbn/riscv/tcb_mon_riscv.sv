@@ -20,10 +20,16 @@ module tcb_mon_riscv
   import riscv_isa_pkg::*;
 #(
   string NAME = "",   // monitored bus name
-  string MODE = "D",  // modes are D-data and I-instruction
+  // TCB parameters
+  // DODO: DLY
+  // RISC-V ISA parameters
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPIO names
 )(
+  // debug mode enable (must be active with VALID)
+  input logic dbg_ifu,  // indicator of instruction fetch
+  input logic dbg_lsu,  // indicator of load/store
+  input logic dbg_gpr,  // indicator of GPR access
   // system bus
   tcb_if.sub bus
 );
@@ -34,8 +40,13 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-// system bus delayed by one clock period
+// system bus delayed by DLY clock periods
 tcb_if #(.AW (bus.AW), .DW (bus.DW)) dly (.clk (bus.clk), .rst (bus.rst));
+
+// debug mode enable delayed by DLY clock periods
+logic dly_ifu;  // indicator of instruction fetch
+logic dly_lsu;  // indicator of load/store
+logic dly_gpr;  // indicator of GPR access
 
 // log signals
 logic [bus.AW-1:0] adr;  // address
@@ -46,6 +57,11 @@ logic              err;  // error
 // delayed signals
 always_ff @(posedge bus.clk, posedge bus.rst)
 if (bus.rst) begin
+  // debug enable
+  dly_ifu <= 'x;
+  dly_lsu <= 'x;
+  dly_gpr <= 'x;
+  // TCB
   dly.vld <= '0;
   dly.wen <= 'x;
   dly.adr <= 'x;
@@ -55,6 +71,11 @@ if (bus.rst) begin
   dly.err <= 'x;
   dly.rdy <= 'x;
 end else begin
+  // debug enable
+  dly_ifu <= dbg_ifu;
+  dly_lsu <= dbg_lsu;
+  dly_gpr <= dbg_gpr;
+  // TCB
   dly.vld <= bus.vld;
   dly.wen <= bus.wen;
   dly.adr <= bus.adr;
@@ -80,25 +101,23 @@ string txt;  // decoded data
 
 always @(posedge bus.clk)
 if (dly.vld & dly.rdy) begin
-  // write/read direction
+  // write/read
+  adr = dly.adr;
+  ben = dly.ben;
   if (dly.wen) begin
-    dir = "W";
-    adr = dly.adr;
-    ben = dly.ben;
+    dir = "WR";
     dat = dly.wdt;
-    err = bus.err;
   end else begin
-    dir = "R";
-    adr = dly.adr;
-    ben = dly.ben;
+    dir = "RD";
     dat = bus.rdt;
-    err = bus.err;
   end
-  // data/instruction
-  if (MODE == "D")  txt = $sformatf("%s", dat);
-  if (MODE == "I")  txt = disasm(ISA, dat, ABI);
-  // log printout
-  $display("%s: %s adr=0x%h ben=0b%b dat=0x%h err=%b, txt=\"%s\"", NAME, dir, adr, ben, dat, err, txt);
+  err = bus.err;
+  // common text
+  txt = $sformatf("%s: %s adr=0x%h ben=0b%b dat=0x%h err=%b", NAME, dir, adr, ben, dat, err);
+  // instruction, load/store, GPR
+  if (dly_ifu)  $display("%s | IFU: %s", txt, disasm(ISA, dat, ABI));
+  if (dly_lsu)  $display("%s | LSU: %s", txt, $sformatf("%s", dat));
+  if (dly_gpr)  $display("%s | GPR: %s", txt, $sformatf("%s == %08h", gpr_n(adr[2+5-1:2], ABI), dat));
 end
 
 ////////////////////////////////////////////////////////////////////////////////
