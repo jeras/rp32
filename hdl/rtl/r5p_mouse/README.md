@@ -99,16 +99,34 @@ for write-back are placed on the data bus.
 
 ## Instruction formats
 
+| signal    | description |
+|-----------|-------------|
+| `bus_adr` | bus address |
+| `bus_wdt` | bus write data |
+| `bus_rdt` | bus read data |
+| `dec_rs1` | decoder GPR `rs1` address |
+| `dec_rs2` | decoder GPR `rs2` address |
+| `dec_rd`  | decoder GPR `rd`  address |
+| `dec_imi` | decoder immediate I (integer, load) |
+| `dec_imb` | decoder immediate B (branch) |
+| `dec_ims` | decoder immediate S (store) |
+| `gpr_rs1` | GPR `rs1` data |
+| `gpr_rs2` | GPR `rs2` data |
+| `alu_add` | ALU adder |
+| `inw`     | instruction Operation Code |
+| `inw_buf` |
+| `buf_dat` |
+
 ### R-type
 
 Arithmetic (`ADD`, `SUB`) and logical (`OR`, `AND`, `XOR`) operations.
 
-| cycle     | address      | read data   | data buffer | rd addr. | write data | description |
-|-----------|--------------|-------------|-------------|----------|------------|-------------|
-| fe        | PC           |             |             |          |            | instruction fetch |
-| rs1       | rs1 addr.    | instr. op.  |             |          |            | read register source 1 |
-| rs2       | rs2 addr.    | rs1 data    | instr. op.  | rd addr. |            | read register source 2 |
-| wb,ex     | rd  addr.    | rs2 data    | rs1 data    | rd addr. | ALU data   | execute and write-back |
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        |   PC+4    | `alu_add` |           |           |             | instruction fetch |
+| rs1       |           | `dec_rs1` |           | `inw`     |             | read register source 1 |
+| rs2       |           | `dec_rs2` |           | `gpr_rs1` | instr. op.  | read register source 2 |
+| wb,ex     | `rs1+rs2` | `dec_rd`  | `alu_add` | `gpr_rs2` | rs1 data    | execute and write-back |
 
 In the last phase, the ALU is used for summation or a logical operation
 between `rs1` data (in the data buffer) and `rs2` (on the read data bus).
@@ -120,11 +138,11 @@ in the previous phase.
 
 ### I-type
 
-| phase     | address      | read data   | data buffer | rd addr. | write data | description |
-|-----------|--------------|-------------|-------------|----------|------------|-------------|
-| fe        | PC           |             |             |          |            | instruction fetch |
-| rs1       | rs1 addr.    | instr. op.  |             |          |            | read register source 1 |
-| wb,ex     | rd  addr.    | rs2 data    | rs1 data    | rd addr. | ALU result | execute and write-back |
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        |   PC+4    | `alu_add` |           |           |             | instruction fetch |
+| rs1       |           | `dec_rs1` |           | `inw`     |             | read register source 1 |
+| wb,ex     | `rs1+imi` | `dec_rd`  | `alu_add` | `gpr_rs2` | rs1 data    | execute and write-back |
 
 For I-type instructions there is no need to read `rs2` contents,
 so this phase can be skipped.
@@ -137,14 +155,24 @@ The ALU output is placed on the write data bus for write-back.
 The `rd` address is decoded from the instruction opcode inside the data buffer.
 NOTE: a better alternative is to use the same dedicated register as for R-type.
 
+#### JALR
+
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        |   PC+4    | `alu_add` |           |           |             | instruction fetch |
+| rs1       |           | `dec_rs1` |           | `inw`     |             | read register source 1 |
+| wb,ex     |   PC+4    | `dec_rd`  | `alu_add` | `gpr_rs2` | rs1 data    | execute and write-back |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        | ` PC+buf` | `alu_add` |           |           |             | instruction fetch |
+
 ### L-type (I-type load)
 
-| phase     | address      | read data   | data buffer | rd addr. | write data  | description |
-|-----------|--------------|-------------|-------------|----------|-------------|-------------|
-| fe        | PC           |             |             |          |             | instruction fetch |
-| rs1       | rs1 addr.    | instr. op.  |             |          |             | read register source 1 |
-| ld,ex     | ALU result   | rs1 data    | instr. op.  | rd addr. |             | execute and load |
-| wb        | rd  addr.    | mem. data   | rs1 data    | rd addr. | read data   | write-back |
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        |   PC+4    | `alu_add` |           |           |             | instruction fetch |
+| rs1       |           | `dec_rs1` |           | `inw`     |             | read register source 1 |
+| ld        | `rs1+imi` | `alu_add` |           | `gpr_rs2` | `dimm`      | load |
+| wb        |           | `dec_rd`  | `bus_rdt` |           |             | write-back |
 
 For I-type instructions there is no need to read `rs2` contents,
 so this phase can be skipped.
@@ -162,6 +190,16 @@ in the previous phase.
 
 ### S-type
 
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | buffer    | description |
+|-----------|-----------|-----------|-----------|-----------|-----------|-------------|
+| fe        |   PC+4    | `alu_add` |           |           |           | instruction fetch |
+| rs1       |           | `dec_rs1` |           | `inw`     |           | read register source 1 |
+| rs2       | `rs1+ims` | `dec_rs2` |           | `gpr_rs1` | `dec_ims` | read register source 2 |
+| wb        |           | `buf_dat` | `bus_rdt` | `gpr_rs1` | `alu_add` | write-back |
+
+TODO: leaving table here, since it uses adder in same stage as load,
+
+
 | phase     | address      | read data   | data buffer | write data     | description |
 |-----------|--------------|-------------|-------------|----------------|-------------|
 | fe        | PC           |             |             |                | instruction fetch |
@@ -178,9 +216,16 @@ written to memory at the address calculated in the previous phase.
 
 ### B-type
 
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        |   PC+imb  | `alu_add` |           |           |             | instruction fetch with branch |
+| rs1       |           | `dec_rs1` |           | `inw`     |             | read register source 1 |
+| rs2       |           | `dec_rs2` |           | `gpr_rs1` | instr. op.  | read register source 2 |
+| wb,ex     | `rs1+rs2` |           |           | `gpr_rs2` | rs1 data    | execute |
+
 | cycle     | address      | read data   | data buffer | rd addr. | write data | description |
 |-----------|--------------|-------------|-------------|----------|------------|-------------|
-| fe        | PC           |             |             |          |            | instruction fetch |
+| fe        |   PC+imb           |             |             |          |            | instruction fetch |
 | rs1       | rs1 addr.    | instr. op.  |             |          |            | read register source 1 |
 | rs2       | rs2 addr.    | rs1 data    | instr. op.  |          |            | read register source 2 and execute |
 | ex        | rd  addr.    | rs2 data    | rs1 data    |          |            | execute and write-back |
@@ -189,7 +234,7 @@ Similar to R-type but instead of a write back,
 The ALU result is used as a branch taken condition.
 
 TODO: in the 3-rd phase the ALU could be used to calculate the branch address,
-the result stored stored somewhere and in the last phase loaded into the PC.
+the result stored somewhere and in the last phase loaded into the PC.
 As an alternative, the branch immediate could be stored in an extended version of 
 `rd` addr. buffer and used to calculate the new PC with a dedicated adder.
 
@@ -209,6 +254,16 @@ but this would affect timing significantly.
 TODO
 
 ### J-type
+
+JAL
+
+| cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        |   PC+4    | `alu_add` |           |           |             | instruction fetch |
+| wb,ex     |   PC+4    | `dec_rd`  | `alu_add` | `gpr_rs2` | rs1 data    | execute and write-back |
+|-----------|-----------|-----------|-----------|-----------|-------------|-------------|
+| fe        | ` PC+buf` | `alu_add` |           |           |             | instruction fetch |
+
 
 | cycle     | address      | read data   | data buffer | rd addr. | write data | description |
 |-----------|--------------|-------------|-------------|----------|------------|-------------|
