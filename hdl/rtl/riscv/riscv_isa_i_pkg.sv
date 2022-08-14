@@ -60,19 +60,19 @@ typedef struct packed {
   logic [1:0]  c11;  // constant 2'b11 got
 } op32_opcode_t;
 
-// func3 arithetic/logic unit (R/I-type)
+// funct3 arithetic/logic unit (R/I-type)
 typedef enum logic [$bits(fn3_t)-1:0] {
-  ADD   = 3'b000,  // func7[5] ? SUB : ADD
+  ADD   = 3'b000,  // funct7[5] ? SUB : ADD
   SL    = 3'b001,  //
   SLT   = 3'b010,  //
   SLTU  = 3'b011,  //
   XOR   = 3'b100,  //
-  SR    = 3'b101,  // func7[5] ? SRA : SRL
+  SR    = 3'b101,  // funct7[5] ? SRA : SRL
   OR    = 3'b110,  //
   AND   = 3'b111   //
 } fn3_alu_et;
 
-// func3 load unit (I-type)
+// funct3 load unit (I-type)
 typedef enum logic [$bits(fn3_t)-1:0] {
   LB  = 3'b000,  // RV32I RV64I RV128I
   LH  = 3'b001,  // RV32I RV64I RV128I
@@ -85,7 +85,7 @@ typedef enum logic [$bits(fn3_t)-1:0] {
 } fn3_ldu_et;
 // NOTE: the RV128I instruction LQ (load quad) is under the MISC_MEM opcode
 
-// func3 store (S-type)
+// funct3 store (S-type)
 typedef enum logic [$bits(fn3_t)-1:0] {
   SB  = 3'b000,  // RV32I RV64I RV128I
   SH  = 3'b001,  // RV32I RV64I RV128I
@@ -97,7 +97,7 @@ typedef enum logic [$bits(fn3_t)-1:0] {
 //    = 3'b111   //
 } fn3_stu_et;
 
-// func3 branch (B-type)
+// funct3 branch (B-type)
 typedef enum logic [$bits(fn3_t)-1:0] {
   BEQ  = 3'b000,  //     equal
   BNE  = 3'b001,  // not equal
@@ -110,13 +110,13 @@ typedef enum logic [$bits(fn3_t)-1:0] {
 } fn3_bru_et;
 
 // 32-bit instruction format structures
-typedef struct packed {logic [4:0] rs3; logic [1:0] func2;          logic [4:0] rs2; logic [4:0] rs1; fn3_t func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r4_t;  // Register 4 (floating point)
-typedef struct packed {                 logic [6:0] func7;          logic [4:0] rs2; logic [4:0] rs1; fn3_t func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
-typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; fn3_t func3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
-typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; fn3_t func3; logic [4:0] imm_4_0;                       op32_opcode_t opcode;} op32_s_t ;  // Store
-typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; fn3_t func3; logic [4:1] imm_4_1; logic [11:11] imm_11; op32_opcode_t opcode;} op32_b_t ;  // Branch
-typedef struct packed {logic [31:12] imm_31_12;                                                                    logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_u_t ;  // Upper immediate
-typedef struct packed {logic [20:20] imm_20; logic [10:1] imm_10_1; logic [11:11] imm_11; logic [19:12] imm_19_12; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_j_t ;  // Jump
+typedef struct packed {logic [4:0] rs3; logic [1:0] fmt;            logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r4_t;  // Register 4 (floating point)
+typedef struct packed {                 logic [6:0] funct7;         logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
+typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
+typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] imm_4_0;                       op32_opcode_t opcode;} op32_s_t ;  // Store
+typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:1] imm_4_1; logic [11:11] imm_11; op32_opcode_t opcode;} op32_b_t ;  // Branch
+typedef struct packed {logic [31:12] imm_31_12;                                                                     logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_u_t ;  // Upper immediate
+typedef struct packed {logic [20:20] imm_20; logic [10:1] imm_10_1; logic [11:11] imm_11; logic [19:12] imm_19_12;  logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_j_t ;  // Jump
 
 `ifndef LANGUAGE_UNSUPPORTED_UNION
 // union of 32-bit instruction formats
@@ -209,26 +209,26 @@ typedef op32_op62_et opc_t;
 
 // branch unit
 typedef struct packed {
-  fn3_bru_et fn3;  // func3
+  fn3_bru_et fn3;  // funct3
   imm_b_t    imm;  // immediate
 } ctl_bru_t;
 
 // arithmetic/logic unit
 typedef struct packed {
   logic      f75;  // used for subtraction and arithmetic/logic shifts
-  fn3_alu_et fn3;  // func3
+  fn3_alu_et fn3;  // funct3
   imm_i_t    imm;  // immediate
 } ctl_alu_t;
 
 // load unit
 typedef struct packed {
-  fn3_ldu_et fn3;  // func3
+  fn3_ldu_et fn3;  // funct3
   imm_l_t    imm;  // immediate
 } ctl_ldu_t;
 
 // store unit
 typedef struct packed {
-  fn3_stu_et fn3;  // func3
+  fn3_stu_et fn3;  // funct3
   imm_s_t    imm;  // immediate
 } ctl_stu_t;
 
@@ -247,7 +247,7 @@ typedef struct packed {
 // M statndard extension
 ///////////////////////////////////////////////////////////////////////////////
 
-// func3 multiply/divide/reminder
+// funct3 multiply/divide/reminder
 typedef enum logic [$bits(fn3_t)-1:0] {
   MUL    = 3'b000,  // multiply
   MULH   = 3'b001,  // multiply high
@@ -286,7 +286,7 @@ typedef struct packed {
 // Zicsr standard extension
 ///////////////////////////////////////////////////////////////////////////////
 
-// func3 CSR unit
+// funct3 CSR unit
 typedef enum logic [$bits(fn3_t)-1:0] {
 //       = 3'b000,  //
   CSRRW  = 3'b001,  //
@@ -305,7 +305,7 @@ typedef logic [5-1:0] csr_imm_t;
 // control structure
 // TODO: change when Verilator supports unpacked structures
 typedef struct packed {
-  fn3_csr_et fn3;  // func3
+  fn3_csr_et fn3;  // funct3
   csr_adr_t  adr;  // address
   csr_imm_t  imm;  // immediate
 } ctl_csr_t;
@@ -451,35 +451,35 @@ function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
 
   // branch unit
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.bru.fn3 = fn3_bru_et'(op.b.func3);
+  dec32.bru.fn3 = fn3_bru_et'(op.b.funct3);
   `else
-  dec32.bru.fn3 = fn3_bru_et'(op  .func3);
+  dec32.bru.fn3 = fn3_bru_et'(op  .funct3);
   `endif
   dec32.bru.imm = imm_b_f(op);
 
   // arithmetic/logic unit
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.alu.f75 =             op.r.func7[5];
-  dec32.alu.fn3 = fn3_alu_et'(op.r.func3)  ;
+  dec32.alu.f75 =             op.r.funct7[5];
+  dec32.alu.fn3 = fn3_alu_et'(op.r.funct3)  ;
   `else
-  dec32.alu.f75 =             op  .func7[5];
-  dec32.alu.fn3 = fn3_alu_et'(op  .func3)  ;
+  dec32.alu.f75 =             op  .funct7[5];
+  dec32.alu.fn3 = fn3_alu_et'(op  .funct3)  ;
   `endif
   dec32.alu.imm = imm_i_f(op);
 
   // load unit
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.ldu.fn3 = fn3_ldu_et'(op.i.func3);
+  dec32.ldu.fn3 = fn3_ldu_et'(op.i.funct3);
   `else
-  dec32.ldu.fn3 = fn3_ldu_et'(op  .func3);
+  dec32.ldu.fn3 = fn3_ldu_et'(op  .funct3);
   `endif
   dec32.ldu.imm = imm_i_f(op);
 
   // store unit
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.stu.fn3 = fn3_stu_et'(op.s.func3);
+  dec32.stu.fn3 = fn3_stu_et'(op.s.funct3);
   `else
-  dec32.stu.fn3 = fn3_stu_et'(op.  func3);
+  dec32.stu.fn3 = fn3_stu_et'(op.  funct3);
   `endif
   dec32.stu.imm = imm_s_f(op);
 
@@ -516,8 +516,8 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
 
   // OP
   t_op    .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_op    .func7     = '{5: ctl.alu.f75, default: IDL};
-  t_op    .func3     = ctl.alu.fn3;
+  t_op    .funct7    = '{5: ctl.alu.f75, default: IDL};
+  t_op    .funct3    = ctl.alu.fn3;
   t_op    .rs2       = ctl.gpr.adr.rs2;
   t_op    .rs1       = ctl.gpr.adr.rs1;
   t_op    .rd        = ctl.gpr.adr.rd;
@@ -528,14 +528,14 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
     SR, SL :  t_op_imm.imm_11_0 = {IDL, ctl.alu.f75, {4{IDL}}, ctl.alu.imm[6-1:0]};
     default:  t_op_imm.imm_11_0 = ctl.alu.imm;
   endcase
-  t_op_imm.func3     = ctl.alu.fn3;
+  t_op_imm.funct3    = ctl.alu.fn3;
   t_op_imm.rs1       = ctl.gpr.adr.rs1;
   t_op_imm.rd        = ctl.gpr.adr.rd;
 
   // LOAD
   t_load  .opcode    = '{opc: ctl.opc, c11: 2'b11};
   t_load  .imm_11_0  = ctl.ldu.imm;
-  t_load  .func3     = ctl.ldu.fn3;
+  t_load  .funct3    = ctl.ldu.fn3;
   t_load  .rs1       = ctl.gpr.adr.rs1;
   t_load  .rd        = ctl.gpr.adr.rd;
 
@@ -543,7 +543,7 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
   t_store .opcode    = '{opc: ctl.opc, c11: 2'b11};
   t_store .imm_11_5  = ctl.stu.imm[11:5];
   t_store .imm_4_0   = ctl.stu.imm[4:0];
-  t_store .func3     = ctl.stu.fn3;
+  t_store .funct3    = ctl.stu.fn3;
   t_store .rs2       = ctl.gpr.adr.rs2;
   t_store .rs1       = ctl.gpr.adr.rs1;
 
@@ -553,7 +553,7 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
   t_branch.imm_11    = ctl.bru.imm[11];
   t_branch.imm_10_5  = ctl.bru.imm[10:5];
   t_branch.imm_4_1   = ctl.bru.imm[4:1];
-  t_branch.func3     = ctl.bru.fn3;
+  t_branch.funct3    = ctl.bru.fn3;
   t_branch.rs2       = ctl.gpr.adr.rs2;
   t_branch.rs1       = ctl.gpr.adr.rs1;
 
@@ -568,7 +568,7 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
   // JALR
   t_jalr  .opcode    = '{opc: ctl.opc, c11: 2'b11};
   t_jalr  .imm_11_0  = ctl.jmp.imm;
-  t_jalr  .func3     = {3{IDL}};
+  t_jalr  .funct3    = {3{IDL}};
   t_jalr  .rs1       = ctl.gpr.adr.rs1;
   t_jalr  .rd        = ctl.gpr.adr.rd;
 
