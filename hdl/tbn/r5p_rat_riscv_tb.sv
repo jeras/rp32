@@ -1,5 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P testbench for core module
+// RISC-V testbench for core module
+// R5P Rat as DUT
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -138,7 +139,7 @@ tcb_dec #(
   .PN   (2),                      // port number
   .AS   ({ {2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
            {2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
-) ls_dec (
+) dec (
   .sub  (bus_ls      ),
   .man  (bus_mem[1:0])
 );
@@ -147,7 +148,7 @@ tcb_dec #(
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-mem #(
+tcb_mem_2p #(
   .FN   (IFN),
   .SZ   (2**IAW)
 ) mem (
@@ -230,7 +231,7 @@ end
 // Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef VERBOSE
+`ifdef TRACE_DEBUG
 
 initial begin
   $display("==========================================");

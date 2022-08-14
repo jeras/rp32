@@ -19,7 +19,7 @@
 import riscv_isa_pkg::*;
 import riscv_asm_pkg::*;
 
-module mem #(
+module tcb_mem_2p #(
   // 1kB by default
   string       FN = "",     // binary initialization file name
   int unsigned SZ = 2**12,  // memory size in bytes
@@ -140,4 +140,4 @@ assign bus_ls.rdy = 1'b1;
 //always @(posedge clk)
 //  bus_ls.rdy <= bus_ls.vld;
 
-endmodule: mem
+endmodule: tcb_mem_2p

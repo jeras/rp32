@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // RISC-V testbench for core module
-// FemtoRV32 as DUT
+// R5P Mouse as DUT
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -103,7 +103,7 @@ r5p_mouse #(
   // system signals
   .clk     (clk),
   .rst     (rst),
-`ifdef TCB_DEBUG
+`ifdef TRACE_DEBUG
   // internal state signals
   .dbg_ifu (dbg_ifu),
   .dbg_lsu (dbg_lsu),
@@ -121,44 +121,15 @@ r5p_mouse #(
 );
 
 ////////////////////////////////////////////////////////////////////////////////
-// GPR change log
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-localparam int unsigned AW = 5;
-
-logic [XLEN-1:0] gpr_tmp [2**AW-1:0];
-logic [XLEN-1:0] gpr_dly [2**AW-1:0] = '{default: '0};
-
-// hierarchical path to GPR inside RTL
-//assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
-assign gpr_tmp = riscv_tb.DUT.registerFile;
-
-always_ff @(posedge clk)
-begin
-  // delayed copy of all GPR
-  gpr_dly <= gpr_tmp;
-  // check each GPR for changes
-  for (int unsigned i=0; i<32; i++) begin
-    if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("%t, Info   %s %08h -> %08h", $time, gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
-    end
-  end
-end
-*/
-
-// TODO: reorder printouts so they are in the same order as instructions.
-
-////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
 tcb_dec #(
-  .AW  (DAW),
-  .DW  (DDW),
-  .PN  (2),                      // port number
-  .AS  ({ {10'd0, 2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
-          {10'd0, 2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
+  .AW   (DAW),
+  .DW   (DDW),
+  .PN   (2),                      // port number
+  .AS   ({ {10'd0, 2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
+           {10'd0, 2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
 ) dec (
   .sub  (bus),
   .man  (bus_mem[1:0])
@@ -187,20 +158,6 @@ begin
     $finish;
   end
 end
-
-// instruction fetch monitor
-tcb_mon_riscv #(
-  .NAME ("IF"),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_if (
-  // debug mode enable (must be active with VALID)
-  .dbg_ifu (dbg_ifu),
-  .dbg_lsu (dbg_lsu),
-  .dbg_gpr (dbg_gpr),
-  // system bus
-  .bus  (bus)
-);
 
 ////////////////////////////////////////////////////////////////////////////////
 // controller
@@ -261,8 +218,24 @@ final begin
 end
 
 ////////////////////////////////////////////////////////////////////////////////
-// timeout
+// Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
+
+`ifdef TRACE_DEBUG
+
+// instruction fetch monitor
+tcb_mon_riscv #(
+  .NAME ("IF"),
+  .ISA  (ISA),
+  .ABI  (ABI)
+) mon_if (
+  // debug mode enable (must be active with VALID)
+  .dbg_ifu (dbg_ifu),
+  .dbg_lsu (dbg_lsu),
+  .dbg_gpr (dbg_gpr),
+  // system bus
+  .bus  (bus)
+);
 
 // time counter
 always_ff @(posedge clk, posedge rst)
@@ -276,13 +249,6 @@ end
 always @(posedge clk)
 if (cnt > 16)  timeout <= 1'b1;
 
-////////////////////////////////////////////////////////////////////////////////
-// waveforms
-////////////////////////////////////////////////////////////////////////////////
-
-//initial begin
-//  $dumpfile("riscv_tb.vcd");
-//  $dumpvars(0, riscv_tb);
-//end
+`endif
 
 endmodule: riscv_tb

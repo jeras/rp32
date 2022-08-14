@@ -108,7 +108,7 @@ VFLAGS += --trace-structs
 # set VERILATOR macro (used to handle tool quirks)
 #MCR += -DVERILATOR
 ifdef TRACE
-MCR += -DTCB_DEBUG
+MCR += -DTRACE_DEBUG
 endif
 
 ################################################################################

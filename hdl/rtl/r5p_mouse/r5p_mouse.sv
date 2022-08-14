@@ -23,7 +23,7 @@ module r5p_mouse #(
   // system signals
   input  logic          clk,
   input  logic          rst,
-`ifdef TCB_DEBUG
+`ifdef TRACE_DEBUG
   // internal state signals
   output logic          dbg_ifu,  // indicator of instruction fetch
   output logic          dbg_lsu,  // indicator of load/store
@@ -401,7 +401,7 @@ end
 // debug code
 ///////////////////////////////////////////////////////////////////////////////
 
-`ifdef TCB_DEBUG
+`ifdef TRACE_DEBUG
 // internal state signals
 assign dbg_ifu = ctl_fsm == PH0;
 assign dbg_lsu = ~(dbg_ifu | dbg_gpr);
