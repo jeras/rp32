@@ -2,25 +2,35 @@
 # HDL source files
 ################################################################################
 
+VERILATOR?=verilator
+VERILATOR_COVERAGE?=verilator_coverage
+
+################################################################################
+# HDL source files
+################################################################################
+
 PATH_RTL=../../hdl/rtl
 PATH_TBN=../../hdl/tbn
 PATH_SRC=../../hdl/src
 
 # R5P files
-PATH_R5P=../../hdl/
+PATH_R5P=../../hdl
 
 # SystemVerilog RTL
 RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
+RTL+=${PATH_RTL}/riscv/riscv_priv_pkg.sv
+RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
 RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
 RTL+=../../submodules/learn-fpga/FemtoRV/RTL/PROCESSOR/femtorv32_quark.v
 
 # TCB files
-PATH_TCB=../../submodules/tcb/hdl/
+PATH_TCB=../../submodules/tcb/hdl
 
 # SystemVerilog RTL
 RTL+=${PATH_TCB}/rtl/tcb_if.sv
+RTL+=${PATH_TCB}/rtl/tcb_pas.sv
 RTL+=${PATH_TCB}/rtl/tcb_arb.sv
 RTL+=${PATH_TCB}/rtl/tcb_dec.sv
 RTL+=${PATH_TCB}/rtl/tcb_reg.sv
@@ -32,6 +42,7 @@ RTL+=${PATH_TCB}/rtl/uart/tcb_uart_fifo.sv
 RTL+=${PATH_TCB}/rtl/uart/tcb_uart.sv
 
 # SoC files
+RTL+=${PATH_RTL}/soc/tcb_dec_3sp.sv
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
 RTL+=${PATH_RTL}/soc/femtorv32_soc_top.sv
 
@@ -67,7 +78,7 @@ VFLAGS += -sc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
 #VFLAGS += -MMD
 # Optimize
-VFLAGS += -O2
+VFLAGS += -O3
 # optimize for speed or maximize finding X assign issues
 VFLAGS += --x-assign fast
 #VFLAGS += --x-assign 0
@@ -75,9 +86,6 @@ VFLAGS += --x-assign fast
 #VFLAGS += --x-assign unique
 # Warn abount lint issues; may not want this on less solid designs
 #VFLAGS += -Wall
-# Make waveforms
-VFLAGS += --trace-fst
-VFLAGS += --trace-structs
 # Check SystemVerilog assertions
 VFLAGS += --assert
 # Generate coverage analysis
@@ -86,6 +94,12 @@ VFLAGS += --assert
 #VFLAGS += --debug
 # Add this trace to get a backtrace in gdb
 #VFLAGS += --gdbbt
+
+# Make waveforms
+#ifdef TRACE
+VFLAGS += --trace-fst
+VFLAGS += --trace-structs
+#endif
 
 ################################################################################
 # Verilog macros
@@ -107,7 +121,9 @@ PAR += -GXLEN=${XLEN}
 ################################################################################
 
 ARG+= +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ifdef TRACE
 ARG+= +trace
+endif
 
 ################################################################################
 #
@@ -116,14 +132,14 @@ ARG+= +trace
 all: sim
 
 lint: ${HDL}
-	verilator --lint-only ${HDL} --top ${TOP}
+	${VERILATOR} --lint-only ${HDL} --top ${TOP}
 
 verilate: ${HDL} ${TSC}
-	verilator $(VFLAGS) ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
+	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
 
 compile: verilate
 	make -j 4 -C obj_dir -f V${TOP}.mk
 
 sim: compile
 	obj_dir/V${TOP} ${ARG}
-#	verilator_coverage --annotate logs/annotated logs/coverage.dat
+#	${VERILATOR_COVERAGE} --annotate logs/annotated logs/coverage.dat
