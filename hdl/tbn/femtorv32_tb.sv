@@ -233,23 +233,17 @@ begin
   end
 end
 
-// instruction fetch monitor
+// TCB monitor
 tcb_mon_riscv #(
   .NAME ("IF"),
-  .MODE ("I"),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_if (
-  .bus  (bus_ls)
-);
-
-// load/store monitor
-tcb_mon_riscv #(
-  .NAME ("LS"),
-  .MODE ("D"),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_ls (
+  // debug mode enable (must be active with VALID)
+  .dbg_ifu (1'b1),
+  .dbg_lsu (1'b1),
+  .dbg_gpr (1'b0),
+  // system bus
   .bus  (bus_ls)
 );
 
