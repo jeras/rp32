@@ -1,0 +1,13 @@
+#
+# RISC-V enumerations
+# funct3 arithetic/logic unit (R/I-type)
+#
+
+000 ADD
+001 SL
+010 SLT
+011 SLTU
+100 XOR
+101 SR
+110 OR
+111 AND
