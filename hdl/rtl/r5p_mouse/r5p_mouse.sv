@@ -47,7 +47,7 @@ module r5p_mouse #(
 // base opcode map
 localparam logic [6:2] LOAD   = 5'b00_000;
 localparam logic [6:2] OP_IMM = 5'b00_100;
-localparam logic [6:2] AUI    = 5'b00_101;
+localparam logic [6:2] AUIPC  = 5'b00_101;
 localparam logic [6:2] STORE  = 5'b01_000;
 localparam logic [6:2] OP     = 5'b01_100;
 localparam logic [6:2] LUI    = 5'b01_101;
@@ -138,9 +138,9 @@ logic   signed [32-1:0] dec_imj;  // decoder immediate J (jump)
 
 // ALU adder (used for aritmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
-logic          [32-1:0] add_op1;  // ALU adder operand 1
-logic          [32-1:0] add_op2;  // ALU adder operand 2
-logic          [32-0:0] add_sum;  // ALU adder output
+logic   signed [32-1:0] add_op1;  // ALU adder operand 1
+logic   signed [32-1:0] add_op2;  // ALU adder operand 2
+logic   signed [32-0:0] add_sum;  // ALU adder output
 
 // ALU logical
 logic          [32-1:0] log_op1;  // ALU logical operand 1
@@ -185,7 +185,7 @@ assign dec_imj = {{12{inw_buf[31]}}, inw_buf[19:12], inw_buf[20], inw_buf[30:21]
 ///////////////////////////////////////////////////////////////////////////////
 
 // adder (summation, subtraction)
-assign add_sum = $signed(add_op1) + $signed(add_op2) + $signed({31'd0, add_inc});
+assign add_sum = add_op1 + add_op2 + $signed({31'd0, add_inc});
 
 ///////////////////////////////////////////////////////////////////////////////
 // ALU logical
@@ -258,7 +258,7 @@ begin
           // adder
           add_inc = 1'b0;
           add_op1 = ctl_pcr;
-          add_op2 = $signed(dec_imb);
+          add_op2 = dec_imb;
           // system bus
           bus_adr = add_sum[32-1:0];
         end
@@ -289,6 +289,19 @@ begin
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
           bus_ben = '1;
           bus_wdt = bus_imu;
+        end
+        AUIPC: begin
+          // control
+          ctl_nxt = PH0;
+          // adder
+          add_inc = 1'b0;
+          add_op1 = ctl_pcr;
+          add_op2 = bus_imu;
+          // GPR rd write
+          bus_wen = 1'b1;
+          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
+          bus_ben = '1;
+          bus_wdt = add_sum[32-1:0];
         end
         JALR, BRANCH, LOAD, STORE, OP_IMM, OP: begin
           // control
