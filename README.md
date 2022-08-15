@@ -1,4 +1,6 @@
-# R5P RISC-V Processor
+# R5P RISC-V processor family
+
+Processors are named after [pet rodents](https://en.wikipedia.org/wiki/Rodents_as_pets) (names everybody can remember).
 
 ## Instruction decoder
 
