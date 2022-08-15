@@ -335,7 +335,7 @@ begin
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = '1;
-          case (bus_opc)
+          case (dec_opc)
             OP: begin
               // arithmetic operations
               add_inc = 1'b0;
