@@ -117,7 +117,7 @@ if (dly.vld & dly.rdy) begin
   // instruction, load/store, GPR
   if (dly_ifu)  $display("%s | IFU: %s", txt, disasm(ISA, dat, ABI));
   if (dly_lsu)  $display("%s | LSU: %s", txt, $sformatf("%s", dat));
-  if (dly_gpr)  $display("%s | GPR: %s", txt, $sformatf("%s == %08h", gpr_n(adr[2+5-1:2], ABI), dat));
+  if (dly_gpr)  $display("%s | GPR: %s", txt, $sformatf("%s %s %08h", gpr_n(adr[2+5-1:2], ABI), dly.wen ? "<=" : "=>", dat));
 end
 
 ////////////////////////////////////////////////////////////////////////////////
