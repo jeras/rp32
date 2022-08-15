@@ -113,7 +113,7 @@ if (dly.vld & dly.rdy) begin
   end
   err = bus.err;
   // common text
-  txt = $sformatf("%s: %s adr=0x%h ben=0b%b dat=0x%h err=%b", NAME, dir, adr, ben, dat, err);
+  txt = $sformatf("%s: %s adr=0x%08h ben=0b%04b dat=0x%08h err=%b", NAME, dir, adr, ben, dat, err);
   // instruction, load/store, GPR
   if (dly_ifu)  $display("%s | IFU: %s", txt, disasm(ISA, dat, ABI));
   if (dly_lsu)  $display("%s | LSU: %s", txt, $sformatf("%s", dat));
