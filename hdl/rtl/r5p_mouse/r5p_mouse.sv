@@ -293,8 +293,12 @@ begin
         JALR, BRANCH, LOAD, STORE, OP_IMM, OP: begin
           // control
           case (bus_opc)
+            BRANCH ,
+            LOAD   ,
+            STORE  ,
             OP     : ctl_nxt = PH2;  // GPR rs2 read
-            OP_IMM : ctl_nxt = PH3;  // execute
+            OP_IMM ,
+            JALR   : ctl_nxt = PH3;  // execute
             default: ctl_nxt = 'x;
           endcase
           // rs1 read
@@ -327,10 +331,10 @@ begin
       endcase
     end
     PH3: begin
+      // control
+      ctl_nxt = PH0;
       case (dec_opc)
         OP, OP_IMM: begin
-          // control
-          ctl_nxt = PH0;
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
@@ -355,13 +359,6 @@ begin
               log_op2 = dec_imi;
             end
             default: begin
-              // arithmetic operations
-              add_inc = 1'bx;
-              add_op1 = 'x;
-              add_op2 = 'x;
-              // logic operations
-              log_op1 = 'x;
-              log_op2 = 'x;
             end
           endcase
           case (dec_fn3)
@@ -379,6 +376,17 @@ begin
             default: begin
             end
           endcase
+        end
+        STORE: begin
+          // arithmetic operations
+          add_inc = 1'b0;
+          add_op1 = buf_dat;
+          add_op2 = dec_ims;
+          // GPR rs2 read
+          bus_wen = 1'b1;
+          bus_adr = add_sum[32-1:0];
+          bus_ben = '1;  // TODO
+          bus_wdt = bus_rdt;
         end
         BRANCH: begin
 //          unique case (ctl.bru.fn3)
