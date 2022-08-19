@@ -279,7 +279,7 @@ begin
   // check each GPR for changes
   for (int unsigned i=0; i<32; i++) begin
     if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("%t, Info   %s %08h -> %08h", $time, gpr_n(i[5-1:0], 1'b1), gpr_dly[i], gpr_tmp[i]);
+      $display("%t, Info   %08h <= %s <= %08h", $time, gpr_dly[i], gpr_n(i[5-1:0], 1'b1), gpr_tmp[i]);
     end
   end
 end
@@ -287,7 +287,8 @@ end
 
 // instruction fetch monitor
 tcb_mon_riscv #(
-  .NAME ("IF"),
+  .NAME ("IFU"),
+  .DLY_IFU (1),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_if (
@@ -301,7 +302,8 @@ tcb_mon_riscv #(
 
 // load/store monitor
 tcb_mon_riscv #(
-  .NAME ("LS"),
+  .NAME ("LSU"),
+  .DLY_LSU (1),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_ls (
