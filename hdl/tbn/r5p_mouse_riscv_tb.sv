@@ -225,14 +225,14 @@ end
 
 // instruction fetch monitor
 tcb_mon_riscv #(
-  .NAME ("IF"),
+  .NAME ("TCB"),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_if (
   // debug mode enable (must be active with VALID)
   .dbg_ifu (dbg_ifu),
   .dbg_lsu (dbg_lsu),
-  .dbg_gpr (dbg_gpr),
+  .dbg_gpr (dbg_gpr & bus.wen),
   // system bus
   .bus  (bus)
 );
@@ -247,7 +247,7 @@ end
 
 // timeout
 always @(posedge clk)
-if (cnt > 200)  timeout <= 1'b1;
+if (cnt > 80000)  timeout <= 1'b1;
 
 `endif
 

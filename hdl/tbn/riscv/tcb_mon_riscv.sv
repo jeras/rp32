@@ -22,6 +22,10 @@ module tcb_mon_riscv
   string NAME = "",   // monitored bus name
   // TCB parameters
   // DODO: DLY
+  // printout order
+  int DLY_IFU = 0,  // printout delay for instruction fetch
+  int DLY_LSU = 0,  // printout delay for load/store
+  int DLY_GPR = 0,  // printout delay for GPR access
   // RISC-V ISA parameters
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPIO names
@@ -96,9 +100,16 @@ end
 // logging
 ////////////////////////////////////////////////////////////////////////////////
 
+// temporary strings
 string dir;  // direction
 string txt;  // decoded data
 
+// printout delay queue
+string str_ifu[DLY_IFU+1];
+string str_lsu[DLY_LSU+1];
+string str_gpr[DLY_GPR+1];
+
+// printouts: instruction, load/store, GPR
 always @(posedge bus.clk)
 if (dly.vld & dly.rdy) begin
   // write/read
@@ -114,10 +125,18 @@ if (dly.vld & dly.rdy) begin
   err = bus.err;
   // common text
   txt = $sformatf("%s: %s adr=0x%08h ben=0b%04b dat=0x%08h err=%b", NAME, dir, adr, ben, dat, err);
+  // individual text strings
+  if (dly_ifu)  str_ifu[0] = $sformatf("%s | IFU: %s", txt, disasm(ISA, dat, ABI));  else  str_ifu[0] = "";
+  if (dly_lsu)  str_lsu[0] = $sformatf("%s | LSU: %s", txt, $sformatf("%s", dat));  else  str_lsu[0] = "";
+  if (dly_gpr)  str_gpr[0] = $sformatf("%s | GPR: %s", txt, $sformatf("%s %s %08h", gpr_n(adr[2+5-1:2], ABI), dly.wen ? "<=" : "=>", dat));  else  str_gpr[0] = "";
+  // delay buffers
+  for (int i=0; i<DLY_IFU; i++)  str_ifu[i+1] <= str_ifu[i];
+  for (int i=0; i<DLY_LSU; i++)  str_lsu[i+1] <= str_lsu[i];
+  for (int i=0; i<DLY_GPR; i++)  str_gpr[i+1] <= str_gpr[i];
   // instruction, load/store, GPR
-  if (dly_ifu)  $display("%s | IFU: %s", txt, disasm(ISA, dat, ABI));
-  if (dly_lsu)  $display("%s | LSU: %s", txt, $sformatf("%s", dat));
-  if (dly_gpr)  $display("%s | GPR: %s", txt, $sformatf("%s %s %08h", gpr_n(adr[2+5-1:2], ABI), dly.wen ? "<=" : "=>", dat));
+  if (str_ifu[DLY_IFU] != "")  $display(str_ifu[DLY_IFU]);
+  if (str_lsu[DLY_LSU] != "")  $display(str_lsu[DLY_LSU]);
+  if (str_gpr[DLY_GPR] != "")  $display(str_gpr[DLY_GPR]);
 end
 
 ////////////////////////////////////////////////////////////////////////////////
