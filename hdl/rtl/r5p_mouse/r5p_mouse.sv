@@ -355,9 +355,9 @@ begin
           case (dec_opc)
             OP: begin
               // arithmetic operations
-              add_inc = 1'b0;
+              add_inc = dec_fn7[5];
               add_op1 = buf_dat;
-              add_op2 = bus_rdt;
+              add_op2 = bus_rdt ^ {32{dec_fn7[5]}};
               // logic operations
               log_op1 = buf_dat;
               log_op2 = bus_rdt;
@@ -430,7 +430,7 @@ assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
 logic search;
 
-assign search = dec_opc == STORE;
+assign search = (dec_opc == OP) & (dec_fn3 == ADD) & (dec_fn7[5]);
 
 `endif
 

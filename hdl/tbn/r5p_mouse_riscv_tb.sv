@@ -223,7 +223,13 @@ end
 
 `ifdef TRACE_DEBUG
 
-// instruction fetch monitor
+// GPR array
+logic [32-1:0] gpr [0:32-1];
+
+// copy GPR array from system memory
+//assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];
+
+// system bus monitor
 tcb_mon_riscv #(
   .NAME ("TCB"),
   .ISA  (ISA),
