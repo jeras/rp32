@@ -1,0 +1,11 @@
+#
+# RISC-V enumerations
+# funct3 branch unit (B-type)
+#
+
+000 BEQ
+001 BNE
+100 BLT
+101 BGE
+110 BLTU
+111 BGEU

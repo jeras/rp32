@@ -1,0 +1,10 @@
+#
+# RISC-V enumerations
+# funct3 load/store unit (S-type store)
+#
+
+000 SB
+001 SH
+010 SW
+011 SD
+100 SQ

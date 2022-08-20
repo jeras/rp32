@@ -1,0 +1,13 @@
+#
+# RISC-V enumerations
+# funct3 load/store unit (I-type load)
+#
+
+000 LB
+001 LH
+010 LW
+011 LD
+100 LBU
+101 LHU
+110 LWU
+111 LDU
