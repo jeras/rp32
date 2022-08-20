@@ -349,7 +349,7 @@ begin
       case (dec_opc)
         OP, OP_IMM: begin
           // GPR rd write
-          bus_wen = 1'b1;
+          bus_wen = (dec_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = '1;
           case (dec_opc)
@@ -427,6 +427,11 @@ end
 assign dbg_ifu = ctl_fsm == PH0;
 assign dbg_lsu = ~(dbg_ifu | dbg_gpr);
 assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
+
+logic search;
+
+assign search = dec_opc == STORE;
+
 `endif
 
 endmodule: r5p_mouse
