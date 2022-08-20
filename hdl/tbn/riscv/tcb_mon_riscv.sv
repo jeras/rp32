@@ -111,7 +111,7 @@ string str_gpr[DLY_GPR+1];
 
 // printouts: instruction, load/store, GPR
 always @(posedge bus.clk)
-if (dly.vld & dly.rdy) begin
+if (dly.trn) begin
   // write/read
   adr = dly.adr;
   ben = dly.ben;
@@ -124,19 +124,41 @@ if (dly.vld & dly.rdy) begin
   end
   err = bus.err;
   // common text
-  txt = $sformatf("%s: %s adr=0x%08h ben=0b%04b dat=0x%08h err=%b", NAME, dir, adr, ben, dat, err);
+  txt = $sformatf("%s: %s adr=0x%8h ben=0b%4b dat=0x%8h err=%b", NAME, dir, adr, ben, dat, err);
   // individual text strings
   if (dly_ifu)  str_ifu[0] = $sformatf("%s | IFU: %s", txt, disasm(ISA, dat, ABI));  else  str_ifu[0] = "";
   if (dly_lsu)  str_lsu[0] = $sformatf("%s | LSU: %s", txt, $sformatf("%s", dat));  else  str_lsu[0] = "";
-  if (dly_gpr)  str_gpr[0] = $sformatf("%s | GPR: %s", txt, $sformatf("%s %s %08h", gpr_n(adr[2+5-1:2], ABI), dly.wen ? "<=" : "=>", dat));  else  str_gpr[0] = "";
+  if (dly_gpr)  str_gpr[0] = $sformatf("%s | GPR: %s", txt, $sformatf("%s %s %8h", gpr_n(adr[2+5-1:2], ABI), dly.wen ? "<=" : "=>", dat));  else  str_gpr[0] = "";
+end else begin
+  str_ifu[0] = "";
+  str_lsu[0] = "";
+  str_gpr[0] = "";
+end
+
+always @(posedge bus.clk)
+begin
   // delay buffers
   for (int i=0; i<DLY_IFU; i++)  str_ifu[i+1] <= str_ifu[i];
   for (int i=0; i<DLY_LSU; i++)  str_lsu[i+1] <= str_lsu[i];
   for (int i=0; i<DLY_GPR; i++)  str_gpr[i+1] <= str_gpr[i];
   // instruction, load/store, GPR
+  // TODO: this should not be handled in the same dly.trn
   if (str_ifu[DLY_IFU] != "")  $display(str_ifu[DLY_IFU]);
   if (str_lsu[DLY_LSU] != "")  $display(str_lsu[DLY_LSU]);
   if (str_gpr[DLY_GPR] != "")  $display(str_gpr[DLY_GPR]);
+end
+
+int len_ifu[DLY_IFU+1];
+int len_lsu[DLY_LSU+1];
+int len_gpr[DLY_GPR+1];
+
+always @(*)
+begin
+  for (int i=0; i<3-1; i++) begin
+    len_ifu[i] = str_ifu[i].len();
+    len_lsu[i] = str_lsu[i].len();
+    len_gpr[i] = str_gpr[i].len();
+  end
 end
 
 ////////////////////////////////////////////////////////////////////////////////
