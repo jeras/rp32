@@ -228,7 +228,7 @@ tcb_mon_riscv #(
   .NAME ("TCB"),
   .ISA  (ISA),
   .ABI  (ABI)
-) mon_if (
+) mon_tcb (
   // debug mode enable (must be active with VALID)
   .dbg_ifu (dbg_ifu),
   .dbg_lsu (dbg_lsu),
