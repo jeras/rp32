@@ -141,13 +141,20 @@ logic                   add_inc;  // ALU adder increment (input carry)
 logic   signed [32-1:0] add_op1;  // ALU adder operand 1
 logic   signed [32-1:0] add_op2;  // ALU adder operand 2
 logic   signed [32-0:0] add_sum;  // ALU adder output
+logic                   add_sgn;  // ALU adder output sign (MSB bit of sum)
+logic                   add_zro;  // ALU adder output zero
 
 // ALU logical
 logic          [32-1:0] log_op1;  // ALU logical operand 1
 logic          [32-1:0] log_op2;  // ALU logical operand 2
 logic          [32-1:0] log_out;  // ALU logical output
 
+// register read buffer
 logic          [32-1:0] buf_dat;  //
+
+// branch taken
+logic                   bru_tkn;
+logic                   buf_tkn;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TCL system bus
@@ -186,6 +193,10 @@ assign dec_imj = {{12{inw_buf[31]}}, inw_buf[19:12], inw_buf[20], inw_buf[30:21]
 
 // adder (summation, subtraction)
 assign add_sum = add_op1 + add_op2 + $signed({31'd0, add_inc});
+// ALU adder output sign (MSB bit of sum)
+assign add_sgn = add_sum[32];
+// ALU adder output zero
+assign add_zro = add_sum[32-1:0] == 32'd0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ALU logical
@@ -235,6 +246,10 @@ end else begin
     if ((ctl_fsm == PH2) || (ctl_fsm == PH3)) begin
       buf_dat <= bus_rdt;
     end
+    // buffer taken bit for branch address calculation
+    if (ctl_fsm == PH3) begin
+      buf_tkn <= bru_tkn;
+    end
   end
 end
 
@@ -266,7 +281,7 @@ begin
           // adder
           add_inc = 1'b0;
           add_op1 = ctl_pcr;
-          add_op2 = dec_imb;
+          add_op2 = buf_tkn ? dec_imb : 32'd4;
           // system bus
           bus_adr = add_sum[32-1:0];
         end
@@ -436,14 +451,19 @@ begin
           bus_wdt = bus_rdt;
         end
         BRANCH: begin
-//          unique case (ctl.bru.fn3)
-//            BEQ    : ifu_pc <= ifu_pc + ((ph3_rs1 == ph3_rs2) ? : 4);
-//            BNE    : ifu_pc <= ifu_pc + ((ph3_rs1 != ph3_rs2) ? : 4);
-//            BLT    : ifu_pc <= ifu_pc + ((ph3_rs1 <  ph3_rs2) ? : 4);
-//            BGE    : ifu_pc <= ifu_pc + ((ph3_rs1 >= ph3_rs2) ? : 4);
-//            BLTU   : ifu_pc <= ifu_pc + ((ph3_rs1 <  ph3_rs2) ? : 4);
-//            BGEU   : ifu_pc <= ifu_pc + ((ph3_rs1 >= ph3_rs2) ? : 4);
-//          endcase
+          // subtraction
+          add_inc = 1'b1;
+          add_op1 =  buf_dat;
+          add_op2 = ~bus_rdt;
+          unique case (dec_fn3)
+            BEQ    : bru_tkn =  add_zro;
+            BNE    : bru_tkn = ~add_zro;
+            BLT    : bru_tkn =  add_sgn;
+            BGE    : bru_tkn = ~add_sgn;
+            BLTU   : bru_tkn =  add_sgn;
+            BGEU   : bru_tkn = ~add_sgn;
+            default: bru_tkn = 1'bx;
+          endcase
         end
         default: begin
         end
@@ -464,7 +484,7 @@ assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
 logic search;
 
-assign search = (dec_opc == JALR);
+assign search = (dec_opc == BRANCH);
 
 `endif
 

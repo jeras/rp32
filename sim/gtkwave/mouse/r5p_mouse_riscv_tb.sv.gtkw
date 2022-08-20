@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Sat Aug 20 15:48:59 2022
+[*] Sat Aug 20 22:21:12 2022
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/verilator/logs/vlt_dump.fst"
-[dumpfile_mtime] "Sat Aug 20 15:41:12 2022"
-[dumpfile_size] 408631
+[dumpfile_mtime] "Sat Aug 20 22:20:02 2022"
+[dumpfile_size] 19579
 [savefile] "/home/ijeras/VLSI/rp32/sim/gtkwave/mouse/r5p_mouse_riscv_tb.sv.gtkw"
-[timestart] 1603600
+[timestart] 1943500
 [size] 1848 1016
 [pos] -1 -1
-*-15.270298 1735100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.270298 2074300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.riscv_tb.
 [treeopen] top.riscv_tb.cpu.
 [treeopen] top.riscv_tb.mem.
 [sst_width] 244
-[signals_width] 228
+[signals_width] 262
 [sst_expanded] 1
 [sst_vpaned_height] 396
 @28
@@ -62,6 +62,7 @@ top.riscv_tb.cpu.bus_imu[31:0]
 top.riscv_tb.cpu.bus_rd[4:0]
 top.riscv_tb.cpu.bus_rs1[4:0]
 top.riscv_tb.cpu.inw_buf[31:0]
+top.riscv_tb.cpu.dec_opc[4:0]
 @2028
 [color] 2
 ^1 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-op.enum
@@ -79,7 +80,6 @@ top.riscv_tb.cpu.dec_fn3[2:0]
 +{dec_fn3[BRU]} top.riscv_tb.cpu.dec_fn3[2:0]
 ^4 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-ldu.enum
 +{dec_fn3[LDU]} top.riscv_tb.cpu.dec_fn3[2:0]
-@2029
 ^5 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-stu.enum
 +{dec_fn3[STU]} top.riscv_tb.cpu.dec_fn3[2:0]
 @22
@@ -115,8 +115,15 @@ top.riscv_tb.cpu.log_op2[31:0]
 top.riscv_tb.cpu.log_out[31:0]
 @1000200
 -logical
-@22
-top.riscv_tb.cpu.dec_opc[4:0]
+@800201
+-branch
+@29
+top.riscv_tb.cpu.add_sgn
+top.riscv_tb.cpu.add_zro
+top.riscv_tb.cpu.bru_tkn
+top.riscv_tb.cpu.buf_tkn
+@1000201
+-branch
 @28
 top.riscv_tb.cpu.search
 [pattern_trace] 1
