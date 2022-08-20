@@ -285,7 +285,7 @@ begin
           // control
           ctl_nxt = PH0;
           // GPR rd write
-          bus_wen = 1'b1;
+          bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
           bus_ben = '1;
           bus_wdt = bus_imu;
@@ -298,7 +298,7 @@ begin
           add_op1 = ctl_pcr;
           add_op2 = bus_imu;
           // GPR rd write
-          bus_wen = 1'b1;
+          bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
           bus_ben = '1;
           bus_wdt = add_sum[32-1:0];
