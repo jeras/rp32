@@ -303,7 +303,7 @@ tcb_mon_riscv #(
 // load/store monitor
 tcb_mon_riscv #(
   .NAME ("LSU"),
-  .DLY_LSU (1),
+  .DLY_LSU (0),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_ls (
