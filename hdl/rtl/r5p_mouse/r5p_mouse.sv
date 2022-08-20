@@ -29,7 +29,7 @@ module r5p_mouse #(
   output logic          dbg_lsu,  // indicator of load/store
   output logic          dbg_gpr,  // indicator of GPR access
 `endif
-  // TCL system bus (shared by inw_bufuction/load/store)
+  // TCL system bus (shared by instruction/load/store)
   output logic          bus_vld,  // valid
   output logic          bus_wen,  // write enable
   output logic [32-1:0] bus_adr,  // address
@@ -115,7 +115,7 @@ logic          [32-1:0] ctl_pcr;  // ctl_pcr register
 logic          [32-1:0] ctl_pcn;  // ctl_pcr next
 
 // buffers
-logic          [32-1:0] inw_buf;  // inw_bufuction word buffer
+logic          [32-1:0] inw_buf;  // instruction word buffer
 
 // decoder
 logic           [5-1:0] bus_opc;  // OP code (from bus read data)
@@ -167,8 +167,8 @@ assign dec_rs1 = inw_buf[19:15];  // decoder GPR `rs1` address (from buffer)
 assign dec_rs2 = inw_buf[24:20];  // decoder GPR `rs2` address
 
 // OP and functions
-assign bus_opc = bus_rdt[ 6: 2];  // OP code (inw_bufuction word [6:2], [1:0] are ignored)
-assign dec_opc = inw_buf[ 6: 2];  // OP code (inw_bufuction word [6:2], [1:0] are ignored)
+assign bus_opc = bus_rdt[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
+assign dec_opc = inw_buf[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
 assign dec_fn3 = inw_buf[14:12];  // funct3
 assign dec_fn7 = inw_buf[31:25];  // funct7
 
@@ -212,7 +212,7 @@ if (rst) begin
   ctl_fsm <= PH0;
   // PC
   ctl_pcr <= '0;
-  // inw_bufuction buffer
+  // instruction buffer
   inw_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
   // data buffer
   buf_dat <= '0;
@@ -227,12 +227,12 @@ end else begin
     if (ctl_fsm == PH0) begin
       ctl_pcr <= ctl_pcn;
     end
-    // load the buffer when the inw_bufuction is available on the bus
+    // load the buffer when the instruction is available on the bus
     if (ctl_fsm == PH1) begin
       inw_buf <= bus_rdt;
     end
     // load the buffer when the data is available on the bus
-    if (ctl_fsm == PH2) begin
+    if ((ctl_fsm == PH2) || (ctl_fsm == PH3)) begin
       buf_dat <= bus_rdt;
     end
   end
@@ -244,15 +244,23 @@ begin
     PH0: begin
       // control
       ctl_nxt = PH1;
-      // calculate inw_bufuction address
+      // calculate instruction address
       case (dec_opc)
-        JAL, JALR: begin
-          // adder: current inw_bufuction address
+        JAL: begin
+          // adder: current instruction address
           add_inc = 1'b0;
           add_op1 = ctl_pcr;
-          add_op2 = 32'd4;
+          add_op2 = dec_imj;
           // system bus
-          bus_adr = buf_dat;
+          bus_adr = add_sum[32-1:0];
+        end
+        JALR: begin
+          // adder: current instruction address
+          add_inc = 1'b0;
+          add_op1 = buf_dat;
+          add_op2 = dec_imi;
+          // system bus
+          bus_adr = add_sum[32-1:0];
         end
         BRANCH: begin
           // adder
@@ -263,15 +271,15 @@ begin
           bus_adr = add_sum[32-1:0];
         end
         default: begin
-          // adder: current inw_bufuction address
+          // adder: current instruction address
           add_inc = 1'b0;
           add_op1 = ctl_pcr;
           add_op2 = 32'd4;
-          // system bus: inw_bufuction address
+          // system bus: instruction address
           bus_adr = add_sum[32-1:0];
         end
       endcase
-      // system bus: inw_bufuction fetch
+      // system bus: instruction fetch
       bus_wen = 1'b0;
       bus_ben = '1;
       bus_wdt = 'x;
@@ -297,6 +305,19 @@ begin
           add_inc = 1'b0;
           add_op1 = ctl_pcr;
           add_op2 = bus_imu;
+          // GPR rd write
+          bus_wen = (bus_rd != 5'd0);
+          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
+          bus_ben = '1;
+          bus_wdt = add_sum[32-1:0];
+        end
+        JAL: begin
+          // control
+          ctl_nxt = PH0;
+          // adder
+          add_inc = 1'b0;
+          add_op1 = ctl_pcr;
+          add_op2 = 32'd4;
           // GPR rd write
           bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
@@ -347,6 +368,19 @@ begin
       // control
       ctl_nxt = PH0;
       case (dec_opc)
+        JALR: begin
+          // control
+          ctl_nxt = PH0;
+          // adder
+          add_inc = 1'b0;
+          add_op1 = ctl_pcr;
+          add_op2 = 32'd4;
+          // GPR rd write
+          bus_wen = (dec_rd != 5'd0);
+          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
+          bus_ben = '1;
+          bus_wdt = add_sum[32-1:0];
+        end
         OP, OP_IMM: begin
           // GPR rd write
           bus_wen = (dec_rd != 5'd0);
@@ -430,7 +464,7 @@ assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
 logic search;
 
-assign search = (dec_opc == OP) & (dec_fn3 == ADD) & (dec_fn7[5]);
+assign search = (dec_opc == JALR);
 
 `endif
 
