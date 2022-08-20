@@ -208,7 +208,7 @@ if (rvmodel_halt | timeout) begin
   if (rvmodel_data_end < 2**IAW)  tmp_end = rvmodel_data_end;
   else                            tmp_end = 2**IAW ;
   if ($value$plusargs("FILE_SIG=%s", fn)) begin
-    $display("Saving signature file with data from 0x%08h to 0x%08h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
+    $display("Saving signature file with data from 0x%8h to 0x%8h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
   //void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
     void'(mem.write_hex(fn, int'(rvmodel_data_begin), int'(tmp_end)));
     $display("Saving signature file done.");
@@ -279,7 +279,7 @@ begin
   // check each GPR for changes
   for (int unsigned i=0; i<32; i++) begin
     if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("%t, Info   %08h <= %s <= %08h", $time, gpr_dly[i], gpr_n(i[5-1:0], 1'b1), gpr_tmp[i]);
+      $display("%t, Info   %8h <= %s <= %8h", $time, gpr_dly[i], gpr_n(i[5-1:0], 1'b1), gpr_tmp[i]);
     end
   end
 end
