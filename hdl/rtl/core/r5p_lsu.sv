@@ -138,9 +138,22 @@ if (ill) begin
 end else begin
   unique case (ctl.opc)
     LOAD   : begin
-        lsb_wdt = 'x;
-        lsb_ben = {BW{CFG_BEN_RD}};
-      end
+      lsb_wdt = 'x;
+      case (ctl.ldu.fn3)
+        LB, LBU: case (adr[1:0])
+          2'b00: lsb_ben = 4'b0001;
+          2'b01: lsb_ben = 4'b0010;
+          2'b10: lsb_ben = 4'b0100;
+          2'b11: lsb_ben = 4'b1000;
+        endcase
+        LH, LHU: case (adr[1])
+          1'b0 : lsb_ben = 4'b0011;
+          1'b1 : lsb_ben = 4'b1100;
+        endcase
+        LW, LWU: lsb_ben = 4'b1111;
+        default: lsb_ben = 4'bxxxx;
+      endcase
+    end
     STORE  :
       // write access
       case (ctl.stu.fn3)
@@ -150,7 +163,7 @@ end else begin
           2'b10: begin lsb_wdt = {8'hxx     , wdt[ 7: 0], 8'hxx     , 8'hxx     }; lsb_ben = 4'b0100; end
           2'b11: begin lsb_wdt = {wdt[ 7: 0], 8'hxx     , 8'hxx     , 8'hxx     }; lsb_ben = 4'b1000; end
         endcase
-        SH : casez (adr[1])
+        SH : case (adr[1])
           1'b0 : begin lsb_wdt = {8'hxx     , 8'hxx     , wdt[15: 8], wdt[ 7: 0]}; lsb_ben = 4'b0011; end
           1'b1 : begin lsb_wdt = {wdt[15: 8], wdt[ 7: 0], 8'hxx     , 8'hxx     }; lsb_ben = 4'b1100; end
         endcase
@@ -158,9 +171,9 @@ end else begin
         default: begin lsb_wdt = {8'hxx     , 8'hxx     , 8'hxx     , 8'hxx     }; lsb_ben = 4'bxxxx; end
       endcase
     default: begin
-        lsb_wdt = 'x;
-        lsb_ben = {BW{CFG_BEN_IDL}};
-      end
+      lsb_wdt = 'x;
+      lsb_ben = {BW{CFG_BEN_IDL}};
+    end
   endcase
 end
 
