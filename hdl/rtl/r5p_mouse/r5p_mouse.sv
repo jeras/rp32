@@ -413,18 +413,50 @@ begin
           case (dec_opc)
             OP: begin
               // arithmetic operations
-              add_inc = dec_fn7[5];
-              add_op1 = ext_sgn(buf_dat);
-              add_op2 = ext_sgn(bus_rdt ^ {32{dec_fn7[5]}});
+              case (dec_fn3)
+                ADD    : begin
+                  add_inc = dec_fn7[5];
+                  add_op1 = ext_sgn(buf_dat);
+                  add_op2 = ext_sgn(bus_rdt ^ {32{dec_fn7[5]}});
+                end
+                SLT    : begin
+                  add_inc = 1'b1;
+                  add_op1 = ext_sgn( buf_dat);
+                  add_op2 = ext_sgn(~bus_rdt);
+                end
+                SLTU   : begin
+                  add_inc = 1'b1;
+                  add_op1 = {1'b0,  buf_dat};
+                  add_op2 = {1'b1, ~bus_rdt};
+                end
+                default: begin
+                end
+              endcase
               // logic operations
               log_op1 = buf_dat;
               log_op2 = bus_rdt;
             end
             OP_IMM: begin
               // arithmetic operations
-              add_inc = 1'b0;
-              add_op1 = ext_sgn(bus_rdt);
-              add_op2 = ext_sgn(dec_imi);
+              case (dec_fn3)
+                ADD    : begin
+                  add_inc = 1'b0;
+                  add_op1 = ext_sgn(bus_rdt);
+                  add_op2 = ext_sgn(dec_imi);
+                end
+                SLT    : begin
+                  add_inc = 1'b1;
+                  add_op1 = ext_sgn(bus_rdt);
+                  add_op2 = ext_sgn(dec_imi);
+                end
+                SLTU   : begin
+                  add_inc = 1'b1;
+                  add_op1 = {1'b0, bus_rdt};
+                  add_op2 = {dec_fn7[5], dec_imi ^ {32{dec_fn7[5]}}};
+                end
+                default: begin
+                end
+              endcase
               // logic operations
               log_op1 = bus_rdt;
               log_op2 = dec_imi;
