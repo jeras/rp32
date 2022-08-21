@@ -446,13 +446,13 @@ begin
                 end
                 SLT    : begin
                   add_inc = 1'b1;
-                  add_op1 = ext_sgn(bus_rdt);
-                  add_op2 = ext_sgn(dec_imi);
+                  add_op1 = ext_sgn( bus_rdt);
+                  add_op2 = ext_sgn(~dec_imi);
                 end
                 SLTU   : begin
                   add_inc = 1'b1;
-                  add_op1 = {1'b0, bus_rdt};
-                  add_op2 = {dec_fn7[5], dec_imi ^ {32{dec_fn7[5]}}};
+                  add_op1 = {1'b0,  bus_rdt};
+                  add_op2 = {1'b1, ~dec_imi};
                 end
                 default: begin
                 end
@@ -474,6 +474,7 @@ begin
             OR  : bus_wdt = log_out;
             XOR : bus_wdt = log_out;
             // barrel shifter
+            // TODO
 //            SR  : bus_wdt =        shf_val ;
 //            SL  : bus_wdt = bitrev(shf_val);
             default: begin
@@ -541,7 +542,7 @@ assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
 logic search;
 
-assign search = (dec_opc == BRANCH);
+assign search = (dec_opc == OP_IMM) && (dec_fn3 == SLT);
 
 `endif
 
