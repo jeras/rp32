@@ -48,16 +48,18 @@ module r5p_core
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // optimizations: timing versus area compromises
+  // optimizations: BRU
   bit          CFG_BRU_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
   bit          CFG_BRU_BRA = 1'b0,  // enable dedicated BRanch Adder
+  // optimizations: ALU
   bit          CFG_ALU_LSA = 1'b0,  // enable dedicated Load/Store Adder
   bit          CFG_ALU_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
   bit          CFG_ALU_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
   bit          CFG_ALU_L4M = 1'b1,  // enable dedicated 4 to 1 Logic    Multiplexer
+  // optimizations: LSU
   logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
   logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_RD  = 1'bx,  // byte  enable for read (TODO)
   logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
   logic        CFG_BEN_ILL = 1'bx,  // byte  enable for illegal instruction
   // FPGA specific optimizations
@@ -498,7 +500,13 @@ r5p_lsu #(
   // data bus
   .AW      (DAW),
   .DW      (DDW),
-  .BW      (DBW)
+  .BW      (DBW),
+  // optimizations
+  .CFG_VLD_ILL (CFG_VLD_ILL),
+  .CFG_WEN_ILL (CFG_WEN_ILL),
+  .CFG_WEN_IDL (CFG_WEN_IDL),
+  .CFG_BEN_IDL (CFG_BEN_IDL),
+  .CFG_BEN_ILL (CFG_BEN_ILL)
 ) lsu (
   // system signals
   .clk     (clk),

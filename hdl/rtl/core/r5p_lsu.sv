@@ -28,7 +28,6 @@ module r5p_lsu
   logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
   logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_RD  = 1'bx,  // byte  enable for read (TODO)
   logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
   logic        CFG_BEN_ILL = 1'bx   // byte  enable for illegal instruction
 )(
