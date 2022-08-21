@@ -102,6 +102,15 @@ localparam logic [2-1:0] PH2  = 2'd2;
 localparam logic [2-1:0] PH3  = 2'd3;
 
 ///////////////////////////////////////////////////////////////////////////////
+// helper functions
+///////////////////////////////////////////////////////////////////////////////
+
+// extend sign to 33 bits
+function logic signed [33-1:0] ext_sgn (logic signed [32-1:0] val);
+  ext_sgn = {val[32-1], val[32-1:0]};
+endfunction
+
+///////////////////////////////////////////////////////////////////////////////
 // local signals
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -138,9 +147,9 @@ logic   signed [32-1:0] dec_imj;  // decoder immediate J (jump)
 
 // ALU adder (used for aritmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
-logic   signed [32-1:0] add_op1;  // ALU adder operand 1
-logic   signed [32-1:0] add_op2;  // ALU adder operand 2
-logic   signed [32-0:0] add_sum;  // ALU adder output
+logic   signed [33-1:0] add_op1;  // ALU adder operand 1
+logic   signed [33-1:0] add_op2;  // ALU adder operand 2
+logic   signed [33-1:0] add_sum;  // ALU adder output
 logic                   add_sgn;  // ALU adder output sign (MSB bit of sum)
 logic                   add_zro;  // ALU adder output zero
 
@@ -264,32 +273,32 @@ begin
         JAL: begin
           // adder: current instruction address
           add_inc = 1'b0;
-          add_op1 = ctl_pcr;
-          add_op2 = dec_imj;
+          add_op1 = ext_sgn(ctl_pcr);
+          add_op2 = ext_sgn(dec_imj);
           // system bus
           bus_adr = add_sum[32-1:0];
         end
         JALR: begin
           // adder: current instruction address
           add_inc = 1'b0;
-          add_op1 = buf_dat;
-          add_op2 = dec_imi;
+          add_op1 = ext_sgn(buf_dat);
+          add_op2 = ext_sgn(dec_imi);
           // system bus
           bus_adr = add_sum[32-1:0];
         end
         BRANCH: begin
           // adder
           add_inc = 1'b0;
-          add_op1 = ctl_pcr;
-          add_op2 = buf_tkn ? dec_imb : 32'd4;
+          add_op1 = ext_sgn(ctl_pcr);
+          add_op2 = ext_sgn(buf_tkn ? dec_imb : 32'd4);
           // system bus
           bus_adr = add_sum[32-1:0];
         end
         default: begin
           // adder: current instruction address
           add_inc = 1'b0;
-          add_op1 = ctl_pcr;
-          add_op2 = 32'd4;
+          add_op1 = ext_sgn(ctl_pcr);
+          add_op2 = ext_sgn(32'd4);
           // system bus: instruction address
           bus_adr = add_sum[32-1:0];
         end
@@ -318,8 +327,8 @@ begin
           ctl_nxt = PH0;
           // adder
           add_inc = 1'b0;
-          add_op1 = ctl_pcr;
-          add_op2 = bus_imu;
+          add_op1 = ext_sgn(ctl_pcr);
+          add_op2 = ext_sgn(bus_imu);
           // GPR rd write
           bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
@@ -331,8 +340,8 @@ begin
           ctl_nxt = PH0;
           // adder
           add_inc = 1'b0;
-          add_op1 = ctl_pcr;
-          add_op2 = 32'd4;
+          add_op1 = ext_sgn(ctl_pcr);
+          add_op2 = ext_sgn(32'd4);
           // GPR rd write
           bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
@@ -388,8 +397,8 @@ begin
           ctl_nxt = PH0;
           // adder
           add_inc = 1'b0;
-          add_op1 = ctl_pcr;
-          add_op2 = 32'd4;
+          add_op1 = ext_sgn(ctl_pcr);
+          add_op2 = ext_sgn(32'd4);
           // GPR rd write
           bus_wen = (dec_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
@@ -405,8 +414,8 @@ begin
             OP: begin
               // arithmetic operations
               add_inc = dec_fn7[5];
-              add_op1 = buf_dat;
-              add_op2 = bus_rdt ^ {32{dec_fn7[5]}};
+              add_op1 = ext_sgn(buf_dat);
+              add_op2 = ext_sgn(bus_rdt ^ {32{dec_fn7[5]}});
               // logic operations
               log_op1 = buf_dat;
               log_op2 = bus_rdt;
@@ -414,8 +423,8 @@ begin
             OP_IMM: begin
               // arithmetic operations
               add_inc = 1'b0;
-              add_op1 = bus_rdt;
-              add_op2 = dec_imi;
+              add_op1 = ext_sgn(bus_rdt);
+              add_op2 = ext_sgn(dec_imi);
               // logic operations
               log_op1 = bus_rdt;
               log_op2 = dec_imi;
@@ -442,8 +451,8 @@ begin
         STORE: begin
           // arithmetic operations
           add_inc = 1'b0;
-          add_op1 = buf_dat;
-          add_op2 = dec_ims;
+          add_op1 = ext_sgn(buf_dat);
+          add_op2 = ext_sgn(dec_ims);
           // GPR rs2 read
           bus_wen = 1'b1;
           bus_adr = add_sum[32-1:0];
@@ -453,8 +462,24 @@ begin
         BRANCH: begin
           // subtraction
           add_inc = 1'b1;
-          add_op1 =  buf_dat;
-          add_op2 = ~bus_rdt;
+          unique case (dec_fn3)
+            BEQ    ,
+            BNE    ,
+            BLT    ,
+            BGE    : begin
+              add_op1 = ext_sgn( buf_dat);
+              add_op2 = ext_sgn(~bus_rdt);
+            end
+            BLTU   ,
+            BGEU   : begin
+              add_op1 = {1'b0,  buf_dat};
+              add_op2 = {1'b1, ~bus_rdt};
+            end
+            default: begin
+              add_op1 = 33'dx;
+              add_op2 = 33'dx;
+            end
+          endcase
           unique case (dec_fn3)
             BEQ    : bru_tkn =  add_zro;
             BNE    : bru_tkn = ~add_zro;
