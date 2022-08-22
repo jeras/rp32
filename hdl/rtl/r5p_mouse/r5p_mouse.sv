@@ -486,11 +486,23 @@ begin
           add_inc = 1'b0;
           add_op1 = ext_sgn(buf_dat);
           add_op2 = ext_sgn(dec_ims);
-          // GPR rs2 read
+          // store
           bus_wen = 1'b1;
-          bus_adr = add_sum[32-1:0];
-          bus_ben = '1;  // TODO
-          bus_wdt = bus_rdt;
+          bus_adr = {add_sum[32-1:2], 2'b00};
+          case (dec_fn3)
+            SB : case (add_sum[1:0])
+              2'b00: begin bus_wdt = {8'hxx         , 8'hxx         , 8'hxx         , bus_rdt[ 7: 0]}; bus_ben = 4'b0001; end
+              2'b01: begin bus_wdt = {8'hxx         , 8'hxx         , bus_rdt[ 7: 0], 8'hxx         }; bus_ben = 4'b0010; end
+              2'b10: begin bus_wdt = {8'hxx         , bus_rdt[ 7: 0], 8'hxx         , 8'hxx         }; bus_ben = 4'b0100; end
+              2'b11: begin bus_wdt = {bus_rdt[ 7: 0], 8'hxx         , 8'hxx         , 8'hxx         }; bus_ben = 4'b1000; end
+            endcase
+            SH : case (add_sum[1])
+              1'b0 : begin bus_wdt = {8'hxx         , 8'hxx         , bus_rdt[15: 8], bus_rdt[ 7: 0]}; bus_ben = 4'b0011; end
+              1'b1 : begin bus_wdt = {bus_rdt[15: 8], bus_rdt[ 7: 0], 8'hxx         , 8'hxx         }; bus_ben = 4'b1100; end
+            endcase
+            SW :     begin bus_wdt = {bus_rdt[31:24], bus_rdt[23:16], bus_rdt[15: 8], bus_rdt[ 7: 0]}; bus_ben = 4'b1111; end
+            default: begin bus_wdt = {8'hxx         , 8'hxx         , 8'hxx         , 8'hxx         }; bus_ben = 4'bxxxx; end
+          endcase
         end
         BRANCH: begin
           // subtraction
@@ -542,7 +554,7 @@ assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
 logic search;
 
-assign search = (dec_opc == OP_IMM) && (dec_fn3 == SLT);
+assign search = (dec_opc == STORE) && (dec_fn3 == SH);
 
 `endif
 
