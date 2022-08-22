@@ -264,6 +264,9 @@ end
 
 always_comb
 begin
+  // control
+  ctl_nxt = 'x;
+  // phases
   unique case (ctl_fsm)
     PH0: begin
       // control
@@ -366,8 +369,6 @@ begin
           bus_wdt = 'x;
         end
         default: begin
-          // control
-          ctl_nxt = 'x;
         end
       endcase
     end
@@ -383,8 +384,6 @@ begin
           bus_wdt = 'x;
         end
         default: begin
-          // control
-          ctl_nxt = 'x;
         end
       endcase
     end
