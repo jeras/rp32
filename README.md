@@ -1,6 +1,17 @@
 # R5P RISC-V processor family
 
-Processors are named after [pet rodents](https://en.wikipedia.org/wiki/Rodents_as_pets) (names everybody can remember).
+Processors are named after [pet rodents](https://en.wikipedia.org/wiki/Rodents_as_pets) so that everybody can easily remember them.
+
+| core            | Mouse | Gerbil | Hamster  | Degu     | Rat | Chinchilla |
+|=================|=======|========|==========|==========|=====|============|
+| status          | WIP   | idea   | planning | v1.0     | | |
+| base            | RV32I | RV32I  | RV32I(E) | RV32I(E) | | |
+| extensions      | -     |        | C        | C        | | |
+| pipeline stages | 1     | 1      | 2        | 2        | | |
+| serial phases   | 2~4   | 3~5    | 2        | 1        | | |
+| ports           | 1 TCB | 1 TCB  | 1 TCB    | 2 TCB    | | |
+| adders          | 1     | 1      | 1        | 2        | | |
+| register file   | -     | -      | 1R1W     | 2R1W     | | |
 
 ## Instruction decoder
 
