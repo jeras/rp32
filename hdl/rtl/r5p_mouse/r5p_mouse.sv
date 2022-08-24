@@ -156,7 +156,14 @@ logic                   add_zro;  // ALU adder output zero
 // ALU logical
 logic          [32-1:0] log_op1;  // ALU logical operand 1
 logic          [32-1:0] log_op2;  // ALU logical operand 2
-logic          [32-1:0] log_out;  // ALU logical output
+logic          [32-1:0] log_val;  // ALU logical output
+
+// ALU barrel shifter
+logic          [32-1:0] shf_op1;  // shift operand 1
+logic           [5-1:0] shf_op2;  // shift operand 2 (shift ammount)
+logic          [32-1:0] shf_tmp;  // bit reversed operand/result
+logic signed   [32-0:0] shf_ext;
+logic          [32-1:0] shf_val /* synthesis keep */;  // result
 
 // register read buffer
 logic          [32-1:0] buf_dat;
@@ -222,11 +229,39 @@ assign add_zro = add_sum[32-1:0] == 32'd0;
 always_comb
 unique case (dec_fn3)
   // bitwise logical operations
-  AND    : log_out = log_op1 & log_op2;
-  OR     : log_out = log_op1 | log_op2;
-  XOR    : log_out = log_op1 ^ log_op2;
-  default: log_out = 32'hxxxxxxxx;
+  AND    : log_val = log_op1 & log_op2;
+  OR     : log_val = log_op1 | log_op2;
+  XOR    : log_val = log_op1 ^ log_op2;
+  default: log_val = 32'hxxxxxxxx;
 endcase
+
+///////////////////////////////////////////////////////////////////////////////
+// barrel shifter
+///////////////////////////////////////////////////////////////////////////////
+
+// reverse bit order
+function automatic logic [32-1:0] bitrev (logic [32-1:0] val);
+  for (int unsigned i=0; i<32; i++)  bitrev[i] = val[32-1-i];
+endfunction
+
+// bit inversion
+always_comb
+unique case (dec_fn3)
+  // barrel shifter
+  SR     : shf_tmp =        shf_op1 ;
+  SL     : shf_tmp = bitrev(shf_op1);
+  default: shf_tmp = 'x;
+endcase
+
+// sign extension to (32+1)
+always_comb
+unique case (dec_fn7[5])
+  1'b1   : shf_ext = {shf_tmp[32-1], shf_tmp};
+  1'b0   : shf_ext = {1'b0         , shf_tmp};
+endcase
+
+// combined barrel shifter for left/right shifting
+assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // FSM
@@ -478,6 +513,9 @@ begin
               // logic operations
               log_op1 = buf_dat;
               log_op2 = bus_rdt;
+              // shift operations
+              shf_op1 = buf_dat;
+              shf_op2 = bus_rdt[5-1:0];
             end
             OP_IMM: begin
               // arithmetic operations
@@ -503,6 +541,9 @@ begin
               // logic operations
               log_op1 = bus_rdt;
               log_op2 = dec_imi;
+              // shift operations
+              shf_op1 = bus_rdt;
+              shf_op2 = dec_imi[5-1:0];
             end
             default: begin
             end
@@ -513,13 +554,12 @@ begin
             SLT ,
             SLTU: bus_wdt = {31'd0, add_sum[32]};
             // bitwise logical operations
-            AND : bus_wdt = log_out;
-            OR  : bus_wdt = log_out;
-            XOR : bus_wdt = log_out;
+            AND : bus_wdt = log_val;
+            OR  : bus_wdt = log_val;
+            XOR : bus_wdt = log_val;
             // barrel shifter
-            // TODO
-//            SR  : bus_wdt =        shf_val ;
-//            SL  : bus_wdt = bitrev(shf_val);
+            SR  : bus_wdt =        shf_val ;
+            SL  : bus_wdt = bitrev(shf_val);
             default: begin
             end
           endcase
@@ -622,4 +662,4 @@ assign search = (dec_opc == LOAD);
 
 `endif
 
-endmodule: r5p_mouse
+endmodule
