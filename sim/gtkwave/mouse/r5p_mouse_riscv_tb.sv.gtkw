@@ -1,23 +1,24 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Sat Aug 20 22:21:12 2022
+[*] Wed Aug 24 18:55:31 2022
 [*]
 [dumpfile] "/home/ijeras/VLSI/rp32/sim/verilator/logs/vlt_dump.fst"
-[dumpfile_mtime] "Sat Aug 20 22:20:02 2022"
-[dumpfile_size] 19579
+[dumpfile_mtime] "Wed Aug 24 18:14:34 2022"
+[dumpfile_size] 47278
 [savefile] "/home/ijeras/VLSI/rp32/sim/gtkwave/mouse/r5p_mouse_riscv_tb.sv.gtkw"
-[timestart] 1943500
-[size] 1848 1016
+[timestart] 1584900
+[size] 1884 2096
 [pos] -1 -1
-*-15.270298 2074300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.307404 1815000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.riscv_tb.
 [treeopen] top.riscv_tb.cpu.
+[treeopen] top.riscv_tb.dec.
 [treeopen] top.riscv_tb.mem.
 [sst_width] 244
 [signals_width] 262
 [sst_expanded] 1
-[sst_vpaned_height] 396
+[sst_vpaned_height] 911
 @28
 top.riscv_tb.cpu.clk
 top.riscv_tb.cpu.rst
@@ -58,56 +59,77 @@ top.riscv_tb.cpu.bus_rdt[31:0]
 ^1 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-op.enum
 top.riscv_tb.cpu.bus_opc[4:0]
 @22
-top.riscv_tb.cpu.bus_imu[31:0]
-top.riscv_tb.cpu.bus_rd[4:0]
-top.riscv_tb.cpu.bus_rs1[4:0]
 top.riscv_tb.cpu.inw_buf[31:0]
 top.riscv_tb.cpu.dec_opc[4:0]
 @2028
 [color] 2
 ^1 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-op.enum
 top.riscv_tb.cpu.dec_opc[4:0]
+@800200
+-GPR
 @22
+top.riscv_tb.cpu.bus_rd[4:0]
+top.riscv_tb.cpu.bus_rs1[4:0]
 top.riscv_tb.cpu.dec_rd[4:0]
 top.riscv_tb.cpu.dec_rs1[4:0]
 top.riscv_tb.cpu.dec_rs2[4:0]
+@2029
+^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-abi.enum
+top.riscv_tb.cpu.bus_rd[4:0]
+^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-abi.enum
+top.riscv_tb.cpu.bus_rs1[4:0]
+^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-abi.enum
+top.riscv_tb.cpu.dec_rd[4:0]
+^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-abi.enum
+top.riscv_tb.cpu.dec_rs1[4:0]
+^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-abi.enum
+top.riscv_tb.cpu.dec_rs2[4:0]
+@1000200
+-GPR
+@800200
+-function
 @28
 top.riscv_tb.cpu.dec_fn3[2:0]
 @2028
-^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-alu.enum
+^3 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-alu.enum
 +{dec_fn3[ALU]} top.riscv_tb.cpu.dec_fn3[2:0]
-^3 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-bru.enum
+^4 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-bru.enum
 +{dec_fn3[BRU]} top.riscv_tb.cpu.dec_fn3[2:0]
-^4 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-ldu.enum
+^5 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-ldu.enum
 +{dec_fn3[LDU]} top.riscv_tb.cpu.dec_fn3[2:0]
-^5 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-stu.enum
+^6 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-stu.enum
 +{dec_fn3[STU]} top.riscv_tb.cpu.dec_fn3[2:0]
 @22
 top.riscv_tb.cpu.dec_fn7[6:0]
+@1000200
+-function
+@800200
+-immediates
+@22
+top.riscv_tb.cpu.bus_imu[31:0]
 top.riscv_tb.cpu.dec_imi[31:0]
 top.riscv_tb.cpu.dec_imb[31:0]
 top.riscv_tb.cpu.dec_ims[31:0]
 top.riscv_tb.cpu.dec_imu[31:0]
 top.riscv_tb.cpu.dec_imj[31:0]
 @1000200
+-immediates
 -decoder
 @800200
 -adder
 @2028
-^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-alu.enum
+^3 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-alu.enum
 top.riscv_tb.cpu.dec_fn3[2:0]
 @28
 top.riscv_tb.cpu.add_inc
 @22
-top.riscv_tb.cpu.add_op1[31:0]
-top.riscv_tb.cpu.add_op2[31:0]
 top.riscv_tb.cpu.add_sum[32:0]
 @1000200
 -adder
 @800200
 -logical
 @2028
-^2 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-alu.enum
+^3 /home/ijeras/VLSI/rp32/sim/gtkwave/riscv-funct3-alu.enum
 top.riscv_tb.cpu.dec_fn3[2:0]
 @22
 top.riscv_tb.cpu.log_op1[31:0]
@@ -115,14 +137,14 @@ top.riscv_tb.cpu.log_op2[31:0]
 top.riscv_tb.cpu.log_out[31:0]
 @1000200
 -logical
-@800201
+@800200
 -branch
-@29
+@28
 top.riscv_tb.cpu.add_sgn
 top.riscv_tb.cpu.add_zro
 top.riscv_tb.cpu.bru_tkn
 top.riscv_tb.cpu.buf_tkn
-@1000201
+@1000200
 -branch
 @28
 top.riscv_tb.cpu.search

@@ -159,7 +159,15 @@ logic          [32-1:0] log_op2;  // ALU logical operand 2
 logic          [32-1:0] log_out;  // ALU logical output
 
 // register read buffer
-logic          [32-1:0] buf_dat;  //
+logic          [32-1:0] buf_dat;
+
+// load address buffer
+logic           [2-1:0] buf_adr;
+// read data multiplexer
+logic          [32-1:0] rdm_dtw;  // word
+logic          [16-1:0] rdm_dth;  // half
+logic          [ 8-1:0] rdm_dtb;  // byte
+logic          [32-1:0] rdm_dat;  // data
 
 // branch taken
 logic                   bru_tkn;
@@ -217,7 +225,7 @@ unique case (dec_fn3)
   AND    : log_out = log_op1 & log_op2;
   OR     : log_out = log_op1 | log_op2;
   XOR    : log_out = log_op1 ^ log_op2;
-  default: log_out = 'x;
+  default: log_out = 32'hxxxxxxxx;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -236,6 +244,10 @@ if (rst) begin
   inw_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
   // data buffer
   buf_dat <= '0;
+  // load address buffer
+  buf_adr <= 2'd0;
+  // branch taken
+  buf_tkn <= 1'b0;
 end else begin
   // bus valid (always valid after reset)
   bus_vld <= 1'b1;
@@ -243,20 +255,26 @@ end else begin
   if (bus_trn) begin
     // control (go to the next state)
     ctl_fsm <= ctl_nxt;
-    // update program counter
+    // FSM dependant buffers
     if (ctl_fsm == PH0) begin
+      // update program counter
       ctl_pcr <= ctl_pcn;
     end
-    // load the buffer when the instruction is available on the bus
     if (ctl_fsm == PH1) begin
+      // load the buffer when the instruction is available on the bus
       inw_buf <= bus_rdt;
     end
     // load the buffer when the data is available on the bus
-    if ((ctl_fsm == PH2) || (ctl_fsm == PH3)) begin
+    if (ctl_fsm == PH2) begin
+      // load the buffer when the data is available on the bus
       buf_dat <= bus_rdt;
+      // load address buffer
+      buf_adr <= add_sum[1:0];
     end
-    // buffer taken bit for branch address calculation
     if (ctl_fsm == PH3) begin
+      // load the buffer when the data is available on the bus
+      buf_dat <= bus_rdt;
+      // branch taken bit for branch address calculation
       buf_tkn <= bru_tkn;
     end
   end
@@ -265,7 +283,7 @@ end
 always_comb
 begin
   // control
-  ctl_nxt = 'x;
+  ctl_nxt = 2'dx;
   // phases
   unique case (ctl_fsm)
     PH0: begin
@@ -309,7 +327,7 @@ begin
       // system bus: instruction fetch
       bus_wen = 1'b0;
       bus_ben = '1;
-      bus_wdt = 'x;
+      bus_wdt = 32'hxxxxxxxx;
       // PC next
       ctl_pcn = bus_adr;
     end
@@ -360,20 +378,46 @@ begin
             OP     : ctl_nxt = PH2;  // GPR rs2 read
             OP_IMM ,
             JALR   : ctl_nxt = PH3;  // execute
-            default: ctl_nxt = 'x;
+            default: ctl_nxt = 2'dx;
           endcase
           // rs1 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
           bus_ben = '1;
-          bus_wdt = 'x;
+          bus_wdt = 32'hxxxxxxxx;
         end
         default: begin
         end
       endcase
     end
     PH2: begin
+      // control
+      ctl_nxt = PH3;
+      // decode
       case (dec_opc)
+        LOAD: begin
+          // arithmetic operations
+          add_inc = 1'b0;
+          add_op1 = ext_sgn(bus_rdt);
+          add_op2 = ext_sgn(dec_imi);
+          // load
+          bus_wen = 1'b0;
+          bus_adr = {add_sum[32-1:2], 2'b00};
+          case (dec_fn3)
+            LB, LBU: case (add_sum[1:0])
+              2'b00: bus_ben = 4'b0001;
+              2'b01: bus_ben = 4'b0010;
+              2'b10: bus_ben = 4'b0100;
+              2'b11: bus_ben = 4'b1000;
+            endcase
+            LH, LHU: case (add_sum[1])
+              1'b0 : bus_ben = 4'b0011;
+              1'b1 : bus_ben = 4'b1100;
+            endcase
+            LW, LWU: bus_ben = 4'b1111;
+            default: bus_ben = 4'bxxxx;
+          endcase
+        end
         BRANCH, STORE, OP: begin
           // control
           ctl_nxt = PH3;
@@ -381,7 +425,7 @@ begin
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
           bus_ben = '1;
-          bus_wdt = 'x;
+          bus_wdt = 32'hxxxxxxxx;
         end
         default: begin
         end
@@ -480,6 +524,27 @@ begin
             end
           endcase
         end
+        LOAD: begin
+          // GPR rd write
+          bus_wen = (dec_rd != 5'd0);
+          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
+          bus_ben = 4'b1111;
+          // read data multiplexer
+          rdm_dtw = bus_rdt[31: 0];
+          rdm_dth = buf_adr[1] ? rdm_dtw[31:16] : rdm_dtw[15: 0];
+          rdm_dtb = buf_adr[0] ? rdm_dth[15: 8] : rdm_dth[ 7: 0];
+          rdm_dat = {rdm_dtw[31:16], rdm_dth[15: 8], rdm_dtb[ 7: 0]};
+          // sign extension, NOTE: this is a good fit for LUT4
+          unique case (dec_fn3)
+            LB     : bus_wdt = {{24{rdm_dat[ 8-1]}}, rdm_dat[ 8-1:0]};
+            LH     : bus_wdt = {{16{rdm_dat[16-1]}}, rdm_dat[16-1:0]};
+            LW     : bus_wdt = {                     rdm_dat[32-1:0]};
+            LBU    : bus_wdt = { 24'd0             , rdm_dat[ 8-1:0]};
+            LHU    : bus_wdt = { 16'd0             , rdm_dat[16-1:0]};
+            LWU    : bus_wdt = {                     rdm_dat[32-1:0]};
+            default: bus_wdt = 32'hxxxxxxxx;
+          endcase
+        end
         STORE: begin
           // arithmetic operations
           add_inc = 1'b0;
@@ -553,7 +618,7 @@ assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
 logic search;
 
-assign search = (dec_opc == STORE) && (dec_fn3 == SH);
+assign search = (dec_opc == LOAD);
 
 `endif
 
