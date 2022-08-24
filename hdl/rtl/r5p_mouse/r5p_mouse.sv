@@ -260,6 +260,8 @@ unique case (dec_fn7[5])
   1'b0   : shf_ext = {1'b0         , shf_tmp};
 endcase
 
+// TODO: implement a layered barrel shifter to reduce logic size
+
 // combined barrel shifter for left/right shifting
 assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
 

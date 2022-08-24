@@ -4,17 +4,17 @@ Processors are named after [pet rodents](https://en.wikipedia.org/wiki/Rodents_a
 
 | core            | Mouse    | Gerbil   | Hamster  | Degu     | Rat | Chinchilla | description |
 |=================|==========|==========|==========|==========|=====|============|=============|
-| status          | WIP      | idea     | planning | v1.0     | TBD | TBD | |
+| status          | v0.1     | idea     | planning | v1.0     | TBD | TBD | |
 | base            | RV32I(E) | RV32I(E) | RV32I(E) | RV32I(E) | TBD | TBD | Either RV32I(E) or RV64I |
 | extensions      | -        |          | C        | C        | | | |
-| pipeline stages | 1        | 2        | 2        | 2        | | | Multiple operatons are done in a single state. |
+| pipeline stages | 1        | 2        | 2        | 2        | | | Multiple operations are done in a single state. |
 | FSM states      | 2~4      | 3~5 TBD  | 2        | 1        | | | |
-| ports           | 1 TCB    | 1 TCB    | 1 TCB    | 2 TCB    | | | |
-| port type       | comb.    | reg.     | reg.     | comb.    | | | Either combinational or registered. |
+| sys. bus ports  | 1 TCB    | 1 TCB    | 1 TCB    | 2 TCB    | | | |
+| output ports    | comb.    | reg.     | reg.     | comb.    | | | Either combinational or registered. |
 | language        | V-2001   | V-2001   | SV-2012  | SW-2012  | | | Either Verilog-2001 or SystemVerilog-2012/2017 |
 | adders          | 1        | 1        | 1        | 2        | | |
 | register file   | -        | -        | 1R1W     | 2R1W     | | | 
-| shifter         |          |          |          | barrel   | | | Either multicycle or barel shifter.
+| shifter         |          |          |          | barrel   | | | Either multicycle or barrel shifter.
 | multiplier      |          |          |          | 1 cyc.   | | | Either multicycle or single cycle.
 | opt. ASIC       |          |          |          |          | | |
 | opt. FPGA LUT4  |          |          |          |          | | |
