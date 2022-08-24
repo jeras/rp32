@@ -3,7 +3,7 @@
 Processors are named after [pet rodents](https://en.wikipedia.org/wiki/Rodents_as_pets) so that everybody can easily remember their names.
 
 | core            | Mouse    | Gerbil   | Hamster  | Degu     | Rat | Chinchilla | description |
-|=================|==========|==========|==========|==========|=====|============|=============|
+|-----------------|----------|----------|----------|----------|-----|------------|-------------|
 | status          | v0.1     | idea     | planning | v1.0     | TBD | TBD | |
 | base            | RV32I(E) | RV32I(E) | RV32I(E) | RV32I(E) | TBD | TBD | Either RV32I(E) or RV64I |
 | extensions      | -        |          | C        | C        | | | |
