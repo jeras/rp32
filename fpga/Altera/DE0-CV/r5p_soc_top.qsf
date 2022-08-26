@@ -514,4 +514,5 @@ set_global_assignment -name QIP_FILE ip/ram32x4096.qip
 set_global_assignment -name QIP_FILE ip/rom32x4096.qip
 set_global_assignment -name QIP_FILE ip/alu_barrel_shifter.qip
 set_global_assignment -name QIP_FILE ip/alu_add_sub.qip
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

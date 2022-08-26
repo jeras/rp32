@@ -90,8 +90,28 @@
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../hdl/rtl/riscv/riscv_isa_pkg.sv">
+      <File Path="$PSRCDIR/sources_1/imports/riscv/riscv_isa_pkg.sv">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../hdl/rtl/riscv/riscv_isa_pkg.sv"/>
+          <Attr Name="ImportTime" Val="1659998687"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/riscv/riscv_priv_pkg.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../hdl/rtl/riscv/riscv_priv_pkg.sv"/>
+          <Attr Name="ImportTime" Val="1659999890"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/riscv/riscv_isa_i_pkg.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../hdl/rtl/riscv/riscv_isa_i_pkg.sv"/>
+          <Attr Name="ImportTime" Val="1660505848"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
