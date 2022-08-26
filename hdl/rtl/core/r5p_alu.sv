@@ -147,8 +147,8 @@ unique case (ctl.opc)
   default:                                                                begin add_inv = 1'bx; add_sgn = 1'bx; end
 endcase
 
-always add_op1 = extend(mux_op1, add_sgn);
-always add_op2 = extend(mux_op2, add_sgn);
+assign add_op1 = extend(mux_op1, add_sgn);
+assign add_op2 = extend(mux_op2, add_sgn);
 
 // adder (summation, subtraction)
 assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
