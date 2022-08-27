@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// R5P: core
+// R5P: Degu core
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,12 +16,12 @@
 // limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 
-  //import r5p_pkg::*;
-  //import riscv_csr_pkg::*;
+module r5p_degu_core
+  import riscv_isa_pkg::*;
   import riscv_isa_i_pkg::*;
   import riscv_isa_c_pkg::*;
-module r5p_core
-  import riscv_isa_pkg::*;
+  //import riscv_csr_pkg::*;
+  //import r5p_pkg::*;
 #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
@@ -546,4 +546,4 @@ r5p_wbu #(
   .dat     (wbu_dat)
 );
 
-endmodule: r5p_core
+endmodule: r5p_degu_core

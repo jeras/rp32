@@ -486,9 +486,12 @@ set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
 
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE AREA"
 set_global_assignment -name SYNTH_GATED_CLOCK_CONVERSION ON
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv
+
 set_global_assignment -name SDC_FILE r5p_soc_top.sdc
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/riscv/riscv_isa_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/riscv/riscv_priv_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/riscv/riscv_isa_i_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_soc_top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/soc/r5p_soc_mem.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/gpio/tcb_gpio.sv
@@ -501,18 +504,17 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/t
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_arb.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_reg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_err.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_wbu.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_pkg.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_lsu.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_gpr.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_core.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_bru.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_alu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_wbu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_lsu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_gpr.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_degu_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_bru.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_alu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE r5p_soc_de0_cv.sv
 set_global_assignment -name QIP_FILE ip/gpr32x32.qip
 set_global_assignment -name QIP_FILE ip/ram32x4096.qip
 set_global_assignment -name QIP_FILE ip/rom32x4096.qip
 set_global_assignment -name QIP_FILE ip/alu_barrel_shifter.qip
 set_global_assignment -name QIP_FILE ip/alu_add_sub.qip
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

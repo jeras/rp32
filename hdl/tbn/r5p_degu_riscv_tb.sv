@@ -94,7 +94,7 @@ tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_core #(
+r5p_degu_core #(
   // RISC-V ISA
   .XLEN (XLEN),
   .ISA  (ISA),

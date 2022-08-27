@@ -24,18 +24,18 @@ RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
 #RTL+=${PATH_RTL}/riscv_csr_adr_map_pkg.sv
-RTL+=${PATH_RTL}/core/r5p_pkg.sv
-RTL+=${PATH_RTL}/core/r5p_bru.sv
-RTL+=${PATH_RTL}/core/r5p_gpr.sv
-RTL+=${PATH_RTL}/core/r5p_alu.sv
-RTL+=${PATH_RTL}/core/r5p_mdu.sv
-#RTL+=${PATH_RTL}/core/r5p_fpu.sv
-RTL+=${PATH_RTL}/core/r5p_lsu.sv
-RTL+=${PATH_RTL}/core/r5p_wbu.sv
-#RTL+=${PATH_RTL}/core/r5p32_csr_pkg.sv
-#RTL+=${PATH_RTL}/core/r5p64_csr_pkg.sv
-#RTL+=${PATH_RTL}/core/r5p_csr.sv
-RTL+=${PATH_RTL}/core/r5p_core.sv
+RTL+=${PATH_RTL}/degu/r5p_pkg.sv
+RTL+=${PATH_RTL}/degu/r5p_bru.sv
+RTL+=${PATH_RTL}/degu/r5p_gpr.sv
+RTL+=${PATH_RTL}/degu/r5p_alu.sv
+RTL+=${PATH_RTL}/degu/r5p_mdu.sv
+#RTL+=${PATH_RTL}/degu/r5p_fpu.sv
+RTL+=${PATH_RTL}/degu/r5p_lsu.sv
+RTL+=${PATH_RTL}/degu/r5p_wbu.sv
+#RTL+=${PATH_RTL}/degu/r5p32_csr_pkg.sv
+#RTL+=${PATH_RTL}/degu/r5p64_csr_pkg.sv
+#RTL+=${PATH_RTL}/degu/r5p_csr.sv
+RTL+=${PATH_RTL}/degu/r5p_degu_core.sv
 
 # TCB files
 PATH_TCB=../../submodules/tcb/hdl
@@ -62,7 +62,7 @@ RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
 TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
 TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
 TSV+=${PATH_TBN}/tcb_mem_2p.sv
-TSV+=${PATH_TBN}/r5p_rat_riscv_tb.sv
+TSV+=${PATH_TBN}/r5p_degu_riscv_tb.sv
 
 # combined HDL sources
 HDL =${RTL}
