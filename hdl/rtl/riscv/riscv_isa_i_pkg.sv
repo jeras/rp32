@@ -52,7 +52,9 @@ typedef enum logic [6:2] {
   BRANCH = 5'b11_000,  JALR     = 5'b11_001,  RESERVED_A = 5'b11_010,  JAL      = 5'b11_011,  SYSTEM = 5'b11_100,  RESERVED_D = 5'b11_101,  CUSTOM_3  = 5'b11_110,  OP_80   = 5'b11_111
 } op32_op62_et;
 
-typedef logic [3-1:0] fn3_t;
+// function fields
+typedef logic [3-1:0] fn3_t;  // funct3
+typedef logic [7-1:0] fn7_t;  // funct7
 
 // base opcode map
 typedef struct packed {
@@ -111,7 +113,7 @@ typedef enum logic [$bits(fn3_t)-1:0] {
 
 // 32-bit instruction format structures
 typedef struct packed {logic [4:0] rs3; logic [1:0] fmt;            logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r4_t;  // Register 4 (floating point)
-typedef struct packed {                 logic [6:0] funct7;         logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
+typedef struct packed {                               fn7_t funct7; logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_r_t ;  // Register
 typedef struct packed {logic [11:00] imm_11_0;                                       logic [4:0] rs1; fn3_t funct3; logic [4:0] rd     ;                       op32_opcode_t opcode;} op32_i_t ;  // Immediate
 typedef struct packed {logic [11:05] imm_11_5;                      logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:0] imm_4_0;                       op32_opcode_t opcode;} op32_s_t ;  // Store
 typedef struct packed {logic [12:12] imm_12; logic [10:5] imm_10_5; logic [4:0] rs2; logic [4:0] rs1; fn3_t funct3; logic [4:1] imm_4_1; logic [11:11] imm_11; op32_opcode_t opcode;} op32_b_t ;  // Branch
@@ -215,7 +217,7 @@ typedef struct packed {
 
 // arithmetic/logic unit
 typedef struct packed {
-  logic      f75;  // used for subtraction and arithmetic/logic shifts
+  fn7_t      fn7;  // funct7 (used for subtraction and arithmetic/logic shifts)
   fn3_alu_et fn3;  // funct3
   imm_i_t    imm;  // immediate
 } ctl_alu_t;
@@ -459,11 +461,11 @@ function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
 
   // arithmetic/logic unit
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.alu.f75 =             op.r.funct7[5];
-  dec32.alu.fn3 = fn3_alu_et'(op.r.funct3)  ;
+  dec32.alu.fn7 =             op.r.funct7 ;
+  dec32.alu.fn3 = fn3_alu_et'(op.r.funct3);
   `else
-  dec32.alu.f75 =             op  .funct7[5];
-  dec32.alu.fn3 = fn3_alu_et'(op  .funct3)  ;
+  dec32.alu.fn7 =             op  .funct7 ;
+  dec32.alu.fn3 = fn3_alu_et'(op  .funct3);
   `endif
   dec32.alu.imm = imm_i_f(op);
 
@@ -497,7 +499,7 @@ endfunction: dec32
 ///////////////////////////////////////////////////////////////////////////////
 
 `ifndef LANGUAGE_UNSUPPORTED_UNION
-function automatic op32_t enc32 (isa_t isa, ctl_t ctl);
+function automatic op32_t   enc32 (isa_t isa, ctl_t ctl);
 `else
 function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
 `endif
@@ -516,7 +518,7 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
 
   // OP
   t_op    .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_op    .funct7    = '{5: ctl.alu.f75, default: IDL};
+  t_op    .funct7    = ctl.alu.fn7;
   t_op    .funct3    = ctl.alu.fn3;
   t_op    .rs2       = ctl.gpr.adr.rs2;
   t_op    .rs1       = ctl.gpr.adr.rs1;
@@ -525,8 +527,8 @@ function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
   // OP_IMM
   t_op_imm.opcode    = '{opc: ctl.opc, c11: 2'b11};
   case (ctl.alu.fn3)
-    SR, SL :  t_op_imm.imm_11_0 = {IDL, ctl.alu.f75, {4{IDL}}, ctl.alu.imm[6-1:0]};
-    default:  t_op_imm.imm_11_0 = ctl.alu.imm;
+    SR, SL :  t_op_imm.imm_11_0 = {ctl.alu.fn7, ctl.alu.imm[5-1:0]};  // TODO: this at least partially depends on XLEN (shift ammount can be 5 or 6 bits)
+    default:  t_op_imm.imm_11_0 =               ctl.alu.imm;
   endcase
   t_op_imm.funct3    = ctl.alu.fn3;
   t_op_imm.rs1       = ctl.gpr.adr.rs1;
