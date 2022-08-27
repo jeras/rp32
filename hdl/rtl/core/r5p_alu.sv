@@ -129,7 +129,7 @@ begin
   unique case (ctl.opc)
     OP     : if (1'b1      )
       unique case (ctl.alu.fn3)
-        ADD    :             begin add_inv = ctl.alu.f75; add_sgn = 1'b1; end
+        ADD    :             begin add_inv = ctl.alu.fn7[5]; add_sgn = 1'b1; end
         SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
         SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
         default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
@@ -225,7 +225,7 @@ endcase
 
 // sign extension to (XLEN+1)
 always_comb
-unique case (ctl.alu.f75)
+unique case (ctl.alu.fn7[5])
   1'b1   : shf_ext = (XLEN+1)'(  $signed(shf_tmp));
   1'b0   : shf_ext = (XLEN+1)'($unsigned(shf_tmp));
 endcase
