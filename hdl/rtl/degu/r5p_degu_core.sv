@@ -16,10 +16,10 @@
 // limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 
-module r5p_degu_core
-  import riscv_isa_pkg::*;
   import riscv_isa_i_pkg::*;
   import riscv_isa_c_pkg::*;
+module r5p_degu_core
+  import riscv_isa_pkg::*;
   //import riscv_csr_pkg::*;
   //import r5p_pkg::*;
 #(

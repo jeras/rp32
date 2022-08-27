@@ -87,7 +87,7 @@ xpm_cdc_async_rst_inst (
 // R5P SoC instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_soc_top #(
+r5p_degu_soc_top #(
   .GW        (GW),
   .CHIP      (CHIP)
 ) soc (

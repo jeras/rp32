@@ -158,7 +158,7 @@ else           {rst, rst_r} <= {rst_r, 1'b0};
 // R5P SoC instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_soc_top #(
+r5p_degu_soc_top #(
   .GW    (GW),
   .CHIP  ("CYCLONE_V")
 ) soc (
