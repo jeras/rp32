@@ -263,13 +263,13 @@ end
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-`ifndef ALTERA_RESERVED_QIS
 generate
+`ifndef ALTERA_RESERVED_QIS
 if (ISA.spec.ext.C) begin: gen_d16
-
+`else
+if (1'b1) begin: gen_d16
+`endif
   ctl_t          idu_dec;
-  (* keep = "true" *)
-  logic [32-1:0] idu_enc;
 
   // 16/32-bit instruction decoder
   always_comb
@@ -279,11 +279,23 @@ if (ISA.spec.ext.C) begin: gen_d16
     default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
 
-  assign idu_enc = enc32(ISA, idu_dec);
-  always_comb
-  begin
-    idu_ctl     = dec32(ISA, idu_enc);
-    idu_ctl.siz = idu_dec.siz;
+  // distributed I/C decoder mux
+//if (CFG_DEC_DIS) begin: gen_dec_dis
+  if (1'b1) begin: gen_dec_dis
+    assign idu_ctl = idu_dec;
+  end: gen_dec_dis
+  // 32-bit I/C decoder mux
+  else begin
+    (* keep = "true" *)
+    logic [32-1:0] idu_enc;
+
+    assign idu_enc = enc32(ISA, idu_dec);
+    always_comb
+    begin
+      idu_ctl     = 'x;
+      idu_ctl     = dec32(ISA, idu_enc);
+      idu_ctl.siz = idu_dec.siz;
+    end
   end
 
 end: gen_d16
@@ -301,30 +313,6 @@ else begin: gen_d32
 
 end: gen_d32
 endgenerate
-`else
-//  // 32-bit instruction decoder
-//  assign idu_ctl = dec32(ISA, ifb_rdt[32-1:0]);
-
-  ctl_t          idu_dec;
-  logic [32-1:0] idu_enc;
-
-  // 16/32-bit instruction decoder
-  always_comb
-  unique case (opsiz(ifb_rdt[16-1:0]))
-    2      : idu_dec = dec16(ISA, ifb_rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_dec = dec32(ISA, ifb_rdt[32-1:0]);  // 32-bit
-    default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
-  endcase
-
-  assign idu_enc = enc32(ISA, idu_dec);
-//  (* keep = "true" *)
-  always_comb
-  begin
-    idu_ctl     = dec32(ISA, idu_enc);
-    idu_ctl.siz = idu_dec.siz;
-  end
-
-`endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
