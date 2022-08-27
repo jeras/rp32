@@ -102,50 +102,63 @@ endfunction: extend
 
 // ALU input multiplexer and signed/unsigned extension
 always_comb
-unique case (ctl.opc)
-  OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2               ; end else begin mux_op1 = 'x; mux_op2 = 'x; end  // R-type (arithmetic/logic)
-  BRANCH : if (CFG_BRANCH) begin mux_op1 = rs1; mux_op2 = rs2               ; end else begin mux_op1 = 'x; mux_op2 = 'x; end  // B-type (branch)
-  JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.jmp.imm); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // I-type (jump)
-  OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.alu.imm); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // I-type (arithmetic/logic)
-  LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.ldu.imm); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // I-type (load)
-  STORE  : if (CFG_STORE ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.stu.imm); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // S-type (store)
-  AUIPC  : if (CFG_AUIPC ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.uiu.imm); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // U-type
-  JAL    : if (CFG_JAL   ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.jmp.jmp); end else begin mux_op1 = 'x; mux_op2 = 'x; end  // J-type (jump)
-  default:                                                                             begin mux_op1 = 'x; mux_op2 = 'x; end
-endcase
+begin
+  // dafault values
+  begin mux_op1 = 'x; mux_op2 = 'x; end
+  // conbinational logic
+  unique case (ctl.opc)
+    OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2               ; end  // R-type (arithmetic/logic)
+    BRANCH : if (CFG_BRANCH) begin mux_op1 = rs1; mux_op2 = rs2               ; end  // B-type (branch)
+    JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.jmp.imm); end  // I-type (jump)
+    OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.alu.imm); end  // I-type (arithmetic/logic)
+    LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.ldu.imm); end  // I-type (load)
+    STORE  : if (CFG_STORE ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.stu.imm); end  // S-type (store)
+    AUIPC  : if (CFG_AUIPC ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.uiu.imm); end  // U-type
+    JAL    : if (CFG_JAL   ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.jmp.jmp); end  // J-type (jump)
+    default:                 begin mux_op1 = 'x ; mux_op2 = 'x                ; end
+  endcase
+end
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
 always_comb
-unique case (ctl.opc)
-  OP     : if (1'b1      ) unique case (ctl.alu.fn3)
-      ADD    :             begin add_inv = ctl.alu.f75; add_sgn = 1'b1; end
-      SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
-      SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
-    endcase
-  OP_IMM : if (1'b1      ) unique case (ctl.alu.fn3)
-      ADD    :             begin add_inv = 1'b0; add_sgn = 1'b1; end
-      SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
-      SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
-    endcase                                                          else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  BRANCH : if (CFG_BRANCH) unique case (ctl.bru.fn3)
-      BEQ    ,
-      BNE    :             begin add_inv = 1'b1; add_sgn = 1'bx; end
-      BLT    ,
-      BGE    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
-      BLTU   ,
-      BGEU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
-      default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
-    endcase                                                          else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  JALR   : if (1'b1      ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  AUIPC  : if (CFG_AUIPC ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_sgn = 1'bx; end else begin add_inv = 1'bx; add_sgn = 1'bx; end
-  default:                                                                begin add_inv = 1'bx; add_sgn = 1'bx; end
-endcase
+begin
+  // dafault values
+  begin add_inv = 1'bx; add_sgn = 1'bx; end
+  // conbinational logic
+  unique case (ctl.opc)
+    OP     : if (1'b1      )
+      unique case (ctl.alu.fn3)
+        ADD    :             begin add_inv = ctl.alu.f75; add_sgn = 1'b1; end
+        SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+        SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
+        default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+      endcase
+    OP_IMM : if (1'b1      )
+      unique case (ctl.alu.fn3)
+        ADD    :             begin add_inv = 1'b0; add_sgn = 1'b1; end
+        SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+        SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
+        default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+      endcase
+    BRANCH : if (CFG_BRANCH)
+      unique case (ctl.bru.fn3)
+        BEQ    ,
+        BNE    :             begin add_inv = 1'b1; add_sgn = 1'bx; end
+        BLT    ,
+        BGE    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+        BLTU   ,
+        BGEU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
+        default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+      endcase
+    JALR   : if (1'b1      ) begin add_inv = 1'b0; add_sgn = 1'bx; end
+    LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_sgn = 1'bx; end
+    STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_sgn = 1'bx; end
+    AUIPC  : if (CFG_AUIPC ) begin add_inv = 1'b0; add_sgn = 1'bx; end
+    JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_sgn = 1'bx; end
+    default:                 begin add_inv = 1'bx; add_sgn = 1'bx; end
+  endcase
+end
 
 assign add_op1 = extend(mux_op1, add_sgn);
 assign add_op2 = extend(mux_op2, add_sgn);
