@@ -1,1 +1,1 @@
-Makefile.r5p
+Makefile.degu
