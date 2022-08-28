@@ -95,11 +95,11 @@ localparam logic [3-1:0] BGEU = 3'b111;  // greater then or equal unsigned
 // local definitions
 ///////////////////////////////////////////////////////////////////////////////
 
-// SFM states (phases)
-localparam logic [2-1:0] PH0  = 2'd0;
-localparam logic [2-1:0] PH1  = 2'd1;
-localparam logic [2-1:0] PH2  = 2'd2;
-localparam logic [2-1:0] PH3  = 2'd3;
+// SFM states
+localparam logic [2-1:0] ST0  = 2'd0;
+localparam logic [2-1:0] ST1  = 2'd1;
+localparam logic [2-1:0] ST2  = 2'd2;
+localparam logic [2-1:0] ST3  = 2'd3;
 
 ///////////////////////////////////////////////////////////////////////////////
 // helper functions
@@ -274,7 +274,7 @@ if (rst) begin
   // bus valid
   bus_vld <= 1'b0;
   // control
-  ctl_fsm <= PH0;
+  ctl_fsm <= ST0;
   // PC
   ctl_pcr <= '0;
   // instruction buffer
@@ -293,22 +293,22 @@ end else begin
     // control (go to the next state)
     ctl_fsm <= ctl_nxt;
     // FSM dependant buffers
-    if (ctl_fsm == PH0) begin
+    if (ctl_fsm == ST0) begin
       // update program counter
       ctl_pcr <= ctl_pcn;
     end
-    if (ctl_fsm == PH1) begin
+    if (ctl_fsm == ST1) begin
       // load the buffer when the instruction is available on the bus
       inw_buf <= bus_rdt;
     end
     // load the buffer when the data is available on the bus
-    if (ctl_fsm == PH2) begin
+    if (ctl_fsm == ST2) begin
       // load the buffer when the data is available on the bus
       buf_dat <= bus_rdt;
       // load address buffer
       buf_adr <= add_sum[1:0];
     end
-    if (ctl_fsm == PH3) begin
+    if (ctl_fsm == ST3) begin
       // load the buffer when the data is available on the bus
       buf_dat <= bus_rdt;
       // branch taken bit for branch address calculation
@@ -346,11 +346,11 @@ begin
   // branch taken
   bru_tkn =  1'bx;
 
-  // phases
+  // states
   unique case (ctl_fsm)
-    PH0: begin
+    ST0: begin
       // control
-      ctl_nxt = PH1;
+      ctl_nxt = ST1;
       // calculate instruction address
       case (dec_opc)
         JAL: begin
@@ -393,12 +393,12 @@ begin
       // PC next
       ctl_pcn = bus_adr;
     end
-    PH1: begin
+    ST1: begin
       // adder, system bus
       case (bus_opc)
         LUI: begin
           // control
-          ctl_nxt = PH0;
+          ctl_nxt = ST0;
           // GPR rd write
           bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
@@ -407,7 +407,7 @@ begin
         end
         AUIPC: begin
           // control
-          ctl_nxt = PH0;
+          ctl_nxt = ST0;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
@@ -420,7 +420,7 @@ begin
         end
         JAL: begin
           // control
-          ctl_nxt = PH0;
+          ctl_nxt = ST0;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
@@ -437,9 +437,9 @@ begin
             BRANCH ,
             LOAD   ,
             STORE  ,
-            OP     : ctl_nxt = PH2;  // GPR rs2 read
+            OP     : ctl_nxt = ST2;  // GPR rs2 read
             OP_IMM ,
-            JALR   : ctl_nxt = PH3;  // execute
+            JALR   : ctl_nxt = ST3;  // execute
             default: ctl_nxt = 2'dx;
           endcase
           // rs1 read
@@ -452,9 +452,9 @@ begin
         end
       endcase
     end
-    PH2: begin
+    ST2: begin
       // control
-      ctl_nxt = PH3;
+      ctl_nxt = ST3;
       // decode
       case (dec_opc)
         LOAD: begin
@@ -482,7 +482,7 @@ begin
         end
         BRANCH, STORE, OP: begin
           // control
-          ctl_nxt = PH3;
+          ctl_nxt = ST3;
           // GPR rs2 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
@@ -493,14 +493,14 @@ begin
         end
       endcase
     end
-    PH3: begin
+    ST3: begin
       // control
-      ctl_nxt = PH0;
+      ctl_nxt = ST0;
       // decode
       case (dec_opc)
         JALR: begin
           // control
-          ctl_nxt = PH0;
+          ctl_nxt = ST0;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
@@ -680,7 +680,7 @@ end
 
 `ifdef TRACE_DEBUG
 // internal state signals
-assign dbg_ifu = ctl_fsm == PH0;
+assign dbg_ifu = ctl_fsm == ST0;
 assign dbg_lsu = ~(dbg_ifu | dbg_gpr);
 assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
 
