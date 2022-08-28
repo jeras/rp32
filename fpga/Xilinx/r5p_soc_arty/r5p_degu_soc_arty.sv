@@ -18,7 +18,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_soc_arty #(
+module r5p_degu_soc_arty #(
   // implementation device (ASIC/FPGA vendor/device)
   string CHIP = "ARTIX_GEN"
 )(
@@ -120,4 +120,4 @@ endgenerate
 // unused IO
 assign ck_io[42-1:GW] = 1'bz;
 
-endmodule: r5p_soc_arty
+endmodule: r5p_degu_soc_arty

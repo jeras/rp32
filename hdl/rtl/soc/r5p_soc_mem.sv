@@ -62,6 +62,7 @@ if (bus.vld) begin
   end
 end
 
+assign bus.err = 1'b0;
 assign bus.rdy = 1'b1;
 
 endmodule: r5p_soc_mem

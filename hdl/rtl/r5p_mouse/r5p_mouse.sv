@@ -320,7 +320,32 @@ end
 always_comb
 begin
   // control
-  ctl_nxt = 2'dx;
+  ctl_nxt =  2'dx;
+  // PC
+  ctl_pcn = 32'hxxxxxxxx;
+  // adder
+  add_inc =  1'bx;
+  add_op1 = 33'dx;
+  add_op2 = 33'dx;
+  // system bus
+  bus_wen =  1'bx;
+  bus_adr = 32'hxxxxxxxx;
+  bus_ben =  4'bxxxx;
+  bus_wdt = 32'hxxxxxxxx;
+  // logic operations
+  log_op1 = 32'hxxxxxxxx;
+  log_op2 = 32'hxxxxxxxx;
+  // shift operations
+  shf_op1 = 32'hxxxxxxxx;
+  shf_op2 =  5'dx;
+  // read data multiplexer
+  rdm_dtw = 32'hxxxxxxxx;
+  rdm_dth = 16'hxxxx;
+  rdm_dtb =  8'hxx;
+  rdm_dat = 32'hxxxxxxxx;
+  // branch taken
+  bru_tkn =  1'bx;
+
   // phases
   unique case (ctl_fsm)
     PH0: begin
@@ -363,7 +388,7 @@ begin
       endcase
       // system bus: instruction fetch
       bus_wen = 1'b0;
-      bus_ben = '1;
+      bus_ben = 4'b1111;
       bus_wdt = 32'hxxxxxxxx;
       // PC next
       ctl_pcn = bus_adr;
@@ -471,6 +496,7 @@ begin
     PH3: begin
       // control
       ctl_nxt = PH0;
+      // decode
       case (dec_opc)
         JALR: begin
           // control
@@ -482,14 +508,14 @@ begin
           // GPR rd write
           bus_wen = (dec_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = '1;
+          bus_ben = 4'b1111;
           bus_wdt = add_sum[32-1:0];
         end
         OP, OP_IMM: begin
           // GPR rd write
           bus_wen = (dec_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = '1;
+          bus_ben = 4'b1111;
           case (dec_opc)
             OP: begin
               // arithmetic operations
@@ -596,18 +622,18 @@ begin
           bus_wen = 1'b1;
           bus_adr = {add_sum[32-1:2], 2'b00};
           case (dec_fn3)
-            SB : case (add_sum[1:0])
-              2'b00: begin bus_wdt = {8'hxx         , 8'hxx         , 8'hxx         , bus_rdt[ 7: 0]}; bus_ben = 4'b0001; end
-              2'b01: begin bus_wdt = {8'hxx         , 8'hxx         , bus_rdt[ 7: 0], 8'hxx         }; bus_ben = 4'b0010; end
-              2'b10: begin bus_wdt = {8'hxx         , bus_rdt[ 7: 0], 8'hxx         , 8'hxx         }; bus_ben = 4'b0100; end
-              2'b11: begin bus_wdt = {bus_rdt[ 7: 0], 8'hxx         , 8'hxx         , 8'hxx         }; bus_ben = 4'b1000; end
+            SB     : case (add_sum[1:0])
+              2'b00: begin bus_wdt[ 7: 0] = bus_rdt[ 7: 0]; bus_ben = 4'b0001; end
+              2'b01: begin bus_wdt[15: 8] = bus_rdt[ 7: 0]; bus_ben = 4'b0010; end
+              2'b10: begin bus_wdt[23:16] = bus_rdt[ 7: 0]; bus_ben = 4'b0100; end
+              2'b11: begin bus_wdt[31:24] = bus_rdt[ 7: 0]; bus_ben = 4'b1000; end
             endcase
-            SH : case (add_sum[1])
-              1'b0 : begin bus_wdt = {8'hxx         , 8'hxx         , bus_rdt[15: 8], bus_rdt[ 7: 0]}; bus_ben = 4'b0011; end
-              1'b1 : begin bus_wdt = {bus_rdt[15: 8], bus_rdt[ 7: 0], 8'hxx         , 8'hxx         }; bus_ben = 4'b1100; end
+            SH     : case (add_sum[1])
+              1'b0 : begin bus_wdt[15: 0] = bus_rdt[15: 0]; bus_ben = 4'b0011; end
+              1'b1 : begin bus_wdt[31:16] = bus_rdt[15: 0]; bus_ben = 4'b1100; end
             endcase
-            SW :     begin bus_wdt = {bus_rdt[31:24], bus_rdt[23:16], bus_rdt[15: 8], bus_rdt[ 7: 0]}; bus_ben = 4'b1111; end
-            default: begin bus_wdt = {8'hxx         , 8'hxx         , 8'hxx         , 8'hxx         }; bus_ben = 4'bxxxx; end
+            SW     : begin bus_wdt[31: 0] = bus_rdt[31: 0]; bus_ben = 4'b1111; end
+            default: begin bus_wdt[31: 0] = 32'hxxxxxxxx  ; bus_ben = 4'bxxxx; end
           endcase
         end
         BRANCH: begin
