@@ -158,17 +158,17 @@ end else begin
     STORE  :
       // write access
       case (ctl.stu.fn3)
-        SB : case (adr[1:0])
+        SB     : case (adr[1:0])
           2'b00: begin lsb_wdt[ 7: 0] = wdt[ 7: 0]; lsb_ben = 4'b0001; end
           2'b01: begin lsb_wdt[15: 8] = wdt[ 7: 0]; lsb_ben = 4'b0010; end
           2'b10: begin lsb_wdt[23:16] = wdt[ 7: 0]; lsb_ben = 4'b0100; end
           2'b11: begin lsb_wdt[31:24] = wdt[ 7: 0]; lsb_ben = 4'b1000; end
         endcase
-        SH : case (adr[1])
+        SH     : case (adr[1])
           1'b0 : begin lsb_wdt[15: 0] = wdt[15: 0]; lsb_ben = 4'b0011; end
           1'b1 : begin lsb_wdt[31:16] = wdt[15: 0]; lsb_ben = 4'b1100; end
         endcase
-        SW :     begin lsb_wdt[31: 0] = wdt[31: 0]; lsb_ben = 4'b1111; end
+        SW     : begin lsb_wdt[31: 0] = wdt[31: 0]; lsb_ben = 4'b1111; end
         default: begin lsb_wdt[31: 0] = 'x        ; lsb_ben = 4'bxxxx; end
       endcase
     default: begin
