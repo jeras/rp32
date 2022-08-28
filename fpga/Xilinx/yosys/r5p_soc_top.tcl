@@ -22,7 +22,7 @@ read_systemverilog \
 ../../../hdl/rtl/degu/r5p_alu.sv \
 ../../../hdl/rtl/degu/r5p_lsu.sv \
 ../../../hdl/rtl/degu/r5p_wbu.sv \
-../../../hdl/rtl/degu/r5p_degu_core.sv \
+../../../hdl/rtl/degu/r5p_degu.sv \
 ../../../submodules/tcb/hdl/rtl/tcb_if.sv \
 ../../../submodules/tcb/hdl/rtl/tcb_err.sv \
 ../../../submodules/tcb/hdl/rtl/tcb_pas.sv \

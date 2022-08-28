@@ -19,7 +19,7 @@ read_systemverilog \
 ../../../hdl/rtl/degu/r5p_alu.sv \
 ../../../hdl/rtl/degu/r5p_lsu.sv \
 ../../../hdl/rtl/degu/r5p_wbu.sv \
-../../../hdl/rtl/degu/r5p_degu_core.sv \
+../../../hdl/rtl/degu/r5p_degu.sv \
 
 synth_xilinx -top r5p_core -edif top.edif
 

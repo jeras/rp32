@@ -35,7 +35,7 @@ RTL+=${PATH_RTL}/degu/r5p_wbu.sv
 #RTL+=${PATH_RTL}/degu/r5p32_csr_pkg.sv
 #RTL+=${PATH_RTL}/degu/r5p64_csr_pkg.sv
 #RTL+=${PATH_RTL}/degu/r5p_csr.sv
-RTL+=${PATH_RTL}/degu/r5p_degu_core.sv
+RTL+=${PATH_RTL}/degu/r5p_degu.sv
 
 # TCB files
 PATH_TCB=../../submodules/tcb/hdl

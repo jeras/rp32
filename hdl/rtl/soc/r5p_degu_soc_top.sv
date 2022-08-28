@@ -107,7 +107,7 @@ tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [3-1:0] (.clk (clk), .rst (rst));
 // R5P Degu core instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_degu_core #(
+r5p_degu #(
   // RISC-V ISA
   .XLEN (XLEN),
   .ISA  (ISA),
