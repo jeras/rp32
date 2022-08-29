@@ -1,5 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // R5P: general purpose registers
+// register file with 2 read ports (asynchronous) and 1 write port
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,7 +17,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_gpr #(
+module r5p_gpr_2r1w #(
   int unsigned AW   = 5,     // can be 4 for RV32E base ISA
   int unsigned XLEN = 32,    // XLEN width
   bit          WBYP = 1'b0,  // write bypass
@@ -195,4 +196,4 @@ else begin: gen_wb_default
 end: gen_wb_default
 endgenerate
 
-endmodule: r5p_gpr
+endmodule: r5p_gpr_2r1w

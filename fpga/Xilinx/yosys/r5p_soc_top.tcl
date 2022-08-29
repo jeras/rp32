@@ -17,8 +17,8 @@ read_systemverilog \
 ../../../hdl/rtl/riscv/riscv_priv_pkg.sv \
 ../../../hdl/rtl/riscv/riscv_isa_i_pkg.sv \
 ../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv \
+../../../hdl/rtl/core/r5p_gpr_2r1w.sv \
 ../../../hdl/rtl/degu/r5p_bru.sv \
-../../../hdl/rtl/degu/r5p_gpr.sv \
 ../../../hdl/rtl/degu/r5p_alu.sv \
 ../../../hdl/rtl/degu/r5p_lsu.sv \
 ../../../hdl/rtl/degu/r5p_wbu.sv \

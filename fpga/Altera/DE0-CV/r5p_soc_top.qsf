@@ -505,13 +505,13 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/t
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_arb.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_reg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../submodules/tcb/hdl/rtl/tcb_err.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/core/r5p_gpr_2r1w.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_wbu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_pkg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_lsu.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_gpr.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_degu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_bru.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_alu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../hdl/rtl/degu/r5p_degu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE r5p_soc_de0_cv.sv
 set_global_assignment -name QIP_FILE ip/gpr32x32.qip
 set_global_assignment -name QIP_FILE ip/ram32x4096.qip

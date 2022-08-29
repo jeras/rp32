@@ -140,7 +140,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/rtl/degu/r5p_gpr.sv">
+      <File Path="$PPRDIR/../../../hdl/rtl/core/r5p_gpr_2r1w.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

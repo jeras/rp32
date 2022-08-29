@@ -1,5 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // R5P: general purpose registers
+// register file with 2 read ports (asynchronous) and 1 write port
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,7 +17,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_gpr #(
+module r5p_gpr_1r1w #(
   int unsigned AW   = 5,     // can be 4 for RV32E base ISA
   int unsigned XLEN = 32,    // XLEN width
   bit          WBYP = 1'b0,  // write bypass
@@ -30,23 +31,19 @@ module r5p_gpr #(
   // configuration/control
   input  logic            en0,  // enable X0 read/write access
   // read/write enable
-  input  logic            e_rs1,
-  input  logic            e_rs2,
+  input  logic            e_rs,
   input  logic            e_rd,
   // read/write address
-  input  logic   [AW-1:0] a_rs1,
-  input  logic   [AW-1:0] a_rs2,
+  input  logic   [AW-1:0] a_rs,
   input  logic   [AW-1:0] a_rd,
   // read/write data
-  output logic [XLEN-1:0] d_rs1,
-  output logic [XLEN-1:0] d_rs2,
+  output logic [XLEN-1:0] d_rs,
   input  logic [XLEN-1:0] d_rd
 );
 
 // local signals
 logic            wen;
-logic [XLEN-1:0] t_rs1;
-logic [XLEN-1:0] t_rs2;
+logic [XLEN-1:0] t_rs;
 
 // special handling of x0
 assign wen = e_rd & (|a_rd | en0);
@@ -83,11 +80,11 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .USE_MEM_INIT            (1),              // DECIMAL
     .USE_MEM_INIT_MMI        (0),              // DECIMAL
     .WRITE_DATA_WIDTH_A      (XLEN)            // DECIMAL
-  ) gpr [2:1] (
+  ) gpr (
     .douta   (),
-    .doutb   ({t_rs2, t_rs1}),
+    .doutb   (t_rs),
     .addra   (a_rd),
-    .addrb   ({a_rs2, a_rs1}),
+    .addrb   (a_rs),
     .clka    (clk),
     .clkb    (clk),
     .dina    (d_rd),
@@ -103,27 +100,27 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
 end: gen_artix_xpm
 else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
 
-  dist_mem_gen_0 gpr [2:1] (
+  dist_mem_gen_0 gpr (
     .clk   (clk),
     .we    (wen),
     .a     (a_rd),
     .d     (d_rd),
-    .dpra  ({a_rs2, a_rs1}),
-    .dpo   ({t_rs2, t_rs1})
+    .dpra  (a_rs),
+    .dpo   (t_rs)
   );
 
 end: gen_artix_gen
 else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
 
-  gpr32x32 gpr [2:1] (
+  gpr32x32 gpr (
     // write access
     .clock      (clk),
     .wren       (wen),
     .wraddress  (a_rd),
     .data       (d_rd),
     // read access
-    .rdaddress  ({a_rs2, a_rs1}),
-    .q          ({t_rs2, t_rs1})
+    .rdaddress  (a_rs),
+    .q          (t_rs)
   );
 
 end: gen_cyclone_v
@@ -138,7 +135,7 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     .pmi_init_file        ("none"),
     .pmi_init_file_format ("binary"),
     .pmi_family           ("ECP5")
-  ) gpr [2:1] (
+  ) gpr (
     // write access
     .WrClock    (clk),
     .WrClockEn  (1'b1),
@@ -149,8 +146,8 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     .RdClock    (clk),
     .RdClockEn  (1'b1),
     .Reset      (1'b0),
-    .RdAddress  ({a_rs2, a_rs1}),
-    .Q          ({t_rs2, t_rs1})
+    .RdAddress  (a_rs),
+    .Q          (t_rs)
   );
 
 end: gen_ecp5
@@ -168,8 +165,7 @@ else begin: gen_default
   if (wen)  gpr[a_rd] <= d_rd;
 
   // read access
-  assign t_rs1 = gpr[a_rs1];
-  assign t_rs2 = gpr[a_rs2];
+  assign t_rs = gpr[a_rs];
 
 end: gen_default
 endgenerate
@@ -183,16 +179,14 @@ endgenerate
 generate
 if (WBYP) begin: gen_wb_bypass
 
-  assign d_rs1 = (wen & (a_rd == a_rs1)) ? d_rd : t_rs1;
-  assign d_rs2 = (wen & (a_rd == a_rs2)) ? d_rd : t_rs2;
+  assign d_rs = (wen & (a_rd == a_rs)) ? d_rd : t_rs;
 
 end: gen_wb_bypass
 else begin: gen_wb_default
 
-  assign d_rs1 = t_rs1;
-  assign d_rs2 = t_rs2;
+  assign d_rs = t_rs;
 
 end: gen_wb_default
 endgenerate
 
-endmodule: r5p_gpr
+endmodule: r5p_gpr_1r1w

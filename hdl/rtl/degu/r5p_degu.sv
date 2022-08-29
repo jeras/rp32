@@ -320,7 +320,7 @@ endgenerate
 
 // TODO: check if access should be blocked during reset
 // general purpose registers
-r5p_gpr #(
+r5p_gpr_2r1w #(
 //  .AW      (ISA.spec.base.E ? 4 : 5),
   .XLEN    (XLEN),
   .WBYP    (1'b1),
