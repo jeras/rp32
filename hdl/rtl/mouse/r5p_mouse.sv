@@ -117,13 +117,15 @@ endfunction
 // TCL system bus
 logic                   bus_trn;  // transfer
 
-// control
+// FSM: finite state machine
 logic           [2-1:0] ctl_fsm;  // FSM state register
 logic           [2-1:0] ctl_nxt;  // FSM state next
+
+// IFU: instruction fetch unit
+// TODO: rename, also in GTKWave savefile
 logic          [32-1:0] ctl_pcr;  // ctl_pcr register
 logic          [32-1:0] ctl_pcn;  // ctl_pcr next
-
-// buffers
+// TODO: rename, also in GTKWave savefile
 logic          [32-1:0] inw_buf;  // instruction word buffer
 
 // decoder
@@ -276,7 +278,7 @@ if (rst) begin
   // control
   ctl_fsm <= ST0;
   // PC
-  ctl_pcr <= '0;
+  ctl_pcr <= 32'h00000000;
   // instruction buffer
   inw_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
   // data buffer
@@ -354,7 +356,7 @@ begin
       // calculate instruction address
       case (dec_opc)
         JAL: begin
-          // adder: current instruction address
+          // adder: current instruction address + J immediate
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
           add_op2 = ext_sgn(dec_imj);
@@ -362,7 +364,7 @@ begin
           bus_adr = add_sum[32-1:0];
         end
         JALR: begin
-          // adder: current instruction address
+          // adder: GPR rs1 + I immediate
           add_inc = 1'b0;
           add_op1 = ext_sgn(buf_dat);
           add_op2 = ext_sgn(dec_imi);
@@ -370,7 +372,7 @@ begin
           bus_adr = add_sum[32-1:0];
         end
         BRANCH: begin
-          // adder
+          // adder: current instruction address + B immediate
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
           add_op2 = ext_sgn(buf_tkn ? dec_imb : 32'd4);
