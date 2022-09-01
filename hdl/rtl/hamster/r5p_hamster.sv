@@ -24,7 +24,6 @@ module r5p_hamster
   //import r5p_pkg::*;
 #(
   // RISC-V ISA
-  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
 `ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
@@ -39,25 +38,11 @@ module r5p_hamster
 `endif
   // system bus
   int unsigned AW = 32,    // address width
-  int unsigned DW = XLEN,  // data    width
+  int unsigned DW = 32,    // data    width
   int unsigned BW = DW/8,  // byte en width
   // privilege implementation details
-  logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
+  logic [32-1:0] PC0 = 'h0000_0000,   // reset vector
   // optimizations: timing versus area compromises
-  // optimizations: BRU
-  bit          CFG_BRU_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
-  bit          CFG_BRU_BRA = 1'b0,  // enable dedicated BRanch Adder
-  // optimizations: ALU
-  bit          CFG_ALU_LSA = 1'b0,  // enable dedicated Load/Store Adder
-  bit          CFG_ALU_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
-  bit          CFG_ALU_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
-  bit          CFG_ALU_L4M = 1'b1,  // enable dedicated 4 to 1 Logic    Multiplexer
-  // optimizations: LSU
-  logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
-  logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
-  logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_ILL = 1'bx,  // byte  enable for illegal instruction
   // FPGA specific optimizations
   int unsigned CFG_SHF     = 1,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
   // implementation device (ASIC/FPGA vendor/device)
@@ -141,27 +126,6 @@ logic          [32-1:0] gpr_wdt;  // write data
 logic          [32-1:0] gpr_rdt;  // read  data
 logic          [32-1:0] gpr_rbf;  // read  buffer
 
-
-
-// decoder
-logic           [5-1:0] bus_opc;  // OP code (from bus read data)
-logic           [5-1:0] dec_opc;  // OP code (from buffer)
-logic           [5-1:0] bus_rd ;  // GPR `rd`  address (from bus read data)
-logic           [5-1:0] dec_rd ;  // GPR `rd`  address (from buffer)
-logic           [5-1:0] bus_rs1;  // GPR `rs1` address (from bus read data)
-logic           [5-1:0] dec_rs1;  // GPR `rs1` address (from buffer)
-logic           [5-1:0] dec_rs2;  // GPR `rs2` address
-logic           [3-1:0] dec_fn3;  // funct3
-logic           [7-1:0] dec_fn7;  // funct7
-
-// immediates
-logic   signed [32-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
-logic   signed [32-1:0] dec_imb;  // decoder immediate B (branch)
-logic   signed [32-1:0] dec_ims;  // decoder immediate S (store)
-logic   signed [32-1:0] bus_imu;  // decoder immediate U (upper)
-logic   signed [32-1:0] dec_imu;  // decoder immediate U (upper)
-logic   signed [32-1:0] dec_imj;  // decoder immediate J (jump)
-
 // ALU adder (used for aritmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
 logic   signed [33-1:0] add_op1;  // ALU adder operand 1
@@ -201,27 +165,6 @@ logic                   buf_tkn;
 logic                   stu_wen;
 logic          [ 5-1:0] stu_wad;
 
-
-
-
-// ALU
-logic [XLEN-1:0] alu_dat;  // register destination
-logic [XLEN-0:0] alu_sum;  // summation result including overflow bit
-
-
-
-// load/sore unit temporary signals
-logic [XLEN-1:0] lsu_adr;  // address
-logic [XLEN-1:0] lsu_wdt;  // write data
-logic [XLEN-1:0] lsu_rdt;  // read data
-logic            lsu_mal;  // MisALigned
-logic            lsu_rdy;  // ready
-
-// write back unit (GPR destination register access)
-logic            wbu_wen;  // write enable
-logic    [5-1:0] wbu_adr;  // address
-logic [XLEN-1:0] wbu_dat;  // data
-
 ///////////////////////////////////////////////////////////////////////////////
 // TCL system bus
 ///////////////////////////////////////////////////////////////////////////////
@@ -254,7 +197,7 @@ end: gen_d16
 else begin: gen_d32
 
   // 32-bit instruction decoder
-  assign idu_buf = dec32(ISA, bus_rdt[32-1:0]);
+  assign idu_rdt = dec32(ISA, bus_rdt[32-1:0]);
 
   // next stage instruction is same as fetched
   assign ifu_mux = bus_rdt;
@@ -273,7 +216,7 @@ assign idu_buf = dec32(ISA, ifu_buf[32-1:0]);
 // general purpose registers
 r5p_gpr_1r1w #(
 //  .AW      (ISA.spec.base.E ? 4 : 5),
-  .XLEN    (XLEN),
+  .XLEN    (32),
   .WBYP    (1'b1),
   .CHIP    (CHIP)
 ) gpr (
@@ -309,7 +252,7 @@ assign add_zro = add_sum[32-1:0] == 32'd0;
 ///////////////////////////////////////////////////////////////////////////////
 
 always_comb
-unique case (dec_fn3)
+unique case (idu_buf.alu.fn3)
   // bitwise logical operations
   AND    : log_val = log_op1 & log_op2;
   OR     : log_val = log_op1 | log_op2;
@@ -328,7 +271,7 @@ endfunction
 
 // bit inversion
 always_comb
-unique case (dec_fn3)
+unique case (idu_buf.alu.fn3)
   // barrel shifter
   SR     : shf_tmp =        shf_op1 ;
   SL     : shf_tmp = bitrev(shf_op1);
@@ -337,7 +280,7 @@ endcase
 
 // sign extension to (32+1)
 always_comb
-unique case (dec_fn7[5])
+unique case (idu_buf.alu.fn7[5])
   1'b1   : shf_ext = {shf_tmp[32-1], shf_tmp};
   1'b0   : shf_ext = {1'b0         , shf_tmp};
 endcase
@@ -384,6 +327,8 @@ end else begin
       SIF: begin
         // FSM control (go to the next state)
         ctl_fsm <= SLS;
+        // PC: program counter
+        ifu_pcr <= bus_adr;
         // load/store
         case (idu_buf.opc)
           LOAD   : begin
@@ -409,13 +354,12 @@ end else begin
       SLS: begin
         // FSM control (go to the next state)
         ctl_fsm <= SIF;
-        // PC: program counter
-        ifu_pcr <= ifu_pcn;
         // instruction buffer
         ifu_buf <= ifu_mux;
         // next instruction fetch
         bus_vld <= 1'b1;
         bus_wen <= 1'b0;
+        bus_adr <= add_sum[32-1:0];
         bus_ben <= 4'b1111;
         bus_wdt <= 32'hxxxxxxxx;
         // GPR rs1 buffer
@@ -439,18 +383,13 @@ end
 always_comb
 begin
   // control
-  ctl_nxt =  2'dx;
+  ctl_nxt =  'x;
   // PC
   ifu_pcn = 32'hxxxxxxxx;
   // adder
   add_inc =  1'bx;
   add_op1 = 33'dx;
   add_op2 = 33'dx;
-  // system bus
-  bus_wen =  1'bx;
-  bus_adr = 32'hxxxxxxxx;
-  bus_ben =  4'bxxxx;
-  bus_wdt = 32'hxxxxxxxx;
   // logic operations
   log_op1 = 32'hxxxxxxxx;
   log_op2 = 32'hxxxxxxxx;
@@ -475,33 +414,38 @@ begin
           case (idu_rdt.opc)
             JAL    : begin
               add_inc = 1'b0;
-              add_op1 = ext_sgn(ifu_pcr);
-              add_op2 = ext_sgn(idu_rdt.jmp.jmp);
+              add_op1 = 33'(ifu_pcr);
+              add_op2 = 33'(idu_rdt.jmp.jmp);
             end
             // TODO: JALR can be 1 or 2 stages long
             // 1 - better CPI
             // 
             JALR   : begin
               add_inc = 1'b0;
-              add_op1 = ext_sgn(ifu_pcr);
-              add_op2 = ext_sgn(idu_rdt.jmp.jmp);
+              add_op1 = 33'(ifu_pcr);
+              add_op2 = 33'(idu_rdt.jmp.imm);
             end
             BRANCH : begin
               // static branch prediction
-              if (idu_buf.bru.imm[31]) begin
+              if (idu_buf.bru.imm[12]) begin
                 // backward branches are predicted taken
                 add_inc = 1'b0;
-                add_op1 = ext_sgn(ifu_pcr);
-                add_op2 = ext_sgn(idu_rdt.bru.imm);
+                add_op1 = 33'(ifu_pcr);
+                add_op2 = 33'(idu_rdt.bru.imm);
               end else begin
                 // forward branches are predicted not taken
                 add_inc = 1'b0;
-                add_op1 = ext_sgn(ifu_pcr);
+                add_op1 = 33'(ifu_pcr);
                 // TODO: support for C extension?
-                add_op2 = 32'd4;
+                add_op2 = 33'd4;
               end
             end
             default: begin
+                // increment instruction address
+                add_inc = 1'b0;
+                add_op1 = 33'(ifu_pcr);
+                // TODO: support for C extension?
+                add_op2 = 33'd4;
             end
           endcase
     end
@@ -519,7 +463,7 @@ assign dbg_lsu = ctl_fsm == SLS;
 
 logic search;
 
-assign search = (dec_opc == LOAD);
+assign search = (idu_rdt.opc == LOAD);
 
 `endif
 
