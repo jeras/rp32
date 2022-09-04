@@ -81,7 +81,7 @@ casez (op)
 32'b????_????_????_????_?001_????_?010_0011: disasm32 = $sformatf("sh     %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rs2, abi), t.stu.imm, gpr_n(t.gpr.adr.rs1, abi));
 32'b????_????_????_????_?010_????_?010_0011: disasm32 = $sformatf("sw     %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rs2, abi), t.stu.imm, gpr_n(t.gpr.adr.rs1, abi));
 32'b????_????_????_????_?011_????_?010_0011: disasm32 = $sformatf("sd     %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rs2, abi), t.stu.imm, gpr_n(t.gpr.adr.rs1, abi));
-32'b????_????_????_????_?000_????_?001_0011: disasm32 = $sformatf("addi   %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.alu.imm, gpr_n(t.gpr.adr.rs1, abi));
+32'b????_????_????_????_?000_????_?001_0011: disasm32 = $sformatf("addi   %s, %s, 0x%3x" , gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
 32'b????_????_????_????_?010_????_?001_0011: disasm32 = $sformatf("slti   %s, %s, 0x%3x" , gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
 32'b????_????_????_????_?011_????_?001_0011: disasm32 = $sformatf("sltiu  %s, %s, 0x%3x" , gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
 32'b????_????_????_????_?100_????_?001_0011: disasm32 = $sformatf("xori   %s, %s, 0x%3x" , gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
@@ -186,19 +186,19 @@ if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   //  fedc_ba98_7654_3210
   16'b0000_0000_0000_0000: disasm16 = $sformatf("ILLEGAL");
   16'b0000_0000_000?_??00: disasm16 = $sformatf("ILLEGAL    RES");  // C.ADDI4SP, nzuimm=0, RES
-  16'b000?_????_????_??00: disasm16 = $sformatf("c.addi4spn %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.alu.imm, gpr_n(t.gpr.adr.rs1, abi));
+  16'b000?_????_????_??00: disasm16 = $sformatf("c.addi4spn %s, %s, 0x%3x" , gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
   16'b010?_????_????_??00: disasm16 = $sformatf("c.lw       %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.ldu.imm, gpr_n(t.gpr.adr.rs1, abi));
   16'b100?_????_????_??00: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
   16'b110?_????_????_??00: disasm16 = $sformatf("c.sw       %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rs2, abi), t.stu.imm, gpr_n(t.gpr.adr.rs1, abi));
   16'b0000_0000_0000_0001: disasm16 = $sformatf("c.nop");
   16'b000?_0000_0???_??01: disasm16 = $sformatf("c.nop      HINT");  // C.NOP, nzimm!=0, HINT
   16'b0000_????_?000_0001: disasm16 = $sformatf("c.addi     HINT");  // C.ADDI, nzimm=0, HINT
-  16'b000?_????_????_??01: disasm16 = $sformatf("c.addi     %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.alu.imm, gpr_n(t.gpr.adr.rs1, abi));
+  16'b000?_????_????_??01: disasm16 = $sformatf("c.addi     %s, %s, 0x%3x", gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
   16'b001?_????_????_??01: disasm16 = $sformatf("ILLEGAL");  // C.JAL, only RV32, NOTE: there are no restriction on immediate value
   16'b010?_0000_0???_??01: disasm16 = $sformatf("c.li       HINT");  // C.LI, rd=0, HINT
   16'b010?_????_????_??01: disasm16 = $sformatf("c.li       %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.alu.imm, gpr_n(t.gpr.adr.rs1, abi));
   16'b0110_0001_0000_0001: disasm16 = $sformatf("ILLEGAL    RES");  // C.ADDI16SP, nzimm=0, RES
-  16'b011?_0001_0???_??01: disasm16 = $sformatf("c.addi16sp %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.alu.imm, gpr_n(t.gpr.adr.rs1, abi));
+  16'b011?_0001_0???_??01: disasm16 = $sformatf("c.addi16sp %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
   16'b0110_????_?000_0001: disasm16 = $sformatf("ILLEGAL    RES");  // C.LUI, nzimm=0, RES
   16'b011?_0000_0???_??01: disasm16 = $sformatf("c.lui      HINT");
   16'b011?_????_????_??01: disasm16 = $sformatf("c.lui      %s, 0x%8x"     , gpr_n(t.gpr.adr.rd , abi), t.uiu.imm);
