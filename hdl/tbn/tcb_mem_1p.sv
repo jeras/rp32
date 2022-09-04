@@ -107,6 +107,8 @@ if (bus.vld) begin
       else                            bus.rdt[8*b+:8] <= 'x;
     end
   end
+end else begin
+  bus.rdt <= 'x;
 end
 
 // trivial ready
