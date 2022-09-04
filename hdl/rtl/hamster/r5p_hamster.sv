@@ -495,6 +495,12 @@ begin
             default: begin
             end
           endcase
+          // logic operations
+          log_op1 = gpr_rbf;
+          log_op2 = gpr_rdt;
+          // shift operations
+          shf_op1 = gpr_rbf;
+          shf_op2 = gpr_rdt[5-1:0];
         end
         OP_IMM : begin
           // arithmetic operations
@@ -517,6 +523,12 @@ begin
             default: begin
             end
           endcase
+          // logic operations
+          log_op1 = gpr_rbf;
+          log_op2 = 32'(idu_buf.alu.imm);
+          // shift operations
+          shf_op1 = gpr_rbf;
+          shf_op2 = idu_buf.alu.imm[5-1:0];
         end
         default: begin
         end
