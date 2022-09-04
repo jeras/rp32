@@ -233,35 +233,6 @@ end
 
 `ifdef TRACE_DEBUG
 
-initial begin
-  $display("==========================================");
-  $display("ISA                  : %p", ISA                  );
-  $display("ISA.spec             : %b", ISA.spec             );
-  $display("ISA.spec.base        : %b", ISA.spec.base        );
-  $display("ISA.spec.ext         : %b", ISA.spec.ext         );
-  $display("ISA.spec.ext.M       : %b", ISA.spec.ext.M       );
-  $display("ISA.spec.ext.A       : %b", ISA.spec.ext.A       );
-  $display("ISA.spec.ext.F       : %b", ISA.spec.ext.F       );
-  $display("ISA.spec.ext.D       : %b", ISA.spec.ext.D       );
-  $display("ISA.spec.ext.Zicsr   : %b", ISA.spec.ext.Zicsr   );
-  $display("ISA.spec.ext.Zifencei: %b", ISA.spec.ext.Zifencei);
-  $display("ISA.spec.ext.Q       : %b", ISA.spec.ext.Q       );
-  $display("ISA.spec.ext.L       : %b", ISA.spec.ext.L       );
-  $display("ISA.spec.ext.C       : %b", ISA.spec.ext.C       );
-  $display("ISA.spec.ext.B       : %b", ISA.spec.ext.B       );
-  $display("ISA.spec.ext.J       : %b", ISA.spec.ext.J       );
-  $display("ISA.spec.ext.T       : %b", ISA.spec.ext.T       );
-  $display("ISA.spec.ext.P       : %b", ISA.spec.ext.P       );
-  $display("ISA.spec.ext.V       : %b", ISA.spec.ext.V       );
-  $display("ISA.spec.ext.N       : %b", ISA.spec.ext.N       );
-  $display("ISA.spec.ext.H       : %b", ISA.spec.ext.H       );
-  $display("ISA.spec.ext.S       : %b", ISA.spec.ext.S       );
-  $display("ISA.spec.ext.Zam     : %b", ISA.spec.ext.Zam     );
-  $display("ISA.spec.ext.Ztso    : %b", ISA.spec.ext.Ztso    );
-  $display("ISA.priv             : %b", ISA.priv             );
-  $display("==========================================");
-end
-
 localparam int unsigned AW = 5;
 
 logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
@@ -283,7 +254,6 @@ begin
     end
   end
 end
-// TODO: reorder printouts so they are in the same order as instructions.
 
 // instruction fetch monitor
 tcb_mon_riscv #(
