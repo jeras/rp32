@@ -98,6 +98,7 @@ endfunction
 logic                   bus_trn;  // transfer
 
 // FSM: finite state machine
+logic                   ctl_run;  // run status becomes active after reset
 fsm_et                  ctl_fsm;  // FSM state register
 fsm_et                  ctl_nxt;  // FSM state next
 
@@ -146,6 +147,9 @@ logic          [32-1:0] shf_tmp;  // bit reversed operand/result
 logic signed   [32-0:0] shf_ext;
 logic          [32-1:0] shf_val /* synthesis keep */;  // result
 
+// ALU result output
+logic          [32-1:0] alu_out;
+
 // register read buffer
 logic          [32-1:0] buf_dat;
 
@@ -160,10 +164,6 @@ logic          [32-1:0] rdm_dat;  // data
 // branch taken
 logic                   bru_tkn;
 logic                   buf_tkn;
-
-// store unit GPR write (the last stage)
-logic                   stu_wen;
-logic          [ 5-1:0] stu_wad;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TCL system bus
@@ -226,14 +226,14 @@ r5p_gpr_1r1w #(
   // configuration/control
   .en0     (1'b0),
   // read/write enable
-  .e_rs    (gpr_ren),
   .e_rd    (gpr_wen),
+  .e_rs    (gpr_ren),
   // read/write address
-  .a_rs    (gpr_wad),
-  .a_rd    (gpr_rad),
+  .a_rd    (gpr_wad),
+  .a_rs    (gpr_rad),
   // read/write data
-  .d_rs    (gpr_wdt),
-  .d_rd    (gpr_rdt)
+  .d_rd    (gpr_wdt),
+  .d_rs    (gpr_rdt)
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -297,30 +297,33 @@ assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
 // sequential logic
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
+  // control
+  ctl_run <= 1'b0;
+  ctl_fsm <= SIF;
   // system bus
   bus_vld <= 1'b0;
   bus_wen <= 1'b0;
   bus_ben <= '0;
   bus_wdt <= 'x;
-  // control
-  ctl_fsm <= SLS;
   // PC
   ifu_pcr <= '0;
   // instruction buffer
   // TODO: jump again or some kind of NOP?
-  ifu_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
+  //ifu_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
+  //typedef struct packed {logic [11:00] imm_11_0; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd; op32_opcode_t opcode;} op32_i_t ;  // Immediate
+  ifu_buf <= op32_i_t'{imm_11_0: 12'd0, rs1: 5'd0, funct3: ADD, rd: 5'd0, opcode: '{opc: OP_IMM, c11: 2'b11}};  // addi x0, x0, 0
   // data buffer
   buf_dat <= '0;
   // load address buffer
   buf_adr <= 2'd0;
   // branch taken
   buf_tkn <= 1'b0;
-  // store unit GPR write (the last stage)
-  stu_wen <= 1'b0;
-  stu_wad <= '0;
 end else begin
+  // RESET transition
+  ctl_run <= 1'b1;
+  bus_vld <= 1'b1;
   // progress into the next state
-  if (bus_trn | ~bus_vld) begin
+  if (ctl_run & (bus_trn | ~bus_vld)) begin
     // system bus
     unique case (ctl_fsm)
       // instruction fetch state
@@ -328,25 +331,50 @@ end else begin
         // FSM control (go to the next state)
         ctl_fsm <= SLS;
         // PC: program counter
+        // TODO: PC is only reloaded if the prediction is correct
         ifu_pcr <= bus_adr;
         // load/store
         case (idu_buf.opc)
+          LUI    : begin
+            // TCB
+            bus_vld <= 1'b0;
+            // GPR
+            gpr_wen <= 1'b1;
+            gpr_wdt <= idu_buf.uiu;
+          end
           LOAD   : begin
+            // TCB
             bus_vld <= 1'b1;
             bus_wen <= 1'b0;
             bus_adr <= add_sum[32-1:0];
             bus_ben <= 4'b1111;
             bus_wdt <= 32'hxxxxxxxx;
+            // GPR
+            gpr_wen <= 1'b0;
           end
           STORE  : begin
+            // TCB
             bus_vld <= 1'b1;
             bus_wen <= 1'b1;
             bus_adr <= add_sum[32-1:0];
             bus_ben <= 4'b1111;
             bus_wdt <= 32'hxxxxxxxx;
+            // GPR
+            gpr_wen <= 1'b0;
+          end
+          OP     ,
+          OP_IMM : begin
+            // TCB
+            bus_vld <= 1'b0;
+            // GPR
+            gpr_wen <= 1'b1;
+            gpr_wdt <= alu_out;
           end
           default: begin
-            bus_vld <= 1'b1;
+            // TCB
+            bus_vld <= 1'b0;
+            // GPR
+            gpr_wen <= 1'b0;
           end
         endcase
       end
@@ -364,14 +392,14 @@ end else begin
         bus_wdt <= 32'hxxxxxxxx;
         // GPR rs1 buffer
         gpr_rbf <= gpr_rdt;
+        // decoder
         case (idu_buf.opc)
-          STORE  : begin
-            // store unit GPR write (the last stage)
-            stu_wen <= 1'b1;
-            stu_wad <= idu_buf.gpr.adr.rd ;
+          LOAD  : begin
+            // load unit GPR write (the last stage)
+            gpr_wen <= 1'b1;
           end
           default: begin
-            stu_wen <= 1'b0;
+            gpr_wen <= 1'b0;
           end
         endcase
       end
@@ -408,46 +436,122 @@ begin
   unique case (ctl_fsm)
     // instruction fetch state
     SIF: begin
+      // GPR (write rd)
+      gpr_wad = idu_buf.gpr.adr.rd;
+      // GPR (read rs1)
+      gpr_ren = 1'b1;
+      gpr_rad = idu_buf.gpr.adr.rs2;
+      // decode operation code
+      case (idu_rdt.opc)
+        OP     : begin
+          // arithmetic operations
+          case (idu_buf.alu.fn3)
+            ADD    : begin
+              add_inc = idu_buf.alu.fn7[5];
+              add_op1 = ext_sgn(gpr_rbf);
+              add_op2 = ext_sgn(gpr_rdt ^ {32{idu_buf.alu.fn7[5]}});
+            end
+            SLT    : begin
+              add_inc = 1'b1;
+              add_op1 = ext_sgn( gpr_rbf);
+              add_op2 = ext_sgn(~gpr_rdt);
+            end
+            SLTU   : begin
+              add_inc = 1'b1;
+              add_op1 = {1'b0,  gpr_rbf};
+              add_op2 = {1'b1, ~gpr_rdt};
+            end
+            default: begin
+            end
+          endcase
+        end
+        OP_IMM : begin
+          // arithmetic operations
+          case (idu_buf.alu.fn3)
+            ADD    : begin
+              add_inc = 1'b0;
+              add_op1 = ext_sgn(gpr_rbf);
+              add_op2 = ext_sgn(32'(idu_buf.alu.imm));
+            end
+            SLT    : begin
+              add_inc = 1'b1;
+              add_op1 = ext_sgn( gpr_rbf);
+              add_op2 = ext_sgn(~32'(idu_buf.alu.imm));
+            end
+            SLTU   : begin
+              add_inc = 1'b1;
+              add_op1 = {1'b0,  gpr_rbf};
+              add_op2 = {1'b1, ~32'(idu_buf.alu.imm)};
+            end
+            default: begin
+            end
+          endcase
+        end
+        default: begin
+        end
+      endcase
+      // ALU output
+      case (idu_buf.alu.fn3)
+        // adder based inw_bufuctions
+        ADD : alu_out = add_sum[32-1:0];
+        SLT ,
+        SLTU: alu_out = {31'd0, add_sum[32]};
+        // bitwise logical operations
+        AND : alu_out = log_val;
+        OR  : alu_out = log_val;
+        XOR : alu_out = log_val;
+        // barrel shifter
+        SR  : alu_out =        shf_val ;
+        SL  : alu_out = bitrev(shf_val);
+        default: begin
+        end
+      endcase
     end
     // load/store state
     SLS: begin
-          case (idu_rdt.opc)
-            JAL    : begin
-              add_inc = 1'b0;
-              add_op1 = 33'(ifu_pcr);
-              add_op2 = 33'(idu_rdt.jmp.jmp);
-            end
-            // TODO: JALR can be 1 or 2 stages long
-            // 1 - better CPI
-            // 
-            JALR   : begin
-              add_inc = 1'b0;
-              add_op1 = 33'(ifu_pcr);
-              add_op2 = 33'(idu_rdt.jmp.imm);
-            end
-            BRANCH : begin
-              // static branch prediction
-              if (idu_buf.bru.imm[12]) begin
-                // backward branches are predicted taken
-                add_inc = 1'b0;
-                add_op1 = 33'(ifu_pcr);
-                add_op2 = 33'(idu_rdt.bru.imm);
-              end else begin
-                // forward branches are predicted not taken
-                add_inc = 1'b0;
-                add_op1 = 33'(ifu_pcr);
-                // TODO: support for C extension?
-                add_op2 = 33'd4;
-              end
-            end
-            default: begin
-                // increment instruction address
-                add_inc = 1'b0;
-                add_op1 = 33'(ifu_pcr);
-                // TODO: support for C extension?
-                add_op2 = 33'd4;
-            end
-          endcase
+      // GPR (write rd)
+      gpr_wad = idu_buf.gpr.adr.rd;
+      // GPR (read rs1)
+      gpr_ren = 1'b1;
+      gpr_rad = idu_rdt.gpr.adr.rs1;
+      // decode operation code
+      case (idu_rdt.opc)
+        JAL    : begin
+          add_inc = 1'b0;
+          add_op1 = 33'(ifu_pcr);
+          add_op2 = 33'(idu_rdt.jmp.jmp);
+        end
+        // TODO: JALR can be 1 or 2 stages long
+        // 1 - better CPI
+        // 
+        JALR   : begin
+          add_inc = 1'b0;
+          add_op1 = 33'(ifu_pcr);
+          add_op2 = 33'(idu_rdt.jmp.imm);
+        end
+        BRANCH : begin
+          // static branch prediction
+          if (idu_buf.bru.imm[12]) begin
+            // backward branches are predicted taken
+            add_inc = 1'b0;
+            add_op1 = 33'(ifu_pcr);
+            add_op2 = 33'(idu_rdt.bru.imm);
+          end else begin
+            // forward branches are predicted not taken
+            add_inc = 1'b0;
+            add_op1 = 33'(ifu_pcr);
+            // TODO: support for C extension?
+            add_op2 = 33'd4;
+          end
+        end
+        default: begin
+            // increment instruction address
+            add_inc = 1'b0;
+            add_op1 = 33'(ifu_pcr);
+            // TODO: support for C extension?
+            add_op2 = 33'd4;
+        end
+      endcase
     end
   endcase
 end

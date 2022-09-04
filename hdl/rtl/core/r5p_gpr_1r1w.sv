@@ -31,14 +31,14 @@ module r5p_gpr_1r1w #(
   // configuration/control
   input  logic            en0,  // enable X0 read/write access
   // read/write enable
-  input  logic            e_rs,
   input  logic            e_rd,
+  input  logic            e_rs,
   // read/write address
-  input  logic   [AW-1:0] a_rs,
   input  logic   [AW-1:0] a_rd,
+  input  logic   [AW-1:0] a_rs,
   // read/write data
-  output logic [XLEN-1:0] d_rs,
-  input  logic [XLEN-1:0] d_rd
+  input  logic [XLEN-1:0] d_rd,
+  output logic [XLEN-1:0] d_rs
 );
 
 // local signals

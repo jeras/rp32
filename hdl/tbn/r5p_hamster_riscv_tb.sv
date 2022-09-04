@@ -17,7 +17,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb #(
+module riscv_tb
+  import riscv_isa_pkg::*;
+#(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
@@ -221,11 +223,27 @@ end
 
 `ifdef TRACE_DEBUG
 
-// GPR array
-logic [32-1:0] gpr [0:32-1];
+localparam int unsigned AW = 5;
 
-// copy GPR array from system memory
-//assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];
+logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
+logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
+
+// hierarchical path to GPR inside RTL
+//assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
+assign gpr_tmp = riscv_tb.cpu.gpr.gen_default.gpr;
+
+// GPR change log
+always_ff @(posedge clk)
+begin
+  // delayed copy of all GPR
+  gpr_dly <= gpr_tmp;
+  // check each GPR for changes
+  for (int unsigned i=0; i<32; i++) begin
+    if (gpr_dly[i] != gpr_tmp[i]) begin
+      $display("%t, Info   %8h <= %s <= %8h", $time, gpr_dly[i], gpr_n(i[5-1:0], 1'b1), gpr_tmp[i]);
+    end
+  end
+end
 
 // system bus monitor
 tcb_mon_riscv #(
@@ -251,7 +269,7 @@ end
 
 // timeout
 always @(posedge clk)
-if (cnt > 16)  timeout <= 1'b1;
+if (cnt > 200)  timeout <= 1'b1;
 
 `endif
 
