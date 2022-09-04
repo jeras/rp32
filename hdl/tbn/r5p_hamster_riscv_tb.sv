@@ -248,6 +248,7 @@ end
 // system bus monitor
 tcb_mon_riscv #(
   .NAME ("TCB"),
+  .DLY_IFU (2),
   .ISA  (ISA),
   .ABI  (ABI)
 ) mon_tcb (
@@ -269,7 +270,7 @@ end
 
 // timeout
 always @(posedge clk)
-if (cnt > 200)  timeout <= 1'b1;
+if (cnt > 10000)  timeout <= 1'b1;
 
 `endif
 
