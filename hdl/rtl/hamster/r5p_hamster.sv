@@ -363,9 +363,21 @@ end else begin
             // TCB
             bus_vld <= 1'b1;
             bus_wen <= 1'b1;
-            bus_adr <= add_sum[32-1:0];
-            bus_ben <= 4'b1111;
-            bus_wdt <= gpr_rdt;
+            bus_adr <= {add_sum[32-1:2], 2'b00};
+            case (idu_buf.stu.fn3)
+              SB     : case (add_sum[1:0])
+                2'b00: begin bus_wdt[ 7: 0] <= gpr_rdt[ 7: 0]; bus_ben <= 4'b0001; end
+                2'b01: begin bus_wdt[15: 8] <= gpr_rdt[ 7: 0]; bus_ben <= 4'b0010; end
+                2'b10: begin bus_wdt[23:16] <= gpr_rdt[ 7: 0]; bus_ben <= 4'b0100; end
+                2'b11: begin bus_wdt[31:24] <= gpr_rdt[ 7: 0]; bus_ben <= 4'b1000; end
+              endcase
+              SH     : case (add_sum[1])
+                1'b0 : begin bus_wdt[15: 0] <= gpr_rdt[15: 0]; bus_ben <= 4'b0011; end
+                1'b1 : begin bus_wdt[31:16] <= gpr_rdt[15: 0]; bus_ben <= 4'b1100; end
+              endcase
+              SW     : begin bus_wdt[31: 0] <= gpr_rdt[31: 0]; bus_ben <= 4'b1111; end
+              default: begin                                                       end
+            endcase
             // GPR
             gpr_wen <= 1'b0;
           end
