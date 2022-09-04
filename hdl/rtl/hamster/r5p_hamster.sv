@@ -114,7 +114,6 @@ logic          [32-1:0] ifu_buf;  // instruction buffer
 
 // IDU: instruction decode unit
 ctl_t                   idu_rdt;
-ctl_t                   idu_mux;
 ctl_t                   idu_buf;
 logic                   idu_vld;  // instruction valid
 
@@ -303,7 +302,7 @@ if (rst) begin
   // system bus
   bus_vld <= 1'b0;
   bus_wen <= 1'b0;
-  bus_ben <= '0;
+  bus_ben <= '1;  // TODO: rethink reset
   bus_wdt <= 'x;
   // PC
   ifu_pcr <= '0;
@@ -320,6 +319,7 @@ if (rst) begin
   buf_tkn <= 1'b0;
 end else begin
   // RESET transition
+  // TODO: rethink reset
   ctl_run <= 1'b1;
   bus_vld <= 1'b1;
   // progress into the next state
@@ -342,6 +342,13 @@ end else begin
             gpr_wen <= 1'b1;
             gpr_wdt <= idu_buf.uiu;
           end
+          AUIPC  : begin
+            // TCB
+            bus_vld <= 1'b0;
+            // GPR
+            gpr_wen <= 1'b1;
+            gpr_wdt <= add_sum[32-1:0];
+          end
           LOAD   : begin
             // TCB
             bus_vld <= 1'b1;
@@ -358,7 +365,7 @@ end else begin
             bus_wen <= 1'b1;
             bus_adr <= add_sum[32-1:0];
             bus_ben <= 4'b1111;
-            bus_wdt <= 32'hxxxxxxxx;
+            bus_wdt <= gpr_rdt;
             // GPR
             gpr_wen <= 1'b0;
           end
@@ -391,10 +398,16 @@ end else begin
         bus_ben <= 4'b1111;
         bus_wdt <= 32'hxxxxxxxx;
         // GPR rs1 buffer
-        gpr_rbf <= gpr_rdt;
-        // decoder
+        case (idu_rdt.opc)
+          AUIPC  : begin
+            gpr_rbf <= ifu_pcr;
+          end
+          default: begin
+            gpr_rbf <= gpr_rdt;
+          end
+        endcase
         case (idu_buf.opc)
-          LOAD  : begin
+          LOAD   : begin
             // load unit GPR write (the last stage)
             gpr_wen <= 1'b1;
           end
@@ -442,7 +455,25 @@ begin
       gpr_ren = 1'b1;
       gpr_rad = idu_buf.gpr.adr.rs2;
       // decode operation code
-      case (idu_rdt.opc)
+      case (idu_buf.opc)
+        AUIPC  : begin
+          // adder
+          add_inc = 1'b0;
+          add_op1 = ext_sgn(gpr_rbf);
+          add_op2 = ext_sgn(idu_buf.uiu.imm);
+        end
+        LOAD  : begin
+          // adder for load address
+          add_inc = 1'b0;
+          add_op1 = ext_sgn(gpr_rbf);
+          add_op2 = ext_sgn(32'(idu_buf.ldu.imm));
+        end
+        STORE : begin
+          // adder for store address
+          add_inc = 1'b0;
+          add_op1 = ext_sgn(gpr_rbf);
+          add_op2 = ext_sgn(32'(idu_buf.stu.imm));
+        end
         OP     : begin
           // arithmetic operations
           case (idu_buf.alu.fn3)
