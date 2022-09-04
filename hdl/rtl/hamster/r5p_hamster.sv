@@ -124,7 +124,7 @@ logic           [5-1:0] gpr_wad;  // write address
 logic           [5-1:0] gpr_rad;  // read  address
 logic          [32-1:0] gpr_wdt;  // write data
 logic          [32-1:0] gpr_rdt;  // read  data
-logic          [32-1:0] gpr_rbf;  // read  buffer
+logic          [32-1:0] gpr_rdb;  // read  data buffer
 
 // ALU adder (used for aritmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
@@ -148,17 +148,18 @@ logic          [32-1:0] shf_val /* synthesis keep */;  // result
 
 // ALU result output
 logic          [32-1:0] alu_out;
+logic          [32-1:0] alu_buf;
 
 // register read buffer
 logic          [32-1:0] buf_dat;
 
-// load address buffer
-logic           [2-1:0] buf_adr;
 // read data multiplexer
+logic           [2-1:0] rdm_adr;  // load address buffer
 logic          [32-1:0] rdm_dtw;  // word
 logic          [16-1:0] rdm_dth;  // half
 logic          [ 8-1:0] rdm_dtb;  // byte
 logic          [32-1:0] rdm_dat;  // data
+fn3_ldu_et              rdm_fn3;  // load funct3
 
 // branch taken
 logic                   bru_tkn;
@@ -314,7 +315,8 @@ if (rst) begin
   // data buffer
   buf_dat <= '0;
   // load address buffer
-  buf_adr <= 2'd0;
+  rdm_adr <= '0;
+  rdm_fn3 <= '0;
   // branch taken
   buf_tkn <= 1'b0;
 end else begin
@@ -324,6 +326,8 @@ end else begin
   bus_vld <= 1'b1;
   // progress into the next state
   if (ctl_run & (bus_trn | ~bus_vld)) begin
+    // GPR (write rd)
+    gpr_wad <= idu_buf.gpr.adr.rd;
     // system bus
     unique case (ctl_fsm)
       // instruction fetch state
@@ -340,24 +344,40 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_wdt <= idu_buf.uiu;
+            alu_buf <= idu_buf.uiu;
           end
           AUIPC  : begin
             // TCB
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_wdt <= add_sum[32-1:0];
+            alu_buf <= add_sum[32-1:0];
           end
           LOAD   : begin
             // TCB
             bus_vld <= 1'b1;
             bus_wen <= 1'b0;
-            bus_adr <= add_sum[32-1:0];
-            bus_ben <= 4'b1111;
-            bus_wdt <= 32'hxxxxxxxx;
+            bus_adr <= {add_sum[32-1:2], 2'b00};
+            case (idu_buf.ldu.fn3)
+              LB, LBU: case (add_sum[1:0])
+                2'b00: bus_ben <= 4'b0001;
+                2'b01: bus_ben <= 4'b0010;
+                2'b10: bus_ben <= 4'b0100;
+                2'b11: bus_ben <= 4'b1000;
+              endcase
+              LH, LHU: case (add_sum[1])
+                1'b0 : bus_ben <= 4'b0011;
+                1'b1 : bus_ben <= 4'b1100;
+              endcase
+              LW, LWU: bus_ben <= 4'b1111;
+              default: ;    // NOTE: avoid toggling
+            endcase
+          //bus_wdt <= 32'hxxxxxxxx;  // NOTE: avoid toggling
             // GPR
             gpr_wen <= 1'b0;
+            // read data multiplexer
+            rdm_adr <=  add_sum[ 2-1:0];
+            rdm_fn3 <= idu_buf.ldu.fn3;
           end
           STORE  : begin
             // TCB
@@ -376,7 +396,7 @@ end else begin
                 1'b1 : begin bus_wdt[31:16] <= gpr_rdt[15: 0]; bus_ben <= 4'b1100; end
               endcase
               SW     : begin bus_wdt[31: 0] <= gpr_rdt[31: 0]; bus_ben <= 4'b1111; end
-              default: begin                                                       end
+              default: begin                                                       end  // NOTE: avoid toggling
             endcase
             // GPR
             gpr_wen <= 1'b0;
@@ -387,7 +407,7 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_wdt <= alu_out;
+            alu_buf <= alu_out;
           end
           default: begin
             // TCB
@@ -408,14 +428,14 @@ end else begin
         bus_wen <= 1'b0;
         bus_adr <= add_sum[32-1:0];
         bus_ben <= 4'b1111;
-        bus_wdt <= 32'hxxxxxxxx;
+      //bus_wdt <= 32'hxxxxxxxx;  // NOTE: avoid toggling to reduce power
         // GPR rs1 buffer
         case (idu_rdt.opc)
           AUIPC  : begin
-            gpr_rbf <= ifu_pcr;
+            gpr_rdb <= ifu_pcr;
           end
           default: begin
-            gpr_rbf <= gpr_rdt;
+            gpr_rdb <= gpr_rdt;
           end
         endcase
         case (idu_buf.opc)
@@ -461,29 +481,42 @@ begin
   unique case (ctl_fsm)
     // instruction fetch state
     SIF: begin
-      // GPR (write rd)
-      gpr_wad = idu_buf.gpr.adr.rd;
       // GPR (read rs1)
       gpr_ren = 1'b1;
       gpr_rad = idu_buf.gpr.adr.rs2;
+      // LOAD: read data multiplexer
+      rdm_dtw = bus_rdt[31: 0];
+      rdm_dth = rdm_adr[1] ? rdm_dtw[31:16] : rdm_dtw[15: 0];
+      rdm_dtb = rdm_adr[0] ? rdm_dth[15: 8] : rdm_dth[ 7: 0];
+      rdm_dat = {rdm_dtw[31:16], rdm_dth[15: 8], rdm_dtb[ 7: 0]};
+      // sign extension, NOTE: this is a good fit for LUT4
+      unique case (rdm_fn3)
+        LB     : gpr_wdt = {{24{rdm_dat[ 8-1]}}, rdm_dat[ 8-1:0]};
+        LH     : gpr_wdt = {{16{rdm_dat[16-1]}}, rdm_dat[16-1:0]};
+        LW     : gpr_wdt = {                     rdm_dat[32-1:0]};
+        LBU    : gpr_wdt = { 24'd0             , rdm_dat[ 8-1:0]};
+        LHU    : gpr_wdt = { 16'd0             , rdm_dat[16-1:0]};
+        LWU    : gpr_wdt = {                     rdm_dat[32-1:0]};
+        default: gpr_wdt = 32'hxxxxxxxx;
+      endcase
       // decode operation code
       case (idu_buf.opc)
         AUIPC  : begin
           // adder
           add_inc = 1'b0;
-          add_op1 = ext_sgn(gpr_rbf);
+          add_op1 = ext_sgn(gpr_rdb);
           add_op2 = ext_sgn(idu_buf.uiu.imm);
         end
         LOAD  : begin
           // adder for load address
           add_inc = 1'b0;
-          add_op1 = ext_sgn(gpr_rbf);
+          add_op1 = ext_sgn(gpr_rdb);
           add_op2 = ext_sgn(32'(idu_buf.ldu.imm));
         end
         STORE : begin
           // adder for store address
           add_inc = 1'b0;
-          add_op1 = ext_sgn(gpr_rbf);
+          add_op1 = ext_sgn(gpr_rdb);
           add_op2 = ext_sgn(32'(idu_buf.stu.imm));
         end
         OP     : begin
@@ -491,27 +524,27 @@ begin
           case (idu_buf.alu.fn3)
             ADD    : begin
               add_inc = idu_buf.alu.fn7[5];
-              add_op1 = ext_sgn(gpr_rbf);
+              add_op1 = ext_sgn(gpr_rdb);
               add_op2 = ext_sgn(gpr_rdt ^ {32{idu_buf.alu.fn7[5]}});
             end
             SLT    : begin
               add_inc = 1'b1;
-              add_op1 = ext_sgn( gpr_rbf);
+              add_op1 = ext_sgn( gpr_rdb);
               add_op2 = ext_sgn(~gpr_rdt);
             end
             SLTU   : begin
               add_inc = 1'b1;
-              add_op1 = {1'b0,  gpr_rbf};
+              add_op1 = {1'b0,  gpr_rdb};
               add_op2 = {1'b1, ~gpr_rdt};
             end
             default: begin
             end
           endcase
           // logic operations
-          log_op1 = gpr_rbf;
+          log_op1 = gpr_rdb;
           log_op2 = gpr_rdt;
           // shift operations
-          shf_op1 = gpr_rbf;
+          shf_op1 = gpr_rdb;
           shf_op2 = gpr_rdt[5-1:0];
         end
         OP_IMM : begin
@@ -519,27 +552,27 @@ begin
           case (idu_buf.alu.fn3)
             ADD    : begin
               add_inc = 1'b0;
-              add_op1 = ext_sgn(gpr_rbf);
+              add_op1 = ext_sgn(gpr_rdb);
               add_op2 = ext_sgn(32'(idu_buf.alu.imm));
             end
             SLT    : begin
               add_inc = 1'b1;
-              add_op1 = ext_sgn( gpr_rbf);
+              add_op1 = ext_sgn( gpr_rdb);
               add_op2 = ext_sgn(~32'(idu_buf.alu.imm));
             end
             SLTU   : begin
               add_inc = 1'b1;
-              add_op1 = {1'b0,  gpr_rbf};
+              add_op1 = {1'b0,  gpr_rdb};
               add_op2 = {1'b1, ~32'(idu_buf.alu.imm)};
             end
             default: begin
             end
           endcase
           // logic operations
-          log_op1 = gpr_rbf;
+          log_op1 = gpr_rdb;
           log_op2 = 32'(idu_buf.alu.imm);
           // shift operations
-          shf_op1 = gpr_rbf;
+          shf_op1 = gpr_rdb;
           shf_op2 = idu_buf.alu.imm[5-1:0];
         end
         default: begin
@@ -564,11 +597,10 @@ begin
     end
     // load/store state
     SLS: begin
-      // GPR (write rd)
-      gpr_wad = idu_buf.gpr.adr.rd;
       // GPR (read rs1)
       gpr_ren = 1'b1;
       gpr_rad = idu_rdt.gpr.adr.rs1;
+      gpr_wdt = alu_buf;
       // decode operation code
       case (idu_rdt.opc)
         JAL    : begin
