@@ -339,6 +339,14 @@ end else begin
         ifu_pcr <= bus_adr;
         // load/store
         case (idu_buf.opc)
+          JAL    ,
+          JALR   : begin
+            // TCB
+            bus_vld <= 1'b0;
+            // GPR
+            gpr_wen <= 1'b1;
+            alu_buf <= add_sum[32-1:0];
+          end
           LUI    : begin
             // TCB
             bus_vld <= 1'b0;
@@ -501,6 +509,12 @@ begin
       endcase
       // decode operation code
       case (idu_buf.opc)
+        JAL    ,
+        JALR   : begin
+          add_inc = 1'b0;
+          add_op1 = 33'(ifu_pcr);
+          add_op2 = 33'(33'd4);
+        end
         AUIPC  : begin
           // adder
           add_inc = 1'b0;
@@ -603,17 +617,17 @@ begin
       gpr_wdt = alu_buf;
       // decode operation code
       case (idu_rdt.opc)
+        // TODO: JAL/JALR can be 1 or 2 rounds long
+        // 1 - better CPI
+        // 2 - easier logic
         JAL    : begin
           add_inc = 1'b0;
           add_op1 = 33'(ifu_pcr);
           add_op2 = 33'(idu_rdt.jmp.jmp);
         end
-        // TODO: JALR can be 1 or 2 stages long
-        // 1 - better CPI
-        // 
         JALR   : begin
           add_inc = 1'b0;
-          add_op1 = 33'(ifu_pcr);
+          add_op1 = 33'(gpr_rdt);
           add_op2 = 33'(idu_rdt.jmp.imm);
         end
         BRANCH : begin
