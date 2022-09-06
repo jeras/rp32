@@ -294,6 +294,8 @@ assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
 // FSM and pipeline
 ///////////////////////////////////////////////////////////////////////////////
 
+localparam op32_i_t NOP = op32_i_t'{imm_11_0: 12'd0, rs1: 5'd0, funct3: ADD, rd: 5'd0, opcode: '{opc: OP_IMM, c11: 2'b11}};  // addi x0, x0, 0
+
 // sequential logic
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
@@ -309,9 +311,7 @@ if (rst) begin
   ifu_pcr <= '0;
   // instruction buffer
   // TODO: jump again or some kind of NOP?
-  //ifu_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
-  //typedef struct packed {logic [11:00] imm_11_0; logic [4:0] rs1; fn3_t funct3; logic [4:0] rd; op32_opcode_t opcode;} op32_i_t ;  // Immediate
-  ifu_buf <= op32_i_t'{imm_11_0: 12'd0, rs1: 5'd0, funct3: ADD, rd: 5'd0, opcode: '{opc: OP_IMM, c11: 2'b11}};  // addi x0, x0, 0
+  ifu_buf <= NOP;
   // data buffer
   buf_dat <= '0;
   // load address buffer
