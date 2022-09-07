@@ -632,7 +632,7 @@ begin
         end
         BRANCH : begin
           // static branch prediction
-          if (idu_buf.bru.imm[12]) begin
+          if (idu_rdt.bru.imm[12]) begin
             // backward branches are predicted taken
             add_inc = 1'b0;
             add_op1 = 33'(ifu_pcr);
@@ -668,7 +668,7 @@ assign dbg_lsu = ctl_fsm == SLS;
 
 logic search;
 
-assign search = (idu_rdt.opc == LOAD);
+assign search = (idu_rdt.opc == BRANCH);
 
 `endif
 
