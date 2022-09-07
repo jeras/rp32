@@ -336,7 +336,11 @@ end else begin
         ctl_fsm <= SLS;
         // PC: program counter
         // TODO: PC is only reloaded if the prediction is correct
-        ifu_pcr <= bus_adr;
+        if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != bru_tkn)) begin
+          // on mispredicted branch ignore the fetched instruction
+        end else begin
+          ifu_pcr <= bus_adr;
+        end
         // load/store
         case (idu_buf.opc)
           JAL    ,
@@ -417,6 +421,12 @@ end else begin
             gpr_wen <= 1'b1;
             alu_buf <= alu_out;
           end
+          BRANCH : begin
+            // TCB
+            bus_vld <= 1'b0;
+            // branch taken buffer
+            buf_tkn <= bru_tkn;
+          end
           default: begin
             // TCB
             bus_vld <= 1'b0;
@@ -430,7 +440,12 @@ end else begin
         // FSM control (go to the next state)
         ctl_fsm <= SIF;
         // instruction buffer
-        ifu_buf <= ifu_mux;
+        if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != buf_tkn)) begin
+          // on mispredicted branch ignore the fetched instruction
+          ifu_buf <= NOP;
+        end else begin
+          ifu_buf <= ifu_mux;
+        end
         // next instruction fetch
         bus_vld <= 1'b1;
         bus_wen <= 1'b0;
@@ -589,6 +604,37 @@ begin
           shf_op1 = gpr_rdb;
           shf_op2 = idu_buf.alu.imm[5-1:0];
         end
+        BRANCH : begin
+          // subtraction
+          add_inc = 1'b1;
+          unique case (idu_buf.bru.fn3)
+            BEQ    ,
+            BNE    ,
+            BLT    ,
+            BGE    : begin
+              add_op1 = ext_sgn( gpr_rdb);
+              add_op2 = ext_sgn(~gpr_rdt);
+            end
+            BLTU   ,
+            BGEU   : begin
+              add_op1 = {1'b0,  gpr_rdb};
+              add_op2 = {1'b1, ~gpr_rdt};
+            end
+            default: begin
+              add_op1 = 33'dx;
+              add_op2 = 33'dx;
+            end
+          endcase
+          unique case (idu_buf.bru.fn3)
+            BEQ    : bru_tkn =  add_zro;
+            BNE    : bru_tkn = ~add_zro;
+            BLT    : bru_tkn =  add_sgn;
+            BGE    : bru_tkn = ~add_sgn;
+            BLTU   : bru_tkn =  add_sgn;
+            BGEU   : bru_tkn = ~add_sgn;
+            default: bru_tkn = 1'bx;
+          endcase
+        end
         default: begin
         end
       endcase
@@ -597,7 +643,7 @@ begin
         // adder based inw_bufuctions
         ADD : alu_out = add_sum[32-1:0];
         SLT ,
-        SLTU: alu_out = {31'd0, add_sum[32]};
+        SLTU: alu_out = {31'd0, add_sgn};
         // bitwise logical operations
         AND : alu_out = log_val;
         OR  : alu_out = log_val;
@@ -616,27 +662,13 @@ begin
       gpr_rad = idu_rdt.gpr.adr.rs1;
       gpr_wdt = alu_buf;
       // decode operation code
-      case (idu_rdt.opc)
-        // TODO: JAL/JALR can be 1 or 2 rounds long
-        // 1 - better CPI
-        // 2 - easier logic
-        JAL    : begin
-          add_inc = 1'b0;
-          add_op1 = 33'(ifu_pcr);
-          add_op2 = 33'(idu_rdt.jmp.jmp);
-        end
-        JALR   : begin
-          add_inc = 1'b0;
-          add_op1 = 33'(gpr_rdt);
-          add_op2 = 33'(idu_rdt.jmp.imm);
-        end
-        BRANCH : begin
-          // static branch prediction
-          if (idu_rdt.bru.imm[12]) begin
+      if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != buf_tkn)) begin
+          // on mispredicted branch reverse static branch prediction decisions
+          if (~idu_buf.bru.imm[12]) begin
             // backward branches are predicted taken
             add_inc = 1'b0;
             add_op1 = 33'(ifu_pcr);
-            add_op2 = 33'(idu_rdt.bru.imm);
+            add_op2 = 33'(idu_buf.bru.imm);
           end else begin
             // forward branches are predicted not taken
             add_inc = 1'b0;
@@ -644,15 +676,45 @@ begin
             // TODO: support for C extension?
             add_op2 = 33'd4;
           end
-        end
-        default: begin
-            // increment instruction address
+      end else begin
+        case (idu_rdt.opc)
+          // TODO: JAL/JALR can be 1 or 2 rounds long
+          // 1 - better CPI
+          // 2 - easier logic
+          JAL    : begin
             add_inc = 1'b0;
             add_op1 = 33'(ifu_pcr);
-            // TODO: support for C extension?
-            add_op2 = 33'd4;
-        end
-      endcase
+            add_op2 = 33'(idu_rdt.jmp.jmp);
+          end
+          JALR   : begin
+            add_inc = 1'b0;
+            add_op1 = 33'(gpr_rdt);
+            add_op2 = 33'(idu_rdt.jmp.imm);
+          end
+          BRANCH : begin
+            // static branch prediction
+            if (idu_rdt.bru.imm[12]) begin
+              // backward branches are predicted taken
+              add_inc = 1'b0;
+              add_op1 = 33'(ifu_pcr);
+              add_op2 = 33'(idu_rdt.bru.imm);
+            end else begin
+              // forward branches are predicted not taken
+              add_inc = 1'b0;
+              add_op1 = 33'(ifu_pcr);
+              // TODO: support for C extension?
+              add_op2 = 33'd4;
+            end
+          end
+          default: begin
+              // increment instruction address
+              add_inc = 1'b0;
+              add_op1 = 33'(ifu_pcr);
+              // TODO: support for C extension?
+              add_op2 = 33'd4;
+          end
+        endcase
+      end
     end
   endcase
 end
@@ -666,9 +728,11 @@ end
 assign dbg_ifu = ctl_fsm == SIF;
 assign dbg_lsu = ctl_fsm == SLS;
 
-logic search;
+logic search0;
+logic search1;
 
-assign search = (idu_rdt.opc == BRANCH);
+assign search0 = (idu_rdt.opc == BRANCH);
+assign search1 = (ifu_pcr == 32'h000009f8);
 
 `endif
 
