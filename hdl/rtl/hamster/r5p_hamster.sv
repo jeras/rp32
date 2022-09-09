@@ -148,7 +148,6 @@ logic          [32-1:0] shf_val /* synthesis keep */;  // result
 
 // ALU result output
 logic          [32-1:0] alu_out;
-logic          [32-1:0] alu_buf;
 
 // read data multiplexer
 logic           [2-1:0] rdm_adr;  // load address buffer
@@ -302,9 +301,9 @@ if (rst) begin
   // system bus
   bus_vld <= 1'b0;
   bus_wen <= 1'b0;
-  bus_adr <= 'x;
+  bus_adr <= '0;
   bus_ben <= '1;  // TODO: rethink reset
-  bus_wdt <= 'x;
+  bus_wdt <= '0;
   // PC
   ifu_pcr <= '0;
   // instruction buffer
@@ -314,8 +313,6 @@ if (rst) begin
   gpr_wen <= 1'b0;
   gpr_wad <= '0;
   gpr_rdb <= '0;
-  // ALU
-  alu_buf <= '0;
   // load address buffer
   rdm_adr <= '0;
   rdm_fn3 <= fn3_ldu_et'(3'b000);
@@ -351,21 +348,21 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            alu_buf <= add_sum[32-1:0];
+            gpr_rdb <= add_sum[32-1:0];
           end
           LUI    : begin
             // TCB
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            alu_buf <= idu_buf.uiu;
+            gpr_rdb <= idu_buf.uiu;
           end
           AUIPC  : begin
             // TCB
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            alu_buf <= add_sum[32-1:0];
+            gpr_rdb <= add_sum[32-1:0];
           end
           LOAD   : begin
             // TCB
@@ -421,7 +418,7 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            alu_buf <= alu_out;
+            gpr_rdb <= alu_out;
           end
           BRANCH : begin
             // TCB
@@ -664,7 +661,7 @@ begin
       // GPR (read rs1)
       gpr_ren = 1'b1;
       gpr_rad = idu_rdt.gpr.adr.rs1;
-      gpr_wdt = alu_buf;
+      gpr_wdt = gpr_rdb;
       // decode operation code
       if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != buf_tkn)) begin
           // on mispredicted branch reverse static branch prediction decisions
