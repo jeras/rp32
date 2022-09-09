@@ -124,7 +124,6 @@ logic           [5-1:0] gpr_wad;  // write address
 logic           [5-1:0] gpr_rad;  // read  address
 logic          [32-1:0] gpr_wdt;  // write data
 logic          [32-1:0] gpr_rdt;  // read  data
-logic          [32-1:0] gpr_rdb;  // read  data buffer
 
 // ALU adder (used for aritmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
@@ -312,7 +311,6 @@ if (rst) begin
   // GPR (write rd)
   gpr_wen <= 1'b0;
   gpr_wad <= '0;
-  gpr_rdb <= '0;
   // load address buffer
   rdm_adr <= '0;
   rdm_fn3 <= fn3_ldu_et'(3'b000);
@@ -348,21 +346,21 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_rdb <= add_sum[32-1:0];
+            bus_wdt <= add_sum[32-1:0];
           end
           LUI    : begin
             // TCB
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_rdb <= idu_buf.uiu;
+            bus_wdt <= idu_buf.uiu;
           end
           AUIPC  : begin
             // TCB
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_rdb <= add_sum[32-1:0];
+            bus_wdt <= add_sum[32-1:0];
           end
           LOAD   : begin
             // TCB
@@ -418,7 +416,7 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            gpr_rdb <= alu_out;
+            bus_wdt <= alu_out;
           end
           BRANCH : begin
             // TCB
@@ -454,10 +452,10 @@ end else begin
         // GPR rs1 buffer
         case (idu_rdt.opc)
           AUIPC  : begin
-            gpr_rdb <= ifu_pcr;
+            bus_wdt <= ifu_pcr;
           end
           default: begin
-            gpr_rdb <= gpr_rdt;
+            bus_wdt <= gpr_rdt;
           end
         endcase
         case (idu_buf.opc)
@@ -534,19 +532,19 @@ begin
         AUIPC  : begin
           // adder
           add_inc = 1'b0;
-          add_op1 = ext_sgn(gpr_rdb);
+          add_op1 = ext_sgn(bus_wdt);
           add_op2 = ext_sgn(idu_buf.uiu.imm);
         end
         LOAD  : begin
           // adder for load address
           add_inc = 1'b0;
-          add_op1 = ext_sgn(gpr_rdb);
+          add_op1 = ext_sgn(bus_wdt);
           add_op2 = ext_sgn(32'(idu_buf.ldu.imm));
         end
         STORE : begin
           // adder for store address
           add_inc = 1'b0;
-          add_op1 = ext_sgn(gpr_rdb);
+          add_op1 = ext_sgn(bus_wdt);
           add_op2 = ext_sgn(32'(idu_buf.stu.imm));
         end
         OP     : begin
@@ -554,27 +552,27 @@ begin
           case (idu_buf.alu.fn3)
             ADD    : begin
               add_inc = idu_buf.alu.fn7[5];
-              add_op1 = ext_sgn(gpr_rdb);
+              add_op1 = ext_sgn(bus_wdt);
               add_op2 = ext_sgn(gpr_rdt ^ {32{idu_buf.alu.fn7[5]}});
             end
             SLT    : begin
               add_inc = 1'b1;
-              add_op1 = ext_sgn( gpr_rdb);
+              add_op1 = ext_sgn( bus_wdt);
               add_op2 = ext_sgn(~gpr_rdt);
             end
             SLTU   : begin
               add_inc = 1'b1;
-              add_op1 = {1'b0,  gpr_rdb};
+              add_op1 = {1'b0,  bus_wdt};
               add_op2 = {1'b1, ~gpr_rdt};
             end
             default: begin
             end
           endcase
           // logic operations
-          log_op1 = gpr_rdb;
+          log_op1 = bus_wdt;
           log_op2 = gpr_rdt;
           // shift operations
-          shf_op1 = gpr_rdb;
+          shf_op1 = bus_wdt;
           shf_op2 = gpr_rdt[5-1:0];
         end
         OP_IMM : begin
@@ -582,27 +580,27 @@ begin
           case (idu_buf.alu.fn3)
             ADD    : begin
               add_inc = 1'b0;
-              add_op1 = ext_sgn(gpr_rdb);
+              add_op1 = ext_sgn(bus_wdt);
               add_op2 = ext_sgn(32'(idu_buf.alu.imm));
             end
             SLT    : begin
               add_inc = 1'b1;
-              add_op1 = ext_sgn( gpr_rdb);
+              add_op1 = ext_sgn( bus_wdt);
               add_op2 = ext_sgn(~32'(idu_buf.alu.imm));
             end
             SLTU   : begin
               add_inc = 1'b1;
-              add_op1 = {1'b0,  gpr_rdb};
+              add_op1 = {1'b0,  bus_wdt};
               add_op2 = {1'b1, ~32'(idu_buf.alu.imm)};
             end
             default: begin
             end
           endcase
           // logic operations
-          log_op1 = gpr_rdb;
+          log_op1 = bus_wdt;
           log_op2 = 32'(idu_buf.alu.imm);
           // shift operations
-          shf_op1 = gpr_rdb;
+          shf_op1 = bus_wdt;
           shf_op2 = idu_buf.alu.imm[5-1:0];
         end
         BRANCH : begin
@@ -613,12 +611,12 @@ begin
             BNE    ,
             BLT    ,
             BGE    : begin
-              add_op1 = ext_sgn( gpr_rdb);
+              add_op1 = ext_sgn( bus_wdt);
               add_op2 = ext_sgn(~gpr_rdt);
             end
             BLTU   ,
             BGEU   : begin
-              add_op1 = {1'b0,  gpr_rdb};
+              add_op1 = {1'b0,  bus_wdt};
               add_op2 = {1'b1, ~gpr_rdt};
             end
             default: begin
@@ -661,7 +659,7 @@ begin
       // GPR (read rs1)
       gpr_ren = 1'b1;
       gpr_rad = idu_rdt.gpr.adr.rs1;
-      gpr_wdt = gpr_rdb;
+      gpr_wdt = bus_wdt;
       // decode operation code
       if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != buf_tkn)) begin
           // on mispredicted branch reverse static branch prediction decisions
