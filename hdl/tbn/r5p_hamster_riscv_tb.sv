@@ -270,7 +270,7 @@ end
 
 // timeout
 always @(posedge clk)
-if (cnt > 10000)  timeout <= 1'b1;
+if (cnt > 20000)  timeout <= 1'b1;
 
 `endif
 

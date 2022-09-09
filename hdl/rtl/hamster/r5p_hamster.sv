@@ -150,9 +150,6 @@ logic          [32-1:0] shf_val /* synthesis keep */;  // result
 logic          [32-1:0] alu_out;
 logic          [32-1:0] alu_buf;
 
-// register read buffer
-logic          [32-1:0] buf_dat;
-
 // read data multiplexer
 logic           [2-1:0] rdm_adr;  // load address buffer
 logic          [32-1:0] rdm_dtw;  // word
@@ -305,6 +302,7 @@ if (rst) begin
   // system bus
   bus_vld <= 1'b0;
   bus_wen <= 1'b0;
+  bus_adr <= 'x;
   bus_ben <= '1;  // TODO: rethink reset
   bus_wdt <= 'x;
   // PC
@@ -312,11 +310,15 @@ if (rst) begin
   // instruction buffer
   // TODO: jump again or some kind of NOP?
   ifu_buf <= NOP;
-  // data buffer
-  buf_dat <= '0;
+  // GPR (write rd)
+  gpr_wen <= 1'b0;
+  gpr_wad <= '0;
+  gpr_rdb <= '0;
+  // ALU
+  alu_buf <= '0;
   // load address buffer
   rdm_adr <= '0;
-  rdm_fn3 <= '0;
+  rdm_fn3 <= fn3_ldu_et'(3'b000);
   // branch taken
   buf_tkn <= 1'b0;
 end else begin
@@ -479,7 +481,7 @@ end
 always_comb
 begin
   // control
-  ctl_nxt =  'x;
+  ctl_nxt = fsm_et'(1'bx);
   // PC
   ifu_pcn = 32'hxxxxxxxx;
   // adder
@@ -492,6 +494,8 @@ begin
   // shift operations
   shf_op1 = 32'hxxxxxxxx;
   shf_op2 =  5'dx;
+  // ALU
+  alu_out = 'x;
   // read data multiplexer
   rdm_dtw = 32'hxxxxxxxx;
   rdm_dth = 16'hxxxx;
