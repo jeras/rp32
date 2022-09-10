@@ -216,6 +216,7 @@ if (rvmodel_halt | timeout) begin
     $display("ERROR: signature save file argument not found.");
     $finish;
   end
+// TODO: add another clock cycle to avoid cutting off delayed printout from TCB monitor
   $finish;
 end
 
