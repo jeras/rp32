@@ -193,8 +193,8 @@ if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b0000_0000_0000_0001: disasm16 = $sformatf("c.nop");
   16'b000?_0000_0???_??01: disasm16 = $sformatf("c.nop      HINT");  // C.NOP, nzimm!=0, HINT
   16'b0000_????_?000_0001: disasm16 = $sformatf("c.addi     HINT");  // C.ADDI, nzimm=0, HINT
-  16'b000?_????_????_??01: disasm16 = $sformatf("c.addi     %s, %s, 0x%3x", gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
-  16'b001?_????_????_??01: disasm16 = $sformatf("ILLEGAL");  // C.JAL, only RV32, NOTE: there are no restriction on immediate value
+  16'b000?_????_????_??01: disasm16 = $sformatf("c.addi     %s, %s, 0x%3x" , gpr_n(t.gpr.adr.rd , abi), gpr_n(t.gpr.adr.rs1, abi), t.alu.imm);
+  16'b001?_????_????_??01: disasm16 = $sformatf("c.jal      0x%x"                                                                , t.jmp.jmp);
   16'b010?_0000_0???_??01: disasm16 = $sformatf("c.li       HINT");  // C.LI, rd=0, HINT
   16'b010?_????_????_??01: disasm16 = $sformatf("c.li       %s, 0x%3x (%s)", gpr_n(t.gpr.adr.rd , abi), t.alu.imm, gpr_n(t.gpr.adr.rs1, abi));
   16'b0110_0001_0000_0001: disasm16 = $sformatf("ILLEGAL    RES");  // C.ADDI16SP, nzimm=0, RES
@@ -217,7 +217,7 @@ if (|(isa.spec.base | (RV_32I | RV_64I | RV_128I))) begin priority casez (op)
   16'b1001_11??_?01?_??01: disasm16 = $sformatf("ILLEGAL    RES");  // RES
   16'b1001_11??_?10?_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
   16'b1001_11??_?11?_??01: disasm16 = $sformatf("ILLEGAL    Reserved");  // Reserved
-  16'b101?_????_????_??01: disasm16 = $sformatf("c.j        0x%x"                                                                 , t.jmp.jmp);
+  16'b101?_????_????_??01: disasm16 = $sformatf("c.j        0x%x"                                                                , t.jmp.jmp);
   16'b110?_????_????_??01: disasm16 = $sformatf("c.beqz     %s, %s, 0x%4x" , gpr_n(t.gpr.adr.rs1, abi), gpr_n(t.gpr.adr.rs2, abi), t.bru.imm);
   16'b111?_????_????_??01: disasm16 = $sformatf("c.bnez     %s, %s, 0x%4x" , gpr_n(t.gpr.adr.rs1, abi), gpr_n(t.gpr.adr.rs2, abi), t.bru.imm);
   16'b0001_????_????_??10: disasm16 = $sformatf("ILLEGAL    NSE");  // C.SLLI, only RV32, nzuimm[5]=1, NSE
