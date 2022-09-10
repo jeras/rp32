@@ -29,6 +29,7 @@ import riscv_priv_pkg::*;
 // instruction size (in bytes)
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO: rewrite this function so it is correct and fit for synthesis
 function automatic int unsigned opsiz (logic [16-1:0] op);
 priority casez (op)
 //16'b????_????_?1111111:  opsiz = 10 + 2 * op[14:12];

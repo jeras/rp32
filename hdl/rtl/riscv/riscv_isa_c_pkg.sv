@@ -194,8 +194,8 @@ function automatic ctl_t dec16 (isa_t isa, logic [16-1:0] op);
 
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
-  //  fedc_ba98_7654_3210             '{  frm ,   qlf};         ill;       '{opc   , f7,  f3};
-//16'b0000_0000_0000_0000: t = '{ill: ILL,                                                                                                                    default: 'x};  // illegal instruction
+  //  fedc_ba98_7654_3210
+//16'b0000_0000_0000_0000: t = '{ill: ILL,                                                                                                                            default: 'x};  // illegal instruction
 //16'b0000_0000_000?_??00: t = '{ill: RES, opc: OP_IMM, gpr: '{3'b110, '{rqd_, 5'd2, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ciw_f(op       ))}, default: 'x};  // C.ADDI4SPN | nzuimm=0
   16'b000?_????_????_??00: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd_, 5'd2, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ciw_f(op       ))}, default: 'x};  // C.ADDI4SPN | addi rd', x2, nzuimm
   16'b010?_????_????_??00: t = '{ill: STD, opc: LOAD  , gpr: '{3'b110, '{rqd_, rq_1, 'x  }}, ldu: '{                 fn3: LW  , imm: imm_l_t'(imm_cls_f(op, T_C_W))}, default: 'x};  // C.LW       | lw rd', offset(rs1')
