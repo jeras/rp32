@@ -170,6 +170,13 @@ assign bus_trn = bus_vld & bus_rdy;
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
+// NOTE: instruction bit [0] is reused to encode instruction length:
+//       0 - 16-bit instruction (compressed)
+//       1 - 32-bit instruction
+// NOTE: instruction bit [1] is reused to encode branch taken status:
+//       0 - not taken
+//       1 - taken
+
 generate
 `ifndef ALTERA_RESERVED_QIS
 if (ISA.spec.ext.C) begin: gen_d16
@@ -186,7 +193,7 @@ if (1'b1) begin: gen_d16
   endcase
 
   // next stage instruction is reencoded from muxed 32/16 decoders
-  assign ifu_mux = enc32(ISA, idu_rdt);
+  assign ifu_mux = (enc32(ISA, idu_rdt) & 32'hfffffffc) | {31'b0, &bus_rdt[1:0]};
 
 end: gen_d16
 else begin: gen_d32
@@ -195,7 +202,8 @@ else begin: gen_d32
   assign idu_rdt = dec32(ISA, bus_rdt[32-1:0]);
 
   // next stage instruction is same as fetched
-  assign ifu_mux = bus_rdt;
+  // instruction bit [0] is hard wired to 1 to avoid the synthesis of C extension logic
+  assign ifu_mux = {bus_rdt[32-1:1], 1'b1};
 
 end: gen_d32
 endgenerate
@@ -525,9 +533,11 @@ begin
       case (idu_buf.opc)
         JAL    ,
         JALR   : begin
+          // address of the instruction following the jump is stored into register
           add_inc = 1'b0;
           add_op1 = 33'(ifu_pcr);
-          add_op2 = 33'(33'd4);
+          // support for C extension
+          add_op2 = ifu_buf[0] ? 33'd4 : 33'd2;
         end
         AUIPC  : begin
           // adder
@@ -672,8 +682,8 @@ begin
             // forward branches are predicted not taken
             add_inc = 1'b0;
             add_op1 = 33'(ifu_pcr);
-            // TODO: support for C extension?
-            add_op2 = 33'd4;
+            // support for C extension
+            add_op2 = ifu_buf[0] ? 33'd4 : 33'd2;
           end
       end else begin
         case (idu_rdt.opc)
@@ -701,16 +711,16 @@ begin
               // forward branches are predicted not taken
               add_inc = 1'b0;
               add_op1 = 33'(ifu_pcr);
-              // TODO: support for C extension?
-              add_op2 = 33'd4;
+              // support for C extension
+              add_op2 = ifu_mux[0] ? 33'd4 : 33'd2;
             end
           end
           default: begin
-              // increment instruction address
-              add_inc = 1'b0;
-              add_op1 = 33'(ifu_pcr);
-              // TODO: support for C extension?
-              add_op2 = 33'd4;
+            // increment instruction address
+            add_inc = 1'b0;
+            add_op1 = 33'(ifu_pcr);
+            // support for C extension
+            add_op2 = ifu_mux[0] ? 33'd4 : 33'd2;
           end
         endcase
       end

@@ -98,6 +98,8 @@ logic dbg_lsu;  // indicator of load/store
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_hamster #(
+  // RISC-V ISA
+  .ISA  (ISA),
 //  .RST_ADR (32'h0000_0000),
 //  .GPR_ADR (32'h001f_ff80)
 ) cpu (

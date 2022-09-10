@@ -16,7 +16,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_hamster_soc_top #(
+module r5p_hamster_soc_top
+  import riscv_isa_pkg::*;
+#(
   /////////////////////////////////////////////////////////////////////////////
   // SoC peripherals
   /////////////////////////////////////////////////////////////////////////////
@@ -24,6 +26,22 @@ module r5p_hamster_soc_top #(
   bit          ENA_UART = 1'b0,
   // GPIO
   int unsigned GW = 32,
+///////////////////////////////////////////////////////////////////////////////
+// RISC-V ISA
+///////////////////////////////////////////////////////////////////////////////
+  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
+`ifndef SYNOPSYS_VERILOG_COMPILER
+  // extensions  (see `riscv_isa_pkg` for enumeration definition)
+  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  // privilige modes
+  isa_priv_t   MODES = MODES_M,
+  // ISA
+`ifdef ENABLE_CSR
+  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+`else
+  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+`endif
+`endif
   /////////////////////////////////////////////////////////////////////////////
   // interconnect/memories
   /////////////////////////////////////////////////////////////////////////////
@@ -73,6 +91,10 @@ tcb_if #(.AW (AW), .DW (DW)) bus_mem [3-1:0] (.clk (clk), .rst (rst));
 ////////////////////////////////////////////////////////////////////////////////
 
 r5p_hamster #(
+  // RISC-V ISA
+  .ISA  (ISA),
+  // implementation device (ASIC/FPGA vendor/device)
+  .CHIP (CHIP)
 ) cpu (
   // system signals
   .clk     (clk),
