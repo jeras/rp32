@@ -58,6 +58,8 @@ module r5p_hamster
 `endif
   // TCL system bus (shared by instruction/load/store)
   output logic          bus_vld,  // valid
+  output logic          bus_lck,  // arbitration lock
+  output logic          bus_rpt,  // repeat access
   output logic          bus_wen,  // write enable
   output logic [AW-1:0] bus_adr,  // address
   output logic [BW-1:0] bus_ben,  // byte enable
@@ -164,7 +166,14 @@ logic                   buf_tkn;
 // TCL system bus
 ///////////////////////////////////////////////////////////////////////////////
 
+// transfer
 assign bus_trn = bus_vld & bus_rdy;
+
+// arbitration lock (not implemented in current version)
+assign bus_lck = 1'b0;
+
+// repeat access (not implemented in current version)
+assign bus_rpt = 1'b0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // instruction decode

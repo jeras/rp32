@@ -113,6 +113,8 @@ r5p_hamster #(
 `endif
   // TCL system bus (shared by instruction/load/store)
   .bus_vld (bus.vld),
+  .bus_lck (bus.lck),
+  .bus_rpt (bus.rpt),
   .bus_wen (bus.wen),
   .bus_adr (bus.adr),
   .bus_ben (bus.ben),

@@ -101,6 +101,8 @@ r5p_hamster #(
   .rst     (rst),
   // TCL system bus (shared by instruction/load/store)
   .bus_vld (bus_cpu.vld),
+  .bus_lck (bus_cpu.lck),
+  .bus_rpt (bus_cpu.rpt),
   .bus_wen (bus_cpu.wen),
   .bus_adr (bus_cpu.adr),
   .bus_ben (bus_cpu.ben),
@@ -136,7 +138,7 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
   // xpm_memory_spram: Single Port RAM
   // Xilinx Parameterized Macro, version 2021.2
   xpm_memory_spram #(
-    .ADDR_WIDTH_A        (RAW-$clog2(4)),   // DECIMAL
+    .ADDR_WIDTH_A        (RAW-$clog2(4)),     // DECIMAL
     .AUTO_SLEEP_TIME     (0),                 // DECIMAL
     .BYTE_WRITE_WIDTH_A  (8),                 // DECIMAL
     .CASCADE_HEIGHT      (0),                 // DECIMAL
@@ -147,7 +149,7 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .MEMORY_PRIMITIVE    ("auto"),            // String
     .MEMORY_SIZE         (8 * 2**RAW),        // DECIMAL
     .MESSAGE_CONTROL     (0),                 // DECIMAL
-    .READ_DATA_WIDTH_A   (DW),               // DECIMAL
+    .READ_DATA_WIDTH_A   (DW),                // DECIMAL
     .READ_LATENCY_A      (1),                 // DECIMAL
     .READ_RESET_VALUE_A  ("0"),               // String
     .RST_MODE_A          ("SYNC"),            // String
@@ -155,7 +157,7 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .USE_MEM_INIT        (1),                 // DECIMAL
     .USE_MEM_INIT_MMI    (0),                 // DECIMAL
     .WAKEUP_TIME         ("disable_sleep"),   // String
-    .WRITE_DATA_WIDTH_A  (DW),               // DECIMAL
+    .WRITE_DATA_WIDTH_A  (DW),                // DECIMAL
     .WRITE_MODE_A        ("read_first"),      // String
     .WRITE_PROTECT       (1)                  // DECIMAL
   ) mem (
