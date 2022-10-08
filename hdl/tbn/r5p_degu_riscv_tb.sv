@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // RISC-V testbench for core module
-// R5P Rat as DUT
+// R5P Degu as DUT
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -45,21 +45,13 @@ module riscv_tb
   string       IFN = "",     // instruction memory file name
   // testbench parameters
   bit          ABI = 1'b1    // enable ABI translation for GPIO names
-)(
-`ifdef VERILATOR
-  // system signals
-  input  logic clk,  // clock
-  input  logic rst   // reset
-`endif
-);
+)();
 
 import riscv_asm_pkg::*;
 
-`ifndef VERILATOR
 // system signals
 logic clk = 1'b1;  // clock
 logic rst = 1'b1;  // reset
-`endif
 
 // clock period counter
 int unsigned cnt;
@@ -69,18 +61,16 @@ bit timeout = 1'b0;
 // test sequence
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifndef VERILATOR
 // clock
 always #(20ns/2) clk = ~clk;
 // reset
 initial
 begin
   repeat (4) @(posedge clk);
-  rst <= 1'b0;
+  rst = 1'b0;
   repeat (10000) @(posedge clk);
   $finish();
 end
-`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals

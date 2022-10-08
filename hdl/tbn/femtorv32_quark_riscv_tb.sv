@@ -17,7 +17,9 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb #(
+module riscv_tb
+  import riscv_isa_pkg::*;
+#(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
@@ -43,21 +45,13 @@ module riscv_tb #(
   string       IFN = "",     // instruction memory file name
   // testbench parameters
   bit          ABI = 1'b1    // enable ABI translation for GPIO names
-)(
-`ifdef VERILATOR
-  // system signals
-  input  logic clk,  // clock
-  input  logic rst   // reset
-`endif
-);
+)();
 
 import riscv_asm_pkg::*;
 
-`ifndef VERILATOR
 // system signals
 logic clk = 1'b1;  // clock
 logic rst = 1'b1;  // reset
-`endif
 
 // clock period counter
 int unsigned cnt;
@@ -67,50 +61,15 @@ bit timeout = 1'b0;
 // test sequence
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifndef VERILATOR
 // clock
 always #(20ns/2) clk = ~clk;
 // reset
 initial
 begin
   repeat (4) @(posedge clk);
-  rst <= 1'b0;
+  rst = 1'b0;
   repeat (10000) @(posedge clk);
   $finish();
-end
-`endif
-
-////////////////////////////////////////////////////////////////////////////////
-// DEBUG
-////////////////////////////////////////////////////////////////////////////////
-
-initial begin
-  $display("==========================================");
-  $display("ISA                  : %p", ISA                  );
-  $display("ISA.spec             : %b", ISA.spec             );
-  $display("ISA.spec.base        : %b", ISA.spec.base        );
-  $display("ISA.spec.ext         : %b", ISA.spec.ext         );
-  $display("ISA.spec.ext.M       : %b", ISA.spec.ext.M       );
-  $display("ISA.spec.ext.A       : %b", ISA.spec.ext.A       );
-  $display("ISA.spec.ext.F       : %b", ISA.spec.ext.F       );
-  $display("ISA.spec.ext.D       : %b", ISA.spec.ext.D       );
-  $display("ISA.spec.ext.Zicsr   : %b", ISA.spec.ext.Zicsr   );
-  $display("ISA.spec.ext.Zifencei: %b", ISA.spec.ext.Zifencei);
-  $display("ISA.spec.ext.Q       : %b", ISA.spec.ext.Q       );
-  $display("ISA.spec.ext.L       : %b", ISA.spec.ext.L       );
-  $display("ISA.spec.ext.C       : %b", ISA.spec.ext.C       );
-  $display("ISA.spec.ext.B       : %b", ISA.spec.ext.B       );
-  $display("ISA.spec.ext.J       : %b", ISA.spec.ext.J       );
-  $display("ISA.spec.ext.T       : %b", ISA.spec.ext.T       );
-  $display("ISA.spec.ext.P       : %b", ISA.spec.ext.P       );
-  $display("ISA.spec.ext.V       : %b", ISA.spec.ext.V       );
-  $display("ISA.spec.ext.N       : %b", ISA.spec.ext.N       );
-  $display("ISA.spec.ext.H       : %b", ISA.spec.ext.H       );
-  $display("ISA.spec.ext.S       : %b", ISA.spec.ext.S       );
-  $display("ISA.spec.ext.Zam     : %b", ISA.spec.ext.Zam     );
-  $display("ISA.spec.ext.Ztso    : %b", ISA.spec.ext.Ztso    );
-  $display("ISA.priv             : %b", ISA.priv             );
-  $display("==========================================");
 end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -306,8 +265,10 @@ final begin
 end
 
 ////////////////////////////////////////////////////////////////////////////////
-// timeout
+// Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
+
+`ifdef TRACE_DEBUG
 
 // time counter
 always_ff @(posedge clk, posedge rst)
@@ -321,13 +282,6 @@ end
 //always @(posedge clk)
 //if (cnt > 5000)  timeout <= 1'b1;
 
-////////////////////////////////////////////////////////////////////////////////
-// waveforms
-////////////////////////////////////////////////////////////////////////////////
-
-//initial begin
-//  $dumpfile("riscv_tb.vcd");
-//  $dumpvars(0, riscv_tb);
-//end
+`endif
 
 endmodule: riscv_tb

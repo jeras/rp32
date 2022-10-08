@@ -62,35 +62,29 @@ HDL+=${TSV}
 TOP = riscv_tb
 
 ################################################################################
-# SystemC
-################################################################################
-
-# SystemC bench (Test SystemC)
-TSC =${PATH_SRC}/sc_main.cpp
-
-################################################################################
 # Verilator compiler/linker flags
 ################################################################################
 
 # specify SystemVerilog LRM version
 #VFLAGS += +1800-2012ext+sv
-# Generate SystemC in executable form
-VFLAGS += -sc --exe
-# Generate makefile dependencies (not shown as complicates the Makefile)
-#VFLAGS += -MMD
+# Generate binary executable
+VFLAGS += --binary
 # Optimize
 VFLAGS += -O3
+# Number of CPU threads
+VFLAGS += -j 0
 # optimize for speed or maximize finding X assign issues
 VFLAGS += --x-assign fast
 #VFLAGS += --x-assign 0
 #VFLAGS += --x-assign 1
 #VFLAGS += --x-assign unique
-# Warn abount lint issues; may not want this on less solid designs
+# Warn about lint issues; may not want this on less solid designs
 #VFLAGS += -Wall
 # Check SystemVerilog assertions
 VFLAGS += --assert
 # Generate coverage analysis
 #VFLAGS += --coverage
+
 # Run Verilator in debug mode
 #VFLAGS += --debug
 # Add this trace to get a backtrace in gdb
@@ -138,11 +132,8 @@ all: sim
 lint: ${HDL}
 	${VERILATOR} --lint-only ${HDL} --top ${TOP}
 
-verilate: ${HDL} ${TSC}
-	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} --top ${TOP} ${HDL} ${TSC}
-
-compile: verilate
-	make -j 4 -C obj_dir -f V${TOP}.mk
+compile: ${HDL}
+	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} --top ${TOP} ${HDL}
 
 sim: compile
 	obj_dir/V${TOP} ${ARG}
