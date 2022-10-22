@@ -58,8 +58,7 @@ HDL =${RTL}
 HDL+=${TSV}
 
 # top level file
-# TODO: pass it as macro to CS compiler
-TOP = riscv_tb
+TOP ?= riscv_tb
 
 ################################################################################
 # Verilator compiler/linker flags
@@ -119,9 +118,6 @@ PAR += -GXLEN=${XLEN}
 ################################################################################
 
 ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
-ifdef TRACE
-ARG += +trace
-endif
 
 ################################################################################
 #
