@@ -22,6 +22,8 @@ module r5p_degu
   import riscv_isa_pkg::*;
   //import riscv_csr_pkg::*;
   //import r5p_pkg::*;
+  import r5p_degu_pkg::*;
+  import tcb_pkg::*;
 #(
   // RISC-V ISA
   int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
@@ -48,48 +50,27 @@ module r5p_degu
   // privilege implementation details
   logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
   // optimizations: timing versus area compromises
-  // optimizations: BRU
-  bit          CFG_BRU_BRU = 1'b0,  // enable dedicated BRanch Unit (comparator)
-  bit          CFG_BRU_BRA = 1'b0,  // enable dedicated BRanch Adder
-  // optimizations: ALU
-  bit          CFG_ALU_LSA = 1'b0,  // enable dedicated Load/Store Adder
-  bit          CFG_ALU_LOM = 1'b0,  // enable dedicated Logical Operand Multiplexer
-  bit          CFG_ALU_SOM = 1'b0,  // enable dedicated Shift   Operand Multiplexer
-  bit          CFG_ALU_L4M = 1'b1,  // enable dedicated 4 to 1 Logic    Multiplexer
-  // optimizations: LSU
-  logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
-  logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
-  logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
-  logic        CFG_BEN_ILL = 1'bx,  // byte  enable for illegal instruction
-  // FPGA specific optimizations
-  int unsigned CFG_SHF     = 1,  // shift per stage, 1 - LUT4, 2 - LUT6, else no optimizations
+  r5p_degu_cfg_t CFG = r5p_degu_cfg_def,
   // implementation device (ASIC/FPGA vendor/device)
   string       CHIP = ""
 )(
   // system signals
-  input  logic           clk,
-  input  logic           rst,
-  // program bus (instruction fetch)
-  output logic           ifb_vld,  // valid
-  output logic [IAW-1:0] ifb_adr,  // address
-  input  logic [IDW-1:0] ifb_rdt,  // read data
-  input  logic           ifb_err,  // error
-  input  logic           ifb_rdy,  // ready
-  // data bus (load/store)
-  output logic           lsb_vld,  // valid
-  output logic           lsb_wen,  // write enable
-  output logic [DAW-1:0] lsb_adr,  // address
-  output logic [DBW-1:0] lsb_ben,  // byte enable
-  output logic [DDW-1:0] lsb_wdt,  // write data
-  input  logic [DDW-1:0] lsb_rdt,  // read data
-  input  logic           lsb_err,  // error
-  input  logic           lsb_rdy   // ready
+  input  logic clk,
+  input  logic rst,
+  // system bus
+  tcb_if.man   ifb,  // instruction fetch
+  tcb_if.man   lsb   // load/store
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
 parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 `endif
+
+///////////////////////////////////////////////////////////////////////////////
+// parameter validation
+///////////////////////////////////////////////////////////////////////////////
+
+// TODO
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -151,22 +132,32 @@ if (rst)  ifu_run <= 1'b0;
 else      ifu_run <= 1'b1;
 
 // request becomes active after reset
-assign ifb_vld = ifu_run;
+assign ifb.vld = ifu_run;
+
+// TODO
+assign ifb.req.cmd = '0;
+assign ifb.req.wen = 1'b0;
+assign ifb.req.ben = '1;
+assign ifb.req.wdt = 'x;
+
+// instruction fetch is always little endian
+assign ifb.req.ndn = TCB_LITTLE;
 
 // PC next is used as IF address
-assign ifb_adr = ifu_pcn;
+assign ifb.req.adr = ifu_pcn;
 
 // instruction valid
 always_ff @ (posedge clk, posedge rst)
 if (rst)  idu_vld <= 1'b0;
-else      idu_vld <= (ifb_vld & ifb_rdy) | (idu_vld & stall);
+else      idu_vld <= ifb.trn | (idu_vld & stall);
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = (ifb_vld & ~ifb_rdy) | (lsb_vld & ~lsb_rdy);
+assign stall = (ifb.vld & ~ifb.rdy) | (lsb.vld & ~lsb.rdy);
+//assign stall = ifb.stl | lsb.stl;
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
@@ -176,7 +167,7 @@ else begin
 end
 
 generate
-if (CFG_BRU_BRU) begin: gen_bru_ena
+if (CFG.BRU_BRU) begin: gen_bru_ena
 
   // branch ALU for checking branch conditions
   r5p_bru #(
@@ -212,7 +203,7 @@ endgenerate
 // split PC adder into 12-bit immediate adder and the rest is an incrementer/decrementer, calculate both increment and decrement in advance.
 
 generate
-if (CFG_BRU_BRA) begin: gen_bra_add
+if (CFG.BRU_BRA) begin: gen_bra_add
   // simultaneous running adders, multiplexer with a late select signal
   // requires more adder logic improves timing
   logic [IAW-1:0] ifu_pci;  // PC incrementer
@@ -246,7 +237,7 @@ endgenerate
 
 // program counter next
 always_comb
-if (ifb_rdy & idu_vld) begin
+if (ifb.rdy & idu_vld) begin
   unique case (idu_ctl.opc)
     JAL    ,
     JALR   : ifu_pcn = {alu_sum[IAW-1:1], 1'b0};
@@ -273,14 +264,14 @@ if (1'b1) begin: gen_d16
 
   // 16/32-bit instruction decoder
   always_comb
-  unique case (opsiz(ifb_rdt[16-1:0]))
-    2      : idu_dec = dec16(ISA, ifb_rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_dec = dec32(ISA, ifb_rdt[32-1:0]);  // 32-bit
+  unique case (opsiz(ifb.rsp.rdt[16-1:0]))
+    2      : idu_dec = dec16(ISA, ifb.rsp.rdt[16-1:0]);  // 16-bit C standard extension
+    4      : idu_dec = dec32(ISA, ifb.rsp.rdt[32-1:0]);  // 32-bit
     default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
   endcase
 
   // distributed I/C decoder mux
-//if (CFG_DEC_DIS) begin: gen_dec_dis
+//if (CFG.DEC_DIS) begin: gen_dec_dis
   if (1'b1) begin: gen_dec_dis
     assign idu_ctl = idu_dec;
   end: gen_dec_dis
@@ -302,12 +293,12 @@ end: gen_d16
 else begin: gen_d32
 
   // 32-bit instruction decoder
-  assign idu_ctl = dec32(ISA, ifb_rdt[32-1:0]);
+  assign idu_ctl = dec32(ISA, ifb.rsp.rdt[32-1:0]);
 
 // enc32 debug code
 //  ctl_t  idu_dec;
 //  logic [32-1:0] idu_enc;
-//  assign idu_dec = dec32(ISA, ifb_rdt[32-1:0]);
+//  assign idu_dec = dec32(ISA, ifb.rsp.rdt[32-1:0]);
 //  assign idu_enc = enc32(ISA, idu_dec);
 //  assign idu_ctl = dec32(ISA, idu_enc);
 
@@ -349,17 +340,17 @@ r5p_gpr_2r1w #(
 r5p_alu #(
   .XLEN    (XLEN),
   // enable opcode
-  .CFG_BRANCH (~CFG_BRU_BRU),
-  .CFG_LOAD   (~CFG_ALU_LSA),
-  .CFG_STORE  (~CFG_ALU_LSA),
+  .CFG_BRANCH (~CFG.BRU_BRU),
+  .CFG_LOAD   (~CFG.ALU_LSA),
+  .CFG_STORE  (~CFG.ALU_LSA),
   .CFG_AUIPC  (1'b1),
   .CFG_JAL    (1'b1),
   // FPGA specific optimizations
-  .CFG_SHF (CFG_SHF),
+  .CFG_SHF (CFG.SHF),
   // optimizations: timing versus area compromises
-  .CFG_LOM (CFG_ALU_LOM),
-  .CFG_SOM (CFG_ALU_SOM),
-  .CFG_L4M (CFG_ALU_L4M)
+  .CFG_LOM (CFG.ALU_LOM),
+  .CFG_SOM (CFG.ALU_SOM),
+  .CFG_L4M (CFG.ALU_L4M)
 ) alu (
    // system signals
   .clk     (clk),
@@ -454,7 +445,7 @@ endgenerate
 ///////////////////////////////////////////////////////////////////////////////
 
 generate
-if (CFG_ALU_LSA) begin: gen_lsa_ena
+if (CFG.ALU_LSA) begin: gen_lsa_ena
 
   logic [XLEN-1:0] lsu_adr_ld;  // address load
   logic [XLEN-1:0] lsu_adr_st;  // address store
@@ -490,11 +481,11 @@ r5p_lsu #(
   .DW      (DDW),
   .BW      (DBW),
   // optimizations
-  .CFG_VLD_ILL (CFG_VLD_ILL),
-  .CFG_WEN_ILL (CFG_WEN_ILL),
-  .CFG_WEN_IDL (CFG_WEN_IDL),
-  .CFG_BEN_IDL (CFG_BEN_IDL),
-  .CFG_BEN_ILL (CFG_BEN_ILL)
+  .CFG_VLD_ILL (CFG.VLD_ILL),
+  .CFG_WEN_ILL (CFG.WEN_ILL),
+  .CFG_WEN_IDL (CFG.WEN_IDL),
+  .CFG_BEN_IDL (CFG.BEN_IDL),
+  .CFG_BEN_ILL (CFG.BEN_ILL)
 ) lsu (
   // system signals
   .clk     (clk),
@@ -511,15 +502,19 @@ r5p_lsu #(
   .mal     (lsu_mal),
   .rdy     (lsu_rdy),
   // data bus (load/store)
-  .lsb_vld (lsb_vld),
-  .lsb_wen (lsb_wen),
-  .lsb_adr (lsb_adr),
-  .lsb_ben (lsb_ben),
-  .lsb_wdt (lsb_wdt),
-  .lsb_rdt (lsb_rdt),
-  .lsb_err (lsb_err),
-  .lsb_rdy (lsb_rdy)
+  .lsb_vld (lsb.vld),
+  .lsb_wen (lsb.req.wen),
+  .lsb_adr (lsb.req.adr),
+  .lsb_ben (lsb.req.ben),
+  .lsb_wdt (lsb.req.wdt),
+  .lsb_rdt (lsb.rsp.rdt),
+  .lsb_err (lsb.rsp.sts.err),
+  .lsb_rdy (lsb.rdy)
 );
+
+// TODO
+assign lsb.req.cmd = '0;
+assign lsb.req.ndn = TCB_LITTLE;
 
 ///////////////////////////////////////////////////////////////////////////////
 // write back

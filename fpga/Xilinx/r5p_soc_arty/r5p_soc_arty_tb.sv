@@ -28,7 +28,7 @@ logic rst_n;  // reset (active low)
 // GPIO
 wire  [42-1:0] ck_io;
 wire           uart_rxd;
-wire           uart_txf;
+wire           uart_txd;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance

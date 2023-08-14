@@ -166,33 +166,12 @@ r5p_degu #(
   .CHIP (CHIP)
 ) core (
   // system signals
-  .clk     (clk),
-  .rst     (rst),
-  // instruction fetch
-  .ifb_vld (tcb_ifu.vld),
-  .ifb_adr (tcb_ifu.req.adr),
-  .ifb_rdt (tcb_ifu.rsp.rdt),
-  .ifb_err (tcb_ifu.rsp.sts.err),
-  .ifb_rdy (tcb_ifu.rdy),
-  // data load/store
-  .lsb_vld (tcb_lsu.vld),
-  .lsb_wen (tcb_lsu.req.wen),
-  .lsb_adr (tcb_lsu.req.adr),
-  .lsb_ben (tcb_lsu.req.ben),
-  .lsb_wdt (tcb_lsu.req.wdt),
-  .lsb_rdt (tcb_lsu.rsp.rdt),
-  .lsb_err (tcb_lsu.rsp.sts.err),
-  .lsb_rdy (tcb_lsu.rdy)
+  .clk  (clk),
+  .rst  (rst),
+  // system bus
+  .ifb  (tcb_ifu),
+  .lsb  (tcb_lsu)
 );
-
-assign tcb_ifu.req.cmd = '0;
-assign tcb_ifu.req.ndn = TCB_LITTLE;
-assign tcb_ifu.req.wen = 1'b0;
-assign tcb_ifu.req.ben = '1;
-assign tcb_ifu.req.wdt = 'x;
-
-assign tcb_lsu.req.cmd = '0;
-assign tcb_lsu.req.ndn = TCB_LITTLE;
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
