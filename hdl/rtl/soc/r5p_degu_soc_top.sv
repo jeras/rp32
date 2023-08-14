@@ -18,6 +18,7 @@
 
 module r5p_degu_soc_top
   import riscv_isa_pkg::*;
+  import tcb_pkg::*;
 #(
   /////////////////////////////////////////////////////////////////////////////
   // SoC peripherals
@@ -92,15 +93,47 @@ localparam int unsigned RAW = DAW-1;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
+localparam tcb_par_phy_t PHY_IF = '{
+  // protocol
+  DLY: 1,
+  // signal bus widths
+  SLW: TCB_PAR_PHY_DEF.SLW,
+  ABW: IAW,
+  DBW: IDW,
+  ALW: $clog2(IDW/TCB_PAR_PHY_DEF.SLW),
+  // size/mode/order parameters
+  SIZ: TCB_PAR_PHY_DEF.SIZ,
+  MOD: TCB_PAR_PHY_DEF.MOD,
+  ORD: TCB_PAR_PHY_DEF.ORD,
+  // channel configuration
+  CHN: TCB_PAR_PHY_DEF.CHN
+};
+
+localparam tcb_par_phy_t PHY_LS = '{
+  // protocol
+  DLY: 1,
+  // signal bus widths
+  SLW: TCB_PAR_PHY_DEF.SLW,
+  ABW: DAW,
+  DBW: DDW,
+  ALW: $clog2(DDW/TCB_PAR_PHY_DEF.SLW),
+  // size/mode/order parameters
+  SIZ: TCB_PAR_PHY_DEF.SIZ,
+  MOD: TCB_PAR_PHY_DEF.MOD,
+  ORD: TCB_PAR_PHY_DEF.ORD,
+  // channel configuration
+  CHN: TCB_PAR_PHY_DEF.CHN
+};
+
 // system busses
-tcb_if #(.AW (IAW), .DW (IDW)) bus_if          (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_ls          (.clk (clk), .rst (rst));
+tcb_if #(PHY_IF) bus_if          (.clk (clk), .rst (rst));
+tcb_if #(PHY_LS) bus_ls          (.clk (clk), .rst (rst));
 `ifdef LANGUAGE_UNSUPPORTED_INTERFACE_ARRAY_PORT
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem_0 (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem_1 (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem_2 (.clk (clk), .rst (rst));
+tcb_if #(PHY_LS) bus_mem_0       (.clk (clk), .rst (rst));
+tcb_if #(PHY_LS) bus_mem_1       (.clk (clk), .rst (rst));
+tcb_if #(PHY_LS) bus_mem_2       (.clk (clk), .rst (rst));
 `else
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [3-1:0] (.clk (clk), .rst (rst));
+tcb_if #(PHY_LS) bus_mem [3-1:0] (.clk (clk), .rst (rst));
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +160,7 @@ r5p_degu #(
   .ifb_vld (bus_if.vld),
   .ifb_adr (bus_if.adr),
   .ifb_rdt (bus_if.rdt),
-  .ifb_err (bus_if.err),
+  .ifb_err (bus_if.sts.err),
   .ifb_rdy (bus_if.rdy),
   // data load/store
   .lsb_vld (bus_ls.vld),
@@ -136,7 +169,7 @@ r5p_degu #(
   .lsb_ben (bus_ls.ben),
   .lsb_wdt (bus_ls.wdt),
   .lsb_rdt (bus_ls.rdt),
-  .lsb_err (bus_ls.err),
+  .lsb_err (bus_ls.sts.err),
   .lsb_rdy (bus_ls.rdy)
 );
 
@@ -169,13 +202,12 @@ tcb_dec_3sp #(
 
 `else
 
-tcb_dec #(
-  .AW  (DAW),
-  .DW  (DDW),
-  .PN  (3),   // port number
-  .AS  ({ {1'b1, 14'bxx_xxxx_x1xx_xxxx} ,   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
-          {1'b1, 14'bxx_xxxx_x0xx_xxxx} ,   // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
-          {1'b0, 14'bxx_xxxx_xxxx_xxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
+tcb_lib_decoder #(
+  .PHY (PHY_LS),
+  .SPN (3),   // port number
+  .DAM ({{1'b1, 14'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
+         {1'b1, 14'bxx_xxxx_x0xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
+         {1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
 ) lsb_dec (
   .sub  (bus_ls      ),
   .man  (bus_mem[2:0])
@@ -279,7 +311,7 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .douta  (bus_mem[0].rdt)
   );
 
-  assign bus_mem[0].err = 1'b0;
+  assign bus_mem[0].rsp.sts.err = 1'b0;
   assign bus_mem[0].rdy = 1'b1;
 
 end: gen_artix_xpm
@@ -288,25 +320,26 @@ else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
   blk_mem_gen_0 imem (
     .clka   (   bus_if.clk),
     .ena    (   bus_if.vld),
-    .wea    ({4{bus_if.wen}}),
-    .addra  (   bus_if.adr[IAW-1:2]),
-    .dina   (   bus_if.wdt),
-    .douta  (   bus_if.rdt)
+    .wea    ({4{bus_if.req.wen}}),
+    .addra  (   bus_if.req.adr[IAW-1:2]),
+    .dina   (   bus_if.req.wdt),
+    .douta  (   bus_if.rsp.rdt)
   );
 
-  assign bus_if.err = 1'b0;
+  assign bus_if.rsp.sts.err = 1'b0;
   assign bus_if.rdy = 1'b1;
 
   blk_mem_gen_0 dmem (
     .clka   (bus_mem[0].clk),
     .ena    (bus_mem[0].vld),
-    .wea    (bus_mem[0].ben & {DBW{bus_mem[0].wen}}),
-    .addra  (bus_mem[0].adr[RAW-1:$clog2(DBW)]),
-    .dina   (bus_mem[0].wdt),
-    .douta  (bus_mem[0].rdt)
+    .wea    (bus_mem[0].req.ben &
+        {DBW{bus_mem[0].req.wen}}),
+    .addra  (bus_mem[0].req.adr[RAW-1:$clog2(DBW)]),
+    .dina   (bus_mem[0].req.wdt),
+    .douta  (bus_mem[0].rsp.rdt)
   );
 
-  assign bus_mem[0].err = 1'b0;
+  assign bus_mem[0].rsp.sts.err = 1'b0;
   assign bus_mem[0].rdy = 1'b1;
 
 end: gen_artix_gen
@@ -324,7 +357,7 @@ else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
     .q          (bus_if.rdt)
   );
 
-  assign bus_if.err = 1'b0;
+  assign bus_if.rsp.sts.err = 1'b0;
   assign bus_if.rdy = 1'b1;
 
   ram32x4096 dmem (
@@ -337,7 +370,7 @@ else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
     .q        (bus_mem[0].rdt)
   );
 
-  assign bus_mem[0].err = 1'b0;
+  assign bus_mem[0].rsp.sts.err = 1'b0;
   assign bus_mem[0].rdy = 1'b1;
 
 end: gen_cyclone_v
@@ -373,7 +406,7 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     .Q          (bus_if.rdt)
   );
 
-  assign bus_if.err = 1'b0;
+  assign bus_if.rsp.sts.err = 1'b0;
   assign bus_if.rdy = 1'b1;
 
   // TODO: use a single port or a true dual port memory
@@ -406,7 +439,7 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     .Q          (bus_mem[0].rdt)
   );
  
-  assign bus_mem[0].err = 1'b0;
+  assign bus_mem[0].rsp.sts.err = 1'b0;
   assign bus_mem[0].rdy = 1'b1;
 
 end: gen_ecp5
@@ -445,7 +478,7 @@ generate
 if (ENA_GPIO) begin: gen_gpio
 
   // GPIO controller
-  tcb_gpio #(
+  tcb_cmn_gpio #(
     .GW          (GW),
     .CFG_RSP_MIN (1'b1),
     .CHIP        (CHIP)
@@ -467,9 +500,9 @@ else begin: gen_gpio_err
 
   // error response
 `ifdef LANGUAGE_UNSUPPORTED_INTERFACE_ARRAY_PORT
-  tcb_err gpio_err (.bus (bus_mem_1));
+  tcb_lib_error gpio_err (.bus (bus_mem_1));
 `else
-  tcb_err gpio_err (.bus (bus_mem[1]));
+  tcb_lib_error gpio_err (.bus (bus_mem[1]));
 `endif
 
   // GPIO signals
@@ -492,7 +525,7 @@ if (ENA_UART) begin: gen_uart
   localparam int unsigned BCW = $clog2(BDR);  // a 9-bit counter is required
 
   // UART controller
-  tcb_uart #(
+  tcb_cmn_uart #(
     // UART parameters
     .CW       (BCW),
     // configuration register parameters (write enable, reset value)
@@ -520,9 +553,9 @@ else begin: gen_uart_err
 
   // error response
 `ifdef LANGUAGE_UNSUPPORTED_INTERFACE_ARRAY_PORT
-  tcb_err uart_err (.bus (bus_mem_2));
+  tcb_lib_error uart_err (.bus (bus_mem_2));
 `else
-  tcb_err uart_err (.bus (bus_mem[2]));
+  tcb_lib_error uart_err (.bus (bus_mem[2]));
 `endif
 
   // GPIO signals

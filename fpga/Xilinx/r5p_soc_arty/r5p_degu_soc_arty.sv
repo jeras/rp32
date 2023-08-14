@@ -71,13 +71,12 @@ assign clk = CLK100MHZ;
 //else          {rst, rst_r} <= {rst_r, 1'b0};
 
 // xpm_cdc_async_rst: Asynchronous Reset Synchronizer
-// Xilinx Parameterized Macro, version 2021.2
+// Xilinx Parameterized Macro, version 2023.1
 xpm_cdc_async_rst #(
  .DEST_SYNC_FF    (4), // DECIMAL; range: 2-10
  .INIT_SYNC_FF    (0), // DECIMAL; 0=disable simulation init values, 1=enable simulation init values
  .RST_ACTIVE_HIGH (1)  // DECIMAL; 0=active low reset, 1=active high reset
-)
-xpm_cdc_async_rst_inst (
+) xpm_cdc_async_rst_inst (
   .src_arst  (~ck_rst),
   .dest_arst (rst),
   .dest_clk  (clk)
