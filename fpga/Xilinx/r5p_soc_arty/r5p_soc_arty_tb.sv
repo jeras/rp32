@@ -18,7 +18,7 @@
 
 module r5p_soc_arty_tb #(
   // implementation device (ASIC/FPGA vendor/device)
-  string CHIP = "ARTIX_XPM"
+  string CHIP = "ARTIX_GEN"
 );
 
 // system signals
@@ -27,20 +27,28 @@ logic rst_n;  // reset (active low)
 
 // GPIO
 wire  [42-1:0] ck_io;
+wire           uart_rxd;
+wire           uart_txf;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_soc_arty #(
-//  .CHIP    (CHIP)
+r5p_degu_soc_arty #(
+  .CHIP         (CHIP)
 ) DUT (
   // system signals
-  .CLK100MHZ (clk),
-  .ck_rst    (rst_n),
+  .CLK100MHZ    (clk),
+  .ck_rst       (rst_n),
   // GPIO
-  .ck_io     (ck_io)
+  .ck_io        (ck_io),
+  // UART
+  .uart_rxd_out (uart_txd),
+  .uart_txd_in  (uart_rxd)
 );
+
+// UART loopback
+assign uart_rxd = uart_txd;
 
 ////////////////////////////////////////////////////////////////////////////////
 // test sequence
