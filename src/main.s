@@ -6,6 +6,10 @@ _start:
     li x30, 0xFFFFFFFF  # GPIO output enable (all enabled)
     sw x29, 0x0(x28)    # write GPIO output
     sw x30, 0x4(x28)    # write GPIO output enable
+    nop
+    nop
+    nop
+    nop
     lw x31, 0x8(x28)    # read GPIO input
 
 finish:
