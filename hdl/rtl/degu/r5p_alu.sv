@@ -152,13 +152,14 @@ begin
         default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
       endcase
     JALR   : if (1'b1      ) begin add_inv = 1'b0; add_sgn = 1'bx; end
-    LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_sgn = 1'bx; end
-    STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_sgn = 1'bx; end
+    LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_sgn = 1'b1; end
+    STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_sgn = 1'b1; end
     AUIPC  : if (CFG_AUIPC ) begin add_inv = 1'b0; add_sgn = 1'bx; end
     JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_sgn = 1'bx; end
     default:                 begin add_inv = 1'bx; add_sgn = 1'bx; end
   endcase
 end
+// TODO: check undefined values
 
 assign add_op1 = extend(mux_op1, add_sgn);
 assign add_op2 = extend(mux_op2, add_sgn);
