@@ -125,6 +125,22 @@ localparam tcb_par_phy_t PHY_LS = '{
   CHN: TCB_PAR_PHY_DEF.CHN
 };
 
+localparam tcb_par_phy_t PHY_MEM = '{
+  // protocol
+  DLY: 0,
+  // signal bus widths
+  SLW: TCB_PAR_PHY_DEF.SLW,
+  ABW: DAW,
+  DBW: DDW,
+  ALW: $clog2(DDW/TCB_PAR_PHY_DEF.SLW),
+  // size/mode/order parameters
+  SIZ: TCB_PAR_PHY_DEF.SIZ,
+  MOD: TCB_PAR_PHY_DEF.MOD,
+  ORD: TCB_PAR_PHY_DEF.ORD,
+  // channel configuration
+  CHN: TCB_PAR_PHY_DEF.CHN
+};
+
 localparam tcb_par_phy_t PHY_PER = '{
   // protocol
   DLY: 0,
@@ -145,6 +161,7 @@ localparam tcb_par_phy_t PHY_PER = '{
 tcb_if #(PHY_IF ) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
 tcb_if #(PHY_LS ) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
 tcb_if #(PHY_LS ) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
+tcb_if #(PHY_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=0
 tcb_if #(PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
 tcb_if #(PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
@@ -156,12 +173,6 @@ r5p_degu #(
   // RISC-V ISA
   .XLEN (XLEN),
   .ISA  (ISA),
-  // instruction bus
-  .IAW  (IAW),
-  .IDW  (IDW),
-  // data bus
-  .DAW  (DAW),
-  .DDW  (DDW),
   // implementation device (ASIC/FPGA vendor/device)
   .CHIP (CHIP)
 ) core (
