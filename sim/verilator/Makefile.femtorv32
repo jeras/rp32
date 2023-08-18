@@ -49,7 +49,6 @@ RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
 TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
-TSV+=${PATH_TBN}/tcb_mem_1p.sv
 TSV+=${PATH_TBN}/femtorv32_quark_riscv_tb.sv
 
 # combined HDL sources

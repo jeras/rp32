@@ -1,1 +1,1 @@
-Makefile.hamster
+Makefile.degu

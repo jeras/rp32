@@ -47,12 +47,12 @@ module r5p_degu_soc_top
   // interconnect/memories
   /////////////////////////////////////////////////////////////////////////////
   // instruction bus
-  int unsigned IAW = 14,    // instruction address width (byte address)
-  int unsigned IDW = 32,    // instruction data    width
+  int unsigned IAW = 14,     // instruction address width (byte address)
+  int unsigned IDW = 32,     // instruction data    width
   // data bus
-  int unsigned DAW = 15,    // data address width (byte address)
-  int unsigned DDW = XLEN,  // data data    width
-  int unsigned DBW = DDW/8, // data byte en width
+  int unsigned DAW = 15,     // data address width (byte address)
+  int unsigned DDW = XLEN,   // data data    width
+  int unsigned DBW = DDW/8,  // data byte en width
   // instruction memory size (in bytes) and initialization file name
   int unsigned IMS = (IDW/8)*(2**IAW),
   string       IFN = "mem_if.vmem",
@@ -93,7 +93,7 @@ localparam int unsigned RAW = DAW-1;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-localparam tcb_par_phy_t PHY_IF = '{
+localparam tcb_par_phy_t PHY_IFU = '{
   // protocol
   DLY: 1,
   // signal bus widths
@@ -109,7 +109,7 @@ localparam tcb_par_phy_t PHY_IF = '{
   CHN: TCB_PAR_PHY_DEF.CHN
 };
 
-localparam tcb_par_phy_t PHY_LS = '{
+localparam tcb_par_phy_t PHY_LSU = '{
   // protocol
   DLY: 1,
   // signal bus widths
@@ -127,7 +127,7 @@ localparam tcb_par_phy_t PHY_LS = '{
 
 localparam tcb_par_phy_t PHY_MEM = '{
   // protocol
-  DLY: 0,
+  DLY: 1,
   // signal bus widths
   SLW: TCB_PAR_PHY_DEF.SLW,
   ABW: DAW,
@@ -158,10 +158,10 @@ localparam tcb_par_phy_t PHY_PER = '{
 };
 
 // system busses
-tcb_if #(PHY_IF ) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
-tcb_if #(PHY_LS ) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-tcb_if #(PHY_LS ) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
-tcb_if #(PHY_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=0
+tcb_if #(PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+tcb_if #(PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+tcb_if #(PHY_LSU) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
+tcb_if #(PHY_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
 tcb_if #(PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
 tcb_if #(PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
@@ -192,7 +192,7 @@ logic [2-1:0] tcb_lsu_sel;
 
 // decoding memory/peripherals
 tcb_lib_decoder #(
-  .PHY (PHY_LS),
+  .PHY (PHY_LSU),
   .SPN (2),
   .DAM ({{1'b1, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
          {1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
@@ -212,7 +212,14 @@ tcb_lib_demultiplexer #(
   .man  (tcb_lsd)
 );
 
-// register request bus to convert from DLY=1 CPU to DLY=0 peripherals
+// convert from reference to memory more
+//tcb_lib_converter tcb_lsu_converter (
+tcb_lib_passthrough tcb_lsu_converter (
+  .sub  (tcb_lsd[0]),
+  .man  (tcb_mem)
+);
+
+// register request path to convert from DLY=1 CPU to DLY=0 peripherals
 tcb_lib_register_request tcb_lsu_register (
   .sub  (tcb_lsd[1]),
   .man  (tcb_pb0)
@@ -222,7 +229,7 @@ logic [2-1:0] tcb_pb0_sel;
 
 // decoding peripherals (GPIO/UART)
 tcb_lib_decoder #(
-  .PHY (PHY_LS),
+  .PHY (PHY_LSU),
   .SPN (2),
   .DAM ({{15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
          {15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
@@ -329,17 +336,17 @@ if (CHIP == "ARTIX_XPM") begin: gen_artix_xpm
     .sleep          (1'b0),
     .regcea         (1'b1),
     // system bus
-    .clka   (tcb_lsd[0].clk),
-    .rsta   (tcb_lsd[0].rst),
-    .ena    (tcb_lsd[0].vld),
-    .wea    (tcb_lsd[0].ben & {DBW{tcb_lsd[0].wen}}),
-    .addra  (tcb_lsd[0].adr[RAW-1:$clog2(DBW)]),
-    .dina   (tcb_lsd[0].wdt),
-    .douta  (tcb_lsd[0].rdt)
+    .clka   (tcb_mem.clk),
+    .rsta   (tcb_mem.rst),
+    .ena    (tcb_mem.vld),
+    .wea    (tcb_mem.ben & {DBW{tcb_mem.wen}}),
+    .addra  (tcb_mem.adr[RAW-1:$clog2(DBW)]),
+    .dina   (tcb_mem.wdt),
+    .douta  (tcb_mem.rdt)
   );
 
-  assign tcb_lsd[0].rsp.sts.err = 1'b0;
-  assign tcb_lsd[0].rdy = 1'b1;
+  assign tcb_mem.rsp.sts.err = 1'b0;
+  assign tcb_mem.rdy = 1'b1;
 
 end: gen_artix_xpm
 else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
@@ -357,17 +364,17 @@ else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
   assign tcb_ifu.rdy = 1'b1;
 
   blk_mem_gen_0 dmem (
-    .clka   (tcb_lsd[0].clk),
-    .ena    (tcb_lsd[0].vld),
-    .wea    (tcb_lsd[0].req.ben &
-        {DBW{tcb_lsd[0].req.wen}}),
-    .addra  (tcb_lsd[0].req.adr[RAW-1:$clog2(DBW)]),
-    .dina   (tcb_lsd[0].req.wdt),
-    .douta  (tcb_lsd[0].rsp.rdt)
+    .clka   (tcb_mem.clk),
+    .ena    (tcb_mem.vld),
+    .wea    (tcb_mem.req.ben &
+        {DBW{tcb_mem.req.wen}}),
+    .addra  (tcb_mem.req.adr[RAW-1:$clog2(DBW)]),
+    .dina   (tcb_mem.req.wdt),
+    .douta  (tcb_mem.rsp.rdt)
   );
 
-  assign tcb_lsd[0].rsp.sts.err = 1'b0;
-  assign tcb_lsd[0].rdy = 1'b1;
+  assign tcb_mem.rsp.sts.err = 1'b0;
+  assign tcb_mem.rdy = 1'b1;
 
 end: gen_artix_gen
 else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
@@ -388,17 +395,17 @@ else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
   assign tcb_ifu.rdy = 1'b1;
 
   ram32x4096 dmem (
-    .clock    (tcb_lsd[0].clk),
-    .wren     (tcb_lsd[0].vld &  tcb_lsd[0].wen),
-    .rden     (tcb_lsd[0].vld & ~tcb_lsd[0].wen),
-    .address  (tcb_lsd[0].adr[RAW-1:$clog2(DBW)]),
-    .byteena  (tcb_lsd[0].ben),
-    .data     (tcb_lsd[0].wdt),
-    .q        (tcb_lsd[0].rdt)
+    .clock    (tcb_mem.clk),
+    .wren     (tcb_mem.vld &  tcb_mem.wen),
+    .rden     (tcb_mem.vld & ~tcb_mem.wen),
+    .address  (tcb_mem.adr[RAW-1:$clog2(DBW)]),
+    .byteena  (tcb_mem.ben),
+    .data     (tcb_mem.wdt),
+    .q        (tcb_mem.rdt)
   );
 
-  assign tcb_lsd[0].rsp.sts.err = 1'b0;
-  assign tcb_lsd[0].rdy = 1'b1;
+  assign tcb_mem.rsp.sts.err = 1'b0;
+  assign tcb_mem.rdy = 1'b1;
 
 end: gen_cyclone_v
 else if (CHIP == "ECP5") begin: gen_ecp5
@@ -453,21 +460,21 @@ else if (CHIP == "ECP5") begin: gen_ecp5
     .pmi_byte_size         (8),
     .pmi_family            ("ECP5")
   ) dmem (
-    .WrClock    (tcb_lsd[0].clk),
-    .WrClockEn  (tcb_lsd[0].vld),
-    .WE         (tcb_lsd[0].wen),
-    .WrAddress  (tcb_lsd[0].adr[RAW-1:$clog2(DBW)]),
-    .ByteEn     (tcb_lsd[0].ben),
-    .Data       (tcb_lsd[0].wdt),
-    .RdClock    (tcb_lsd[0].clk),
-    .RdClockEn  (tcb_lsd[0].vld),
-    .Reset      (tcb_lsd[0].rst),
-    .RdAddress  (tcb_lsd[0].adr[RAW-1:$clog2(DBW)]),
-    .Q          (tcb_lsd[0].rdt)
+    .WrClock    (tcb_mem.clk),
+    .WrClockEn  (tcb_mem.vld),
+    .WE         (tcb_mem.wen),
+    .WrAddress  (tcb_mem.adr[RAW-1:$clog2(DBW)]),
+    .ByteEn     (tcb_mem.ben),
+    .Data       (tcb_mem.wdt),
+    .RdClock    (tcb_mem.clk),
+    .RdClockEn  (tcb_mem.vld),
+    .Reset      (tcb_mem.rst),
+    .RdAddress  (tcb_mem.adr[RAW-1:$clog2(DBW)]),
+    .Q          (tcb_mem.rdt)
   );
  
-  assign tcb_lsd[0].rsp.sts.err = 1'b0;
-  assign tcb_lsd[0].rdy = 1'b1;
+  assign tcb_mem.rsp.sts.err = 1'b0;
+  assign tcb_mem.rdy = 1'b1;
 
 end: gen_ecp5
 else begin: gen_default
@@ -487,7 +494,7 @@ else begin: gen_default
     .AW   (RAW-1),
     .DW   (DDW)
   ) dmem (
-    .bus  (tcb_lsd[0])
+    .bus  (tcb_mem)
   );
 
 end: gen_default

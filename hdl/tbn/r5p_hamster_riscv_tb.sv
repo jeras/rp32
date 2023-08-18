@@ -19,6 +19,7 @@
 
 module riscv_tb
   import riscv_isa_pkg::*;
+  import tcb_pkg::*;
 #(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
@@ -32,7 +33,7 @@ module riscv_tb
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
 `else
-  isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
   // instruction bus
   int unsigned IAW = 22,     // instruction address width
@@ -76,8 +77,26 @@ end
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_if #(.AW (DAW), .DW (DDW)) bus           (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
+localparam tcb_par_phy_t PHY_BUS = '{
+  // protocol
+  DLY: 1,
+  // signal bus widths
+  SLW: TCB_PAR_PHY_DEF.SLW,
+  ABW: IAW,
+  DBW: IDW,
+  ALW: $clog2(IDW/TCB_PAR_PHY_DEF.SLW),
+  // size/mode/order parameters
+  SIZ: TCB_PAR_PHY_DEF.SIZ,
+  MOD: TCB_PAR_PHY_DEF.MOD,
+  ORD: TCB_PAR_PHY_DEF.ORD,
+  // channel configuration
+  CHN: TCB_PAR_PHY_DEF.CHN
+};
+
+// system busses
+tcb_if #(PHY_BUS) tcb_bus         (.clk (clk), .rst (rst));
+tcb_if #(PHY_LSU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
+tcb_if #(PHY_LSU) tcb_mem [1-1:0] (.clk (clk), .rst (rst));
 
 // internal state signals
 logic dbg_ifu;  // indicator of instruction fetch
@@ -92,7 +111,7 @@ r5p_hamster #(
   .ISA  (ISA),
 //  .RST_ADR (32'h0000_0000),
 //  .GPR_ADR (32'h001f_ff80)
-) cpu (
+) DUT (
   // system signals
   .clk     (clk),
   .rst     (rst),
@@ -103,14 +122,14 @@ r5p_hamster #(
 `endif
   // TCL system bus (shared by instruction/load/store)
   .bus_vld (bus.vld),
-  .bus_lck (bus.lck),
-  .bus_rpt (bus.rpt),
-  .bus_wen (bus.wen),
-  .bus_adr (bus.adr),
-  .bus_ben (bus.ben),
-  .bus_wdt (bus.wdt),
-  .bus_rdt (bus.rdt),
-  .bus_err (bus.err),
+  .bus_lck (bus.req.cmd.lck),
+  .bus_rpt (bus.req.cmd.rpt),
+  .bus_wen (bus.req.wen),
+  .bus_adr (bus.req.adr),
+  .bus_ben (bus.req.ben),
+  .bus_wdt (bus.req.wdt),
+  .bus_rdt (bus.rsp.rdt),
+  .bus_err (bus.rsp.sts.err),
   .bus_rdy (bus.rdy)
 );
 
@@ -119,25 +138,41 @@ r5p_hamster #(
 ////////////////////////////////////////////////////////////////////////////////
 
 tcb_dec #(
-  .AW   (DAW),
-  .DW   (DDW),
-  .PN   (2),                      // port number
-  .AS   ({ {10'd0, 2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
-           {10'd0, 2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
-) dec (
-  .sub  (bus),
-  .man  (bus_mem[1:0])
+  .PHY (PHY_LSU),
+  .SPN (2),
+  .DAM ({{10'd0, 2'b1x, 20'hxxxxx},   // 0x20_0000 ~ 0x2f_ffff - controller
+         {10'd0, 2'b0x, 20'hxxxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
+) tcb_bus_dec (
+  .tcb  (tcb_bus),
+  .sel  (tcb_lsu_sel)
+);
+
+// demultiplexing memory/controller
+tcb_lib_demultiplexer #(
+  .MPN (2)
+) tcb_lsu_demux (
+  // control
+  .sel  (tcb_lsu_sel),
+  // TCB interfaces
+  .sub  (tcb_bus),
+  .man  (tcb_dmx)
+);
+
+// passthrough TCB interfaces to array
+tcb_lib_passthrough tcb_pas_lsu (
+  .sub  (tcb_dmx[0]),
+  .man  (tcb_mem[0])
 );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_mem_1p #(
+tcb_vip_mem #(
   .FN   (IFN),
-  .SZ   (2**IAW)
+  .SIZ  (2**IAW)
 ) mem (
-  .bus  (bus_mem[0])
+  .tcb  (bus_mem[0:0])
 );
 
 // memory initialization file is provided at runtime
@@ -166,13 +201,13 @@ if (rst) begin
   rvmodel_data_begin <= 'x;
   rvmodel_data_end   <= 'x;
   rvmodel_halt       <= '0;
-end else if (bus_mem[1].vld & bus_mem[1].rdy) begin
-  if (bus_mem[1].wen) begin
+end else if (bus_mem[1].trn) begin
+  if (bus_mem[1].req.wen) begin
     // write access
-    case (bus_mem[1].adr[5-1:0])
-      5'h00:  rvmodel_data_begin <= bus_mem[1].wdt;
-      5'h08:  rvmodel_data_end   <= bus_mem[1].wdt;
-      5'h10:  rvmodel_halt       <= bus_mem[1].wdt[0];
+    case (bus_mem[1].req.adr[5-1:0])
+      5'h00:  rvmodel_data_begin <= bus_mem[1].req.wdt;
+      5'h08:  rvmodel_data_end   <= bus_mem[1].req.wdt;
+      5'h10:  rvmodel_halt       <= bus_mem[1].req.wdt[0];
       default:  ;  // do nothing
     endcase
   end
@@ -224,7 +259,7 @@ logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
 
 // hierarchical path to GPR inside RTL
 //assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
-assign gpr_tmp = riscv_tb.cpu.gpr.gen_default.gpr;
+assign gpr_tmp = riscv_tb.DUT.gpr.gen_default.gpr;
 
 // GPR change log
 always_ff @(posedge clk)
@@ -251,7 +286,7 @@ tcb_mon_riscv #(
   .dbg_lsu (dbg_lsu),
   .dbg_gpr (1'b0),
   // system bus
-  .bus  (bus)
+  .bus  (tcb_bus)
 );
 
 // time counter

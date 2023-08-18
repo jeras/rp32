@@ -19,6 +19,7 @@
 
 module riscv_tb
   import riscv_isa_pkg::*;
+  import tcb_pkg::*;
 #(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
@@ -32,7 +33,7 @@ module riscv_tb
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
 `else
-  isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
   // instruction bus
   int unsigned IAW = 22,     // instruction address width
@@ -76,9 +77,43 @@ end
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_if #(.AW (IAW), .DW (IDW)) bus_if        (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_ls        (.clk (clk), .rst (rst));
-tcb_if #(.AW (DAW), .DW (DDW)) bus_mem [1:0] (.clk (clk), .rst (rst));
+localparam tcb_par_phy_t PHY_IFU = '{
+  // protocol
+  DLY: 1,
+  // signal bus widths
+  SLW: TCB_PAR_PHY_DEF.SLW,
+  ABW: IAW,
+  DBW: IDW,
+  ALW: $clog2(IDW/TCB_PAR_PHY_DEF.SLW),
+  // size/mode/order parameters
+  SIZ: TCB_PAR_PHY_DEF.SIZ,
+  MOD: TCB_PAR_PHY_DEF.MOD,
+  ORD: TCB_PAR_PHY_DEF.ORD,
+  // channel configuration
+  CHN: TCB_PAR_PHY_DEF.CHN
+};
+
+localparam tcb_par_phy_t PHY_LSU = '{
+  // protocol
+  DLY: 1,
+  // signal bus widths
+  SLW: TCB_PAR_PHY_DEF.SLW,
+  ABW: DAW,
+  DBW: DDW,
+  ALW: $clog2(DDW/TCB_PAR_PHY_DEF.SLW),
+  // size/mode/order parameters
+  SIZ: TCB_PAR_PHY_DEF.SIZ,
+  MOD: TCB_PAR_PHY_DEF.MOD,
+  ORD: TCB_PAR_PHY_DEF.ORD,
+  // channel configuration
+  CHN: TCB_PAR_PHY_DEF.CHN
+};
+
+// system busses
+tcb_if #(PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+tcb_if #(PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+tcb_if #(PHY_LSU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
+tcb_if #(PHY_LSU) tcb_mem [2-1:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -88,62 +123,62 @@ r5p_degu #(
   // RISC-V ISA
   .XLEN (XLEN),
   .ISA  (ISA),
-  // instruction bus
-  .IAW  (IAW),
-  .IDW  (IDW),
-  // data bus
-  .DAW  (DAW),
-  .DDW  (DDW)
 ) DUT (
   // system signals
-  .clk     (clk),
-  .rst     (rst),
-  // instruction fetch
-  .ifb_vld  (bus_if.vld),
-  .ifb_adr  (bus_if.adr),
-  .ifb_rdt  (bus_if.rdt),
-  .ifb_err  (bus_if.err),
-  .ifb_rdy  (bus_if.rdy),
-  // data load/store
-  .lsb_vld  (bus_ls.vld),
-  .lsb_wen  (bus_ls.wen),
-  .lsb_adr  (bus_ls.adr),
-  .lsb_ben  (bus_ls.ben),
-  .lsb_wdt  (bus_ls.wdt),
-  .lsb_rdt  (bus_ls.rdt),
-  .lsb_err  (bus_ls.err),
-  .lsb_rdy  (bus_ls.rdy)
+  .clk  (clk),
+  .rst  (rst),
+  // system bus
+  .ifb  (tcb_ifu),
+  .lsb  (tcb_lsu)
 );
-
-assign bus_if.wen = 1'b0;
-assign bus_if.ben = '1;
-assign bus_if.wdt = 'x;
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store bus decoder
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_dec #(
-  .AW   (DAW),
-  .DW   (DDW),
-  .PN   (2),                      // port number
-  .AS   ({ {2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
-           {2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
-) dec (
-  .sub  (bus_ls      ),
-  .man  (bus_mem[1:0])
+logic [2-1:0] tcb_lsu_sel;
+
+// decoding memory/controller
+tcb_lib_decoder #(
+  .PHY (PHY_LSU),
+  .SPN (2),
+  .DAM ({{2'b1x, 20'hxxxxx},   // 0x20_0000 ~ 0x2f_ffff - controller
+         {2'b0x, 20'hxxxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
+) tcb_lsu_dec (
+  .tcb  (tcb_lsu    ),
+  .sel  (tcb_lsu_sel)
+);
+
+// demultiplexing memory/controller
+tcb_lib_demultiplexer #(
+  .MPN (2)
+) tcb_lsu_demux (
+  // control
+  .sel  (tcb_lsu_sel),
+  // TCB interfaces
+  .sub  (tcb_lsu),
+  .man  (tcb_dmx)
+);
+
+// passthrough TCB interfaces to array
+tcb_lib_passthrough tcb_pas_ifu (
+  .sub  (tcb_ifu),
+  .man  (tcb_mem[0])
+);
+tcb_lib_passthrough tcb_pas_lsu (
+  .sub  (tcb_dmx[0]),
+  .man  (tcb_mem[1])
 );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_mem_2p #(
+tcb_vip_mem #(
   .FN   (IFN),
-  .SZ   (2**IAW)
+  .SIZ  (2**IAW)
 ) mem (
-  .bus_if  (bus_if),
-  .bus_ls  (bus_mem[0])
+  .tcb  (bus_mem[0:0])
 );
 
 // memory initialization file is provided at runtime
@@ -172,13 +207,13 @@ if (rst) begin
   rvmodel_data_begin <= 'x;
   rvmodel_data_end   <= 'x;
   rvmodel_halt       <= '0;
-end else if (bus_mem[1].vld & bus_mem[1].rdy) begin
-  if (bus_mem[1].wen) begin
+end else if (bus_mem[1].trn) begin
+  if (bus_mem[1].req.wen) begin
     // write access
-    case (bus_mem[1].adr[5-1:0])
-      5'h00:  rvmodel_data_begin <= bus_mem[1].wdt;
-      5'h08:  rvmodel_data_end   <= bus_mem[1].wdt;
-      5'h10:  rvmodel_halt       <= bus_mem[1].wdt[0];
+    case (bus_mem[1].req.adr[5-1:0])
+      5'h00:  rvmodel_data_begin <= bus_mem[1].req.wdt;
+      5'h08:  rvmodel_data_end   <= bus_mem[1].req.wdt;
+      5'h10:  rvmodel_halt       <= bus_mem[1].req.wdt[0];
       default:  ;  // do nothing
     endcase
   end
