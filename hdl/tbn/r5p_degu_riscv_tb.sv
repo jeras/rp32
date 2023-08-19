@@ -19,7 +19,6 @@
 
 module riscv_tb
   import riscv_isa_pkg::*;
-  import tcb_pkg::*;
 #(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
@@ -48,6 +47,7 @@ module riscv_tb
   bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )();
 
+import tcb_pkg::*;
 import riscv_asm_pkg::*;
 
 // system signals
@@ -122,7 +122,7 @@ tcb_if #(PHY_LSU) tcb_mem [2-1:0] (.clk (clk), .rst (rst));
 r5p_degu #(
   // RISC-V ISA
   .XLEN (XLEN),
-  .ISA  (ISA),
+  .ISA  (ISA)
 ) DUT (
   // system signals
   .clk  (clk),
@@ -178,7 +178,7 @@ tcb_vip_mem #(
   .FN   (IFN),
   .SIZ  (2**IAW)
 ) mem (
-  .tcb  (bus_mem[0:0])
+  .tcb  (tcb_mem[0:0])
 );
 
 // memory initialization file is provided at runtime
