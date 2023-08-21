@@ -47,7 +47,7 @@ typedef enum logic [1:0] {
   XLEN_32  = 2'd1,  // XLEN = 32
   XLEN_64  = 2'd2,  // XLEN = 64
   XLEN_128 = 2'd3   // XLEN = 128
-} csr_xlen_et;
+} csr_xlen_t;
 
 // endian mode
 typedef enum logic {
@@ -77,7 +77,7 @@ typedef enum logic [1:0] {
 
 // [Machine] ISA Register
 typedef struct packed {
-  csr_xlen_et        MXL       ;  // Machine XLEN
+  csr_xlen_t         MXL       ;  // Machine XLEN
   logic [MXLEN-3:26] warl_xx_26;  // Reserved
   struct packed {
     logic Z;  // 25 // Reserved
@@ -179,8 +179,8 @@ typedef struct packed {
   csr_endian_t  MBE       ;  // 37    // M-mode endianness
   csr_endian_t  SBE       ;  // 36    // S-mode endianness
   // Base ISA Control
-  csr_xlen_et   SXL       ;  // 35:34 // S-mode XLEN
-  csr_xlen_et   UXL       ;  // 33:32 // U-mode XLEN
+  csr_xlen_t    SXL       ;  // 35:34 // S-mode XLEN
+  csr_xlen_t    UXL       ;  // 33:32 // U-mode XLEN
   logic [31:23] wpri_31_23;  // 31:23 //
   // Virtualization Support
   logic         TSR       ;  // 22    // Trap SRET
@@ -539,8 +539,8 @@ localparam csr_map_st CSR_MAP_WR = '{
     MBE        : csr_endian_t '(`WLRL),  // 37    // M-mode endianness
     SBE        : csr_endian_t '(`WLRL),  // 36    // S-mode endianness
     // Base ISA Control
-    SXL        : csr_xlen_et  '(`WLRL),  // 35:34 // S-mode XLEN
-    UXL        : csr_xlen_et  '(`WLRL),  // 33:32 // U-mode XLEN
+    SXL        : csr_xlen_t   '(`WLRL),  // 35:34 // S-mode XLEN
+    UXL        : csr_xlen_t   '(`WLRL),  // 33:32 // U-mode XLEN
     wpri_31_23 :                `WPRI ,  // 31:23 //
     // Virtualization Support
     TSR        :                `WLRL ,  // 22    // Trap SRET
@@ -568,7 +568,7 @@ localparam csr_map_st CSR_MAP_WR = '{
   },
   // 0x301       // ISA and extensions
   misa       : '{
-    MXL        : csr_xlen_et  '(`WARL),  // Machine XLEN
+    MXL        : csr_xlen_t   '(`WARL),  // Machine XLEN
     warl_xx_26 :                `WARL ,  // Reserved
     Extensions : '{
       Z : `WARL,  // 25 // Reserved

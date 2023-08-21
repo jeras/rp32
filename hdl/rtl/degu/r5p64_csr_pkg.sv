@@ -23,6 +23,7 @@
 package r5p64_csr_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_priv_pkg::*;
 import rv64_csr_pkg::*;
 
 import r5p_pkg::*;
@@ -31,7 +32,7 @@ import r5p_pkg::*;
 // Machine-Level CSRs
 ////////////////////////////////////////////////////////////////////////////////
 
-localparam csr_misa_t CSR_RST_MISA = '{
+localparam csr_isa_t CSR_RST_MISA = '{
   MXL: XLEN_64,
   Extensions: '{
     M: '1,
@@ -43,35 +44,35 @@ localparam csr_misa_t CSR_RST_MISA = '{
   },
   default: '0
 };
-localparam csr_misa_t CSR_WEM_MISA = '0;
+localparam csr_isa_t CSR_WEM_MISA = '0;
 
 // Machine Vendor ID Register
 // NOTE: JEDEC ID values are not assigned yet
-localparam csr_mvendorid_t CSR_RST_MVENDORID = '{
+localparam csr_vendorid_t CSR_RST_MVENDORID = '{
    zero  : 32'h0000_0000,  // **:32 //
    Bank  : '0,             // 31:07 //
    Offset: '0              // 06:00 //
 };
-localparam csr_mvendorid_t CSR_WEM_MVENDORID = '{
+localparam csr_vendorid_t CSR_WEM_MVENDORID = '{
    zero  : 32'h0000_0000,  // **:32 //
    Bank  : '0,             // 31:07 //
    Offset: '0              // 06:00 //
 };
 
 // Machine Architecture ID Register
-localparam csr_marchid_t CSR_RST_MARCHID = MXLEN'(0);
-localparam csr_marchid_t CSR_WEM_MARCHID = MXLEN'(0);
+localparam csr_archid_t CSR_RST_MARCHID = MXLEN'(0);
+localparam csr_archid_t CSR_WEM_MARCHID = MXLEN'(0);
 
 // Machine Implementation ID Register
-localparam csr_mimpid_t CSR_RST_MIMPID = MXLEN'(0);
-localparam csr_mimpid_t CSR_WEM_MIMPID = MXLEN'(0);
+localparam csr_impid_t CSR_RST_MIMPID = MXLEN'(0);
+localparam csr_impid_t CSR_WEM_MIMPID = MXLEN'(0);
 
 // Hart ID Register
-localparam csr_mhartid_t CSR_RST_MHARTID = MXLEN'(0);
-localparam csr_mhartid_t CSR_WEM_MHARTID = MXLEN'(0);
+localparam csr_hartid_t CSR_RST_MHARTID = MXLEN'(0);
+localparam csr_hartid_t CSR_WEM_MHARTID = MXLEN'(0);
 
 // Machine Status Register
-localparam csr_mstatus_t CSR_RST_MSTATUS = '{
+localparam csr_status_t CSR_RST_MSTATUS = '{
   SD  : 1'b0,           // SD=((FS==11) OR (XS==11)))
   // Endianness Control
   MBE : ENDIAN_LITTLE,  // M-mode endianness
@@ -100,7 +101,7 @@ localparam csr_mstatus_t CSR_RST_MSTATUS = '{
   SIE : 1'b0,           // supervisor global interrupt-enable
   default: '0
 };
-localparam csr_mstatus_t CSR_WEM_MSTATUS = '{
+localparam csr_status_t CSR_WEM_MSTATUS = '{
   SD  :                1'b0,    // SD=((FS==11) OR (XS==11)))
   // Endianness Control
   MBE : csr_endian_t '(1'b0),   // M-mode endianness
@@ -131,11 +132,11 @@ localparam csr_mstatus_t CSR_WEM_MSTATUS = '{
 };
 
 // Machine Trap-Vector Base-Address Register
-localparam csr_mtvec_t CSR_RST_MTVEC = '{
+localparam csr_tvec_t CSR_RST_MTVEC = '{
   BASE: '0,                // vector base address
   MODE: TVEC_MODE_DIRECT   // vector mode
 };
-localparam csr_mtvec_t CSR_WEM_MTVEC = '{
+localparam csr_tvec_t CSR_WEM_MTVEC = '{
   BASE:                '1,     // vector base address
   MODE: csr_vector_t'(2'b01)   // vector mode (one bit is reserved)
 };
@@ -195,20 +196,20 @@ localparam csr_mie_t CSR_WEM_MIE = '{
 };
 
 // Hardware Performance Monitor
-localparam csr_mhpmcounter_t CSR_RST_MHPMCOUNTER = '0;
-localparam csr_mhpmcounter_t CSR_WEM_MHPMCOUNTER = '1;
-localparam csr_mhpmevent_t CSR_RST_MHPMEVENT = '0;
-localparam csr_mhpmevent_t CSR_WEM_MHPMEVENT = csr_mhpmevent_t'(r5p_hpmevent_t'('1));
+localparam csr_hpmcounter_t CSR_RST_MHPMCOUNTER = '0;
+localparam csr_hpmcounter_t CSR_WEM_MHPMCOUNTER = '1;
+localparam csr_hpmevent_t CSR_RST_MHPMEVENT = '0;
+localparam csr_hpmevent_t CSR_WEM_MHPMEVENT = csr_hpmevent_t'(r5p_hpmevent_t'('1));
 
 // Machine Counter-Enable Register
-localparam csr_mcounteren_t CSR_RST_MCOUNTEREN = '{
+localparam csr_counteren_t CSR_RST_MCOUNTEREN = '{
   HPM: '0,    // hpmcounter[*]
   IR : 1'b0,  // instret
   TM : 1'b0,  // time
   CY : 1'b0,  // cycle
   default: '0
 };
-localparam csr_mcounteren_t CSR_WEM_MCOUNTEREN = '{
+localparam csr_counteren_t CSR_WEM_MCOUNTEREN = '{
   HPM: '1,    // hpmcounter[*]
   IR : 1'b1,  // instret
   TM : 1'b1,  // time
@@ -217,14 +218,14 @@ localparam csr_mcounteren_t CSR_WEM_MCOUNTEREN = '{
 };
 
 // Machine Counter-Inhibit Register
-localparam csr_mcountinhibit_t CSR_RST_MCOUNTINHIBIT = '{
+localparam csr_countinhibit_t CSR_RST_MCOUNTINHIBIT = '{
   HPM: '0,    // hpmcounter[*]
   IR : 1'b0,  // instret
 //TM : 1'b0,  // time (always 1'b0)
   CY : 1'b0,  // cycle
   default: '0
 };
-localparam csr_mcountinhibit_t CSR_WEM_MCOUNTINHIBIT = '{
+localparam csr_countinhibit_t CSR_WEM_MCOUNTINHIBIT = '{
   HPM: '1,    // hpmcounter[*]
   IR : 1'b1,  // instret
 //TM : 1'b0,  // time (always 1'b0)
@@ -233,22 +234,22 @@ localparam csr_mcountinhibit_t CSR_WEM_MCOUNTINHIBIT = '{
 };
 
 // Machine Scratch Register
-localparam csr_mscratch_t CSR_RST_MSCRATCH = '0;
-localparam csr_mscratch_t CSR_WEM_MSCRATCH = '1;
+localparam csr_scratch_t CSR_RST_MSCRATCH = '0;
+localparam csr_scratch_t CSR_WEM_MSCRATCH = '1;
 
 // Machine Exception Program Counter
-localparam csr_mepc_t CSR_RST_MEPC = '0;
-localparam csr_mepc_t CSR_WEM_MEPC = '{epc: '1, default: '0};
+localparam csr_epc_t CSR_RST_MEPC = '0;
+localparam csr_epc_t CSR_WEM_MEPC = '{epc: '1, default: '0};
 // NOTE: if IALIGN=32, then 2 LSB bits are 1'b0
 
 // Machine Cause Register
-localparam csr_mcause_t CSR_RST_MCAUSE = '0;
-localparam csr_mcause_t CSR_WEM_MCAUSE = '0;
+localparam csr_cause_t CSR_RST_MCAUSE = '0;
+localparam csr_cause_t CSR_WEM_MCAUSE = '0;
 // logic             Interrupt     ;  // set if the trap was caused by an interrupt
 // logic [MXLEN-2:0] Exception_Code;  // code identifying the last exception or interrupt
 
 //// Machine cause register (mcause) values after trap
-//typedef enum csr_mcause_t {
+//typedef enum csr_cause_t {
 //  // Interrupts
 //  CAUSE_IRQ_RSV_0            = {1'b1, (MXLEN-1-6)'(0), 6'd00},  // Reserved
 //  CAUSE_IRQ_SW_S             = {1'b1, (MXLEN-1-6)'(0), 6'd01},  // Supervisor software interrupt
@@ -292,8 +293,8 @@ localparam csr_mcause_t CSR_WEM_MCAUSE = '0;
 //} csr_cause_t;
 
 // Machine Trap Value Register
-localparam csr_mtval_t CSR_RST_MTVAL = '0;
-localparam csr_mtval_t CSR_WEM_MTVAL = '0;
+localparam csr_tval_t CSR_RST_MTVAL = '0;
+localparam csr_tval_t CSR_WEM_MTVAL = '0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CSR reset values

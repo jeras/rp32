@@ -19,6 +19,8 @@
 
 module r5p_csr
   import riscv_isa_pkg::*;
+  import riscv_priv_pkg::*;
+  import riscv_isa_i_pkg::*;
   import rv32_csr_pkg::*;
   //import rv64_csr_pkg::*;
   import r5p_pkg::*;
@@ -101,10 +103,10 @@ logic [XLEN-1:0] csr_msk;
 
 // CSR data mask decoder
 always_comb begin
-  unique case (csr_ctl.msk)
-    CSR_REG: csr_msk = csr_wdt;             // GPR register source 1
-    CSR_IMM: csr_msk = XLEN'(csr_ctl.imm);  // 5-bit zero extended immediate
-    default: csr_msk = 'x;
+  unique case (csr_ctl.fn3)
+    CSRRW , CSRRS , CSRRC : csr_msk = csr_wdt;             // GPR register source 1
+    CSRRWI, CSRRSI, CSRRCI: csr_msk = XLEN'(csr_ctl.imm);  // 5-bit zero extended immediate
+    default               : csr_msk = 'x;
   endcase
 end
 
@@ -112,10 +114,10 @@ end
 function automatic logic [XLEN-1:0] csr_wdt_f (
   logic [XLEN-1:0] csr_rdt
 );
-  unique casez (csr_ctl.op)
-    CSR_RW : csr_wdt_f =            csr_msk;  // write mask bits
-    CSR_SET: csr_wdt_f = csr_rdt |  csr_msk;  // set   mask bits
-    CSR_CLR: csr_wdt_f = csr_rdt & ~csr_msk;  // clear mask bits
+  unique casez (csr_ctl.fn3)
+    CSRRW, CSRRWI: csr_wdt_f =            csr_msk;  // write mask bits
+    CSRRS, CSRRSI: csr_wdt_f = csr_rdt |  csr_msk;  // set   mask bits
+    CSRRC, CSRRCI: csr_wdt_f = csr_rdt & ~csr_msk;  // clear mask bits
     default: begin end
   endcase
 endfunction: csr_wdt_f
@@ -126,7 +128,7 @@ endfunction: csr_wdt_f
 
 // *CAUSE
 // TODO: extend with missing causes
-function automatic csr_mcause_t cause_f (
+function automatic csr_cause_t cause_f (
   ctl_priv_t  priv,
   isa_level_t level
 );
@@ -142,7 +144,7 @@ function automatic csr_mcause_t cause_f (
   endcase
 endfunction: cause_f
 
-csr_mcause_t cause;
+csr_cause_t cause;
 assign cause = cause_f(priv_i, level);
 
 // trap delegation
@@ -151,8 +153,8 @@ assign deleg = cause.Interrupt ? csr_map.s.mideleg : csr_map.s.medeleg;
 
 // TVEC address calculator
 function automatic logic [XLEN-1:0] tvec_f (
-  csr_mtvec_t  tvec,
-  csr_mcause_t cause
+  csr_tvec_t  tvec,
+  csr_cause_t cause
 );
   unique case (tvec.MODE)
     TVEC_MODE_DIRECT  : tvec_f = {tvec.BASE, 2'b00};
@@ -202,10 +204,10 @@ end else begin
   end else begin
     // Zicsr access
     if (csr_wen) begin
-      unique casez (csr_ctl.op)
-        CSR_RW : csr_map.a[csr_ctl.adr] <=            csr_wdt;  // read/write
-        CSR_SET: csr_map.a[csr_ctl.adr] <= csr_rdt |  csr_msk;  // set   masked bits
-        CSR_CLR: csr_map.a[csr_ctl.adr] <= csr_rdt & ~csr_msk;  // clear masked bits
+      unique casez (csr_ctl.fn3)
+        CSRRW, CSRRWI: csr_map.a[csr_ctl.adr] <=            csr_wdt;  // read/write
+        CSRRS, CSRRSI: csr_map.a[csr_ctl.adr] <= csr_rdt |  csr_msk;  // set   masked bits
+        CSRRC, CSRRCI: csr_map.a[csr_ctl.adr] <= csr_rdt & ~csr_msk;  // clear masked bits
         default: begin end
       endcase
     end

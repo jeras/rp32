@@ -19,6 +19,7 @@
 package riscv_csr_adr_map_pkg;
 
 import riscv_isa_pkg::*;
+import riscv_priv_pkg::*;
 
 // SCR address map structure
 // verilator lint_off LITENDIAN
