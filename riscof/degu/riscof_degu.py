@@ -15,14 +15,14 @@ from riscof.pluginTemplate import pluginTemplate
 
 logger = logging.getLogger()
 
-class r5p(pluginTemplate):
-    __model__ = "r5p"
+class degu(pluginTemplate):
+    __model__ = "degu"
 
     #TODO: please update the below to indicate family, version, etc of your DUT.
     __version__ = "XXX"
 
     def __init__(self, *args, **kwargs):
-        sclass = super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         config = kwargs.get('config')
 
@@ -36,7 +36,7 @@ class r5p(pluginTemplate):
         # test-bench produced by a simulator (like verilator, vcs, incisive, etc). In case of an iss or
         # emulator, this variable could point to where the iss binary is located. If 'PATH variable
         # is missing in the config.ini we can hardcode the alternate here.
-        self.dut_exe = os.path.join(config['PATH'] if 'PATH' in config else "","r5p")
+        self.dut_exe = os.path.join(config['PATH'] if 'PATH' in config else "","degu")
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in
@@ -58,9 +58,6 @@ class r5p(pluginTemplate):
             self.target_run = False
         else:
             self.target_run = True
-
-        # Return the parameters set above back to RISCOF for further processing.
-        return sclass
 
     def initialise(self, suite, work_dir, archtest_env):
 
@@ -92,7 +89,7 @@ class r5p(pluginTemplate):
       # will be useful in setting integer value in the compiler string (if not already hardcoded);
       self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
 
-      # for r5p start building the '--isa' argument. the self.isa is dutnmae specific and may not be
+      # for degu start building the '--isa' argument. the self.isa is dutnmae specific and may not be
       # useful for all DUTs
       self.isa = 'rv' + self.xlen
       if "I" in ispec["ISA"]:
@@ -120,7 +117,7 @@ class r5p(pluginTemplate):
 
       # set the make command that will be used. The num_jobs parameter was set in the __init__
       # function earlier
-      make.makeCommand = 'make -j' + self.num_jobs
+      make.makeCommand = 'make -k -j' + self.num_jobs
 
       # we will iterate over each entry in the testList. Each entry node will be refered to by the
       # variable testname.
