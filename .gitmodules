@@ -13,6 +13,3 @@
 [submodule "submodules/tcb"]
 	path = submodules/tcb
 	url = git@github.com:jeras/TCB.git
-[submodule "submodules/yosys-uhdm-plugin-integration"]
-	path = submodules/yosys-systemverilog
-	url = https://github.com/antmicro/yosys-systemverilog.git
