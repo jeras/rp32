@@ -362,7 +362,7 @@ r5p_alu #(
 `ifndef ALTERA_RESERVED_QIS
 generate
 if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
-
+/*
   // mul/div/rem unit
   r5p_mdu #(
     .XLEN    (XLEN)
@@ -377,7 +377,7 @@ if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
     .rs2     (gpr_rs2),
     .rd      (mul_dat)
   );
-
+*/
 end: gen_mdu
 else begin: gen_nomdu
 
