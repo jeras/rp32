@@ -17,6 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_mouse #(
+  // configuration options
+  bit            ENA_NOP = 1'b0,  // enable single clock cycle NOP
+  // address space
   logic [32-1:0] RST_ADR = 'h0000_0000,  // reset address
   logic [32-1:0] GPR_ADR = 'h0000_0000   // GPR address
 )(
@@ -56,7 +59,7 @@ localparam logic [6:2] JALR   = 5'b11_001;
 localparam logic [6:2] JAL    = 5'b11_011;
 localparam logic [6:2] SYSTEM = 5'b11_100;
 
-// funct3 arithetic/logic unit (R/I-type)
+// funct3 arithmetic/logic unit (R/I-type)
 localparam logic [3-1:0] ADD  = 3'b000;  // funct7[5] ? SUB : ADD
 localparam logic [3-1:0] SL   = 3'b001;  //
 localparam logic [3-1:0] SLT  = 3'b010;  //
@@ -147,7 +150,7 @@ logic   signed [32-1:0] bus_imu;  // decoder immediate U (upper)
 logic   signed [32-1:0] dec_imu;  // decoder immediate U (upper)
 logic   signed [32-1:0] dec_imj;  // decoder immediate J (jump)
 
-// ALU adder (used for aritmetic and address calculations)
+// ALU adder (used for arithmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
 logic   signed [33-1:0] add_op1;  // ALU adder operand 1
 logic   signed [33-1:0] add_op2;  // ALU adder operand 2
@@ -162,7 +165,7 @@ logic          [32-1:0] log_val;  // ALU logical output
 
 // ALU barrel shifter
 logic          [32-1:0] shf_op1;  // shift operand 1
-logic           [5-1:0] shf_op2;  // shift operand 2 (shift ammount)
+logic           [5-1:0] shf_op2;  // shift operand 2 (shift amount)
 logic          [32-1:0] shf_tmp;  // bit reversed operand/result
 logic signed   [32-0:0] shf_ext;
 logic          [32-1:0] shf_val /* synthesis keep */;  // result
@@ -268,7 +271,7 @@ endcase
 assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
-// FSM
+// FSM (split into sequential and combinational blocks)
 ///////////////////////////////////////////////////////////////////////////////
 
 always_ff @(posedge clk, posedge rst)
@@ -579,7 +582,7 @@ begin
             end
           endcase
           case (dec_fn3)
-            // adder based inw_bufuctions
+            // adder based inw_buf functions
             ADD : bus_wdt = add_sum[32-1:0];
             SLT ,
             SLTU: bus_wdt = {31'd0, add_sum[32]};

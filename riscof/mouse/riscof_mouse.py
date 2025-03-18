@@ -36,7 +36,8 @@ class mouse(pluginTemplate):
         # test-bench produced by a simulator (like verilator, vcs, incisive, etc). In case of an iss or
         # emulator, this variable could point to where the iss binary is located. If 'PATH variable
         # is missing in the config.ini we can hardcode the alternate here.
-        self.dut_exe = os.path.join(config['PATH'] if 'PATH' in config else "","mouse")
+        self.dut_exe = os.path.join(config['PATH'] if 'PATH' in config else "", "make -f ../sim/questa/Makefile.mouse")
+        self.dut_exe = os.path.join("make -f ../sim/questa/Makefile.mouse")
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in

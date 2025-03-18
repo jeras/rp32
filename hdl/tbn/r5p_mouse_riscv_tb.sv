@@ -137,6 +137,7 @@ r5p_mouse #(
 
   // RTL decoder DUT
   tcb_lib_decoder #(
+    .PHY  (TCB_PAR_PHY),
     // interconnect parameters
     .MPN  (2),
     // decoder address and mask array
@@ -148,7 +149,6 @@ r5p_mouse #(
     // select
     .sel  (bus_sel)
   );
-
 
   tcb_lib_demultiplexer #(
     // interconnect parameters (manager port number and logarithm)

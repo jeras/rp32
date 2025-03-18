@@ -1,11 +1,16 @@
 # R5P Mouse processor
 
+## introduction
+
 The main feature of this processor is storing GPR
 in the same memory as instructions and data,
 instead of having a dedicated register file.
 
 This approach can be used in small FPGA to avoid the overhead,
 when the GPR register file would consume less than the entire memory block size.
+For FPGA families without some kind of distributed memory with asynchronous read
+to be used for the GPR register file,
+this approach avoids using logic cell registers for GPR.
 
 On ASIC this enables the creation of a processor
 around a single single-port memory.
@@ -15,12 +20,12 @@ This approach looses some of the RISC architecture advantages,
 when there is a fast GPR register file compared to a slower memory.
 The advantage of simultaneous 2R1W GPR and memory access is also lost.
 
-There is still some advantage when the GPR, the stack
-and the current code section are in a fast SRAM,
-while the rest are accesses to a
-high latency and/or low data rate memory or periheral.
+The design is still competitive, when the GPR, the stack
+and the current code section are all in a fast SRAM,
+while the remaining accesses are to a
+high latency and/or low data rate memory or peripheral.
 Examples of such memories can be an XIP SPI Flash
-or a SDRAM/DDR/... memory controller.
+or so other slow external memory controller.
 
 Performance aside, this processor can still take full advantage
 of the RISC-V toolchain compared to a fully custom solution,
@@ -28,29 +33,38 @@ which would also require a custom toolchain.
 
 ## Instruction execution phases
 
+The CPU takes multiple clock cycles to execute an instruction.
+Most of this cycles are used to perform a system bus access to either
+fetch an instruction, read/write to GPR or memory/peripheral load/store.
+
 Phases have a similar meaning as pipeline stages,
-but the the word stage is not used,
+but the word stage is not used,
 since there is no pipelining parallelism.
+The same logic is used in each stage to perform a different task.
 
 | Phase | Description |
 |-------|-------------|
-| IFD   | Instruction fetch and decode (partial). |
+| IF    | Instruction fetch and decode (partial). |
 | RS1   | Read register source 1. |
 | RS2   | Read register source 1. |
-| MLD   | Memory load. |
-| MST   | Memory store. |
+| LD    | Memory load. |
+| ST    | Memory store. |
 | EXE   | Execute. |
-| RWB   | Register Write-back. |
+| WB    | Write-back. |
 
-For a simplified overview, there are 4 phases,
-not all 4 phases are needed in each instruction.
+Instructions take between 1 and 4 clock cycles to execute,
+depending on the instruction.
+The CPU state machine has 4 states, 
+Each phase fits into one of those states.
+Instructions do not need all available phases
+so multiple similar phases can share the same state.
 
-| phase       | address      | read data   | data buffer | write data     | description |
-|-------------|--------------|-------------|-------------|----------------|-------------|
-| IFD         | PC           |             |             |                | instruction fetch |
-| RS1/RWB     | rs1 addr.    | instr. op.  |             |       ALU data | read register source 1 or upper immediate write-back |
-| RS2/MLD,EXE | rs2/ld addr. | rs1 data    | instr. op.  |                | read register source 2 or memory load, execute |
-| MST/RWB,EXE | st/rd addr.  | rs2/ld data | rs1 data    | st/ld/ALU data | store or write-back destination register, execute |
+| state | phases     | address      | read data   | data buffer | write data     | description |
+|-------|------------|--------------|-------------|-------------|----------------|-------------|
+| `ST0` | IFD        | PC           |             |             |                | instruction fetch |
+| `ST1` | RS1/WB     | rs1 addr.    | instr. op.  |             |       ALU data | read register source 1 or upper immediate write-back |
+| `ST2` | RS2/LD,EXE | rs2/ld addr. | rs1 data    | instr. op.  |                | read register source 2 or memory load, execute |
+| `ST3` | ST/WB,EXE  | st/rd addr.  | rs2/ld data | rs1 data    | st/ld/ALU data | store or write-back destination register, execute |
 
 The buffer contains a copy of the read data bus on the previous cycle.
 

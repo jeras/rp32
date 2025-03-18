@@ -1,7 +1,5 @@
 hart_ids: [0]
 hart0:
-  Vendor: Rattus Digital Development
-  Device: Mouse
   ISA: RV32I
   User_Spec_Version: '2.3'
   hw_data_misaligned_support: False
