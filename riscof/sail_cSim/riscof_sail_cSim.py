@@ -7,45 +7,40 @@ import logging
 import random
 import string
 from string import Template
-import sys
 
 import riscof.utils as utils
-import riscof.constants as constants
 from riscof.pluginTemplate import pluginTemplate
+import riscof.constants as constants
+from riscv_isac.isac import isac
 
 logger = logging.getLogger()
 
-class spike(pluginTemplate):
-    __model__ = "spike"
-
-    #TODO: please update the below to indicate family, version, etc of your DUT.
-    __version__ = "XXX"
+class sail_cSim(pluginTemplate):
+    __model__ = "sail_c_simulator"
+    __version__ = "0.5.0"
 
     def __init__(self, *args, **kwargs):
         sclass = super().__init__(*args, **kwargs)
 
         config = kwargs.get('config')
-
-        self.ref_exe = os.path.join(config['PATH'] if 'PATH' in config else "","spike")
+        if config is None:
+            logger.error("Config node for sail_cSim missing.")
+            raise SystemExit(1)
         self.num_jobs = str(config['jobs'] if 'jobs' in config else 1)
-        self.pluginpath=os.path.abspath(config['pluginpath'])
+        self.pluginpath = os.path.abspath(config['pluginpath'])
+        self.sail_exe = { '32' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv32d"),
+                          '64' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv64d")}
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
         self.make = config['make'] if 'make' in config else 'make'
-        logger.debug("spike plugin initialised using the following configuration.")
+        logger.debug("SAIL CSim plugin initialised using the following configuration.")
         for entry in config:
             logger.debug(entry+' : '+config[entry])
         return sclass
 
     def initialise(self, suite, work_dir, archtest_env):
         self.suite = suite
-        if shutil.which(self.ref_exe) is None:
-            logger.error('Please install Executable for DUTNAME to proceed further')
-            raise SystemExit(1)
         self.work_dir = work_dir
-
-        #TODO: The following assumes you are using the riscv-gcc toolchain. If
-        #      not please change appropriately
         self.objdump_cmd = 'riscv{1}-unknown-elf-objdump -D {0} > {2};'
         self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
          -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles\
@@ -53,16 +48,10 @@ class spike(pluginTemplate):
          -I '+self.pluginpath+'/env/\
          -I ' + archtest_env
 
-        # set all the necessary variables like compile command, elf2hex
-        # commands, objdump cmds. etc whichever you feel necessary and required
-        # for your plugin.
-
     def build(self, isa_yaml, platform_yaml):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa = 'rv' + self.xlen
-        #TODO: The following assumes you are using the riscv-gcc toolchain. If
-        #      not please change appropriately
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
         if "I" in ispec["ISA"]:
             self.isa += 'i'
@@ -74,9 +63,21 @@ class spike(pluginTemplate):
             self.isa += 'f'
         if "D" in ispec["ISA"]:
             self.isa += 'd'
+        objdump = "riscv{0}-unknown-elf-objdump".format(self.xlen)
+        if shutil.which(objdump) is None:
+            logger.error(objdump+": executable not found. Please check environment setup.")
+            raise SystemExit(1)
+        compiler = "riscv{0}-unknown-elf-gcc".format(self.xlen)
+        if shutil.which(compiler) is None:
+            logger.error(compiler+": executable not found. Please check environment setup.")
+            raise SystemExit(1)
+        if shutil.which(self.sail_exe[self.xlen]) is None:
+            logger.error(self.sail_exe[self.xlen]+ ": executable not found. Please check environment setup.")
+            raise SystemExit(1)
+        if shutil.which(self.make) is None:
+            logger.error(self.make+": executable not found. Please check environment setup.")
+            raise SystemExit(1)
 
-        # based on the validated isa and platform configure your simulator or
-        # build your RTL here
 
     def runTests(self, testList, cgf_file=None):
         if os.path.exists(self.work_dir+ "/Makefile." + self.name[:-1]):
@@ -94,36 +95,30 @@ class spike(pluginTemplate):
             execute = "@cd "+testentry['work_dir']+";"
 
             cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
-
-            #TODO: we are using -D to enable compile time macros. If your
-            #      toolchain is not riscv-gcc you may want to change the below code
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 
             execute += self.objdump_cmd.format(elf, self.xlen, 'ref.disass')
             sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
 
-            #TODO: You will need to add any other arguments to your DUT
-            #      executable if any in the quotes below
-            execute += self.ref_exe + ''
+            execute += self.sail_exe[self.xlen] + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
 
-            #TODO: The following is useful only if your reference model can
-            #      support coverage extraction from riscv-isac. Else leave it
-            #      commented out
+            cov_str = ' '
+            for label in testentry['coverage_labels']:
+                cov_str+=' -l '+label
 
-            #cov_str = ' '
-            #for label in testentry['coverage_labels']:
-            #    cov_str+=' -l '+label
-            #if cgf_file is not None:
-            #    coverage_cmd = 'riscv_isac --verbose info coverage -d \
-            #            -t {0}.log --parser-name c_sail -o coverage.rpt  \
-            #            --sig-label begin_signature  end_signature \
-            #            --test-label rvtest_code_begin rvtest_code_end \
-            #            -e {0}.elf -c {1} -x{2} {3};'.format(\
-            #            test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
-            #else:
-            #    coverage_cmd = ''
-            #execute+=coverage_cmd
+            if cgf_file is not None:
+                coverage_cmd = 'riscv_isac --verbose info coverage -d \
+                        -t {0}.log --parser-name c_sail -o coverage.rpt  \
+                        --sig-label begin_signature  end_signature \
+                        --test-label rvtest_code_begin rvtest_code_end \
+                        -e ref.elf -c {1} -x{2} {3};'.format(\
+                        test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
+            else:
+                coverage_cmd = ''
+
+
+            execute+=coverage_cmd
 
             make.add_target(execute)
         make.execute_all(self.work_dir)
