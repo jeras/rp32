@@ -36,8 +36,7 @@ class mouse(pluginTemplate):
         # test-bench produced by a simulator (like verilator, vcs, incisive, etc). In case of an iss or
         # emulator, this variable could point to where the iss binary is located. If 'PATH variable
         # is missing in the config.ini we can hardcode the alternate here.
-        self.dut_exe = os.path.join(config['PATH'] if 'PATH' in config else "", "make -f ../sim/questa/Makefile.mouse")
-        self.dut_exe = os.path.join("make -f ../sim/questa/Makefile.mouse")
+        self.dut_exe = "make -f ../../sim/questa/Makefile.mouse"
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in
@@ -159,19 +158,22 @@ class mouse(pluginTemplate):
 	  # echo statement.
           if self.target_run:
             # set up the simulation command. Template is for spike. Please change.
-            simcmd = self.dut_exe + f' +signature={sig_file} +signature-granularity=4 +binary={elf}' #.format(self.isa)
+#            simcmd = self.dut_exe + f' +signature={sig_file} +signature-granularity=4 +binary={elf}' #.format(self.isa)
+            simcmd = self.dut_exe + f' FILE_MEM={os.path.join(test_dir, elf)}.bin FILE_SIG={sig_file}' #.format(self.isa)
           else:
             simcmd = 'echo "NO RUN"'
 
           # concatenate all commands that need to be executed within a make-target.
-          execute  = f'@cd {testentry['work_dir']};'
+          execute  = f' cd {test_dir};'
           execute += f' {elfcmd};'
           execute += f' {bincmd};'
+          execute += f' cd -;'
+          execute += f' pwd;'
           execute += f' {simcmd};'
 
           # create a target. The makeutil will create a target with the name "TARGET<num>" where num
           # starts from 0 and increments automatically for each new target that is added
-          make.add_target(execute)
+          make.add_target('@' + execute)
 
       # if you would like to exit the framework once the makefile generation is complete uncomment the
       # following line. Note this will prevent any signature checking or report generation.
