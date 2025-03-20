@@ -5,7 +5,7 @@ export LM_LICENSE_FILE=$HOME/intelFPGA_pro/License.dat
 export PATH="$HOME/intelFPGA_pro/24.3.1/questa_fse/bin/:$PATH"
 export PATH=/opt/riscv-isa-sim/bin/:$PATH
 export PATH=/opt/riscv-gcc/bin/:$PATH
-export PATH=$HOME/VLSI/sail-riscv/build/c_emulator/:$PATH
+export PATH=`git rev-parse --show-toplevel`/submodules/sail-riscv/build/c_emulator/:$PATH
 pip3 install git+https://github.com/riscv/riscof.git@d38859f
 #pip3 install -e ../submodules/riscof
 riscof setup --dutname=mouse
