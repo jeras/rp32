@@ -372,7 +372,7 @@ begin
           add_op1 = ext_sgn(buf_dat);
           add_op2 = ext_sgn(dec_imi);
           // system bus
-          bus_adr = add_sum[32-1:0];
+          bus_adr = {add_sum[32-1:1], 1'b0};
         end
         BRANCH: begin
           // adder: current instruction address + B immediate
