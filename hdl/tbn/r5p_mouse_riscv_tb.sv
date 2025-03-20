@@ -79,7 +79,7 @@ end
 
 localparam tcb_par_phy_t TCB_PAR_PHY = '{
   // protocol
-  DLY: 0,
+  DLY: 1,
   // signal widths
   SLW: 8,
   ABW: 32,
