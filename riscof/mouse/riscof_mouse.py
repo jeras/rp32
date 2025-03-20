@@ -36,7 +36,7 @@ class mouse(pluginTemplate):
         # test-bench produced by a simulator (like verilator, vcs, incisive, etc). In case of an iss or
         # emulator, this variable could point to where the iss binary is located. If 'PATH variable
         # is missing in the config.ini we can hardcode the alternate here.
-        self.dut_exe = "make -f ../../sim/questa/Makefile.mouse"
+        self.dut_exe = "make -C ../../sim/questa/ -f Makefile.mouse"
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in
@@ -153,6 +153,9 @@ class mouse(pluginTemplate):
           # command for converting elf file into a binary for loading RTL simulation memory
           bincmd = f'riscv{self.xlen}-unknown-elf-objcopy -O binary {elf} {elf}.bin'
 
+          # disassembler
+          disasscmd = f'riscv{self.xlen}-unknown-elf-objdump -D {elf} > {elf}.disass'
+
 	  # if the user wants to disable running the tests and only compile the tests, then
 	  # the "else" clause is executed below assigning the sim command to simple no action
 	  # echo statement.
@@ -166,8 +169,8 @@ class mouse(pluginTemplate):
           execute  = f' cd {test_dir};'
           execute += f' {elfcmd};'
           execute += f' {bincmd};'
+          execute += f' {disasscmd};'
           execute += f' cd -;'
-          execute += f' pwd;'
           execute += f' {simcmd};'
 
           # create a target. The makeutil will create a target with the name "TARGET<num>" where num
