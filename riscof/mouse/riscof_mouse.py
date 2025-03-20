@@ -36,7 +36,12 @@ class mouse(pluginTemplate):
         # test-bench produced by a simulator (like verilator, vcs, incisive, etc). In case of an iss or
         # emulator, this variable could point to where the iss binary is located. If 'PATH variable
         # is missing in the config.ini we can hardcode the alternate here.
+<<<<<<< HEAD
         self.dut_exe = "make -f ../../sim/questa/Makefile.mouse"
+=======
+#        self.dut_exe = os.path.join(config['PATH'] if 'PATH' in config else "", "make -f ../sim/questa/Makefile.mouse")
+        self.dut_exe = os.path.join("make -f ../sim/questa/Makefile.mouse")
+>>>>>>> 74d6b45 (updated RISCOF DUT plugin CLI code)
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in
@@ -158,8 +163,7 @@ class mouse(pluginTemplate):
 	  # echo statement.
           if self.target_run:
             # set up the simulation command. Template is for spike. Please change.
-#            simcmd = self.dut_exe + f' +signature={sig_file} +signature-granularity=4 +binary={elf}' #.format(self.isa)
-            simcmd = self.dut_exe + f' FILE_MEM={os.path.join(test_dir, elf)}.bin FILE_SIG={sig_file}' #.format(self.isa)
+            simcmd = self.dut_exe + f' FILE_MEM={os.path.join(test_dir, elf)}.bin FILE_SIG={sig_file}'
           else:
             simcmd = 'echo "NO RUN"'
 
