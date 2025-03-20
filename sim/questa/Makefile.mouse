@@ -2,13 +2,6 @@
 # HDL source files
 ################################################################################
 
-VERILATOR?=verilator
-VERILATOR_COVERAGE?=verilator_coverage
-
-################################################################################
-# HDL source files
-################################################################################
-
 PATH_RTL=../../hdl/rtl
 PATH_TBN=../../hdl/tbn
 PATH_SRC=../../hdl/src
@@ -83,8 +76,8 @@ ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
 FLAGS = -suppress 13178
 
 all:
-	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} -top ${TOP}
+	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP}
 
 gui:
-	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} -top ${TOP} -gui
+	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} -gui
 
