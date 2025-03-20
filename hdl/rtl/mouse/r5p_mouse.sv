@@ -131,22 +131,26 @@ logic          [32-1:0] ctl_pcn;  // ctl_pcr next
 // TODO: rename, also in GTKWave savefile
 logic          [32-1:0] inw_buf;  // instruction word buffer
 
-// decoder
-logic           [5-1:0] bus_opc;  // OP code (from bus read data)
-logic           [5-1:0] dec_opc;  // OP code (from buffer)
-logic           [5-1:0] bus_rd ;  // GPR `rd`  address (from bus read data)
-logic           [5-1:0] dec_rd ;  // GPR `rd`  address (from buffer)
-logic           [5-1:0] bus_rs1;  // GPR `rs1` address (from bus read data)
-logic           [5-1:0] dec_rs1;  // GPR `rs1` address (from buffer)
+// decoder (from bus read data)
+logic           [5-1:0] bus_opc;  // OP code
+logic           [5-1:0] bus_rd ;  // GPR `rd`  address
+logic           [5-1:0] bus_rs1;  // GPR `rs1` address
+logic           [3-1:0] bus_fn3;  // funct3
+// decoder (from buffer)
+logic           [5-1:0] dec_opc;  // OP code
+logic           [5-1:0] dec_rd ;  // GPR `rd`  address
+logic           [5-1:0] dec_rs1;  // GPR `rs1` address
 logic           [5-1:0] dec_rs2;  // GPR `rs2` address
 logic           [3-1:0] dec_fn3;  // funct3
 logic           [7-1:0] dec_fn7;  // funct7
 
-// immediates
+// immediates (from bus read data)
+logic   signed [32-1:0] bus_imi;  // decoder immediate I (integer, load, jump)
+logic   signed [32-1:0] bus_imu;  // decoder immediate U (upper)
+// immediates (from buffer)
 logic   signed [32-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
 logic   signed [32-1:0] dec_imb;  // decoder immediate B (branch)
 logic   signed [32-1:0] dec_ims;  // decoder immediate S (store)
-logic   signed [32-1:0] bus_imu;  // decoder immediate U (upper)
 logic   signed [32-1:0] dec_imu;  // decoder immediate U (upper)
 logic   signed [32-1:0] dec_imj;  // decoder immediate J (jump)
 
@@ -195,24 +199,29 @@ assign bus_trn = bus_vld & bus_rdy;
 // decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// GPR address
-assign bus_rd  = bus_rdt[11: 7];  // decoder GPR `rd`  address (from bus read data)
-assign dec_rd  = inw_buf[11: 7];  // decoder GPR `rd`  address (from buffer)
-assign bus_rs1 = bus_rdt[19:15];  // decoder GPR `rs1` address (from bus read data)
-assign dec_rs1 = inw_buf[19:15];  // decoder GPR `rs1` address (from buffer)
+// GPR address (from bus read data)
+assign bus_rd  = bus_rdt[11: 7];  // decoder GPR `rd`  address
+assign bus_rs1 = bus_rdt[19:15];  // decoder GPR `rs1` address
+// GPR address (from buffer)
+assign dec_rd  = inw_buf[11: 7];  // decoder GPR `rd`  address
+assign dec_rs1 = inw_buf[19:15];  // decoder GPR `rs1` address
 assign dec_rs2 = inw_buf[24:20];  // decoder GPR `rs2` address
 
-// OP and functions
+// OP and functions (from bus read data)
 assign bus_opc = bus_rdt[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
+assign bus_fn3 = bus_rdt[14:12];  // funct3
+// OP and functions (from buffer)
 assign dec_opc = inw_buf[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
 assign dec_fn3 = inw_buf[14:12];  // funct3
 assign dec_fn7 = inw_buf[31:25];  // funct7
 
-// immediates
+// immediates (from bus read data)
+assign bus_imi = {{21{bus_rdt[31]}}, bus_rdt[30:20]};  // I (integer, load, jump)
+assign bus_imu = {bus_rdt[31:12], 12'd0};  // U (upper)
+// immediates (from buffer)
 assign dec_imi = {{21{inw_buf[31]}}, inw_buf[30:20]};  // I (integer, load, jump)
 assign dec_imb = {{20{inw_buf[31]}}, inw_buf[7], inw_buf[30:25], inw_buf[11:8], 1'b0};  // B (branch)
 assign dec_ims = {{21{inw_buf[31]}}, inw_buf[30:25], inw_buf[11:7]};  // S (store)
-assign bus_imu = {bus_rdt[31:12], 12'd0};  // U (upper)
 assign dec_imu = {inw_buf[31:12], 12'd0};  // U (upper)
 assign dec_imj = {{12{inw_buf[31]}}, inw_buf[19:12], inw_buf[20], inw_buf[30:21], 1'b0};  // J (jump)
 
