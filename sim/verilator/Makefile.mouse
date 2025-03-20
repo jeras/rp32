@@ -17,42 +17,42 @@ PATH_SRC=../../hdl/src
 PATH_R5P=../../hdl
 
 # SystemVerilog RTL
-RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_priv_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
-RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
-RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
+#RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
+#RTL+=${PATH_RTL}/riscv/riscv_priv_pkg.sv
+#RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
+#RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
+#RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
+#RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
 RTL+=${PATH_RTL}/mouse/r5p_mouse.sv
 
 # TCB files
 PATH_TCB=../../submodules/tcb/hdl
 
 # SystemVerilog RTL
-RTL+=${PATH_TCB}/rtl/tcb_pkg.sv
-RTL+=${PATH_TCB}/rtl/tcb_if.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_passthrough.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_arbiter.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_multiplexer.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_decoder.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_demultiplexer.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_register_request.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_error.sv
-RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_cmn_gpio.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_ser.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_des.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_fifo.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
+#RTL+=${PATH_TCB}/rtl/tcb_pkg.sv
+#RTL+=${PATH_TCB}/rtl/tcb_if.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_passthrough.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_arbiter.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_multiplexer.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_decoder.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_demultiplexer.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_register_request.sv
+#RTL+=${PATH_TCB}/rtl/lib/tcb_lib_error.sv
+#RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_cmn_gpio.sv
+#RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_ser.sv
+#RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_des.sv
+#RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_fifo.sv
+#RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
 
 # SoC files
-RTL+=${PATH_RTL}/soc/tcb_dec_3sp.sv
-RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
+#RTL+=${PATH_RTL}/soc/tcb_dec_3sp.sv
+#RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
 #RTL+=${PATH_RTL}/soc/r5p_mouse_soc_top.sv
 
 # SystemVerilog bench (Test SV)
-TSV+=${PATH_TCB}/tbn/vip/tcb_vip_mem.sv
-TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
-TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
+#TSV+=${PATH_TCB}/tbn/vip/tcb_vip_mem.sv
+#TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
+#TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
 TSV+=${PATH_TBN}/r5p_mouse_riscv_tb.sv
 
 # combined HDL sources
@@ -101,8 +101,6 @@ VFLAGS += --trace-structs
 # Verilog macros
 ################################################################################
 
-# set VERILATOR macro (used to handle tool quirks)
-#MCR += -DVERILATOR
 ifdef TRACE
 MCR += -DTRACE_DEBUG
 endif

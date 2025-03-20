@@ -36,7 +36,14 @@ class mouse(pluginTemplate):
         # test-bench produced by a simulator (like verilator, vcs, incisive, etc). In case of an iss or
         # emulator, this variable could point to where the iss binary is located. If 'PATH variable
         # is missing in the config.ini we can hardcode the alternate here.
-        self.dut_exe = "make -C ../../sim/questa/ -f Makefile.mouse"
+        if   (config['simulator'] == "questa"):
+            self.dut_exe = "make -C ../../sim/questa/ -f Makefile.mouse"
+        elif (config['simulator'] == "verilator"):
+            self.dut_exe = "make -C ../../sim/verilator/ -f Makefile.mouse"
+        else:
+            print("No simulator selected for '{__model__}'.")
+            raise SystemExit(1)
+            
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in
@@ -111,7 +118,7 @@ class mouse(pluginTemplate):
 
       # Delete Makefile if it already exists.
       if os.path.exists(self.work_dir+ "/Makefile." + self.name[:-1]):
-            os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
+              os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
       # create an instance the makeUtil class that we will use to create targets.
       make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
 

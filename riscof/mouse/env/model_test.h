@@ -1,5 +1,16 @@
 #ifndef _COMPLIANCE_MODEL_H
 #define _COMPLIANCE_MODEL_H
+
+#if XLEN == 64
+  #define ALIGNMENT 3
+#else
+  #define ALIGNMENT 2
+#endif
+
+//-----------------------------------------------------------------------
+// RVMODEL Macros
+//-----------------------------------------------------------------------
+
 #define RVMODEL_DATA_SECTION \
         .pushsection .tohost,"aw",@progbits;                            \
         .align 8; .global tohost; tohost: .dword 0;                     \
@@ -11,24 +22,34 @@
         .word 4;
 
 //RV_COMPLIANCE_HALT
-#define RVMODEL_HALT                                              \
-  li x1, 1;                                                                   \
-  write_tohost:                                                               \
-    sw x1, tohost, t5;                                                        \
-    j write_tohost;
+#define TESTUTIL_BASE                  0x200000
+#define TESTUTIL_ADDR_BEGIN_SIGNATURE  0x00
+#define TESTUTIL_ADDR_END_SIGNATURE    0x08
+#define TESTUTIL_ADDR_HALT             0x10
+
+#define RVMODEL_HALT                                                          \
+        li t1, TESTUTIL_BASE;                                                 \
+        /* tell simulation about location of begin_signature */               \
+        la t0, begin_signature;                                               \
+        sw t0, TESTUTIL_ADDR_BEGIN_SIGNATURE(t1);                             \
+        /* tell simulation about location of end_signature */                 \
+        la t0, end_signature;                                                 \
+        sw t0, TESTUTIL_ADDR_END_SIGNATURE(t1);                               \
+        /* dump signature and terminate simulation */                         \
+        li t0, 1;                                                             \
+        sw t0, TESTUTIL_ADDR_HALT(t1);                                        \
+        /* TODO: an infinite loop might help here */
 
 #define RVMODEL_BOOT
 
 //RV_COMPLIANCE_DATA_BEGIN
 #define RVMODEL_DATA_BEGIN                                              \
-  RVMODEL_DATA_SECTION                                                        \
-  .align 4;\
-  .global begin_signature; begin_signature:
+  RVMODEL_DATA_SECTION                                                  \
+  .align 4; .global begin_signature; begin_signature:
 
 //RV_COMPLIANCE_DATA_END
-#define RVMODEL_DATA_END                                                      \
-  .align 4;\
-  .global end_signature; end_signature:  
+#define RVMODEL_DATA_END                                                \
+  .align 4; .global end_signature; end_signature:  
 
 //RVTEST_IO_INIT
 #define RVMODEL_IO_INIT
