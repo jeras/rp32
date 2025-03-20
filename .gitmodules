@@ -13,3 +13,6 @@
 [submodule "submodules/tcb"]
 	path = submodules/tcb
 	url = git@github.com:jeras/TCB.git
+[submodule "submodules/sail-riscv"]
+	path = submodules/sail-riscv
+	url = https://github.com/riscv/sail-riscv.git
