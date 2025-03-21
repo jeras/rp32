@@ -76,8 +76,8 @@ ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
 FLAGS = -suppress 13178
 
 all:
-	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP}
+	qrun -voptargs=+acc -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP}
 
 gui:
-	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} -gui
+	qrun -voptargs=+acc -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} -gui
 
