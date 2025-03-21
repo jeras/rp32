@@ -161,7 +161,7 @@ class mouse(pluginTemplate):
           bincmd = f'riscv{self.xlen}-unknown-elf-objcopy -O binary {elf} {elf}.bin'
 
           # disassembler
-          disasscmd = f'riscv{self.xlen}-unknown-elf-objdump -D {elf} > {elf}.disass'
+          disasscmd = f'riscv{self.xlen}-unknown-elf-objdump -M no-aliases -M numeric -D {elf} > {elf}.disass'
 
 	  # if the user wants to disable running the tests and only compile the tests, then
 	  # the "else" clause is executed below assigning the sim command to simple no action
