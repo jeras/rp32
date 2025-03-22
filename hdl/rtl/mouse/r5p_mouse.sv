@@ -283,6 +283,7 @@ assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
 // FSM (split into sequential and combinational blocks)
 ///////////////////////////////////////////////////////////////////////////////
 
+// sequential block
 always_ff @(posedge clk, posedge rst)
 if (rst) begin
   // bus valid
@@ -331,6 +332,7 @@ end else begin
   end
 end
 
+// combinational block
 always_comb
 begin
   // control
@@ -495,8 +497,6 @@ begin
           endcase
         end
         BRANCH, STORE, OP: begin
-          // control
-          ctl_nxt = ST3;
           // GPR rs2 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
@@ -513,8 +513,6 @@ begin
       // decode
       case (dec_opc)
         JALR: begin
-          // control
-          ctl_nxt = ST0;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
