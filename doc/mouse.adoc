@@ -1,6 +1,6 @@
-# R5P Mouse processor
+= R5P Mouse processor
 
-## introduction
+== Introduction
 
 The main feature of this processor is storing GPR
 in the same memory as instructions and data,
@@ -13,111 +13,156 @@ to be used for the GPR register file,
 this approach avoids using logic cell registers for GPR.
 
 On ASIC this enables the creation of a processor
-around a single single-port memory.
+around a single single-port SRAM memory.
 Thus having the smallest possible memory cell for GPR.
 
 This approach looses some of the RISC architecture advantages,
 when there is a fast GPR register file compared to a slower memory.
 The advantage of simultaneous 2R1W GPR and memory access is also lost.
 
-The design is still competitive, when the GPR, the stack
-and the current code section are all in a fast SRAM,
-while the remaining accesses are to a
-high latency and/or low data rate memory or peripheral.
-Examples of such memories can be an XIP SPI Flash
-or so other slow external memory controller.
-
 Performance aside, this processor can still take full advantage
 of the RISC-V toolchain compared to a fully custom solution,
 which would also require a custom toolchain.
 
-## Instruction execution phases
-
 The CPU takes multiple clock cycles to execute an instruction.
-Most of this cycles are used to perform a system bus access to either
+Most this cycles are used to perform a system bus access to either
 fetch an instruction, read/write to GPR or memory/peripheral load/store.
+The only exception are BRANCH instructions.
+
+The system bus interface is designed around the SRAM interface.
+If peripherals behave the same, then each system bus access takes
+a single clock cycle.
+
+== Instruction execution phases
 
 Phases have a similar meaning as pipeline stages,
-but the word stage is not used,
-since there is no pipelining parallelism.
-The same logic is used in each stage to perform a different task.
+but the word stage is not used, since there is no pipelining parallelism.
+Instead, the same logic is used in each phase to perform a different task.
+For example a single adder is shared across all stages.
 
-| Phase | Description |
-|-------|-------------|
-| IF    | Instruction fetch and decode (partial). |
-| RS1   | Read register source 1. |
-| RS2   | Read register source 1. |
-| LD    | Memory load. |
-| ST    | Memory store. |
-| EXE   | Execute. |
-| WB    | Write-back. |
+.Instruction execution phase names
+[%autowidth]
+|===
+| Phase | Description
+| IF    | Instruction fetch.
+| RS1   | Read register source 1.
+| RS2   | Read register source 1.
+| LD    | Memory load.
+| ST    | Memory store.
+| EXE   | Execute (only used to evaluate branching condition).
+| WB    | GPR write-back.
+|===
 
-Instructions take between 1 and 4 clock cycles to execute,
-depending on the instruction.
-The CPU state machine has 4 states, 
-Each phase fits into one of those states.
+What would usually be called execute (EXE) is part of either LD/ST or WB.
+
+Instructions take between 1 and 4 clock cycles to execute, depending on the instruction.
+The CPU state machine has 4 states, each phase fits into one of those states.
 Instructions do not need all available phases
 so multiple similar phases can share the same state.
 
-| state | phases     | address      | read data   | data buffer | write data     | description |
-|-------|------------|--------------|-------------|-------------|----------------|-------------|
-| `ST0` | IFD        | PC           |             |             |                | instruction fetch |
-| `ST1` | RS1/WB     | rs1 addr.    | instr. op.  |             |       ALU data | read register source 1 or upper immediate write-back |
-| `ST2` | RS2/LD,EXE | rs2/ld addr. | rs1 data    | instr. op.  |                | read register source 2 or memory load, execute |
-| `ST3` | ST/WB,EXE  | st/rd addr.  | rs2/ld data | rs1 data    | st/ld/ALU data | store or write-back destination register, execute |
+Phase 0 always performs an instruction fetch,
+phase 1 always follows phase 0, since the instruction can't be decoded earlier.
+Other states always follow in order as numbered, but some can be skipped,
+they have more variability regarding which phase they contain.
 
-The buffer contains a copy of the read data bus on the previous cycle.
+The basic sequence of states/phases depends on the opcode
+(see the _RISC-V base opcode map_ in the _The RISC-V Instruction Set Manual Volume I_).
 
-If the GPR register file is stored at the end of the address space,
-than the address of a register `gpr[4:0]` would be `{{XLEN-5{1'b1}}, gpr[4:0]}`.
+.Sequence of instruction execution phases for each opcode
+[%autowidth]
+|===
+|  opcode  | state 0 | state 1 | state 2 | state 3 | total | notes
 
-In case the same ALU is used for R-type and LOAD/STORE operations,
-there is not much advantage to having an address bus of less than XLEN.
+| `LOAD`   | IF      | RS1     | LD      | WB      | 4     |
+| `OP-IMM` | IF      | RS1     |         | WB      | 3     |
+| `AUIPC`  | IF      | WB      |         |         | 2     |
+| `STORE`  | IF      | RS1     | RS2     | ST      | 4     |
+| `OP`     | IF      | RS1     | RS2     | WB      | 4     |
+| `LUI`    | IF      | WB      |         |         | 2     |
+| `BRANCH` | IF      | RS1     | RS2     | EXE     | 4     |
+| `JALR`   | IF      | RS1     |         | WB      | 3     |
+| `JAL`    | IF      | WB      |         |         | 2     |
+| `SYSTEM` | IF      |         |         |         | ???   | TODO
+|===
 
-The PC adder for increments and branches can be shorter to save logic.
-The PC is unsigned extended to XLEN for the address bus.
-
-### Instruction fetch phase
-
-The PC value is on the memory address bus,
-so in the next phase the memory read data bus will have the instruction opcode,
-and one phase further the instruction opcode will be stored in the data buffer.
+=== IF phase (instruction fetch)
 
 All instructions require this phase.
 
-For the last, 4-th phase there is no need to store the entire instruction,
-so a smaller dedicated set of registers could be used.
+The PC value is on the system address bus,
+so in the next phase the system read data bus will have the instruction opcode.
+For all further states/phases, the opcode is stored in the instruction buffer.
 
-### Read register source 1 phase
+The address depends on the previous instruction opcode,
+a branch (BRANCH), a jump (JAL, JALR) or a simple increment (other opcodes).
 
-The GPR register source 1 (`rs1`) address
-is available by decoding the instruction opcode
-on the *read data bus* and placed on the memory address bus.
-In the next phase the memory read data bus will have the `rs1` contents,
-and one phase further the `rs1` contents will be stored in the data buffer.
+The reset sequence starts as if the previous instruction was
+a jump to the reset address (`JAL x0, reset`).
 
-### Read register source 2 phase
+=== RS1 phase (read register source 1)
 
-The GPR register source 2 (`rs2`) address
-is available by decoding the instruction opcode
-from the *data buffer* and placed on the memory address bus.
-In the next phase the memory read data bus will have the `rs2` contents.
+The GPR register source 1 (`rs1`) index is available
+by decoding the instruction opcode and placed on the system address bus.
+In the next phase the system read data bus will have the `rs1` contents.
+For all further states/phases, the `rs1` contents will be stored in the data buffer.
 
-### Store or write-back phase
+=== RS2 phase (read register source 2)
 
-The last phase of executing each instruction is execution and
-either a memory store or a GPR destination register (`rd`) write-back.
-Either memory or `rd` address are placed on the address bus
-and simultaneously `rs1` from the buffer or the ALU result
-for write-back are placed on the data bus.
+The GPR register source 2 (`rs2`) index is available
+by decoding the buffered instruction opcode and placed on the system address bus.
+In the next phase the system read data bus will have the `rs2` contents.
+There is no need to store this value for later phases.
 
-## Instruction formats
+=== LD phase (load)
 
-| signal    | description |
-|-----------|-------------|
-| `bus_adr` | bus address |
-| `bus_wdt` | bus write data |
-| `bus_rdt` | bus read data |
+The load immediate is available by decoding the buffered instruction opcode,
+it is added to the `rs1` value from the system read data bus
+and placed on the system address bus.
+In the next phase the system read data bus will have the load contents.
+
+=== ST phase (store)
+
+The store immediate is available by decoding the buffered instruction opcode,
+it is added to the `rs1` value from the data buffer
+and placed on the system address bus.
+The `rs1` value is available on the system read data bus (see RS2 phase)
+and placed on the system write data bus.
+
+=== WB phase (write-back)
+
+GPR destination register (`rd`) index is available as part of the opcode,
+and placed on the system address bus.
+The write back value is either available on the system read data bus
+due to the previous phase, or calculated by an ALU operation,
+and is placed on the system write data bus.
+
+This is always the last phase.
+
+== Instruction execution details
+
+This section provides further details on how signal values propagate between phases.
+The following tables list signals and values and describes each.
+Then subsections cover each opcode in more details.
+
+The following system bus signals are observed:
+
+.System bus signals
+[%autowidth]
+|===
+| signal    | description
+| `bus_adr` | address
+| `bus_wdt` | write data
+| `bus_rdt` | read data
+|===
+
+.Internal signals
+[%autowidth]
+|===
+|===
+
+System bus and internal signals can have different values
+depending on the opcode and phase, most options are listed here.
+
 | `dec_rs1` | decoder GPR `rs1` address |
 | `dec_rs2` | decoder GPR `rs2` address |
 | `dec_rd`  | decoder GPR `rd`  address |
@@ -131,7 +176,7 @@ for write-back are placed on the data bus.
 | `inw_buf` |
 | `buf_dat` |
 
-### R-type
+=== R-type
 
 Arithmetic (`ADD`, `SUB`) and logical (`OR`, `AND`, `XOR`) operations.
 
@@ -150,7 +195,7 @@ The `rd` address must be stored in a dedicated register,
 since the data buffer looses the instruction opcode
 in the previous phase.
 
-### I-type
+=== I-type
 
 | cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
 |-----------|-----------|-----------|-----------|-----------|-------------|-------------|
@@ -169,7 +214,7 @@ The ALU output is placed on the write data bus for write-back.
 The `rd` address is decoded from the instruction opcode inside the data buffer.
 NOTE: a better alternative is to use the same dedicated register as for R-type.
 
-#### JALR
+=== JALR
 
 | cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
 |-----------|-----------|-----------|-----------|-----------|-------------|-------------|
@@ -179,7 +224,7 @@ NOTE: a better alternative is to use the same dedicated register as for R-type.
 |-----------|-----------|-----------|-----------|-----------|-------------|-------------|
 | fe        | ` PC+buf` | `alu_add` |           |           |             | instruction fetch |
 
-### L-type (I-type load)
+=== L-type (I-type load)
 
 | cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
 |-----------|-----------|-----------|-----------|-----------|-------------|-------------|
@@ -202,7 +247,7 @@ The `rd` address must be stored in a dedicated register,
 since the data buffer looses the instruction opcode
 in the previous phase.
 
-### S-type
+=== S-type
 
 | cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | buffer    | description |
 |-----------|-----------|-----------|-----------|-----------|-----------|-------------|
@@ -228,7 +273,7 @@ is placed into the data buffer, to be used in the next phase.
 In the last phase, read data is copied to write data and
 written to memory at the address calculated in the previous phase.
 
-### B-type
+=== B-type
 
 | cycle     | `alu_add` | `bus_adr` | `bus_wdt` | `bus_rdt` | data buffer | description |
 |-----------|-----------|-----------|-----------|-----------|-------------|-------------|
@@ -256,7 +301,7 @@ NOTE: since there is no memory access in the 4-th phase,
 this phase could be combined into the next fetch,
 but this would affect timing significantly.
 
-### U-type
+=== U-type
 
 | cycle     | address      | read data   | data buffer | rd addr. | write data | description |
 |-----------|--------------|-------------|-------------|----------|------------|-------------|
@@ -267,7 +312,7 @@ but this would affect timing significantly.
 
 TODO
 
-### J-type
+=== J-type
 
 JAL
 
@@ -286,7 +331,28 @@ JAL
 
 TODO
 
-## System bus backpressure and stall
+
+
+== System bus
+
+The buffer contains a copy of the read data bus on the previous cycle.
+
+If the GPR register file is stored at the end of the address space,
+than the address of a register `gpr[4:0]` would be `{{XLEN-5{1'b1}}, gpr[4:0]}`.
+
+In case the same ALU is used for R-type and LOAD/STORE operations,
+there is not much advantage to having an address bus of less than XLEN.
+
+The PC adder for increments and branches can be shorter to save logic.
+The PC is unsigned extended to XLEN for the address bus.
+
+
+| state | phases     | address      | read data   | data buffer | write data     | description |
+|-------|------------|--------------|-------------|-------------|----------------|-------------|
+| `ST0` | IFD        | PC           |             |             |                | instruction fetch |
+| `ST1` | RS1/WB     | rs1 addr.    | instr. op.  |             |       ALU data | read register source 1 or upper immediate write-back |
+| `ST2` | RS2/LD,EXE | rs2/ld addr. | rs1 data    | instr. op.  |                | read register source 2 or memory load, execute |
+| `ST3` | ST/WB,EXE  | st/rd addr.  | rs2/ld data | rs1 data    | st/ld/ALU data | store or write-back destination register, execute |
 
 If the [tightly coupled memory bus](../../../doc/Sysbus.md) is used,
 then the ready signal can be used directly as a CPU stall,
