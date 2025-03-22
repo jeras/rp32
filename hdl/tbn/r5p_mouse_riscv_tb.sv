@@ -45,19 +45,28 @@ bit timeout = 1'b0;
 // test sequence
 ////////////////////////////////////////////////////////////////////////////////
 
-// clock
-always #(20ns/2) clk = ~clk;
-// reset
-initial
-begin
-  /* verilator lint_off INITIALDLY */
-  repeat (4) @(posedge clk);
-  rst <= 1'b0;
-  repeat (20000) @(posedge clk);
-  timeout <= 1'b1;
-  $finish();
-  /* verilator lint_on INITIALDLY */
-end
+  // clock
+  always #(20ns/2) clk = ~clk;
+
+  // reset
+  initial
+  begin
+    /* verilator lint_off INITIALDLY */
+    repeat (4) @(posedge clk);
+    rst <= 1'b0;
+    repeat (20000) @(posedge clk);
+    timeout <= 1'b1;
+    $finish();
+    /* verilator lint_on INITIALDLY */
+  end
+
+  // time counter
+  always_ff @(posedge clk, posedge rst)
+  if (rst) begin
+    cnt <= 0;
+  end else begin
+    cnt <= cnt+1;
+  end  
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -233,6 +242,8 @@ end
 // Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
 
+  
+
 `ifdef TRACE_DEBUG
 
   // GPR array
@@ -242,7 +253,7 @@ end
   //assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];
 
   // system bus monitor
-  tcb_mon_riscv #(
+  r5p_mouse_tcb_mon #(
     .NAME ("TCB"),
     .ISA  (ISA),
     .ABI  (ABI)
@@ -254,18 +265,6 @@ end
     // system bus
     .bus  (bus)
   );
-
-  // time counter
-  always_ff @(posedge clk, posedge rst)
-  if (rst) begin
-    cnt <= 0;
-  end else begin
-    cnt <= cnt+1;
-  end
-
-  // timeout
-  always @(posedge clk)
-  if (cnt > 80000)  timeout <= 1'b1;
 
 `endif
 
