@@ -38,7 +38,9 @@
         /* dump signature and terminate simulation */                         \
         li t0, 1;                                                             \
         sw t0, TESTUTIL_ADDR_HALT(t1);                                        \
-        /* TODO: an infinite loop might help here */
+        /* TODO: an infinite loop might help here */                          \
+halt_loop:                                                                    \
+        j halt_loop
 
 #define RVMODEL_BOOT
 
