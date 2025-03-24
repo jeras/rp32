@@ -7,7 +7,6 @@ import logging
 import random
 import string
 from string import Template
-import sys
 
 import riscof.utils as utils
 import riscof.constants as constants
@@ -25,27 +24,26 @@ class spike(pluginTemplate):
         sclass = super().__init__(*args, **kwargs)
 
         config = kwargs.get('config')
-
-        self.ref_exe = os.path.join(config['PATH'] if 'PATH' in config else "","spike")
+        if config is None:
+            logger.error("Config node for" + self.__model__ + " is missing.")
+            raise SystemExit(1)
         self.num_jobs = str(config['jobs'] if 'jobs' in config else 1)
-        self.pluginpath=os.path.abspath(config['pluginpath'])
+        self.pluginpath = os.path.abspath(config['pluginpath'])
+        self.ref_exe = os.path.join(config['PATH'] if 'PATH' in config else "","spike")
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
         self.make = config['make'] if 'make' in config else 'make'
-        logger.debug("spike plugin initialised using the following configuration.")
+        logger.debug(self.__model__ + " plugin initialised using the following configuration.")
         for entry in config:
             logger.debug(entry+' : '+config[entry])
         return sclass
 
     def initialise(self, suite, work_dir, archtest_env):
         self.suite = suite
-        if shutil.which(self.ref_exe) is None:
-            logger.error('Please install Executable for DUTNAME to proceed further')
-            raise SystemExit(1)
         self.work_dir = work_dir
 
-        #TODO: The following assumes you are using the riscv-gcc toolchain. If
-        #      not please change appropriately
+        # NOTE: The following assumes you are using the riscv-gcc toolchain.
+        #       If not please change appropriately.
         self.objdump_cmd = 'riscv{1}-unknown-elf-objdump -D {0} > {2};'
         self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
          -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles\
@@ -60,20 +58,13 @@ class spike(pluginTemplate):
     def build(self, isa_yaml, platform_yaml):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
+        # construct ISA string
         self.isa = 'rv' + self.xlen
-        #TODO: The following assumes you are using the riscv-gcc toolchain. If
-        #      not please change appropriately
+        for ext in ['I', 'M', 'C', 'F', 'F', 'D']:
+            self.isa += ext.lower()
+        # NOTE: The following assumes you are using the riscv-gcc toolchain.
+        #       If not please change appropriately.
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
-        if "I" in ispec["ISA"]:
-            self.isa += 'i'
-        if "M" in ispec["ISA"]:
-            self.isa += 'm'
-        if "C" in ispec["ISA"]:
-            self.isa += 'c'
-        if "F" in ispec["ISA"]:
-            self.isa += 'f'
-        if "D" in ispec["ISA"]:
-            self.isa += 'd'
 
         # based on the validated isa and platform configure your simulator or
         # build your RTL here
@@ -100,10 +91,10 @@ class spike(pluginTemplate):
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 
-            execute += self.objdump_cmd.format(elf, self.xlen, 'ref.disass')
+            execute += self.objdump_cmd.format(self.xlen, elf, 'ref.disass')
             sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
 
-            #TODO: You will need to add any other arguments to your DUT
+            #TODO: You will need to add any other arguments to your reference
             #      executable if any in the quotes below
             execute += self.ref_exe + ''
 
