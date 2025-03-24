@@ -43,7 +43,6 @@ class mouse(pluginTemplate):
         else:
             print("No simulator selected for '{__model__}'.")
             raise SystemExit(1)
-            
 
         # Number of parallel jobs that can be spawned off by RISCOF
         # for various actions performed in later functions, specifically to run the tests in
@@ -141,7 +140,7 @@ class mouse(pluginTemplate):
           test_dir = testentry['work_dir']
 
           # name of the elf file after compilation of the test
-          elf = 'testcase.elf'
+          elf = 'dut.elf'
 
           # name of the signature file as per requirement of RISCOF. RISCOF expects the signature to
           # be named as DUT-<dut-name>.signature. The below variable creates an absolute path of
