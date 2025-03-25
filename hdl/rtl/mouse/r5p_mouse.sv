@@ -104,6 +104,15 @@ localparam logic [2-1:0] ST1  = 2'd1;
 localparam logic [2-1:0] ST2  = 2'd2;
 localparam logic [2-1:0] ST3  = 2'd3;
 
+// FSM phases (GPR access phases can be decoded from a single bit)
+localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
+localparam logic [3-1:0] RS1 = 3'b101;  // read register source 1
+localparam logic [3-1:0] RS2 = 3'b110;  // read register source 1
+localparam logic [3-1:0] MLD = 3'b001;  // memory load
+localparam logic [3-1:0] MST = 3'b010;  // memory store
+localparam logic [3-1:0] EXE = 3'b011;  // execute (only used to evaluate branching condition)
+localparam logic [3-1:0] WB  = 3'b100;  // GPR write-back
+
 ///////////////////////////////////////////////////////////////////////////////
 // helper functions
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,9 +129,10 @@ endfunction
 // TCL system bus
 logic                   bus_trn;  // transfer
 
-// FSM: finite state machine
+// FSM (finite state machine) and phases
 logic           [2-1:0] ctl_fsm;  // FSM state register
 logic           [2-1:0] ctl_nxt;  // FSM state next
+logic           [3-1:0] ctl_pha;  // FSM phase
 
 // IFU: instruction fetch unit
 // TODO: rename, also in GTKWave savefile
@@ -335,8 +345,9 @@ end
 // combinational block
 always_comb
 begin
-  // control
+  // control (FSM, phase)
   ctl_nxt =  2'dx;
+  ctl_pha =  3'bxxx;
   // PC
   ctl_pcn = 32'hxxxxxxxx;
   // adder
@@ -365,8 +376,9 @@ begin
   // states
   unique case (ctl_fsm)
     ST0: begin
-      // control
+      // control (FSM, phase)
       ctl_nxt = ST1;
+      ctl_pha = IF;
       // calculate instruction address
       case (dec_opc)
         JAL: begin
@@ -412,43 +424,41 @@ begin
     ST1: begin
       // adder, system bus
       case (bus_opc)
-        LUI: begin
-          // control
+        LUI, AUIPC, JAL: begin
+          // control (FSM, phase)
           ctl_nxt = ST0;
+          ctl_pha = WB;
           // GPR rd write
           bus_wen = (bus_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
-          bus_ben = '1;
-          bus_wdt = bus_imu;
-        end
-        AUIPC: begin
-          // control
-          ctl_nxt = ST0;
-          // adder
-          add_inc = 1'b0;
-          add_op1 = ext_sgn(ctl_pcr);
-          add_op2 = ext_sgn(bus_imu);
-          // GPR rd write
-          bus_wen = (bus_rd != 5'd0);
-          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
-          bus_ben = '1;
-          bus_wdt = add_sum[32-1:0];
-        end
-        JAL: begin
-          // control
-          ctl_nxt = ST0;
-          // adder
-          add_inc = 1'b0;
-          add_op1 = ext_sgn(ctl_pcr);
-          add_op2 = ext_sgn(32'd4);
-          // GPR rd write
-          bus_wen = (bus_rd != 5'd0);
-          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
-          bus_ben = '1;
-          bus_wdt = add_sum[32-1:0];
+          bus_ben = {4{(bus_rd != 5'd0)}};
+          case (bus_opc)
+            LUI: begin
+              // GPR rd write (upper immediate)
+              bus_wdt = bus_imu;
+            end
+            AUIPC: begin
+              // adder (PC + upper immediate)
+              add_inc = 1'b0;
+              add_op1 = ext_sgn(ctl_pcr);
+              add_op2 = ext_sgn(bus_imu);
+              // GPR rd write (PC + upper immediate)
+              bus_wdt = add_sum[32-1:0];
+            end
+            JAL: begin
+              // adder (PC increment)
+              add_inc = 1'b0;
+              add_op1 = ext_sgn(ctl_pcr);
+              add_op2 = ext_sgn(32'd4);
+              // GPR rd write (PC increment)
+              bus_wdt = add_sum[32-1:0];
+            end
+            default: begin
+            end
+          endcase
         end
         JALR, BRANCH, LOAD, STORE, OP_IMM, OP: begin
-          // control
+          // control (FSM)
           case (bus_opc)
             BRANCH ,
             LOAD   ,
@@ -458,6 +468,8 @@ begin
             JALR   : ctl_nxt = ST3;  // execute
             default: ctl_nxt = 2'dx;
           endcase
+          // control (phase)
+          ctl_pha = RS1;
           // rs1 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
@@ -469,11 +481,13 @@ begin
       endcase
     end
     ST2: begin
-      // control
+      // control (FSM)
       ctl_nxt = ST3;
       // decode
       case (dec_opc)
         LOAD: begin
+          // control (phase)
+          ctl_pha = MLD;
           // arithmetic operations
           add_inc = 1'b0;
           add_op1 = ext_sgn(bus_rdt);
@@ -497,6 +511,8 @@ begin
           endcase
         end
         BRANCH, STORE, OP: begin
+          // control (phase)
+          ctl_pha = RS2;
           // GPR rs2 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
@@ -508,11 +524,13 @@ begin
       endcase
     end
     ST3: begin
-      // control
+      // control (FSM)
       ctl_nxt = ST0;
       // decode
       case (dec_opc)
         JALR: begin
+          // control (phase)
+          ctl_pha = WB;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
@@ -524,6 +542,8 @@ begin
           bus_wdt = add_sum[32-1:0];
         end
         OP, OP_IMM: begin
+          // control (phase)
+          ctl_pha = WB;
           // GPR rd write
           bus_wen = (dec_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
@@ -605,6 +625,8 @@ begin
           endcase
         end
         LOAD: begin
+          // control (phase)
+          ctl_pha = WB;
           // GPR rd write
           bus_wen = (dec_rd != 5'd0);
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
@@ -626,6 +648,8 @@ begin
           endcase
         end
         STORE: begin
+          // control (phase)
+          ctl_pha = MST;
           // arithmetic operations
           add_inc = 1'b0;
           add_op1 = ext_sgn(buf_dat);
@@ -649,6 +673,8 @@ begin
           endcase
         end
         BRANCH: begin
+          // control (phase)
+          ctl_pha = EXE;
           // subtraction
           add_inc = 1'b1;
           unique case (dec_fn3)

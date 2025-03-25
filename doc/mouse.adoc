@@ -73,16 +73,16 @@ The basic sequence of states/phases depends on the opcode
 |===
 |  opcode  | state 0 | state 1 | state 2 | state 3 | total | notes
 
-| `LOAD`   | IF      | RS1     | LD      | WB      | 4     |
-| `OP-IMM` | IF      | RS1     |         | WB      | 3     |
-| `AUIPC`  | IF      | WB      |         |         | 2     |
-| `STORE`  | IF      | RS1     | RS2     | ST      | 4     |
-| `OP`     | IF      | RS1     | RS2     | WB      | 4     |
-| `LUI`    | IF      | WB      |         |         | 2     |
-| `BRANCH` | IF      | RS1     | RS2     | EXE     | 4     |
-| `JALR`   | IF      | RS1     |         | WB      | 3     |
-| `JAL`    | IF      | WB      |         |         | 2     |
-| `SYSTEM` | IF      |         |         |         | ???   | TODO
+| `LOAD`   | `IF`    | `RS1`   | `MLD`   | `WB`    | 4     |
+| `OP-IMM` | `IF`    | `RS1`   |         | `WB`    | 3     | `OP_IMM` is used in the code.
+| `AUIPC`  | `IF`    | `WB`    |         |         | 2     |
+| `STORE`  | `IF`    | `RS1`   | `RS2`   | `MST`   | 4     |
+| `OP`     | `IF`    | `RS1`   | `RS2`   | `WB`    | 4     |
+| `LUI`    | `IF`    | `WB`    |         |         | 2     |
+| `BRANCH` | `IF`    | `RS1`   | `RS2`   | `EXE`   | 4     |
+| `JALR`   | `IF`    | `RS1`   |         | `WB`    | 3     |
+| `JAL`    | `IF`    | `WB`    |         |         | 2     |
+| `SYSTEM` | `IF`    | `???`   |         |         | ???   | TODO
 |===
 
 === IF phase (instruction fetch)
