@@ -79,7 +79,8 @@ class sail_cSim(pluginTemplate):
         # construct ISA string
         self.isa = 'rv' + self.xlen
         for ext in ['I', 'M', 'C', 'F', 'D']:
-            self.isa += ext.lower()
+            if ext in ispec["ISA"]:
+                self.isa += ext.lower()
 
         # NOTE: The following assumes you are using the riscv-gcc toolchain.
         #       If not please change appropriately.

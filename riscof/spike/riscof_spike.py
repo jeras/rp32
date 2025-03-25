@@ -78,7 +78,8 @@ class spike(pluginTemplate):
         # construct ISA string
         self.isa = 'rv' + self.xlen
         for ext in ['I', 'M', 'C', 'F', 'D']:
-            self.isa += ext.lower()
+            if ext in ispec["ISA"]:
+                self.isa += ext.lower()
 
         # NOTE: The following assumes you are using the riscv-gcc toolchain.
         #       If not please change appropriately.
@@ -138,7 +139,8 @@ class spike(pluginTemplate):
             execute += f'{cmd};\\\n'
 
             # run reference model
-            cmd = self.ref_exe + f' --isa={self.isa} --log-commits --signature={name}.signature {elf} > {test_name}.log 2>&1'
+            # signature-granularity specifies how many bytes in HEX are in a line of the signature file
+            cmd = self.ref_exe + f' --isa={self.isa} --log-commits +signature={name}.signature +signature-granularity=4 {elf} > {test_name}.log 2>&1'
             execute += f'{cmd};\\\n'
 
 
