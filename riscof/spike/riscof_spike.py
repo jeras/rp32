@@ -16,63 +16,98 @@ logger = logging.getLogger()
 
 class spike(pluginTemplate):
     __model__ = "spike"
-
-    #TODO: please update the below to indicate family, version, etc of your DUT.
-    __version__ = "XXX"
+    __version__ = "0.1.0"
 
     def __init__(self, *args, **kwargs):
+        """
+        Process config.ini file and setup logging.
+        """
         sclass = super().__init__(*args, **kwargs)
 
         config = kwargs.get('config')
         if config is None:
-            logger.error("Config node for" + self.__model__ + " is missing.")
+            logger.error(self.name + " config node is missing.")
             raise SystemExit(1)
         self.num_jobs = str(config['jobs'] if 'jobs' in config else 1)
         self.pluginpath = os.path.abspath(config['pluginpath'])
-        self.ref_exe = os.path.join(config['PATH'] if 'PATH' in config else "","spike")
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
         self.make = config['make'] if 'make' in config else 'make'
-        logger.debug(self.__model__ + " plugin initialised using the following configuration.")
+        logger.debug(self.name + " plugin initialized using the following configuration:")
+        self.config = config
         for entry in config:
             logger.debug(entry+' : '+config[entry])
         return sclass
 
     def initialise(self, suite, work_dir, archtest_env):
+        """
+        Prepare toolchain, and model executables.
+        Checking whether the executables are available is done in the build step,
+        since this step lacks XLEN information from YAML files.
+        """
         self.suite = suite
         self.work_dir = work_dir
 
         # NOTE: The following assumes you are using the riscv-gcc toolchain.
         #       If not please change appropriately.
-        self.objdump_cmd = 'riscv{1}-unknown-elf-objdump -D {0} > {2};'
-        self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
-         -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles\
-         -T '+self.pluginpath+'/env/link.ld\
-         -I '+self.pluginpath+'/env/\
-         -I ' + archtest_env
+        # prepare toolchain executables ({} to be replaced with XLEN)
+        self.objdump_exe = 'riscv{}-unknown-elf-objdump'
+        self.compile_exe = 'riscv{}-unknown-elf-gcc'
 
-        # set all the necessary variables like compile command, elf2hex
-        # commands, objdump cmds. etc whichever you feel necessary and required
-        # for your plugin.
+        # prepare toolchain command template
+        self.objdump_cmd = self.objdump_exe + ' -D {} > {}'
+        self.compile_cmd = self.compile_exe + (
+            ' -march={}'
+            ' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
+            ' -T ' + self.pluginpath + '/env/link.ld'
+            ' -I ' + self.pluginpath + '/env/'
+            ' -I ' + archtest_env
+        )
+
+        # prepare model executable
+        self.ref_exe = os.path.join(self.config['PATH'] if 'PATH' in self.config else "","spike")
 
     def build(self, isa_yaml, platform_yaml):
+        """
+        Build is run only once before running for each test list.
+        """
+        # load ISA YAML file
         ispec = utils.load_yaml(isa_yaml)['hart0']
+
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         # construct ISA string
         self.isa = 'rv' + self.xlen
-        for ext in ['I', 'M', 'C', 'F', 'F', 'D']:
+        for ext in ['I', 'M', 'C', 'F', 'D']:
             self.isa += ext.lower()
+
         # NOTE: The following assumes you are using the riscv-gcc toolchain.
         #       If not please change appropriately.
+        # extend compiler command with ABI (integer and floating-point calling convention)
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
 
-        # based on the validated isa and platform configure your simulator or
-        # build your RTL here
+        # check if toolchain executables are available
+        for tool in [self.compile_exe, self.objdump_exe]:
+            tool_xlen = tool.format(self.xlen)
+            if shutil.which(tool_xlen) is None:
+                logger.error(tool_xlen + ": executable not found. Please check environment setup.")
+                raise SystemExit(1)
+            
+        # check if the reference executable is available
+        if shutil.which(self.ref_exe.format(self.xlen)) is None:
+            logger.error(self.ref_exe.format(self.xlen) + ": executable not found. Please check environment setup.")
+            raise SystemExit(1)
+        
+        # check if 'make' is available
+        if shutil.which(self.make) is None:
+            logger.error(self.make + ": executable not found. Please check environment setup.")
+            raise SystemExit(1)
 
     def runTests(self, testList, cgf_file=None):
-        if os.path.exists(self.work_dir+ "/Makefile." + self.name[:-1]):
-            os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
-        make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
+        # remove ':' from the end of the name
+        name = self.name[:-1]
+        if os.path.exists(self.work_dir+ "/Makefile." + name):
+            os.remove(self.work_dir+ "/Makefile." + name)
+        make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + name))
         make.makeCommand = self.make + ' -j' + self.num_jobs
         for file in testList:
             testentry = testList[file]
@@ -82,39 +117,30 @@ class spike(pluginTemplate):
 
             elf = 'ref.elf'
 
-            execute = "@cd "+testentry['work_dir']+";"
+            execute = ''
 
-            cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
+            # prepare list of commands to execute
+            cmd = "@cd " + testentry['work_dir']
+            execute += f'{cmd};\\\n'
 
-            #TODO: we are using -D to enable compile time macros. If your
-            #      toolchain is not riscv-gcc you may want to change the below code
-            compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
-            execute+=compile_cmd+";"
+            # NOTE: The following assumes you are using the riscv-gcc toolchain.
+            #       If not please change appropriately.
+            # compile testcase assembly into an elf file
+            cmd = self.compile_cmd.format(self.xlen, testentry['isa'].lower()) + (
+                f' {test}'
+                f' -o {elf}'
+                f' -D{" -D".join(testentry['macros'])}'
+            )
+            execute += f'{cmd};\\\n'
 
-            execute += self.objdump_cmd.format(self.xlen, elf, 'ref.disass')
-            sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
+            # dump disassembled elf file
+            cmd = self.objdump_cmd.format(self.xlen, elf, 'ref.disass')
+            execute += f'{cmd};\\\n'
 
-            #TODO: You will need to add any other arguments to your reference
-            #      executable if any in the quotes below
-            execute += self.ref_exe + ''
+            # run reference model
+            cmd = self.ref_exe + f' --isa={self.isa} --log-commits --signature={name}.signature {elf} > {test_name}.log 2>&1'
+            execute += f'{cmd};\\\n'
 
-            #TODO: The following is useful only if your reference model can
-            #      support coverage extraction from riscv-isac. Else leave it
-            #      commented out
-
-            #cov_str = ' '
-            #for label in testentry['coverage_labels']:
-            #    cov_str+=' -l '+label
-            #if cgf_file is not None:
-            #    coverage_cmd = 'riscv_isac --verbose info coverage -d \
-            #            -t {0}.log --parser-name c_sail -o coverage.rpt  \
-            #            --sig-label begin_signature  end_signature \
-            #            --test-label rvtest_code_begin rvtest_code_end \
-            #            -e {0}.elf -c {1} -x{2} {3};'.format(\
-            #            test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
-            #else:
-            #    coverage_cmd = ''
-            #execute+=coverage_cmd
 
             make.add_target(execute)
         make.execute_all(self.work_dir)
