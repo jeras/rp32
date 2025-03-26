@@ -78,7 +78,7 @@ class mouse(pluginTemplate):
        # Note the march is not hardwired here, because it will change for each
        # test. Similarly the output elf name and compile macros will be assigned later in the
        # runTests function
-       self.compile_cmd = 'riscv{1}-unknown-elf-gcc -march={0} \
+       self.compile_cmd = 'riscv{0}-unknown-elf-gcc -march={1} \
          -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g\
          -T '+self.pluginpath+'/env/link.ld\
          -I '+self.pluginpath+'/env/\
@@ -88,110 +88,127 @@ class mouse(pluginTemplate):
 
     def build(self, isa_yaml, platform_yaml):
 
-      # load the isa yaml as a dictionary in python.
-      ispec = utils.load_yaml(isa_yaml)['hart0']
+        # load the isa yaml as a dictionary in python.
+        ispec = utils.load_yaml(isa_yaml)['hart0']
 
-      # capture the XLEN value by picking the max value in 'supported_xlen' field of isa yaml. This
-      # will be useful in setting integer value in the compiler string (if not already hardcoded);
-      self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
+        # capture the XLEN value by picking the max value in 'supported_xlen' field of isa yaml. This
+        # will be useful in setting integer value in the compiler string (if not already hardcoded);
+        self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
 
-      # for mouse start building the '--isa' argument. the self.isa is dutnmae specific and may not be
-      # useful for all DUTs
-      self.isa = 'rv' + self.xlen
-      if "I" in ispec["ISA"]:
-          self.isa += 'i'
-      if "M" in ispec["ISA"]:
-          self.isa += 'm'
-      if "F" in ispec["ISA"]:
-          self.isa += 'f'
-      if "D" in ispec["ISA"]:
-          self.isa += 'd'
-      if "C" in ispec["ISA"]:
-          self.isa += 'c'
+        # for mouse start building the '--isa' argument. the self.isa is dutname specific and may not be
+        # useful for all DUTs
+        self.isa = 'rv' + self.xlen
+        for ext in ['I', 'M', 'C', 'F', 'D']:
+            if ext in ispec["ISA"]:
+                self.isa += ext.lower()
 
-      #TODO: The following assumes you are using the riscv-gcc toolchain. If
-      #      not please change appropriately
-      self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
+        #TODO: The following assumes you are using the riscv-gcc toolchain. If
+        #      not please change appropriately
+        self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
 
     def runTests(self, testList):
 
-      # Delete Makefile if it already exists.
-      if os.path.exists(self.work_dir+ "/Makefile." + self.name[:-1]):
-              os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
-      # create an instance the makeUtil class that we will use to create targets.
-      make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
+        # Delete Makefile if it already exists.
+        if os.path.exists(self.work_dir+ "/Makefile." + self.name[:-1]):
+                os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
+        # create an instance the makeUtil class that we will use to create targets.
+        make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
 
-      # set the make command that will be used. The num_jobs parameter was set in the __init__
-      # function earlier
-      make.makeCommand = 'make -k -j' + self.num_jobs
+        # set the make command that will be used. The num_jobs parameter was set in the __init__
+        # function earlier
+        make.makeCommand = 'make -k -j' + self.num_jobs
 
-      # we will iterate over each entry in the testList. Each entry node will be refered to by the
-      # variable testname.
-      for testname in testList:
+        # we will iterate over each entry in the testList. Each entry node will be refered to by the
+        # variable testname.
+        for testname in testList:
 
-          # for each testname we get all its fields (as described by the testList format)
-          testentry = testList[testname]
+            # for each testname we get all its fields (as described by the testList format)
+            testentry = testList[testname]
 
-          # we capture the path to the assembly file of this test
-          test = testentry['test_path']
+            # we capture the path to the assembly file of this test
+            test = testentry['test_path']
 
-          # capture the directory where the artifacts of this test will be dumped/created. RISCOF is
-          # going to look into this directory for the signature files
-          test_dir = testentry['work_dir']
+            # capture the directory where the artifacts of this test will be dumped/created. RISCOF is
+            # going to look into this directory for the signature files
+            test_dir = testentry['work_dir']
 
-          # name of the elf file after compilation of the test
-          elf = 'dut.elf'
+            # name of the elf file after compilation of the test
+            elf = 'dut.elf'
 
-          # name of the signature file as per requirement of RISCOF. RISCOF expects the signature to
-          # be named as DUT-<dut-name>.signature. The below variable creates an absolute path of
-          # signature file.
-          sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
+            # name of the signature file as per requirement of RISCOF. RISCOF expects the signature to
+            # be named as DUT-<dut-name>.signature. The below variable creates an absolute path of
+            # signature file.
+            sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
 
-          # for each test there are specific compile macros that need to be enabled. The macros in
-          # the testList node only contain the macros/values. For the gcc toolchain we need to
-          # prefix with "-D". The following does precisely that.
-          compile_macros= ' -D' + " -D".join(testentry['macros'])
+            # for each test there are specific compile macros that need to be enabled. The macros in
+            # the testList node only contain the macros/values. For the gcc toolchain we need to
+            # prefix with "-D". The following does precisely that.
+            compile_macros= ' -D' + " -D".join(testentry['macros'])
 
-          # substitute all variables in the compile command that we created in the initialize
-          # function
-          elfcmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen, test, elf, compile_macros)
+            # substitute all variables in the compile command that we created in the initialize
+            # function
+            elfcmd = self.compile_cmd.format(self.xlen, testentry['isa'].lower(), test, elf, compile_macros)
 
-          # command for converting elf file into a binary for loading RTL simulation memory
-          bincmd = f'riscv{self.xlen}-unknown-elf-objcopy -O binary {elf} {elf}.bin'
+            # command for converting elf file into a binary for loading RTL simulation memory
+            bincmd = f'riscv{self.xlen}-unknown-elf-objcopy -O binary {elf} {elf}.bin'
 
-          # disassembler
-          disasscmd = f'riscv{self.xlen}-unknown-elf-objdump -M no-aliases -M numeric -D {elf} > {elf}.disass'
+            # disassembler
+            disasscmd = f'riscv{self.xlen}-unknown-elf-objdump -M no-aliases -M numeric -D {elf} > {elf}.disass'
 
-	  # if the user wants to disable running the tests and only compile the tests, then
-	  # the "else" clause is executed below assigning the sim command to simple no action
-	  # echo statement.
-          if self.target_run:
-            # set up the simulation command. Template is for spike. Please change.
-            simcmd = self.dut_exe + f' FILE_MEM={os.path.join(test_dir, elf)}.bin FILE_SIG={sig_file}'
-          else:
-            simcmd = 'echo "NO RUN"'
+#            # get symbols from elf file
+#            symbols_dump = f'riscv{self.xlen}-unknown-elf-objdump -t {elf}'
+#            # extract listed symbols
+#            symbols_list = ['begin_signature', 'end_signature', 'tohost', 'fromhost']
+#            # construct dictionary of listed symbols
+#            symbols_dict = {}
+#            for line in symbols_dump.splitlines():
+#                for symbol in symbols_list:
+#                    if symbol in line:
+#                        print(line)
+#                        symbols_dict.update({symbol: line[0:7]})
 
-          # concatenate all commands that need to be executed within a make-target.
-          execute  = f' cd {test_dir};'
-          execute += f' {elfcmd};'
-          execute += f' {bincmd};'
-          execute += f' {disasscmd};'
-          execute += f' cd -;'
-          execute += f' {simcmd};'
+            # construct dictionary of file paths
+            files_dict = {
+                'firmware': os.path.join(test_dir, elf)+'.bin',
+                'signature': sig_file
+            }
 
-          # create a target. The makeutil will create a target with the name "TARGET<num>" where num
-          # starts from 0 and increments automatically for each new target that is added
-          make.add_target('@' + execute)
+            # construct plusargs string from symbols and file paths
+#            plusargs_dict = symbols_dict | files_dict
+            plusargs_dict = files_dict
+            plusargs = ' '.join([f'+{key}={val}' for key, val in plusargs_dict.items()])
 
-      # if you would like to exit the framework once the makefile generation is complete uncomment the
-      # following line. Note this will prevent any signature checking or report generation.
-      #raise SystemExit
+	        # if the user wants to disable running the tests and only compile the tests, then
+	        # the "else" clause is executed below assigning the sim command to simple no action
+	        # echo statement.
+            if self.target_run:
+                # set up the simulation command. Template is for spike. Please change.
+                simcmd = self.dut_exe + f' ARG="{plusargs}"'
+            else:
+                simcmd = 'echo "NO RUN"'
 
-      # once the make-targets are done and the makefile has been created, run all the targets in
-      # parallel using the make command set above.
-      make.execute_all(self.work_dir)
+            # concatenate all commands that need to be executed within a make-target.
+            execute = []
+            execute.append(f'cd {test_dir}')
+            execute.append(f'{elfcmd}')
+            execute.append(f'{bincmd}')
+            execute.append(f'{disasscmd}')
+            execute.append(f'cd -')
+            execute.append(f'{simcmd}')
 
-      # if target runs are not required then we simply exit as this point after running all
-      # the makefile targets.
-      if not self.target_run:
-          raise SystemExit(0)
+            # create a target. The makeutil will create a target with the name "TARGET<num>" where num
+            # starts from 0 and increments automatically for each new target that is added
+            make.add_target('@' + ';\\\n'.join(execute))
+
+        # if you would like to exit the framework once the makefile generation is complete uncomment the
+        # following line. Note this will prevent any signature checking or report generation.
+        #raise SystemExit
+
+        # once the make-targets are done and the makefile has been created, run all the targets in
+        # parallel using the make command set above.
+        make.execute_all(self.work_dir)
+
+        # if target runs are not required then we simply exit as this point after running all
+        # the makefile targets.
+        if not self.target_run:
+            raise SystemExit(0)

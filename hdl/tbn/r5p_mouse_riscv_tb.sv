@@ -154,7 +154,7 @@ bit timeout = 1'b0;
   initial
   begin
     string fn;
-    if ($value$plusargs("FILE_MEM=%s", fn)) begin
+    if ($value$plusargs("firmware=%s", fn)) begin
       int code;  // status code
       int fd;    // file descriptor
       bit [640-1:0] err;
@@ -215,7 +215,7 @@ bit timeout = 1'b0;
     if (timeout     )  $display("TIMEOUT");
     if (rvmodel_data_end < 2**IAW)  tmp_end = rvmodel_data_end;
     else                            tmp_end = 2**IAW ;
-    if ($value$plusargs("FILE_SIG=%s", fn)) begin
+    if ($value$plusargs("signature=%s", fn)) begin
       int fd;    // file descriptor
       $display("Saving signature file with data from 0x%8h to 0x%8h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
       // dump

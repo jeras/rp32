@@ -117,7 +117,7 @@ PAR += -GXLEN=${XLEN}
 # Verilog $plusargs runtime arguments
 ################################################################################
 
-ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ARG ?= +firmware="${FIRMWARE}" +signature="${SIGNATURE}"
 
 ################################################################################
 #
