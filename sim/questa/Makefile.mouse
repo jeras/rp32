@@ -64,20 +64,36 @@ XLEN ?= 32
 PAR += -GXLEN=${XLEN}
 
 ################################################################################
-# Verilog $plusargs runtime arguments
+# Verilog plusargs
 ################################################################################
 
-ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ARG =
+
+################################################################################
+# CLI arguments from RISCOF
+################################################################################
+
+# Verilog define macros (processed at compile time)
+RISCOF_DEFINES ?=
+# Verilog TOP level parameters overrides (processed at compile time)
+RISCOF_PARAMETERS ?=
+# Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
+RISCOF_PLUSRGS ?=
 
 ################################################################################
 #
 ################################################################################
 
+# TODO: add comment regarding this flag.
+# I think it is supressing errors on clock transition at time 0.
 FLAGS = -suppress 13178
 
 all:
-	qrun -voptargs=+acc -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP}
+	qrun -voptargs=+acc -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_ARGUMENTS}
 
 gui:
-	qrun -voptargs=+acc -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} -gui
+	qrun -voptargs=+acc -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_ARGUMENTS} \
+	-gui
 

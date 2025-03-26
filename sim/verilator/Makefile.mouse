@@ -114,10 +114,21 @@ XLEN ?= 32
 PAR += -GXLEN=${XLEN}
 
 ################################################################################
-# Verilog $plusargs runtime arguments
+# Verilog plusargs
 ################################################################################
 
-ARG ?= +firmware="${FIRMWARE}" +signature="${SIGNATURE}"
+ARG =
+
+################################################################################
+# CLI arguments from RISCOF
+################################################################################
+
+# Verilog define macros (processed at compile time)
+RISCOF_DEFINES ?=
+# Verilog TOP level parameters overrides (processed at compile time)
+RISCOF_PARAMETERS ?=
+# Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
+RISCOF_PLUSRGS ?=
 
 ################################################################################
 #
@@ -126,11 +137,11 @@ ARG ?= +firmware="${FIRMWARE}" +signature="${SIGNATURE}"
 all: sim
 
 lint: ${HDL}
-	${VERILATOR} --lint-only ${HDL} --top ${TOP}
+	${VERILATOR} --lint-only ${HDL}  ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP}
 
 compile: ${HDL}
-	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} --top ${TOP} ${HDL}
+	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
 
 sim: compile
-	obj_dir/V${TOP} ${ARG}
+	obj_dir/V${TOP} ${ARG} ${RISCOF_ARGUMENTS}
 #	${VERILATOR_COVERAGE} --annotate logs/annotated logs/coverage.dat
