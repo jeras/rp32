@@ -26,12 +26,6 @@ module r5p_mouse #(
   // system signals
   input  logic          clk,
   input  logic          rst,
-`ifdef TRACE_DEBUG
-  // internal state signals
-  output logic          dbg_ifu,  // indicator of instruction fetch
-  output logic          dbg_lsu,  // indicator of load/store
-  output logic          dbg_gpr,  // indicator of GPR access
-`endif
   // TCL system bus (shared by instruction/load/store)
   output logic          bus_vld,  // valid
   output logic          bus_wen,  // write enable
@@ -429,9 +423,9 @@ begin
           ctl_nxt = ST0;
           ctl_pha = WB;
           // GPR rd write
-          bus_wen = (bus_rd != 5'd0);
+          bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
-          bus_ben = {4{(bus_rd != 5'd0)}};
+          bus_ben = {4{bus_rd != 5'd0}};
           case (bus_opc)
             LUI: begin
               // GPR rd write (upper immediate)
@@ -536,18 +530,18 @@ begin
           add_op1 = ext_sgn(ctl_pcr);
           add_op2 = ext_sgn(32'd4);
           // GPR rd write
-          bus_wen = (dec_rd != 5'd0);
+          bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = 4'b1111;
+          bus_ben = {4{dec_rd != 5'd0}};
           bus_wdt = add_sum[32-1:0];
         end
         OP, OP_IMM: begin
           // control (phase)
           ctl_pha = WB;
           // GPR rd write
-          bus_wen = (dec_rd != 5'd0);
+          bus_wen =1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = 4'b1111;
+          bus_ben = {4{dec_rd != 5'd0}};
           case (dec_opc)
             OP: begin
               // arithmetic operations
@@ -628,9 +622,9 @@ begin
           // control (phase)
           ctl_pha = WB;
           // GPR rd write
-          bus_wen = (dec_rd != 5'd0);
+          bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = 4'b1111;
+          bus_ben = {4{dec_rd != 5'd0}};
           // read data multiplexer
           rdm_dtw = bus_rdt[31: 0];
           rdm_dth = buf_adr[1] ? rdm_dtw[31:16] : rdm_dtw[15: 0];
@@ -713,19 +707,7 @@ begin
 end
 
 ///////////////////////////////////////////////////////////////////////////////
-// debug code
+// load/store unit
 ///////////////////////////////////////////////////////////////////////////////
-
-`ifdef TRACE_DEBUG
-// internal state signals
-assign dbg_ifu = ctl_fsm == ST0;
-assign dbg_lsu = ~(dbg_ifu | dbg_gpr);
-assign dbg_gpr = bus_adr[32-1:5+2] == GPR_ADR[32-1:5+2];
-
-logic search;
-
-assign search = (dec_opc == LOAD);
-
-`endif
 
 endmodule
