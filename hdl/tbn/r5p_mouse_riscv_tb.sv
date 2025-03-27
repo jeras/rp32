@@ -74,6 +74,7 @@ import riscv_asm_pkg::*;
     rst <= 1'b0;
     repeat (20000) @(posedge clk);
     timeout <= 1'b1;
+    repeat (4) @(posedge clk);
     $finish();
     /* verilator lint_on INITIALDLY */
   end
@@ -92,7 +93,7 @@ import riscv_asm_pkg::*;
 
   localparam tcb_par_phy_t TCB_PAR_PHY = '{
     // protocol
-    DLY: 0,
+    DLY: 1,
     // signal widths
     SLW: 8,
     ABW: 32,
@@ -123,12 +124,6 @@ import riscv_asm_pkg::*;
     // system signals
     .clk     (clk),
     .rst     (rst),
-`ifdef TRACE_DEBUG
-    // internal state signals
-    .dbg_ifu (dbg_ifu),
-    .dbg_lsu (dbg_lsu),
-    .dbg_gpr (dbg_gpr),
-`endif
     // TCL system bus (shared by instruction/load/store)
     .bus_vld (bus[0].vld),
     .bus_wen (bus[0].req.wen),
@@ -231,17 +226,15 @@ import riscv_asm_pkg::*;
   //assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];
 
   // system bus monitor
-  tcb_mon_riscv #(
+  r5p_mouse_tcb_mon #(
     .NAME ("TCB"),
     .ISA  (ISA),
     .ABI  (ABI)
   ) mon_tcb (
-    // debug mode enable (must be active with VALID)
-    .dbg_ifu (dbg_ifu),
-    .dbg_lsu (dbg_lsu),
-    .dbg_gpr (dbg_gpr & bus.wen),
+  // instruction execution phase
+    .pha  (cpu.ctl_pha),
     // system bus
-    .bus  (bus)
+    .bus  (bus[0])
   );
 
 `endif
