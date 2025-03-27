@@ -187,7 +187,6 @@ class mouse(pluginTemplate):
             execute.append(compile_cmd)
             execute.append(objcopy_cmd)
             execute.append(objdump_cmd)
-            execute.append('cd -')
             execute.append(sim_cmd)
 
             # Create a target.

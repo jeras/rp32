@@ -17,9 +17,24 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb #(
+module riscv_tb
+  import riscv_isa_pkg::*;
+  import tcb_pkg::*;
+#(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
+  // extensions  (see `riscv_isa_pkg` for enumeration definition)
+  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  // privilige modes
+  isa_priv_t   MODES = MODES_M,
+  // ISA
+`ifdef ENABLE_CSR
+  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
+                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+`else
+  isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+`endif
   // instruction bus
   int unsigned IAW = 22,     // instruction address width
   int unsigned IDW = 32,     // instruction data    width
@@ -33,13 +48,15 @@ module riscv_tb #(
   bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )();
 
-// system signals
-logic clk = 1'b1;  // clock
-logic rst = 1'b1;  // reset
+import riscv_asm_pkg::*;
 
-// clock period counter
-int unsigned cnt;
-bit timeout = 1'b0;
+  // system signals
+  logic clk = 1'b1;  // clock
+  logic rst = 1'b1;  // reset
+
+  // clock period counter
+  int unsigned cnt;
+  bit timeout = 1'b0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // test sequence
@@ -53,6 +70,7 @@ bit timeout = 1'b0;
   begin
     /* verilator lint_off INITIALDLY */
     repeat (4) @(posedge clk);
+    // synchronous reset release
     rst <= 1'b0;
     repeat (20000) @(posedge clk);
     timeout <= 1'b1;
@@ -72,17 +90,23 @@ bit timeout = 1'b0;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  // TCB interface
-  logic          tcb_vld;
-  logic          tcb_wen;
-  logic [32-1:0] tcb_adr;
-  logic [ 4-1:0] tcb_ben;
-  logic [32-1:0] tcb_wdt;
-  logic [32-1:0] tcb_rdt;
-  logic          tcb_err;
-  logic          tcb_rdy;
+  localparam tcb_par_phy_t TCB_PAR_PHY = '{
+    // protocol
+    DLY: 0,
+    // signal widths
+    SLW: 8,
+    ABW: 32,
+    DBW: 32,
+    ALW: 2,   // $clog2(DBW/SLW)
+    // data packing parameters
+    MOD: TCB_MEMORY,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
 
-  logic          tcb_trn;
+  tcb_if #(.PHY (TCB_PAR_PHY)) bus           (.clk (clk), .rst (rst));
+  tcb_if #(.PHY (TCB_PAR_PHY)) bus_mem [1:0] (.clk (clk), .rst (rst));
 
   // internal state signals
   logic dbg_ifu;  // indicator of instruction fetch
@@ -107,75 +131,73 @@ bit timeout = 1'b0;
     .dbg_gpr (dbg_gpr),
 `endif
     // TCL system bus (shared by instruction/load/store)
-    .bus_vld (tcb_vld),
-    .bus_wen (tcb_wen),
-    .bus_adr (tcb_adr),
-    .bus_ben (tcb_ben),
-    .bus_wdt (tcb_wdt),
-    .bus_rdt (tcb_rdt),
-    .bus_err (tcb_err),
-    .bus_rdy (tcb_rdy)
+    .bus_vld (bus.vld),
+    .bus_wen (bus.req.wen),
+    .bus_adr (bus.req.adr),
+    .bus_ben (bus.req.ben),
+    .bus_wdt (bus.req.wdt),
+    .bus_rdt (bus.rsp.rdt),
+    .bus_err (bus.rsp.sts.err),
+    .bus_rdy (bus.rdy)
   );
 
-  // TCB transfer
-  assign tcb_trn = tcb_vld & tcb_rdy;
+////////////////////////////////////////////////////////////////////////////////
+// load/store bus decoder
+////////////////////////////////////////////////////////////////////////////////
+
+  logic bus_sel;
+
+  // RTL decoder DUT
+  tcb_lib_decoder #(
+    // TCB parameters (contains address width)
+    .PHY  (TCB_PAR_PHY),
+    // interconnect parameters
+    .MPN  (2),
+    // decoder address and mask array
+    .DAM  ({ {10'd0, 2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
+             {10'd0, 2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
+  ) arb (
+    // TCB interfaces
+    .tcb  (bus),
+    // select
+    .sel  (bus_sel)
+  );
+
+
+  tcb_lib_demultiplexer #(
+    // interconnect parameters (manager port number and logarithm)
+    .MPN  (2)
+  ) dec (
+    // select
+    .sel  (bus_sel),
+    // TCB interfaces
+    .sub  (bus),
+    .man  (bus_mem[1:0])
+  );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam SIZ = 2**IAW;
-
-  logic [8-1:0] mem [0:SIZ-1];
-
-  always @(posedge clk)
-  if (tcb_trn) begin
-    // write access
-    if (tcb_wen) begin: write
-      for (int unsigned b=0; b<4; b++) begin: byteenable
-        if (tcb_ben[b]) begin
-          mem[{tcb_adr[32-1:2], 2'b0} + b] <= tcb_wdt[b*8+:8];
-        end
-      end: byteenable
-    end: write
-    else begin: read
-      // read access
-      for (int unsigned b=0; b<4; b++) begin: byteenable
-        if (tcb_ben[b]) begin
-           tcb_rdt[b*8+:8] <= mem[{tcb_adr[32-1:2], 2'b0} + b];
-        end else begin
-           tcb_rdt[b*8+:8] <= 'x;
-        end
-      end: byteenable
-    end: read
-  end
+  tcb_vip_memory #(
+    .SPN   (1),
+    .SIZ   (2**IAW)
+  ) mem (
+    .tcb  (bus_mem[0:0])
+  );
 
   // memory initialization file is provided at runtime
   initial
   begin
     string fn;
     if ($value$plusargs("firmware=%s", fn)) begin
-      int code;  // status code
-      int fd;    // file descriptor
-      bit [640-1:0] err;
       $display("Loading file into memory: %s", fn);
-      fd = $fopen(fn, "rb");
-      code = $fread(mem, fd);
-      if (code == 0) begin
-        code = $ferror(fd, err);
-        $display("DEBUG: read_bin: code = %d, err = %s", code, err);
-      end else begin
-        $display("DEBUG: read %dB from binary file", code);
-      end
-      $fclose(fd);
+      void'(mem.read_bin(fn));
     end else if (IFN == "") begin
       $display("ERROR: memory load file argument not found.");
       $finish;
     end
   end
-
-  // memory is always ready
-  assign tcb_rdy = 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // controller
@@ -190,20 +212,20 @@ bit timeout = 1'b0;
     rvmodel_data_begin <= 'x;
     rvmodel_data_end   <= 'x;
     rvmodel_halt       <= '0;
-  end else if (tcb_trn) begin
-    // decode address
-    if (tcb_adr[32-1:0] ==? 32'h0020_00xx) begin
-      if (tcb_wen) begin
-        // write access
-        case (tcb_adr[8-1:0])
-          8'h00:  rvmodel_data_begin <= tcb_wdt;
-          8'h08:  rvmodel_data_end   <= tcb_wdt;
-          8'h10:  rvmodel_halt       <= tcb_wdt[0];
-          default:  ;  // do nothing
-        endcase
-      end
+  end else if (bus_mem[1].trn) begin
+    if (bus_mem[1].req.wen) begin
+      // write access
+      case (bus_mem[1].req.adr[5-1:0])
+        5'h00:  rvmodel_data_begin <= bus_mem[1].req.wdt;
+        5'h08:  rvmodel_data_end   <= bus_mem[1].req.wdt;
+        5'h10:  rvmodel_halt       <= bus_mem[1].req.wdt[0];
+        default:  ;  // do nothing
+      endcase
     end
   end
+
+  // controller response is immediate
+  assign bus_mem[1].rdy = 1'b1;
 
   // finish simulation
   always @(posedge clk)
@@ -216,16 +238,13 @@ bit timeout = 1'b0;
     if (rvmodel_data_end < 2**IAW)  tmp_end = rvmodel_data_end;
     else                            tmp_end = 2**IAW ;
     if ($value$plusargs("signature=%s", fn)) begin
-      int fd;    // file descriptor
       $display("Saving signature file with data from 0x%8h to 0x%8h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
-      // dump
-      fd = $fopen(fn, "w");
-      for (int unsigned addr=rvmodel_data_begin; addr<rvmodel_data_end; addr+=4) begin
-          $fwrite(fd, "%h%h%h%h\n", mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
-      end
-      $fclose(fd);
+    //void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
+      void'(mem.write_hex(fn, int'(rvmodel_data_begin), int'(tmp_end)));
+      $display("Saving signature file done.");
     end else begin
       $display("ERROR: signature save file argument not found.");
+      $finish;
     end
     $finish;
   end
@@ -234,15 +253,12 @@ bit timeout = 1'b0;
   // TODO: not working in Verilator, at least if the C code ends the simulation.
   final begin
     $display("FINAL");
-  //void'(mem.write_hex(FILE_SIG, int'(rvmodel_data_begin), int'(rvmodel_data_end)));
     $display("TIME: cnt = %d", cnt);
   end
 
 ////////////////////////////////////////////////////////////////////////////////
 // Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
-
-  
 
 `ifdef TRACE_DEBUG
 
@@ -253,7 +269,7 @@ bit timeout = 1'b0;
   //assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];
 
   // system bus monitor
-  r5p_mouse_tcb_mon #(
+  tcb_mon_riscv #(
     .NAME ("TCB"),
     .ISA  (ISA),
     .ABI  (ABI)
@@ -261,7 +277,7 @@ bit timeout = 1'b0;
     // debug mode enable (must be active with VALID)
     .dbg_ifu (dbg_ifu),
     .dbg_lsu (dbg_lsu),
-    .dbg_gpr (dbg_gpr & tcb_wen),
+    .dbg_gpr (dbg_gpr & bus.wen),
     // system bus
     .bus  (bus)
   );

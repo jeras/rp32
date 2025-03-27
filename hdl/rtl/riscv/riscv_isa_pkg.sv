@@ -141,10 +141,9 @@ typedef enum logic [$bits(isa_spec_t)-1:0] {
 
 // ISA configuration
 // TODO: change when Verilator supports unpacked structures
-typedef struct {
+typedef struct packed {
   isa_spec_t spec;
   isa_priv_t priv;
 } isa_t;
 
 endpackage: riscv_isa_pkg
-
