@@ -105,8 +105,7 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  tcb_if #(.PHY (TCB_PAR_PHY)) bus           (.clk (clk), .rst (rst));
-  tcb_if #(.PHY (TCB_PAR_PHY)) bus_mem [1:0] (.clk (clk), .rst (rst));
+  tcb_if #(.PHY (TCB_PAR_PHY)) bus [0:0] (.clk (clk), .rst (rst));
 
   // internal state signals
   logic dbg_ifu;  // indicator of instruction fetch
@@ -131,48 +130,14 @@ import riscv_asm_pkg::*;
     .dbg_gpr (dbg_gpr),
 `endif
     // TCL system bus (shared by instruction/load/store)
-    .bus_vld (bus.vld),
-    .bus_wen (bus.req.wen),
-    .bus_adr (bus.req.adr),
-    .bus_ben (bus.req.ben),
-    .bus_wdt (bus.req.wdt),
-    .bus_rdt (bus.rsp.rdt),
-    .bus_err (bus.rsp.sts.err),
-    .bus_rdy (bus.rdy)
-  );
-
-////////////////////////////////////////////////////////////////////////////////
-// load/store bus decoder
-////////////////////////////////////////////////////////////////////////////////
-
-  logic bus_sel;
-
-  // RTL decoder DUT
-  tcb_lib_decoder #(
-    // TCB parameters (contains address width)
-    .PHY  (TCB_PAR_PHY),
-    // interconnect parameters
-    .MPN  (2),
-    // decoder address and mask array
-    .DAM  ({ {10'd0, 2'b1x, 20'hxxxxx} ,   // 0x20_0000 ~ 0x2f_ffff - controller
-             {10'd0, 2'b0x, 20'hxxxxx} })  // 0x00_0000 ~ 0x1f_ffff - data memory
-  ) arb (
-    // TCB interfaces
-    .tcb  (bus),
-    // select
-    .sel  (bus_sel)
-  );
-
-
-  tcb_lib_demultiplexer #(
-    // interconnect parameters (manager port number and logarithm)
-    .MPN  (2)
-  ) dec (
-    // select
-    .sel  (bus_sel),
-    // TCB interfaces
-    .sub  (bus),
-    .man  (bus_mem[1:0])
+    .bus_vld (bus[0].vld),
+    .bus_wen (bus[0].req.wen),
+    .bus_adr (bus[0].req.adr),
+    .bus_ben (bus[0].req.ben),
+    .bus_wdt (bus[0].req.wdt),
+    .bus_rdt (bus[0].rsp.rdt),
+    .bus_err (bus[0].rsp.sts.err),
+    .bus_rdy (bus[0].rdy)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +148,7 @@ import riscv_asm_pkg::*;
     .SPN   (1),
     .SIZ   (2**IAW)
   ) mem (
-    .tcb  (bus_mem[0:0])
+    .tcb  (bus[0:0])
   );
 
   // memory initialization file is provided at runtime
@@ -212,20 +177,17 @@ import riscv_asm_pkg::*;
     rvmodel_data_begin <= 'x;
     rvmodel_data_end   <= 'x;
     rvmodel_halt       <= '0;
-  end else if (bus_mem[1].trn) begin
-    if (bus_mem[1].req.wen) begin
+  end else if (bus[0].trn) begin
+    if (bus[0].req.wen) begin
       // write access
-      case (bus_mem[1].req.adr[5-1:0])
-        5'h00:  rvmodel_data_begin <= bus_mem[1].req.wdt;
-        5'h08:  rvmodel_data_end   <= bus_mem[1].req.wdt;
-        5'h10:  rvmodel_halt       <= bus_mem[1].req.wdt[0];
+      case (bus[0].req.adr)
+        32'h0020_0000:  rvmodel_data_begin <= bus[0].req.wdt;
+        32'h0020_0008:  rvmodel_data_end   <= bus[0].req.wdt;
+        32'h0020_0010:  rvmodel_halt       <= bus[0].req.wdt[0];
         default:  ;  // do nothing
       endcase
     end
   end
-
-  // controller response is immediate
-  assign bus_mem[1].rdy = 1'b1;
 
   // finish simulation
   always @(posedge clk)
