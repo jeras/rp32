@@ -140,7 +140,7 @@ class sail_cSim(pluginTemplate):
             execute += f'{cmd};\\\n'
 
             # run reference model
-            cmd = self.ref_exe.format(self.xlen) + f' --test-signature={name}.signature {elf} > {test_name}.log 2>&1'
+            cmd = self.ref_exe.format(self.xlen) + f' --test-signature={name}.signature {elf} > ref.log 2>&1'
             execute += f'{cmd};\\\n'
 
             cov_str = ' '
