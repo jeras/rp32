@@ -48,6 +48,9 @@ class mouse(pluginTemplate):
         # Capture HDL simulator choice.
         self.simulator = config['simulator']
 
+        # Enable/disable debug functionality
+        self.debug = config['debug']
+
     def initialise(self, suite, work_dir, archtest_env):
 
         # Capture the working directory.
@@ -162,24 +165,38 @@ class mouse(pluginTemplate):
                 f' -D {elf} > {elf}.disass'
             )
 
+            # Simulation define macros.
+            simulate_defines_dict = {}
+            if self.debug:
+                simulate_defines_dict.update({'TRACE_DEBUG': None})
+
+            # Convert define macro dictionary into CLI
+            # TODO: properly handle define macros without value
+            if self.simulator == 'questa':
+                simulate_defines = ' '.join([f'-defineall {key}={val}' for key, val in simulate_defines_dict.items()])
+
             # Construct Verilog plusargs dictionary containing file paths.
-            plusargs_dict = {
+            simulate_plusargs_dict = {
                 'firmware': os.path.join(test_dir, elf)+'.bin',
                 'signature': sig_file
             }
 
             # Other DUT testbench specific Verilog plusargs can be added here.
-            plusargs_dict.update({})
+            simulate_plusargs_dict.update({})
+
+            # Convert Verilog plusargs dictionary into CLI
+            simulate_plusargs = ' '.join([f'+{key}={val}' for key, val in simulate_plusargs_dict.items()])
 
 	        # If the user wants to disable running the tests and only compile the tests,
             # then the "else" clause is executed below assigning the sim command to simple no action echo statement.
             if self.target_run:
                 # set up the simulation command. Template is for spike. Please change.
-                sim_cmd = self.dut_exe + (
-                    f' RISCOF_ARGUMENTS="{' '.join([f'+{key}={val}' for key, val in plusargs_dict.items()])}"'
+                simulate_cmd = self.dut_exe + (
+                    f' RISCOF_DEFINES="{simulate_defines}"'
+                    f' RISCOF_ARGUMENTS="{simulate_plusargs}"'
                 )
             else:
-                sim_cmd = 'echo "NO RUN"'
+                simulate_cmd = 'echo "NO RUN"'
 
             # Concatenate all commands that need to be executed within a make-target.
             execute = []
@@ -187,7 +204,7 @@ class mouse(pluginTemplate):
             execute.append(compile_cmd)
             execute.append(objcopy_cmd)
             execute.append(objdump_cmd)
-            execute.append(sim_cmd)
+            execute.append(simulate_cmd)
 
             # Create a target.
             # The makeutil will create a target with the name "TARGET<num>" where
