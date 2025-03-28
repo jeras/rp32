@@ -35,13 +35,8 @@ module riscv_tb
 `else
   isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
-  // instruction bus
-  int unsigned IAW = 22,     // instruction address width
-  int unsigned IDW = 32,     // instruction data    width
-  // data bus
-  int unsigned DAW = 32,     // data address width
-  int unsigned DDW = XLEN,   // data data    width
-  int unsigned DBW = DDW/8,  // data byte en width
+  // memory size
+  int unsigned MEM_SIZ = 32,
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters
@@ -118,8 +113,9 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
   r5p_mouse #(
-    .RST_ADR (32'h0000_0000),
-    .GPR_ADR (32'h001f_ff80)
+    .SYS_RST (32'h8000_0000),
+    .SYS_MSK (32'h803f_ffff),
+    .SYS_GPR (32'h801f_ff80)
   ) cpu (
     // system signals
     .clk     (clk),
@@ -141,7 +137,7 @@ import riscv_asm_pkg::*;
 
   tcb_vip_memory #(
     .SPN   (1),
-    .SIZ   (2**IAW)
+    .SIZ   (MEM_SIZ)
   ) mem (
     .tcb  (bus[0:0])
   );
@@ -163,9 +159,9 @@ import riscv_asm_pkg::*;
 // controller
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [DDW-1:0] rvmodel_data_begin;
-  logic [DDW-1:0] rvmodel_data_end;
-  logic           rvmodel_halt = '0;
+  logic [XLEN-1:0] rvmodel_data_begin;
+  logic [XLEN-1:0] rvmodel_data_end;
+  logic            rvmodel_halt = '0;
 
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
@@ -192,8 +188,8 @@ import riscv_asm_pkg::*;
     int tmp_end;
     if (rvmodel_halt)  $display("HALT");
     if (timeout     )  $display("TIMEOUT");
-    if (rvmodel_data_end < 2**IAW)  tmp_end = rvmodel_data_end;
-    else                            tmp_end = 2**IAW ;
+    if (rvmodel_data_end < MEM_SIZ)  tmp_end = rvmodel_data_end;
+    else                             tmp_end = MEM_SIZ ;
     if ($value$plusargs("signature=%s", fn)) begin
       $display("Saving signature file with data from 0x%8h to 0x%8h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
     //void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));

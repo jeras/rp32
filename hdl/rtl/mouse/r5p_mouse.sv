@@ -19,9 +19,10 @@
 module r5p_mouse #(
   // configuration options
   bit            ENA_NOP = 1'b0,  // enable single clock cycle NOP
-  // address space
-  logic [32-1:0] RST_ADR = 'h0000_0000,  // reset address
-  logic [32-1:0] GPR_ADR = 'h0000_0000   // GPR address
+  // system bus parameters
+  logic [32-1:0] SYS_RST = 32'h8000_0000,          // reset address
+  logic [32-1:0] SYS_MSK = 32'h803f_ffff,          // PC mask
+  logic [32-1:0] SYS_GPR = 32'hffff_ff80 & SYS_MSK // GPR address
 )(
   // system signals
   input  logic          clk,
@@ -295,7 +296,7 @@ if (rst) begin
   // control
   ctl_fsm <= ST0;
   // PC
-  ctl_pcr <= 32'h00000000;
+  ctl_pcr <= SYS_RST;
   // instruction buffer
   inw_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
   // data buffer
@@ -314,7 +315,7 @@ end else begin
     // FSM dependant buffers
     if (ctl_fsm == ST0) begin
       // update program counter
-      ctl_pcr <= ctl_pcn;
+      ctl_pcr <= ctl_pcn & SYS_MSK;
     end
     if (ctl_fsm == ST1) begin
       // load the buffer when the instruction is available on the bus
@@ -424,7 +425,7 @@ begin
           ctl_pha = WB;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
+          bus_adr = {SYS_GPR[32-1:5+2], bus_rd , 2'b00};
           bus_ben = {4{bus_rd != 5'd0}};
           case (bus_opc)
             LUI: begin
@@ -466,7 +467,7 @@ begin
           ctl_pha = RS1;
           // rs1 read
           bus_wen = 1'b0;
-          bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
+          bus_adr = {SYS_GPR[32-1:5+2], bus_rs1, 2'b00};
           bus_ben = '1;
           bus_wdt = 32'hxxxxxxxx;
         end
@@ -509,7 +510,7 @@ begin
           ctl_pha = RS2;
           // GPR rs2 read
           bus_wen = 1'b0;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
+          bus_adr = {SYS_GPR[32-1:5+2], dec_rs2, 2'b00};
           bus_ben = '1;
           bus_wdt = 32'hxxxxxxxx;
         end
@@ -531,7 +532,7 @@ begin
           add_op2 = ext_sgn(32'd4);
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = {4{dec_rd != 5'd0}};
           bus_wdt = add_sum[32-1:0];
         end
@@ -540,7 +541,7 @@ begin
           ctl_pha = WB;
           // GPR rd write
           bus_wen =1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = {4{dec_rd != 5'd0}};
           case (dec_opc)
             OP: begin
@@ -623,7 +624,7 @@ begin
           ctl_pha = WB;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = {4{dec_rd != 5'd0}};
           // read data multiplexer
           rdm_dtw = bus_rdt[31: 0];
