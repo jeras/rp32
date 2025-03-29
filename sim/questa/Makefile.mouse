@@ -75,11 +75,11 @@ ARG =
 ################################################################################
 
 # Verilog define macros (processed at compile time)
-RISCOF_DEFINES ?=
+RISCOF_DEFINES ?= ""
 # Verilog TOP level parameters overrides (processed at compile time)
-RISCOF_PARAMETERS ?=
+RISCOF_PARAMETERS ?= ""
 # Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
-RISCOF_PLUSRGS ?=
+RISCOF_PLUSARGS ?= ""
 
 ################################################################################
 #
@@ -94,11 +94,17 @@ FLAGS += -suppress 7033
 FLAGS += -voptargs=+acc
 
 all:
+	echo "============="
+	echo ${RISCOF_PLUSARGS}
+	echo "+++++++++++++"
 	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
-	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_ARGUMENTS}
+	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
 gui:
+	echo "============="
+	echo ${RISCOF_PLUSARGS}
+	echo "+++++++++++++"
 	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
-	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_ARGUMENTS} \
+	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui
 

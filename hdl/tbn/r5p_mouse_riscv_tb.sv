@@ -103,11 +103,6 @@ import riscv_asm_pkg::*;
 
   tcb_if #(.PHY (TCB_PAR_PHY)) bus [0:0] (.clk (clk), .rst (rst));
 
-  // internal state signals
-  logic dbg_ifu;  // indicator of instruction fetch
-  logic dbg_lsu;  // indicator of load/store
-  logic dbg_gpr;  // indicator of GPR access
-
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,14 +116,14 @@ import riscv_asm_pkg::*;
     .clk     (clk),
     .rst     (rst),
     // TCL system bus (shared by instruction/load/store)
-    .bus_vld (bus[0].vld),
-    .bus_wen (bus[0].req.wen),
-    .bus_adr (bus[0].req.adr),
-    .bus_ben (bus[0].req.ben),
-    .bus_wdt (bus[0].req.wdt),
-    .bus_rdt (bus[0].rsp.rdt),
-    .bus_err (bus[0].rsp.sts.err),
-    .bus_rdy (bus[0].rdy)
+    .tcb_vld (bus[0].vld),
+    .tcb_wen (bus[0].req.wen),
+    .tcb_adr (bus[0].req.adr),
+    .tcb_ben (bus[0].req.ben),
+    .tcb_wdt (bus[0].req.wdt),
+    .tcb_rdt (bus[0].rsp.rdt),
+    .tcb_err (bus[0].rsp.sts.err),
+    .tcb_rdy (bus[0].rdy)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -167,10 +162,15 @@ import riscv_asm_pkg::*;
 
   initial
   begin
+    // get ELF symbols from plusargs
     void'($value$plusargs("begin_signature=%0h", begin_signature));
     void'($value$plusargs("end_signature=%0h"  , end_signature  ));
     void'($value$plusargs("tohost=%0h"         , tohost         ));
     void'($value$plusargs("fromhost=%0h"       , fromhost       ));
+    // mask signature symbols with memory size
+    begin_signature = begin_signature & (MEM_SIZ-1);
+    end_signature   = end_signature   & (MEM_SIZ-1);
+    // display ELF symbols
     $display("begin_signature=%08h", begin_signature);
     $display("end_signature  =%08h", end_signature  );
     $display("tohost         =%08h", tohost         );
@@ -181,18 +181,15 @@ import riscv_asm_pkg::*;
 // controller
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic            rvmodel_halt = '0;
+  logic rvmodel_halt = '0;
 
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
-    rvmodel_halt       <= '0;
+    rvmodel_halt <= '0;
   end else if (bus[0].trn) begin
     if (bus[0].req.wen) begin
-      // write access
-      case (bus[0].req.adr)
-        32'h0020_0010:  rvmodel_halt       <= bus[0].req.wdt[0];
-        default:  ;  // do nothing
-      endcase
+      // HTIF tohost
+      if (bus[0].req.adr == tohost) rvmodel_halt <= bus[0].req.wdt[0];
     end
   end
 
@@ -227,7 +224,7 @@ import riscv_asm_pkg::*;
 `ifdef TRACE_DEBUG
 
   // GPR array
-  logic [32-1:0] gpr [0:32-1];
+  //logic [32-1:0] gpr [0:32-1];
 
   // copy GPR array from system memory
   //assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];

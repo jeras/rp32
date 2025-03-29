@@ -27,15 +27,15 @@ module r5p_mouse #(
   // system signals
   input  logic          clk,
   input  logic          rst,
-  // TCL system bus (shared by instruction/load/store)
-  output logic          bus_vld,  // valid
-  output logic          bus_wen,  // write enable
-  output logic [32-1:0] bus_adr,  // address
-  output logic [ 4-1:0] bus_ben,  // byte enable
-  output logic [32-1:0] bus_wdt,  // write data
-  input  logic [32-1:0] bus_rdt,  // read data
-  input  logic          bus_err,  // error
-  input  logic          bus_rdy   // ready
+  // TCB system bus (shared by instruction/load/store)
+  output logic          tcb_vld,  // valid
+  output logic          tcb_wen,  // write enable
+  output logic [32-1:0] tcb_adr,  // address
+  output logic [ 4-1:0] tcb_ben,  // byte enable
+  output logic [32-1:0] tcb_wdt,  // write data
+  input  logic [32-1:0] tcb_rdt,  // read data
+  input  logic          tcb_err,  // error
+  input  logic          tcb_rdy   // ready
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -124,10 +124,25 @@ endfunction
 // TCL system bus
 logic                   bus_trn;  // transfer
 
+// TCL system bus (shared by instruction/load/store)
+logic                   bus_vld;  // valid
+logic                   bus_wen;  // write enable
+logic          [32-1:0] bus_adr;  // address
+logic          [ 4-1:0] bus_ben;  // byte enable
+logic          [32-1:0] bus_wdt;  // write data
+logic          [32-1:0] bus_rdt;  // read data
+logic                   bus_err;  // error
+logic                   bus_rdy;  // ready
+
 // FSM (finite state machine) and phases
 logic           [2-1:0] ctl_fsm;  // FSM state register
 logic           [2-1:0] ctl_nxt;  // FSM state next
 logic           [3-1:0] ctl_pha;  // FSM phase
+
+// GPR x0 write/read
+logic                   gpr_x0w;  // GPR x0 write
+logic                   gpr_x0r;  // GPR x0 read
+logic                   gpr_x0d;  // GPR x0 read delayed for TCB response
 
 // IFU: instruction fetch unit
 // TODO: rename, also in GTKWave savefile
@@ -295,6 +310,7 @@ if (rst) begin
   bus_vld <= 1'b0;
   // control
   ctl_fsm <= ST0;
+  gpr_x0d <= 1'b0;
   // PC
   ctl_pcr <= SYS_RST;
   // instruction buffer
@@ -307,11 +323,13 @@ if (rst) begin
   buf_tkn <= 1'b0;
 end else begin
   // bus valid (always valid after reset)
+  // TODO: EXE for branch does not need VALID
   bus_vld <= 1'b1;
   // internal state 
   if (bus_trn) begin
     // control (go to the next state)
     ctl_fsm <= ctl_nxt;
+    gpr_x0d <= gpr_x0r;
     // FSM dependant buffers
     if (ctl_fsm == ST0) begin
       // update program counter
@@ -343,6 +361,8 @@ begin
   // control (FSM, phase)
   ctl_nxt =  2'dx;
   ctl_pha =  3'bxxx;
+  gpr_x0w =  1'b0;
+  gpr_x0r =  1'b0;
   // PC
   ctl_pcn = 32'hxxxxxxxx;
   // adder
@@ -423,10 +443,11 @@ begin
           // control (FSM, phase)
           ctl_nxt = ST0;
           ctl_pha = WB;
+          gpr_x0w = ~|bus_rd;
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {SYS_GPR[32-1:5+2], bus_rd , 2'b00};
-          bus_ben = {4{bus_rd != 5'd0}};
+          bus_ben = 4'b1111;
           case (bus_opc)
             LUI: begin
               // GPR rd write (upper immediate)
@@ -465,6 +486,7 @@ begin
           endcase
           // control (phase)
           ctl_pha = RS1;
+          gpr_x0r = ~|bus_rs1;
           // rs1 read
           bus_wen = 1'b0;
           bus_adr = {SYS_GPR[32-1:5+2], bus_rs1, 2'b00};
@@ -508,6 +530,7 @@ begin
         BRANCH, STORE, OP: begin
           // control (phase)
           ctl_pha = RS2;
+          gpr_x0r = ~|dec_rs2;
           // GPR rs2 read
           bus_wen = 1'b0;
           bus_adr = {SYS_GPR[32-1:5+2], dec_rs2, 2'b00};
@@ -526,6 +549,7 @@ begin
         JALR: begin
           // control (phase)
           ctl_pha = WB;
+          gpr_x0w = ~|dec_rd;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
@@ -533,16 +557,17 @@ begin
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = {4{dec_rd != 5'd0}};
+          bus_ben = 4'b1111;
           bus_wdt = add_sum[32-1:0];
         end
         OP, OP_IMM: begin
           // control (phase)
           ctl_pha = WB;
+          gpr_x0w = ~|dec_rd;
           // GPR rd write
           bus_wen =1'b1;
           bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = {4{dec_rd != 5'd0}};
+          bus_ben = 4'b1111;
           case (dec_opc)
             OP: begin
               // arithmetic operations
@@ -622,10 +647,11 @@ begin
         LOAD: begin
           // control (phase)
           ctl_pha = WB;
+          gpr_x0w = ~|dec_rd;
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = {4{dec_rd != 5'd0}};
+          bus_ben = 4'b1111;
           // read data multiplexer
           rdm_dtw = bus_rdt[31: 0];
           rdm_dth = buf_adr[1] ? rdm_dtw[31:16] : rdm_dtw[15: 0];
@@ -706,6 +732,20 @@ begin
     end
   endcase
 end
+
+///////////////////////////////////////////////////////////////////////////////
+// GPR access unit
+///////////////////////////////////////////////////////////////////////////////
+
+// connection between external TCB and internal bus with GPR x0 access filter
+assign tcb_vld =                          bus_vld;
+assign tcb_wen =                          bus_wen;
+assign tcb_adr =                          bus_adr;
+assign tcb_ben = gpr_x0w ?  4'b0000     : bus_ben;
+assign tcb_wdt = gpr_x0w ? 32'h00000000 : bus_wdt;
+assign bus_rdt = gpr_x0d ? 32'h00000000 : tcb_rdt;
+assign bus_err =                          tcb_err;
+assign bus_rdy =                          tcb_rdy;
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store unit

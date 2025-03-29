@@ -171,7 +171,7 @@ class mouse(pluginTemplate):
             symbols_cmd = []
             for symbol in symbols_list:
                 # get symbols from elf file
-                cmd = f'{symbol}=$$(riscv{self.xlen}-unknown-elf-nm {elf} | grep {symbol} | cut -c 1-8)'
+                cmd = f'{symbol}=$$(riscv{self.xlen}-unknown-elf-nm {elf} | grep -w {symbol} | cut -c 1-8)'
                 symbols_cmd.append(cmd)
 
             # Simulation define macros.
@@ -206,7 +206,7 @@ class mouse(pluginTemplate):
                 # set up the simulation command. Template is for spike. Please change.
                 simulate_cmd = self.dut_exe + (
                     f' RISCOF_DEFINES="{simulate_defines}"'
-                    f' RISCOF_ARGUMENTS="{simulate_plusargs}"'
+                    f' RISCOF_PLUSARGS="{simulate_plusargs}"'
                 )
             else:
                 simulate_cmd = 'echo "NO RUN"'
