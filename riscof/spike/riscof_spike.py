@@ -55,7 +55,7 @@ class spike(pluginTemplate):
         self.compile_exe = 'riscv{}-unknown-elf-gcc'
 
         # prepare toolchain command template
-        self.objdump_cmd = self.objdump_exe + ' -D {} > {}'
+        self.objdump_cmd = self.objdump_exe + ' -M no-aliases -M numeric -D {} > {}'
         self.compile_cmd = self.compile_exe + (
             ' -march={}'
             ' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'

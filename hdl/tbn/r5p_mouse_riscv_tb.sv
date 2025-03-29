@@ -36,7 +36,7 @@ module riscv_tb
   isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
   // memory size
-  int unsigned MEM_SIZ = 32,
+  int unsigned MEM_SIZ = 2**22,
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters
@@ -156,24 +156,40 @@ import riscv_asm_pkg::*;
   end
 
 ////////////////////////////////////////////////////////////////////////////////
+// ELF file symbols
+////////////////////////////////////////////////////////////////////////////////
+
+  // symbol addresses
+  logic [32-1:0] begin_signature;
+  logic [32-1:0] end_signature  ;
+  logic [32-1:0] tohost         ;
+  logic [32-1:0] fromhost       ;
+
+  initial
+  begin
+    void'($value$plusargs("begin_signature=%0h", begin_signature));
+    void'($value$plusargs("end_signature=%0h"  , end_signature  ));
+    void'($value$plusargs("tohost=%0h"         , tohost         ));
+    void'($value$plusargs("fromhost=%0h"       , fromhost       ));
+    $display("begin_signature=%08h", begin_signature);
+    $display("end_signature  =%08h", end_signature  );
+    $display("tohost         =%08h", tohost         );
+    $display("fromhost       =%08h", fromhost       );
+  end
+
+////////////////////////////////////////////////////////////////////////////////
 // controller
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [XLEN-1:0] rvmodel_data_begin;
-  logic [XLEN-1:0] rvmodel_data_end;
   logic            rvmodel_halt = '0;
 
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
-    rvmodel_data_begin <= 'x;
-    rvmodel_data_end   <= 'x;
     rvmodel_halt       <= '0;
   end else if (bus[0].trn) begin
     if (bus[0].req.wen) begin
       // write access
       case (bus[0].req.adr)
-        32'h0020_0000:  rvmodel_data_begin <= bus[0].req.wdt;
-        32'h0020_0008:  rvmodel_data_end   <= bus[0].req.wdt;
         32'h0020_0010:  rvmodel_halt       <= bus[0].req.wdt[0];
         default:  ;  // do nothing
       endcase
@@ -184,16 +200,11 @@ import riscv_asm_pkg::*;
   always @(posedge clk)
   if (rvmodel_halt | timeout) begin
     string fn;
-    int tmp_begin;
-    int tmp_end;
     if (rvmodel_halt)  $display("HALT");
     if (timeout     )  $display("TIMEOUT");
-    if (rvmodel_data_end < MEM_SIZ)  tmp_end = rvmodel_data_end;
-    else                             tmp_end = MEM_SIZ ;
     if ($value$plusargs("signature=%s", fn)) begin
-      $display("Saving signature file with data from 0x%8h to 0x%8h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
-    //void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
-      void'(mem.write_hex(fn, int'(rvmodel_data_begin), int'(tmp_end)));
+      $display("Saving signature file with data from 0x%8h to 0x%8h: %s", begin_signature, end_signature, fn);
+      void'(mem.write_hex(fn, int'(begin_signature), int'(end_signature)));
       $display("Saving signature file done.");
     end else begin
       $display("ERROR: signature save file argument not found.");

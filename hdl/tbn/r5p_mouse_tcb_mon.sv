@@ -94,7 +94,7 @@ module r5p_mouse_tcb_mon
 
   // print-out delay queue
   string str_if [$];  // instruction fetch
-  string str_wb [$];  // write-back
+  string str_wb [$];  // GPR write-back
   string str_ld [$];  // load
   string str_st [$];  // store
 
@@ -112,6 +112,12 @@ module r5p_mouse_tcb_mon
     err <= bus.rsp.sts.err;
   end
 
+  // format GPR string with desired whitespace
+  function string format_gpr (logic [5-1:0] idx);
+      if (idx < 10)  return($sformatf("x%0d ", idx));
+      else           return($sformatf("x%0d", idx));
+  endfunction: format_gpr
+
   // prepare string for each execution phase
   always_ff @(posedge bus.clk)
   begin
@@ -120,9 +126,12 @@ module r5p_mouse_tcb_mon
       if (dly_pha == IF) begin
         str_if.push_front($sformatf(" 0x%8h (0x%8h)", adr, dat));
       end
-      // register write-back (rs1/rs2 reads are not logged)
+      // GPR write-back (rs1/rs2 reads are not logged)
       if (dly_pha == WB) begin
-        str_wb.push_front($sformatf(" x%0d 0x%8h", adr[2+:5], dat));
+        // byte enable signals are used to disable write to x0 GPR
+        if (&ben) begin
+            str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(adr[2+:5]), dat));
+        end
       end
       // memory load
       if (dly_pha == MLD) begin
@@ -143,14 +152,20 @@ module r5p_mouse_tcb_mon
     fd = $fopen("dut.log", "w");
   end
 
+  logic log_trn = 1'b0;
+
   // prepare string for each execution phase
   always_ff @(posedge bus.clk)
   begin
     // at instruction fetch combine strings from precious instructions
     if (dly.trn) begin
+      log_trn <= 1'b1;
       // instruction fetch
       if (dly_pha == IF) begin
-        $fwrite(fd, "core 0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
+        // skip first fetch
+        if (log_trn) begin
+            $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
+        end
       end
     end
   end

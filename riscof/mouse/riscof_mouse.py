@@ -165,6 +165,15 @@ class mouse(pluginTemplate):
                 f' -D {elf} > {elf}.disass'
             )
 
+            # extract listed symbols
+            symbols_list = ['begin_signature', 'end_signature', 'tohost', 'fromhost']
+            # construct dictionary of listed symbols
+            symbols_cmd = []
+            for symbol in symbols_list:
+                # get symbols from elf file
+                cmd = f'{symbol}=$$(riscv{self.xlen}-unknown-elf-nm {elf} | grep {symbol} | cut -c 1-8)'
+                symbols_cmd.append(cmd)
+
             # Simulation define macros.
             simulate_defines_dict = {}
             if self.debug:
@@ -180,6 +189,10 @@ class mouse(pluginTemplate):
                 'firmware': os.path.join(test_dir, elf)+'.bin',
                 'signature': sig_file
             }
+
+            # provide ELF symbols as plusargs
+            for symbol in symbols_list:
+                simulate_plusargs_dict.update({symbol: f'$${symbol}'})
 
             # Other DUT testbench specific Verilog plusargs can be added here.
             simulate_plusargs_dict.update({})
@@ -204,6 +217,7 @@ class mouse(pluginTemplate):
             execute.append(compile_cmd)
             execute.append(objcopy_cmd)
             execute.append(objdump_cmd)
+            execute +=     symbols_cmd
             execute.append(simulate_cmd)
 
             # Create a target.
