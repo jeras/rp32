@@ -17,8 +17,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_mouse #(
-  // configuration options
-  bit            ENA_NOP = 1'b0,  // enable single clock cycle NOP
+  // implementation options
+  bit IMP_NOP   = 1'b0,  // single clock cycle NOP (otherwise a 3 phase ADDI x0, x0, 0)
+  bit IMP_FENCE = 1'b0,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
+  bit IMP_CSR   = 1'b0,  // TODO
   // system bus parameters
   logic [32-1:0] SYS_RST = 32'h8000_0000,          // reset address
   logic [32-1:0] SYS_MSK = 32'h803f_ffff,          // PC mask
@@ -42,17 +44,18 @@ module r5p_mouse #(
 // RISC-V ISA definitions
 ///////////////////////////////////////////////////////////////////////////////
 
-// base opcode map
-localparam logic [6:2] LOAD   = 5'b00_000;
-localparam logic [6:2] OP_IMM = 5'b00_100;
-localparam logic [6:2] AUIPC  = 5'b00_101;
-localparam logic [6:2] STORE  = 5'b01_000;
-localparam logic [6:2] OP     = 5'b01_100;
-localparam logic [6:2] LUI    = 5'b01_101;
-localparam logic [6:2] BRANCH = 5'b11_000;
-localparam logic [6:2] JALR   = 5'b11_001;
-localparam logic [6:2] JAL    = 5'b11_011;
-localparam logic [6:2] SYSTEM = 5'b11_100;
+// base opcode map ([6:5]_[4:2])
+localparam logic [6:2] LOAD      = 5'b00_000;
+localparam logic [6:2] OP_IMM_32 = 5'b00_100;
+localparam logic [6:2] AUIPC     = 5'b00_101;
+localparam logic [6:2] MISC_MEM  = 5'b00_011;
+localparam logic [6:2] STORE     = 5'b01_000;
+localparam logic [6:2] OP_32     = 5'b01_100;
+localparam logic [6:2] LUI       = 5'b01_101;
+localparam logic [6:2] BRANCH    = 5'b11_000;
+localparam logic [6:2] JALR      = 5'b11_001;
+localparam logic [6:2] JAL       = 5'b11_011;
+localparam logic [6:2] SYSTEM    = 5'b11_100;
 
 // funct3 arithmetic/logic unit (R/I-type)
 localparam logic [3-1:0] ADD  = 3'b000;  // funct7[5] ? SUB : ADD
@@ -94,10 +97,10 @@ localparam logic [3-1:0] BGEU = 3'b111;  // greater then or equal unsigned
 ///////////////////////////////////////////////////////////////////////////////
 
 // SFM states
-localparam logic [2-1:0] ST0  = 2'd0;
-localparam logic [2-1:0] ST1  = 2'd1;
-localparam logic [2-1:0] ST2  = 2'd2;
-localparam logic [2-1:0] ST3  = 2'd3;
+localparam logic [2-1:0] ST0 = 2'd0;
+localparam logic [2-1:0] ST1 = 2'd1;
+localparam logic [2-1:0] ST2 = 2'd2;
+localparam logic [2-1:0] ST3 = 2'd3;
 
 // FSM phases (GPR access phases can be decoded from a single bit)
 localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
@@ -473,16 +476,16 @@ begin
             end
           endcase
         end
-        JALR, BRANCH, LOAD, STORE, OP_IMM, OP: begin
+        JALR, BRANCH, LOAD, STORE, OP_IMM_32, OP_32: begin
           // control (FSM)
           case (bus_opc)
-            BRANCH ,
-            LOAD   ,
-            STORE  ,
-            OP     : ctl_nxt = ST2;  // GPR rs2 read
-            OP_IMM ,
-            JALR   : ctl_nxt = ST3;  // execute
-            default: ctl_nxt = 2'dx;
+            BRANCH   ,
+            LOAD     ,
+            STORE    ,
+            OP_32    : ctl_nxt = ST2;  // GPR rs2 read
+            OP_IMM_32,
+            JALR     : ctl_nxt = ST3;  // execute
+            default  : ctl_nxt = 2'dx;
           endcase
           // control (phase)
           ctl_pha = RS1;
@@ -527,7 +530,7 @@ begin
             default: bus_ben = 4'bxxxx;
           endcase
         end
-        BRANCH, STORE, OP: begin
+        BRANCH, STORE, OP_32: begin
           // control (phase)
           ctl_pha = RS2;
           gpr_x0r = ~|dec_rs2;
@@ -560,7 +563,7 @@ begin
           bus_ben = 4'b1111;
           bus_wdt = add_sum[32-1:0];
         end
-        OP, OP_IMM: begin
+        OP_32, OP_IMM_32: begin
           // control (phase)
           ctl_pha = WB;
           gpr_x0w = ~|dec_rd;
@@ -569,7 +572,7 @@ begin
           bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = 4'b1111;
           case (dec_opc)
-            OP: begin
+            OP_32: begin
               // arithmetic operations
               case (dec_fn3)
                 ADD    : begin
@@ -597,7 +600,7 @@ begin
               shf_op1 = buf_dat;
               shf_op2 = bus_rdt[5-1:0];
             end
-            OP_IMM: begin
+            OP_IMM_32: begin
               // arithmetic operations
               case (dec_fn3)
                 ADD    : begin
@@ -729,6 +732,9 @@ begin
         default: begin
         end
       endcase
+    end
+    // all FSM states are covered, nothing to do for default
+    default: begin
     end
   endcase
 end

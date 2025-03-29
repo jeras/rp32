@@ -101,29 +101,33 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  tcb_if #(.PHY (TCB_PAR_PHY)) bus [0:0] (.clk (clk), .rst (rst));
+  tcb_if #(.PHY (TCB_PAR_PHY)) tcb [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
+  localparam [XLEN-1:0] SYS_RST = 32'h8000_0000;
+  localparam [XLEN-1:0] SYS_MSK = 32'h803f_ffff;
+  localparam [XLEN-1:0] SYS_GPR = 32'h801f_ff80;
+
   r5p_mouse #(
-    .SYS_RST (32'h8000_0000),
-    .SYS_MSK (32'h803f_ffff),
-    .SYS_GPR (32'h801f_ff80)
+    .SYS_RST (SYS_RST),
+    .SYS_MSK (SYS_MSK),
+    .SYS_GPR (SYS_GPR)
   ) cpu (
     // system signals
     .clk     (clk),
     .rst     (rst),
     // TCL system bus (shared by instruction/load/store)
-    .tcb_vld (bus[0].vld),
-    .tcb_wen (bus[0].req.wen),
-    .tcb_adr (bus[0].req.adr),
-    .tcb_ben (bus[0].req.ben),
-    .tcb_wdt (bus[0].req.wdt),
-    .tcb_rdt (bus[0].rsp.rdt),
-    .tcb_err (bus[0].rsp.sts.err),
-    .tcb_rdy (bus[0].rdy)
+    .tcb_vld (tcb[0].vld),
+    .tcb_wen (tcb[0].req.wen),
+    .tcb_adr (tcb[0].req.adr),
+    .tcb_ben (tcb[0].req.ben),
+    .tcb_wdt (tcb[0].req.wdt),
+    .tcb_rdt (tcb[0].rsp.rdt),
+    .tcb_err (tcb[0].rsp.sts.err),
+    .tcb_rdy (tcb[0].rdy)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +138,7 @@ import riscv_asm_pkg::*;
     .SPN   (1),
     .SIZ   (MEM_SIZ)
   ) mem (
-    .tcb  (bus[0:0])
+    .tcb  (tcb[0:0])
   );
 
   // memory initialization file is provided at runtime
@@ -186,22 +190,22 @@ import riscv_asm_pkg::*;
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
     rvmodel_halt <= '0;
-  end else if (bus[0].trn) begin
-    if (bus[0].req.wen) begin
+  end else if (tcb[0].trn) begin
+    if (tcb[0].req.wen) begin
       // HTIF tohost
-      if (bus[0].req.adr == tohost) rvmodel_halt <= bus[0].req.wdt[0];
+      if (tcb[0].req.adr == tohost) rvmodel_halt <= tcb[0].req.wdt[0];
     end
   end
 
   // finish simulation
   always @(posedge clk)
   if (rvmodel_halt | timeout) begin
-    string fn;
+    string fn;  // file name
     if (rvmodel_halt)  $display("HALT");
     if (timeout     )  $display("TIMEOUT");
     if ($value$plusargs("signature=%s", fn)) begin
       $display("Saving signature file with data from 0x%8h to 0x%8h: %s", begin_signature, end_signature, fn);
-      void'(mem.write_hex(fn, int'(begin_signature), int'(end_signature)));
+      mem.write_hex(fn, int'(begin_signature), int'(end_signature));
       $display("Saving signature file done.");
     end else begin
       $display("ERROR: signature save file argument not found.");
@@ -224,22 +228,31 @@ import riscv_asm_pkg::*;
 `ifdef TRACE_DEBUG
 
   // GPR array
-  //logic [32-1:0] gpr [0:32-1];
+  logic [32-1:0] gpr [0:32-1];
 
   // copy GPR array from system memory
-  //assign gpr = mem.mem[mem.SZ-32:mem.SZ-1];
+  // TODO: apply proper streaming operator
+  assign gpr = {>> 32 {mem.mem[SYS_GPR & (MEM_SIZ-1) +: 4*32]}};
 
   // system bus monitor
   r5p_mouse_tcb_mon #(
-    .NAME ("TCB"),
     .ISA  (ISA),
     .ABI  (ABI)
-  ) mon_tcb (
-  // instruction execution phase
+  ) mon (
+    // instruction execution phase
     .pha  (cpu.ctl_pha),
-    // system bus
-    .bus  (bus[0])
+    // TCB system bus
+    .tcb  (tcb[0])
   );
+
+  // open log file with filename obtained through plusargs
+  initial
+  begin
+    string fn;  // file name
+    if ($value$plusargs("log=%s", fn)) begin
+      mon.fd = $fopen(fn, "w");
+    end
+  end
 
 `endif
 

@@ -137,6 +137,9 @@ class mouse(pluginTemplate):
             # The below variable creates an absolute path of signature file.
             sig_file = os.path.join(test_dir, name + ".signature")
 
+            # Name of the HDL testbench log file
+            log_file = os.path.join(test_dir, "dut.log")
+
             # For each test there are specific compile macros that need to be enabled.
             # The macros in the testList node only contain the macros/values.
             # For the gcc toolchain we need to prefix with "-D". The following does precisely that.
@@ -187,7 +190,8 @@ class mouse(pluginTemplate):
             # Construct Verilog plusargs dictionary containing file paths.
             simulate_plusargs_dict = {
                 'firmware': os.path.join(test_dir, elf)+'.bin',
-                'signature': sig_file
+                'signature': sig_file,
+                'log': log_file
             }
 
             # provide ELF symbols as plusargs

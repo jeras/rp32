@@ -19,19 +19,16 @@
 module r5p_mouse_tcb_mon
   import riscv_isa_pkg::*;
 #(
-  string NAME = "",   // monitored bus name
-  // printout order
-  int DLY_IFU = 0,  // printout delay for instruction fetch
-  int DLY_LSU = 0,  // printout delay for load/store
-  int DLY_GPR = 0,  // printout delay for GPR access
+  // log file name
+  string LOG = "",
   // RISC-V ISA parameters
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPR names
 )(
   // instruction execution phase
   input logic [3-1:0] pha,
-  // system bus
-  tcb_if.sub bus
+  // TCB system bus
+  tcb_if.sub tcb
 );
 
   import riscv_asm_pkg::*;
@@ -49,22 +46,26 @@ module r5p_mouse_tcb_mon
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  // system bus delayed by DLY clock periods
-  tcb_if #(.PHY (bus.PHY)) dly (.clk (bus.clk), .rst (bus.rst));
+  // TCB system bus delayed by DLY clock periods
+  tcb_if #(.PHY (tcb.PHY)) dly (.clk (tcb.clk), .rst (tcb.rst));
 
   // phase delayed by DLY clock periods
   logic [3-1:0] dly_pha;
 
   // log signals
-  logic [bus.PHY.ABW-1:0] adr;  // address
+  logic [tcb.PHY.ABW-1:0] adr;  // address
   logic                   wen;  // write enable
-  logic [bus.PHY_BEW-1:0] ben;  // byte enable
-  logic [bus.PHY.DBW-1:0] dat;  // data
+  logic [tcb.PHY_BEW-1:0] ben;  // byte enable
+  logic [tcb.PHY.DBW-1:0] dat;  // data
   logic                   err;  // error
 
+////////////////////////////////////////////////////////////////////////////////
+// delay TCB signals
+////////////////////////////////////////////////////////////////////////////////
+
   // delayed signals
-  always_ff @(posedge bus.clk, posedge bus.rst)
-  if (bus.rst) begin
+  always_ff @(posedge tcb.clk, posedge tcb.rst)
+  if (tcb.rst) begin
     // debug enable
     dly_pha <= 'x;
     // TCB
@@ -76,17 +77,11 @@ module r5p_mouse_tcb_mon
     // debug enable
     dly_pha <= pha;
     // TCB
-    dly.vld <= bus.vld;
-    dly.req <= bus.req;
-    dly.rsp <= bus.rsp;
-    dly.rdy <= bus.rdy;
+    dly.vld <= tcb.vld;
+    dly.req <= tcb.req;
+    dly.rsp <= tcb.rsp;
+    dly.rdy <= tcb.rdy;
   end
-
-////////////////////////////////////////////////////////////////////////////////
-// protocol check
-////////////////////////////////////////////////////////////////////////////////
-
-// TODO: on reads where byte enables bits are not active
 
 ////////////////////////////////////////////////////////////////////////////////
 // logging
@@ -107,9 +102,9 @@ module r5p_mouse_tcb_mon
     if (dly.req.wen) begin
       dat <= dly.req.wdt;
     end else begin
-      dat <= bus.rsp.rdt;
+      dat <= tcb.rsp.rdt;
     end
-    err <= bus.rsp.sts.err;
+    err <= tcb.rsp.sts.err;
   end
 
   // format GPR string with desired whitespace
@@ -119,7 +114,7 @@ module r5p_mouse_tcb_mon
   endfunction: format_gpr
 
   // prepare string for each execution phase
-  always_ff @(posedge bus.clk)
+  always_ff @(posedge tcb.clk)
   begin
     if (dly.trn) begin
       // instruction fetch
@@ -147,24 +142,32 @@ module r5p_mouse_tcb_mon
   // log file descriptor
   int fd;
 
+  // open log file if name is given by parameter
   initial
   begin
-    fd = $fopen("dut.log", "w");
+    if (LOG) begin
+      fd = $fopen(LOG, "w");
+    end
   end
 
+  // skip retirement of reset JAL instruction
   logic log_trn = 1'b0;
 
   // prepare string for each execution phase
-  always_ff @(posedge bus.clk)
+  always_ff @(posedge tcb.clk)
   begin
-    // at instruction fetch combine strings from precious instructions
-    if (dly.trn) begin
-      log_trn <= 1'b1;
-      // instruction fetch
-      if (dly_pha == IF) begin
-        // skip first fetch
-        if (log_trn) begin
-            $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
+    // only log if a log file was opened
+    if (fd) begin
+      // at instruction fetch combine strings from precious instructions
+      if (dly.trn) begin
+        // skip retirement of reset JAL instruction
+        log_trn <= 1'b1;
+        // instruction fetch
+        if (dly_pha == IF) begin
+          // skip first fetch
+          if (log_trn) begin
+              $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
+          end
         end
       end
     end
