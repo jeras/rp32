@@ -707,6 +707,8 @@ begin
         BRANCH: begin
           // control (phase)
           ctl_pha = EXE;
+          // TODO: this is not really a write to GPR x0, find a more generic approach (signal name)
+          gpr_x0w = 1'b1;
           // subtraction
           add_inc = 1'b1;
           unique case (dec_fn3)
