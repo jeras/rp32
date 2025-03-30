@@ -18,19 +18,20 @@
 
 module r5p_mouse #(
   // constants used across the design in signal range sizing instead of literals
-  localparam int unsigned XLEN = 32,
+  localparam int unsigned XLEN = 32,  // 
+  localparam int unsigned XLOG = $clog2(XLEN),
   localparam int unsigned ILEN = 32,
   // implementation options
   bit IMP_NOP   = 1'b0,  // single clock cycle NOP (otherwise a 3 phase ADDI x0, x0, 0)
   bit IMP_FENCE = 1'b0,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
   bit IMP_CSR   = 1'b0,  // TODO
   // instruction fetch unit
-  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,   // PC reset address
-  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,   // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
+  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,  // PC reset address
+  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
   // general purpose register
-  logic [XLEN-1:0] GPR_ADR = 32'h803f_ff80    // GPR address
+  logic [XLEN-1:0] GPR_ADR = 32'h803f_ff80,  // GPR address
   // load/store unit
-  logic [XLEN-1:0] LSU_MSK = '1               // TODO: implement and check whether it affects synthesis
+  logic [XLEN-1:0] LSU_MSK = '1              // TODO: implement and check whether it affects synthesis
 
 )(
   // system signals
@@ -175,37 +176,37 @@ logic           [3-1:0] dec_fn3;  // funct3
 logic           [7-1:0] dec_fn7;  // funct7
 
 // immediates (from bus read data)
-logic   signed [32-1:0] bus_imi;  // decoder immediate I (integer, load, jump)
-logic   signed [32-1:0] bus_imu;  // decoder immediate U (upper)
+logic signed [XLEN-1:0] bus_imi;  // decoder immediate I (integer, load, jump)
+logic signed [XLEN-1:0] bus_imu;  // decoder immediate U (upper)
 // immediates (from buffer)
-logic   signed [32-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
-logic   signed [32-1:0] dec_imb;  // decoder immediate B (branch)
-logic   signed [32-1:0] dec_ims;  // decoder immediate S (store)
-logic   signed [32-1:0] dec_imu;  // decoder immediate U (upper)
-logic   signed [32-1:0] dec_imj;  // decoder immediate J (jump)
+logic signed [XLEN-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
+logic signed [XLEN-1:0] dec_imb;  // decoder immediate B (branch)
+logic signed [XLEN-1:0] dec_ims;  // decoder immediate S (store)
+logic signed [XLEN-1:0] dec_imu;  // decoder immediate U (upper)
+logic signed [XLEN-1:0] dec_imj;  // decoder immediate J (jump)
 
 // ALU adder (used for arithmetic and address calculations)
 logic                   add_inc;  // ALU adder increment (input carry)
-logic   signed [33-1:0] add_op1;  // ALU adder operand 1
-logic   signed [33-1:0] add_op2;  // ALU adder operand 2
-logic   signed [33-1:0] add_sum;  // ALU adder output
+logic signed [XLEN-0:0] add_op1;  // ALU adder operand 1
+logic signed [XLEN-0:0] add_op2;  // ALU adder operand 2
+logic signed [XLEN-0:0] add_sum;  // ALU adder output
 logic                   add_sgn;  // ALU adder output sign (MSB bit of sum)
 logic                   add_zro;  // ALU adder output zero
 
 // ALU logical
-logic          [32-1:0] log_op1;  // ALU logical operand 1
-logic          [32-1:0] log_op2;  // ALU logical operand 2
-logic          [32-1:0] log_val;  // ALU logical output
+logic        [XLEN-1:0] log_op1;  // ALU logical operand 1
+logic        [XLEN-1:0] log_op2;  // ALU logical operand 2
+logic        [XLEN-1:0] log_val;  // ALU logical output
 
 // ALU barrel shifter
-logic          [32-1:0] shf_op1;  // shift operand 1
-logic           [5-1:0] shf_op2;  // shift operand 2 (shift amount)
-logic          [32-1:0] shf_tmp;  // bit reversed operand/result
-logic signed   [32-0:0] shf_ext;
-logic          [32-1:0] shf_val /* synthesis keep */;  // result
+logic        [XLEN-1:0] shf_op1;  // shift operand 1
+logic        [XLOG-1:0] shf_op2;  // shift operand 2 (shift amount)
+logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
+logic signed [XLEN-0:0] shf_ext;
+logic        [XLEN-1:0] shf_val /* synthesis keep */;  // result
 
 // register read buffer
-logic          [32-1:0] buf_dat;
+logic        [XLEN-1:0] buf_dat;
 
 // load address buffer
 logic           [2-1:0] buf_adr;
@@ -213,7 +214,7 @@ logic           [2-1:0] buf_adr;
 logic          [32-1:0] rdm_dtw;  // word
 logic          [16-1:0] rdm_dth;  // half
 logic          [ 8-1:0] rdm_dtb;  // byte
-logic          [32-1:0] rdm_dat;  // data
+logic        [XLEN-1:0] rdm_dat;  // data
 
 // branch taken
 logic                   bru_tkn;
@@ -262,9 +263,9 @@ assign dec_imj = {{12{inw_buf[31]}}, inw_buf[19:12], inw_buf[20], inw_buf[30:21]
 // adder (summation, subtraction)
 assign add_sum = add_op1 + add_op2 + $signed({31'd0, add_inc});
 // ALU adder output sign (MSB bit of sum)
-assign add_sgn = add_sum[32];
+assign add_sgn = add_sum[XLEN];
 // ALU adder output zero
-assign add_zro = add_sum[32-1:0] == 32'd0;
+assign add_zro = add_sum[XLEN-1:0] == 'd0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ALU logical
@@ -276,7 +277,7 @@ unique case (dec_fn3)
   AND    : log_val = log_op1 & log_op2;
   OR     : log_val = log_op1 | log_op2;
   XOR    : log_val = log_op1 ^ log_op2;
-  default: log_val = 32'hxxxxxxxx;
+  default: log_val = 'x;
 endcase
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -284,8 +285,8 @@ endcase
 ///////////////////////////////////////////////////////////////////////////////
 
 // reverse bit order
-function automatic logic [32-1:0] bitrev (logic [32-1:0] val);
-  for (int unsigned i=0; i<32; i++)  bitrev[i] = val[32-1-i];
+function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
+  for (int unsigned i=0; i<XLEN; i++)  bitrev[i] = val[XLEN-1-i];
 endfunction
 
 // bit inversion
@@ -300,14 +301,14 @@ endcase
 // sign extension to (32+1)
 always_comb
 unique case (dec_fn7[5])
-  1'b1   : shf_ext = {shf_tmp[32-1], shf_tmp};
-  1'b0   : shf_ext = {1'b0         , shf_tmp};
+  1'b1   : shf_ext = {shf_tmp[XLEN-1], shf_tmp};
+  1'b0   : shf_ext = {1'b0           , shf_tmp};
 endcase
 
 // TODO: implement a layered barrel shifter to reduce logic size
 
 // combined barrel shifter for left/right shifting
-assign shf_val = 32'($signed(shf_ext) >>> shf_op2[5-1:0]);
+assign shf_val = XLEN'($signed(shf_ext) >>> shf_op2[XLOG-1:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // FSM (split into sequential and combinational blocks)
@@ -751,14 +752,14 @@ end
 ///////////////////////////////////////////////////////////////////////////////
 
 // connection between external TCB and internal bus with GPR x0 access filter
-assign tcb_vld =                          bus_vld;
-assign tcb_wen =                          bus_wen;
-assign tcb_adr =                          bus_adr;
-assign tcb_ben = gpr_x0w ?  4'b0000     : bus_ben;
-assign tcb_wdt = gpr_x0w ? 32'h00000000 : bus_wdt;
-assign bus_rdt = gpr_x0d ? 32'h00000000 : tcb_rdt;
-assign bus_err =                          tcb_err;
-assign bus_rdy =                          tcb_rdy;
+assign tcb_vld = gpr_x0w | gpr_x0r ? 1'b0 : bus_vld;
+assign tcb_wen =                            bus_wen;
+assign tcb_adr =                            bus_adr;
+assign tcb_ben =                            bus_ben;
+assign tcb_wdt =                            bus_wdt;
+assign bus_rdt = gpr_x0d ? 32'h00000000   : tcb_rdt;
+assign bus_err =                            tcb_err;
+assign bus_rdy = gpr_x0w | gpr_x0r ? 1'b1 : tcb_rdy;
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store unit
