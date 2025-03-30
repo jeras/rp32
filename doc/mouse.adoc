@@ -71,18 +71,19 @@ The basic sequence of states/phases depends on the opcode
 .Sequence of instruction execution phases for each opcode
 [%autowidth]
 |===
-|  opcode     | state 0 | state 1 | state 2 | state 3 | total | notes
+|  opcode     | encoding | instructions                                                           | state 0 | state 1 | state 2 | state 3 | total | notes
 
-| `LOAD`      | `IF`    | `RS1`   | `MLD`   | `WB`    | 4     |
-| `OP-IMM-32` | `IF`    | `RS1`   |         | `WB`    | 3     | `OP_IMM` is used in the code.
-| `AUIPC`     | `IF`    | `WB`    |         |         | 2     |
-| `STORE`     | `IF`    | `RS1`   | `RS2`   | `MST`   | 4     |
-| `OP_32`     | `IF`    | `RS1`   | `RS2`   | `WB`    | 4     |
-| `LUI`       | `IF`    | `WB`    |         |         | 2     |
-| `BRANCH`    | `IF`    | `RS1`   | `RS2`   | `EXE`   | 4     |
-| `JALR`      | `IF`    | `RS1`   |         | `WB`    | 3     |
-| `JAL`       | `IF`    | `WB`    |         |         | 2     |
-| `SYSTEM`    | `IF`    | `???`   |         |         | ???   | TODO
+| `LOAD`      | I-type   | `LB`, `LH`, `LW`, `LBU`, `LHU`                                         | `IF`    | `RS1`   | `MLD`   | `WB`    | 4     |
+| `OP_IMM_32` | I-type   | `ADDI`, `SLTI`, `SLTIU`, `XORI`, `ORI`, `ANDI`, `SLLI`, `SRLI`, `SRAI` | `IF`    | `RS1`   |         | `WB`    | 3     |
+| `AUIPC`     | U-type   | `AUIPC`                                                                | `IF`    | `WB`    |         |         | 2     |
+| `STORE`     | S-type   | `SB`, `SH`, `SW`                                                       | `IF`    | `RS1`   | `RS2`   | `MST`   | 4     |
+| `OP_32`     | R-type   | `ADD`, `SUB`, `SLL`, `SLT`, `SLTU`, `XOR`, `SRL`, `SRA`, `OR`, `AND`   | `IF`    | `RS1`   | `RS2`   | `WB`    | 4     |
+| `LUI`       | U-type   | `LUI`                                                                  | `IF`    | `WB`    |         |         | 2     |
+| `BRANCH`    | B-type   | `BEQ`, `BNE`, `BLT`, `BGE`, `BLTU`, `BGEU`                             | `IF`    | `RS1`   | `RS2`   | `EXE`   | 4     |
+| `JALR`      | I-type   | `JALR`                                                                 | `IF`    | `RS1`   |         | `WB`    | 3     |
+| `JAL`       | J-type   | `JAL`                                                                  | `IF`    | `WB`    |         |         | 2     |
+| `SYSTEM`    |          | `ECALL`, `EBREAK`                                                      | `IF`    | `???`   |         |         | ???   | TODO
+| `MISC_MEM`  |          | `FENCE`, `PAUSE`                                                       | `IF`    | `???`   |         |         | ???   | TODO
 |===
 
 === IF phase (instruction fetch)
@@ -294,7 +295,7 @@ The ALU result is used as a branch taken condition.
 
 TODO: in the 3-rd phase the ALU could be used to calculate the branch address,
 the result stored somewhere and in the last phase loaded into the PC.
-As an alternative, the branch immediate could be stored in an extended version of 
+As an alternative, the branch immediate could be stored in an extended version of
 `rd` addr. buffer and used to calculate the new PC with a dedicated adder.
 
 NOTE: since there is no memory access in the 4-th phase,

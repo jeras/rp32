@@ -107,14 +107,14 @@ import riscv_asm_pkg::*;
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam [XLEN-1:0] SYS_RST = 32'h8000_0000;
-  localparam [XLEN-1:0] SYS_MSK = 32'h803f_ffff;
-  localparam [XLEN-1:0] SYS_GPR = 32'h801f_ff80;
+  localparam [XLEN-1:0] IFU_RST = 32'h8000_0000;
+  localparam [XLEN-1:0] IFU_MSK = 32'h803f_ffff;
+  localparam [XLEN-1:0] GPR_ADR = 32'h801f_ff80;
 
   r5p_mouse #(
-    .SYS_RST (SYS_RST),
-    .SYS_MSK (SYS_MSK),
-    .SYS_GPR (SYS_GPR)
+    .IFU_RST (IFU_RST),
+    .IFU_MSK (IFU_MSK),
+    .GPR_ADR (GPR_ADR)
   ) cpu (
     // system signals
     .clk     (clk),
@@ -232,7 +232,7 @@ import riscv_asm_pkg::*;
 
   // copy GPR array from system memory
   // TODO: apply proper streaming operator
-  assign gpr = {>> 32 {mem.mem[SYS_GPR & (MEM_SIZ-1) +: 4*32]}};
+  assign gpr = {>> 32 {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*32]}};
 
   // system bus monitor
   r5p_mouse_tcb_mon #(

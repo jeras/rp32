@@ -17,27 +17,34 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module r5p_mouse #(
+  // constants used across the design in signal range sizing instead of literals
+  localparam int unsigned XLEN = 32,
+  localparam int unsigned ILEN = 32,
   // implementation options
   bit IMP_NOP   = 1'b0,  // single clock cycle NOP (otherwise a 3 phase ADDI x0, x0, 0)
   bit IMP_FENCE = 1'b0,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
   bit IMP_CSR   = 1'b0,  // TODO
-  // system bus parameters
-  logic [32-1:0] SYS_RST = 32'h8000_0000,          // reset address
-  logic [32-1:0] SYS_MSK = 32'h803f_ffff,          // PC mask
-  logic [32-1:0] SYS_GPR = 32'hffff_ff80 & SYS_MSK // GPR address
+  // instruction fetch unit
+  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,   // PC reset address
+  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,   // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
+  // general purpose register
+  logic [XLEN-1:0] GPR_ADR = 32'h803f_ff80    // GPR address
+  // load/store unit
+  logic [XLEN-1:0] LSU_MSK = '1               // TODO: implement and check whether it affects synthesis
+
 )(
   // system signals
-  input  logic          clk,
-  input  logic          rst,
+  input  logic            clk,
+  input  logic            rst,
   // TCB system bus (shared by instruction/load/store)
-  output logic          tcb_vld,  // valid
-  output logic          tcb_wen,  // write enable
-  output logic [32-1:0] tcb_adr,  // address
-  output logic [ 4-1:0] tcb_ben,  // byte enable
-  output logic [32-1:0] tcb_wdt,  // write data
-  input  logic [32-1:0] tcb_rdt,  // read data
-  input  logic          tcb_err,  // error
-  input  logic          tcb_rdy   // ready
+  output logic            tcb_vld,  // valid
+  output logic            tcb_wen,  // write enable
+  output logic [XLEN-1:0] tcb_adr,  // address
+  output logic [   4-1:0] tcb_ben,  // byte enable
+  output logic [XLEN-1:0] tcb_wdt,  // write data
+  input  logic [XLEN-1:0] tcb_rdt,  // read data
+  input  logic            tcb_err,  // error
+  input  logic            tcb_rdy   // ready
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,8 +123,8 @@ localparam logic [3-1:0] WB  = 3'b100;  // GPR write-back
 ///////////////////////////////////////////////////////////////////////////////
 
 // extend sign to 33 bits
-function logic signed [33-1:0] ext_sgn (logic signed [32-1:0] val);
-  ext_sgn = {val[32-1], val[32-1:0]};
+function logic signed [XLEN:0] ext_sgn (logic signed [XLEN-1:0] val);
+  ext_sgn = {val[XLEN-1], val[XLEN-1:0]};
 endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,10 +137,10 @@ logic                   bus_trn;  // transfer
 // TCL system bus (shared by instruction/load/store)
 logic                   bus_vld;  // valid
 logic                   bus_wen;  // write enable
-logic          [32-1:0] bus_adr;  // address
+logic        [XLEN-1:0] bus_adr;  // address
 logic          [ 4-1:0] bus_ben;  // byte enable
-logic          [32-1:0] bus_wdt;  // write data
-logic          [32-1:0] bus_rdt;  // read data
+logic        [XLEN-1:0] bus_wdt;  // write data
+logic        [XLEN-1:0] bus_rdt;  // read data
 logic                   bus_err;  // error
 logic                   bus_rdy;  // ready
 
@@ -149,10 +156,10 @@ logic                   gpr_x0d;  // GPR x0 read delayed for TCB response
 
 // IFU: instruction fetch unit
 // TODO: rename, also in GTKWave savefile
-logic          [32-1:0] ctl_pcr;  // ctl_pcr register
-logic          [32-1:0] ctl_pcn;  // ctl_pcr next
+logic        [XLEN-1:0] ctl_pcr;  // ctl_pcr register
+logic        [XLEN-1:0] ctl_pcn;  // ctl_pcr next
 // TODO: rename, also in GTKWave savefile
-logic          [32-1:0] inw_buf;  // instruction word buffer
+logic        [ILEN-1:0] inw_buf;  // instruction word buffer
 
 // decoder (from bus read data)
 logic           [5-1:0] bus_opc;  // OP code
@@ -315,7 +322,7 @@ if (rst) begin
   ctl_fsm <= ST0;
   gpr_x0d <= 1'b0;
   // PC
-  ctl_pcr <= SYS_RST;
+  ctl_pcr <= IFU_RST;
   // instruction buffer
   inw_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
   // data buffer
@@ -336,7 +343,7 @@ end else begin
     // FSM dependant buffers
     if (ctl_fsm == ST0) begin
       // update program counter
-      ctl_pcr <= ctl_pcn & SYS_MSK;
+      ctl_pcr <= ctl_pcn & IFU_MSK;
     end
     if (ctl_fsm == ST1) begin
       // load the buffer when the instruction is available on the bus
@@ -449,7 +456,7 @@ begin
           gpr_x0w = ~|bus_rd;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {SYS_GPR[32-1:5+2], bus_rd , 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
           bus_ben = 4'b1111;
           case (bus_opc)
             LUI: begin
@@ -492,7 +499,7 @@ begin
           gpr_x0r = ~|bus_rs1;
           // rs1 read
           bus_wen = 1'b0;
-          bus_adr = {SYS_GPR[32-1:5+2], bus_rs1, 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
           bus_ben = '1;
           bus_wdt = 32'hxxxxxxxx;
         end
@@ -536,7 +543,7 @@ begin
           gpr_x0r = ~|dec_rs2;
           // GPR rs2 read
           bus_wen = 1'b0;
-          bus_adr = {SYS_GPR[32-1:5+2], dec_rs2, 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
           bus_ben = '1;
           bus_wdt = 32'hxxxxxxxx;
         end
@@ -559,7 +566,7 @@ begin
           add_op2 = ext_sgn(32'd4);
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = 4'b1111;
           bus_wdt = add_sum[32-1:0];
         end
@@ -569,7 +576,7 @@ begin
           gpr_x0w = ~|dec_rd;
           // GPR rd write
           bus_wen =1'b1;
-          bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = 4'b1111;
           case (dec_opc)
             OP_32: begin
@@ -653,7 +660,7 @@ begin
           gpr_x0w = ~|dec_rd;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {SYS_GPR[32-1:5+2], dec_rd , 2'b00};
+          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
           bus_ben = 4'b1111;
           // read data multiplexer
           rdm_dtw = bus_rdt[31: 0];
