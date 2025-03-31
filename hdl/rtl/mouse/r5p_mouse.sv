@@ -333,7 +333,6 @@ if (rst) begin
   buf_tkn <= 1'b0;
 end else begin
   // bus valid (always valid after reset)
-  // TODO: EXE for branch does not need VALID
   bus_vld <= 1'b1;
   // internal state 
   if (bus_trn) begin
@@ -509,7 +508,7 @@ begin
             ctl_nxt = ST0;
             // control (phase)
             ctl_pha = EXE;
-            // TODO: this is not really a write to GPR x0, find a more generic approach (signal name)
+            // idle system bus
             ctl_bvc = 1'b0;
           end
         end
@@ -716,6 +715,7 @@ begin
         BRANCH: begin
           // control (phase)
           ctl_pha = EXE;
+          // idle system bus
           ctl_bvc = 1'b0;
           // subtraction
           add_inc = 1'b1;
