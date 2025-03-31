@@ -150,10 +150,9 @@ logic           [2-1:0] ctl_fsm;  // FSM state register
 logic           [2-1:0] ctl_nxt;  // FSM state next
 logic           [3-1:0] ctl_pha;  // FSM phase
 
-// GPR x0 write/read
-logic                   gpr_x0w;  // GPR x0 write
-logic                   gpr_x0r;  // GPR x0 read
-logic                   gpr_x0d;  // GPR x0 read delayed for TCB response
+// bus valid combinational/registerd
+logic                   ctl_bvc;
+logic                   ctl_bvr;
 
 // IFU: instruction fetch unit
 // TODO: rename, also in GTKWave savefile
@@ -321,7 +320,7 @@ if (rst) begin
   bus_vld <= 1'b0;
   // control
   ctl_fsm <= ST0;
-  gpr_x0d <= 1'b0;
+  ctl_bvr <= 1'b0;
   // PC
   ctl_pcr <= IFU_RST;
   // instruction buffer
@@ -340,7 +339,7 @@ end else begin
   if (bus_trn) begin
     // control (go to the next state)
     ctl_fsm <= ctl_nxt;
-    gpr_x0d <= gpr_x0r;
+    ctl_bvr <= ctl_bvc;
     // FSM dependant buffers
     if (ctl_fsm == ST0) begin
       // update program counter
@@ -372,8 +371,7 @@ begin
   // control (FSM, phase)
   ctl_nxt =  2'dx;
   ctl_pha =  3'bxxx;
-  gpr_x0w =  1'b0;
-  gpr_x0r =  1'b0;
+  ctl_bvc =  1'b1;
   // PC
   ctl_pcn = 32'hxxxxxxxx;
   // adder
@@ -454,7 +452,7 @@ begin
           // control (FSM, phase)
           ctl_nxt = ST0;
           ctl_pha = WB;
-          gpr_x0w = ~|bus_rd;
+          ctl_bvc = |bus_rd;
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
@@ -497,7 +495,7 @@ begin
           endcase
           // control (phase)
           ctl_pha = RS1;
-          gpr_x0r = ~|bus_rs1;
+          ctl_bvc = |bus_rs1;
           // rs1 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
@@ -512,7 +510,7 @@ begin
             // control (phase)
             ctl_pha = EXE;
             // TODO: this is not really a write to GPR x0, find a more generic approach (signal name)
-            gpr_x0w = 1'b1;
+            ctl_bvc = 1'b0;
           end
         end
         default: begin
@@ -552,7 +550,7 @@ begin
         BRANCH, STORE, OP_32: begin
           // control (phase)
           ctl_pha = RS2;
-          gpr_x0r = ~|dec_rs2;
+          ctl_bvc = |dec_rs2;
           // GPR rs2 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
@@ -571,7 +569,7 @@ begin
         JALR: begin
           // control (phase)
           ctl_pha = WB;
-          gpr_x0w = ~|dec_rd;
+          ctl_bvc = |dec_rd;
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(ctl_pcr);
@@ -585,7 +583,7 @@ begin
         OP_32, OP_IMM_32: begin
           // control (phase)
           ctl_pha = WB;
-          gpr_x0w = ~|dec_rd;
+          ctl_bvc = |dec_rd;
           // GPR rd write
           bus_wen =1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
@@ -669,7 +667,7 @@ begin
         LOAD: begin
           // control (phase)
           ctl_pha = WB;
-          gpr_x0w = ~|dec_rd;
+          ctl_bvc = |dec_rd;
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
@@ -718,8 +716,7 @@ begin
         BRANCH: begin
           // control (phase)
           ctl_pha = EXE;
-          // TODO: this is not really a write to GPR x0, find a more generic approach (signal name)
-          gpr_x0w = 1'b1;
+          ctl_bvc = 1'b0;
           // subtraction
           add_inc = 1'b1;
           unique case (dec_fn3)
@@ -764,15 +761,16 @@ end
 // GPR access unit
 ///////////////////////////////////////////////////////////////////////////////
 
-// connection between external TCB and internal bus with GPR x0 access filter
-assign tcb_vld = gpr_x0w | gpr_x0r ? 1'b0 : bus_vld;
-assign tcb_wen =                            bus_wen;
-assign tcb_adr =                            bus_adr;
-assign tcb_ben =                            bus_ben;
-assign tcb_wdt =                            bus_wdt;
-assign bus_rdt = gpr_x0d ? 32'h00000000   : tcb_rdt;
-assign bus_err =                            tcb_err;
-assign bus_rdy = gpr_x0w | gpr_x0r ? 1'b1 : tcb_rdy;
+// connection between external TCB and internal bus
+// filtering: GPR x0 access, NOP, BRANCH EXE phase
+assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
+assign tcb_wen =           bus_wen               ;
+assign tcb_adr =           bus_adr               ;
+assign tcb_ben =           bus_ben               ;
+assign tcb_wdt =           bus_wdt               ;
+assign bus_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
+assign bus_err =           tcb_err               ;
+assign bus_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store unit
