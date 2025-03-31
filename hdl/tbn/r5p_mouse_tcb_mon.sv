@@ -32,6 +32,7 @@ module r5p_mouse_tcb_mon
 );
 
   import riscv_asm_pkg::*;
+  import tcb_pkg::*;
 
   // FSM phases (GPR access phases can be decoded from a single bit)
   localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
@@ -55,7 +56,7 @@ module r5p_mouse_tcb_mon
   // log signals
   logic [tcb.PHY.ABW-1:0] adr;  // address
   logic                   wen;  // write enable
-  logic [tcb.PHY_BEW-1:0] ben;  // byte enable
+  logic           [3-1:0] fn3;  // RISC-V func3
   logic [tcb.PHY.DBW-1:0] dat;  // data
   logic                   err;  // error
 
@@ -100,9 +101,22 @@ module r5p_mouse_tcb_mon
       if (tcb.vld == 1'b1) begin
         assert (( tcb.rdy     !== 1'bx) && ( tcb.rdy     !== 1'bz)) else $fatal("TCB: tcb.rdy is undefined during a cycle.");
         assert (( tcb.req.wen !== 1'bx) && ( tcb.req.wen !== 1'bz)) else $fatal("TCB: tcb.req.wen is undefined during a cycle.");
-        assert ((^tcb.req.ben !== 1'bx) && (^tcb.req.wen !== 1'bz)) else $fatal("TCB: tcb.req.ben is undefined during a cycle.");
+        case (tcb.PHY.MOD)
+          TCB_RISC_V:
+          begin
+            assert (^tcb.req.siz !== 1'bx) else $fatal("TCB: tcb.req.siz is undefined during a cycle.");
+            assert ( tcb.req.uns !== 1'bx) else $fatal("TCB: tcb.req.uns is undefined during a cycle.");
+          end
+          TCB_RISC_V:
+          begin
+            assert (^tcb.req.ben !== 1'bx) else $fatal("TCB: tcb.req.ben is undefined during a cycle.");
+          end
+          default:
+          begin
+          end
+        endcase
+        // TODO: check other signals too
       end
-      // TODO: check other signals too
     end
   end
 
@@ -119,9 +133,10 @@ module r5p_mouse_tcb_mon
   // write/read signals
   always_comb
   begin
-    adr <= dly.req.adr;
-    wen <= dly.req.wen;
-    ben <= dly.req.ben;
+    adr <=  dly.req.adr;
+    wen <=  dly.req.wen;
+    fn3 <= {dly.req.uns,
+            dly.req.siz};
     if (dly.req.wen) begin
       dat <= dly.req.wdt;
     end else begin
@@ -147,7 +162,7 @@ module r5p_mouse_tcb_mon
       // GPR write-back (rs1/rs2 reads are not logged)
       if (dly_pha == WB) begin
         // byte enable signals are used to disable write to x0 GPR
-        if (&ben) begin
+        if (fn3 == {1'b0, 2'b10}) begin
             str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(adr[2+:5]), dat));
         end
       end

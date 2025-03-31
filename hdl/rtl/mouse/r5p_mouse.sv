@@ -41,7 +41,7 @@ module r5p_mouse #(
   output logic            tcb_vld,  // valid
   output logic            tcb_wen,  // write enable
   output logic [XLEN-1:0] tcb_adr,  // address
-  output logic [   4-1:0] tcb_ben,  // byte enable
+  output logic    [3-1:0] tcb_fn3,  // RISC-V func3
   output logic [XLEN-1:0] tcb_wdt,  // write data
   input  logic [XLEN-1:0] tcb_rdt,  // read data
   input  logic            tcb_err,  // error
@@ -139,7 +139,7 @@ logic                   bus_trn;  // transfer
 logic                   bus_vld;  // valid
 logic                   bus_wen;  // write enable
 logic        [XLEN-1:0] bus_adr;  // address
-logic          [ 4-1:0] bus_ben;  // byte enable
+logic           [3-1:0] bus_fn3;  // RISC-V func3
 logic        [XLEN-1:0] bus_wdt;  // write data
 logic        [XLEN-1:0] bus_rdt;  // read data
 logic                   bus_err;  // error
@@ -165,7 +165,6 @@ logic        [ILEN-1:0] inw_buf;  // instruction word buffer
 logic           [5-1:0] bus_opc;  // OP code
 logic           [5-1:0] bus_rd ;  // GPR `rd`  address
 logic           [5-1:0] bus_rs1;  // GPR `rs1` address
-logic           [3-1:0] bus_fn3;  // funct3
 // decoder (from buffer)
 logic           [5-1:0] dec_opc;  // OP code
 logic           [5-1:0] dec_rd ;  // GPR `rd`  address
@@ -209,11 +208,6 @@ logic        [XLEN-1:0] buf_dat;
 
 // load address buffer
 logic           [2-1:0] buf_adr;
-// read data multiplexer
-logic          [32-1:0] rdm_dtw;  // word
-logic          [16-1:0] rdm_dth;  // half
-logic          [ 8-1:0] rdm_dtb;  // byte
-logic        [XLEN-1:0] rdm_dat;  // data
 
 // branch taken
 logic                   bru_tkn;
@@ -239,7 +233,6 @@ assign dec_rs2 = inw_buf[24:20];  // decoder GPR `rs2` address
 
 // OP and functions (from bus read data)
 assign bus_opc = bus_rdt[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
-assign bus_fn3 = bus_rdt[14:12];  // funct3
 // OP and functions (from buffer)
 assign dec_opc = inw_buf[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
 assign dec_fn3 = inw_buf[14:12];  // funct3
@@ -380,7 +373,7 @@ begin
   // system bus
   bus_wen =  1'bx;
   bus_adr = 32'hxxxxxxxx;
-  bus_ben =  4'bxxxx;
+  bus_fn3 =  3'bxxx;
   bus_wdt = 32'hxxxxxxxx;
   // logic operations
   log_op1 = 32'hxxxxxxxx;
@@ -388,11 +381,6 @@ begin
   // shift operations
   shf_op1 = 32'hxxxxxxxx;
   shf_op2 =  5'dx;
-  // read data multiplexer
-  rdm_dtw = 32'hxxxxxxxx;
-  rdm_dth = 16'hxxxx;
-  rdm_dtb =  8'hxx;
-  rdm_dat = 32'hxxxxxxxx;
   // branch taken
   bru_tkn =  1'bx;
 
@@ -426,7 +414,7 @@ begin
           add_op1 = ext_sgn(ctl_pcr);
           add_op2 = ext_sgn(buf_tkn ? dec_imb : 32'd4);
           // system bus
-          bus_adr = add_sum[32-1:0];
+          bus_adr = add_sum[XLEN-1:0];
         end
         default: begin
           // adder: current instruction address
@@ -434,12 +422,12 @@ begin
           add_op1 = ext_sgn(ctl_pcr);
           add_op2 = ext_sgn(32'd4);
           // system bus: instruction address
-          bus_adr = add_sum[32-1:0];
+          bus_adr = add_sum[XLEN-1:0];
         end
       endcase
       // system bus: instruction fetch
       bus_wen = 1'b0;
-      bus_ben = 4'b1111;
+      bus_fn3 = LW;
       bus_wdt = 32'hxxxxxxxx;
       // PC next
       ctl_pcn = bus_adr;
@@ -454,8 +442,8 @@ begin
           ctl_bvc = |bus_rd;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], bus_rd , 2'b00};
-          bus_ben = 4'b1111;
+          bus_adr = {GPR_ADR[XLEN-1:5+2], bus_rd , 2'b00};
+          bus_fn3 = SW;
           case (bus_opc)
             LUI: begin
               // GPR rd write (upper immediate)
@@ -497,8 +485,8 @@ begin
           ctl_bvc = |bus_rs1;
           // rs1 read
           bus_wen = 1'b0;
-          bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
-          bus_ben = '1;
+          bus_adr = {GPR_ADR[XLEN-1:5+2], bus_rs1, 2'b00};
+          bus_fn3 = LW;
           bus_wdt = 32'hxxxxxxxx;
         end
         MISC_MEM: begin
@@ -530,21 +518,8 @@ begin
           add_op2 = ext_sgn(dec_imi);
           // load
           bus_wen = 1'b0;
-          bus_adr = {add_sum[32-1:2], 2'b00};
-          case (dec_fn3)
-            LB, LBU: case (add_sum[1:0])
-              2'b00: bus_ben = 4'b0001;
-              2'b01: bus_ben = 4'b0010;
-              2'b10: bus_ben = 4'b0100;
-              2'b11: bus_ben = 4'b1000;
-            endcase
-            LH, LHU: case (add_sum[1])
-              1'b0 : bus_ben = 4'b0011;
-              1'b1 : bus_ben = 4'b1100;
-            endcase
-            LW, LWU: bus_ben = 4'b1111;
-            default: bus_ben = 4'bxxxx;
-          endcase
+          bus_adr = add_sum[XLEN-1:0];
+          bus_fn3 = dec_fn3;
         end
         BRANCH, STORE, OP_32: begin
           // control (phase)
@@ -552,8 +527,8 @@ begin
           ctl_bvc = |dec_rs2;
           // GPR rs2 read
           bus_wen = 1'b0;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rs2, 2'b00};
-          bus_ben = '1;
+          bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rs2, 2'b00};
+          bus_fn3 = LW;
           bus_wdt = 32'hxxxxxxxx;
         end
         default: begin
@@ -575,9 +550,9 @@ begin
           add_op2 = ext_sgn(32'd4);
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = 4'b1111;
-          bus_wdt = add_sum[32-1:0];
+          bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+          bus_fn3 = SW;
+          bus_wdt = add_sum[XLEN-1:0];
         end
         OP_32, OP_IMM_32: begin
           // control (phase)
@@ -585,8 +560,8 @@ begin
           ctl_bvc = |dec_rd;
           // GPR rd write
           bus_wen =1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = 4'b1111;
+          bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+          bus_fn3 = SW;
           case (dec_opc)
             OP_32: begin
               // arithmetic operations
@@ -594,7 +569,7 @@ begin
                 ADD    : begin
                   add_inc = dec_fn7[5];
                   add_op1 = ext_sgn(buf_dat);
-                  add_op2 = ext_sgn(bus_rdt ^ {32{dec_fn7[5]}});
+                  add_op2 = ext_sgn(bus_rdt ^ {XLEN{dec_fn7[5]}});
                 end
                 SLT    : begin
                   add_inc = 1'b1;
@@ -614,7 +589,7 @@ begin
               log_op2 = bus_rdt;
               // shift operations
               shf_op1 = buf_dat;
-              shf_op2 = bus_rdt[5-1:0];
+              shf_op2 = bus_rdt[XLOG-1:0];
             end
             OP_IMM_32: begin
               // arithmetic operations
@@ -642,16 +617,16 @@ begin
               log_op2 = dec_imi;
               // shift operations
               shf_op1 = bus_rdt;
-              shf_op2 = dec_imi[5-1:0];
+              shf_op2 = dec_imi[XLOG-1:0];
             end
             default: begin
             end
           endcase
           case (dec_fn3)
             // adder based inw_buf functions
-            ADD : bus_wdt = add_sum[32-1:0];
+            ADD : bus_wdt = add_sum[XLEN-1:0];
             SLT ,
-            SLTU: bus_wdt = {31'd0, add_sum[32]};
+            SLTU: bus_wdt = {31'd0, add_sum[XLEN]};
             // bitwise logical operations
             AND : bus_wdt = log_val;
             OR  : bus_wdt = log_val;
@@ -669,23 +644,9 @@ begin
           ctl_bvc = |dec_rd;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[32-1:5+2], dec_rd , 2'b00};
-          bus_ben = 4'b1111;
-          // read data multiplexer
-          rdm_dtw = bus_rdt[31: 0];
-          rdm_dth = buf_adr[1] ? rdm_dtw[31:16] : rdm_dtw[15: 0];
-          rdm_dtb = buf_adr[0] ? rdm_dth[15: 8] : rdm_dth[ 7: 0];
-          rdm_dat = {rdm_dtw[31:16], rdm_dth[15: 8], rdm_dtb[ 7: 0]};
-          // sign extension, NOTE: this is a good fit for LUT4
-          unique case (dec_fn3)
-            LB     : bus_wdt = {{24{rdm_dat[ 8-1]}}, rdm_dat[ 8-1:0]};
-            LH     : bus_wdt = {{16{rdm_dat[16-1]}}, rdm_dat[16-1:0]};
-            LW     : bus_wdt = {                     rdm_dat[32-1:0]};
-            LBU    : bus_wdt = { 24'd0             , rdm_dat[ 8-1:0]};
-            LHU    : bus_wdt = { 16'd0             , rdm_dat[16-1:0]};
-            LWU    : bus_wdt = {                     rdm_dat[32-1:0]};
-            default: bus_wdt = 32'hxxxxxxxx;
-          endcase
+          bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+          bus_fn3 = SW;
+          bus_wdt = bus_rdt;
         end
         STORE: begin
           // control (phase)
@@ -696,21 +657,9 @@ begin
           add_op2 = ext_sgn(dec_ims);
           // store
           bus_wen = 1'b1;
-          bus_adr = {add_sum[32-1:2], 2'b00};
-          case (dec_fn3)
-            SB     : case (add_sum[1:0])
-              2'b00: begin bus_wdt[ 7: 0] = bus_rdt[ 7: 0]; bus_ben = 4'b0001; end
-              2'b01: begin bus_wdt[15: 8] = bus_rdt[ 7: 0]; bus_ben = 4'b0010; end
-              2'b10: begin bus_wdt[23:16] = bus_rdt[ 7: 0]; bus_ben = 4'b0100; end
-              2'b11: begin bus_wdt[31:24] = bus_rdt[ 7: 0]; bus_ben = 4'b1000; end
-            endcase
-            SH     : case (add_sum[1])
-              1'b0 : begin bus_wdt[15: 0] = bus_rdt[15: 0]; bus_ben = 4'b0011; end
-              1'b1 : begin bus_wdt[31:16] = bus_rdt[15: 0]; bus_ben = 4'b1100; end
-            endcase
-            SW     : begin bus_wdt[31: 0] = bus_rdt[31: 0]; bus_ben = 4'b1111; end
-            default: begin bus_wdt[31: 0] = 32'hxxxxxxxx  ; bus_ben = 4'bxxxx; end
-          endcase
+          bus_adr = add_sum[XLEN-1:0];
+          bus_fn3 = dec_fn3;
+          bus_wdt = bus_rdt;
         end
         BRANCH: begin
           // control (phase)
@@ -766,7 +715,7 @@ end
 assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
 assign tcb_wen =           bus_wen               ;
 assign tcb_adr =           bus_adr               ;
-assign tcb_ben =           bus_ben               ;
+assign tcb_fn3 =           bus_fn3               ;
 assign tcb_wdt =           bus_wdt               ;
 assign bus_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
 assign bus_err =           tcb_err               ;

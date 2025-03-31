@@ -95,7 +95,7 @@ import riscv_asm_pkg::*;
     DBW: 32,
     ALW: 2,   // $clog2(DBW/SLW)
     // data packing parameters
-    MOD: TCB_MEMORY,
+    MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -120,14 +120,15 @@ import riscv_asm_pkg::*;
     .clk     (clk),
     .rst     (rst),
     // TCL system bus (shared by instruction/load/store)
-    .tcb_vld (tcb[0].vld),
-    .tcb_wen (tcb[0].req.wen),
-    .tcb_adr (tcb[0].req.adr),
-    .tcb_ben (tcb[0].req.ben),
-    .tcb_wdt (tcb[0].req.wdt),
-    .tcb_rdt (tcb[0].rsp.rdt),
-    .tcb_err (tcb[0].rsp.sts.err),
-    .tcb_rdy (tcb[0].rdy)
+    .tcb_vld ( tcb[0].vld ),
+    .tcb_wen ( tcb[0].req.wen ),
+    .tcb_adr ( tcb[0].req.adr ),
+    .tcb_fn3 ({tcb[0].req.uns,
+               tcb[0].req.siz}),
+    .tcb_wdt ( tcb[0].req.wdt ),
+    .tcb_rdt ( tcb[0].rsp.rdt ),
+    .tcb_err ( tcb[0].rsp.sts.err ),
+    .tcb_rdy ( tcb[0].rdy )
   );
 
 ////////////////////////////////////////////////////////////////////////////////
