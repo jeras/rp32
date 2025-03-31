@@ -23,7 +23,7 @@ module r5p_mouse #(
   localparam int unsigned ILEN = 32,
   // implementation options
   bit IMP_NOP   = 1'b0,  // single clock cycle NOP (otherwise a 3 phase ADDI x0, x0, 0)
-  bit IMP_FENCE = 1'b0,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
+  bit IMP_FENCE = 1'b1,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
   bit IMP_CSR   = 1'b0,  // TODO
   // instruction fetch unit
   logic [XLEN-1:0] IFU_RST = 32'h8000_0000,  // PC reset address
@@ -503,6 +503,17 @@ begin
           bus_adr = {GPR_ADR[32-1:5+2], bus_rs1, 2'b00};
           bus_ben = '1;
           bus_wdt = 32'hxxxxxxxx;
+        end
+        MISC_MEM: begin
+          // FENCE instruction
+          if (IMP_FENCE) begin
+            // control (FSM)
+            ctl_nxt = ST0;
+            // control (phase)
+            ctl_pha = EXE;
+            // TODO: this is not really a write to GPR x0, find a more generic approach (signal name)
+            gpr_x0w = 1'b1;
+          end
         end
         default: begin
         end

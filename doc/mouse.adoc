@@ -83,7 +83,7 @@ The basic sequence of states/phases depends on the opcode
 | `JALR`      | I-type   | `JALR`                                                                 | `IF`    | `RS1`   |         | `WB`    | 3     |
 | `JAL`       | J-type   | `JAL`                                                                  | `IF`    | `WB`    |         |         | 2     |
 | `SYSTEM`    |          | `ECALL`, `EBREAK`                                                      | `IF`    | `???`   |         |         | ???   | TODO
-| `MISC_MEM`  |          | `FENCE`, `PAUSE`                                                       | `IF`    | `???`   |         |         | ???   | TODO
+| `MISC_MEM`  |          | `FENCE`, `PAUSE`                                                       | `IF`    | `NOP`   |         |         | 2     | TODO
 |===
 
 === IF phase (instruction fetch)
