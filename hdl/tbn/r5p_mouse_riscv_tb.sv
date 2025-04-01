@@ -143,7 +143,7 @@ import riscv_asm_pkg::*;
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_memory #(
+  tcb_vip_memoryory #(
     .SPN   (1),
     .SIZ   (MEM_SIZ)
   ) mem (

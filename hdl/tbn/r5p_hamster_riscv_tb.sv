@@ -168,7 +168,7 @@ tcb_lib_passthrough tcb_pas_lsu (
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_vip_mem #(
+tcb_vip_memory #(
   .FN   (IFN),
   .SIZ  (2**IAW)
 ) mem (
