@@ -33,7 +33,7 @@ module riscv_tb
                    : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
                               : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
 `else
-  isa_t ISA = '{spec: RV32IC, priv: MODES_NONE},
+  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
   // memory size
   int unsigned MEM_SIZ = 2**22,
@@ -86,14 +86,14 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PAR_PHY = '{
+  localparam tcb_par_phy_t TCB_PHY = '{
     // protocol
     DLY: 1,
     // signal widths
     SLW: 8,
-    ABW: 32,
-    DBW: 32,
-    ALW: 2,   // $clog2(DBW/SLW)
+    ABW: XLEN,
+    DBW: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW)
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -101,7 +101,8 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  tcb_if #(.PHY (TCB_PAR_PHY)) tcb [0:0] (.clk (clk), .rst (rst));
+  // system busses
+  tcb_if #(TCB_PHY) tcb [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -115,11 +116,11 @@ import riscv_asm_pkg::*;
     .IFU_RST (IFU_RST),
     .IFU_MSK (IFU_MSK),
     .GPR_ADR (GPR_ADR)
-  ) cpu (
+  ) dut (
     // system signals
     .clk     (clk),
     .rst     (rst),
-    // TCL system bus (shared by instruction/load/store)
+    // TCB system bus (shared by instruction/load/store)
     .tcb_vld ( tcb[0].vld ),
     .tcb_wen ( tcb[0].req.wen ),
     .tcb_adr ( tcb[0].req.adr ),
@@ -139,13 +140,14 @@ import riscv_asm_pkg::*;
     .tcb  (tcb[0])
   );
 
-  ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_memoryory #(
-    .SPN   (1),
-    .SIZ   (MEM_SIZ)
+  tcb_vip_memory #(
+    .MFN  (IFN),
+    .SPN  (1),
+    .SIZ  (MEM_SIZ)
   ) mem (
     .tcb  (tcb[0:0])
   );
@@ -194,11 +196,11 @@ import riscv_asm_pkg::*;
 // controller
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic rvmodel_halt = '0;
+  logic rvmodel_halt = 1'b0;
 
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
-    rvmodel_halt <= '0;
+    rvmodel_halt <= 1'b0;
   end else if (tcb[0].trn) begin
     if (tcb[0].req.wen) begin
       // HTIF tohost
@@ -237,11 +239,11 @@ import riscv_asm_pkg::*;
 `ifdef TRACE_DEBUG
 
   // GPR array
-  logic [32-1:0] gpr [0:32-1];
+  logic [XLEN-1:0] gpr [0:32-1];
 
   // copy GPR array from system memory
   // TODO: apply proper streaming operator
-  assign gpr = {>> 32 {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*32]}};
+  assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
   // system bus monitor
   r5p_mouse_tcb_mon #(
@@ -249,7 +251,7 @@ import riscv_asm_pkg::*;
     .ABI  (ABI)
   ) r5p_mon (
     // instruction execution phase
-    .pha  (cpu.ctl_pha),
+    .pha  (dut.ctl_pha),
     // TCB system bus
     .tcb  (tcb[0])
   );
@@ -275,3 +277,4 @@ import riscv_asm_pkg::*;
   end
 
 endmodule: riscv_tb
+

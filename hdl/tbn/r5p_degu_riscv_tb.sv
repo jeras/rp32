@@ -19,6 +19,7 @@
 
 module riscv_tb
   import riscv_isa_pkg::*;
+  import tcb_pkg::*;
 #(
   // RISC-V ISA
   int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
@@ -34,224 +35,229 @@ module riscv_tb
 `else
   isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
-  // instruction bus
-  int unsigned IAW = 22,     // instruction address width
-  int unsigned IDW = 32,     // instruction data    width
-  // data bus
-  int unsigned DAW = 22,     // data address width
-  int unsigned DDW = XLEN,   // data data    width
-  int unsigned DBW = DDW/8,  // data byte en width
+  // memory size
+  int unsigned MEM_SIZ = 2**22,
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters
   bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )();
 
-import tcb_pkg::*;
 import riscv_asm_pkg::*;
 
-// system signals
-logic clk = 1'b1;  // clock
-logic rst = 1'b1;  // reset
+  // system signals
+  logic clk = 1'b1;  // clock
+  logic rst = 1'b1;  // reset
 
-// clock period counter
-int unsigned cnt;
-bit timeout = 1'b0;
+  // clock period counter
+  int unsigned cnt;
+  bit timeout = 1'b0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // test sequence
 ////////////////////////////////////////////////////////////////////////////////
 
-// clock
-always #(20ns/2) clk = ~clk;
-// reset
-initial
-begin
-  repeat (4) @(posedge clk);
-  rst = 1'b0;
-  repeat (10000) @(posedge clk);
-  $finish();
-end
+  // clock
+  always #(20ns/2) clk = ~clk;
+
+  // reset
+  initial
+  begin
+    /* verilator lint_off INITIALDLY */
+    repeat (4) @(posedge clk);
+    // synchronous reset release
+    rst <= 1'b0;
+    repeat (10000) @(posedge clk);
+    timeout <= 1'b1;
+    repeat (4) @(posedge clk);
+    $finish();
+    /* verilator lint_on INITIALDLY */
+  end
+
+  // time counter
+  always_ff @(posedge clk, posedge rst)
+  if (rst) begin
+    cnt <= 0;
+  end else begin
+    cnt <= cnt+1;
+  end  
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-localparam tcb_par_phy_t PHY_IFU = '{
-  // protocol
-  DLY: 1,
-  // signal bus widths
-  SLW: TCB_PAR_PHY_DEF.SLW,
-  ABW: IAW,
-  DBW: IDW,
-  ALW: $clog2(IDW/TCB_PAR_PHY_DEF.SLW),
-  // size/mode/order parameters
-  SIZ: TCB_PAR_PHY_DEF.SIZ,
-  MOD: TCB_PAR_PHY_DEF.MOD,
-  ORD: TCB_PAR_PHY_DEF.ORD,
-  // channel configuration
-  CHN: TCB_PAR_PHY_DEF.CHN
-};
+  localparam tcb_par_phy_t TCB_PHY_IFU = '{
+    // protocol
+    DLY: 1,
+    // signal widths
+    SLW: 8,
+    ABW: IAW,
+    DBW: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW) // TODO: could be 16-bit allignment
+    // data packing parameters
+    MOD: TCB_MEMORY,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
 
-localparam tcb_par_phy_t PHY_LSU = '{
-  // protocol
-  DLY: 1,
-  // signal bus widths
-  SLW: TCB_PAR_PHY_DEF.SLW,
-  ABW: DAW,
-  DBW: DDW,
-  ALW: $clog2(DDW/TCB_PAR_PHY_DEF.SLW),
-  // size/mode/order parameters
-  SIZ: TCB_PAR_PHY_DEF.SIZ,
-  MOD: TCB_PAR_PHY_DEF.MOD,
-  ORD: TCB_PAR_PHY_DEF.ORD,
-  // channel configuration
-  CHN: TCB_PAR_PHY_DEF.CHN
-};
+  localparam tcb_par_phy_t TCB_PHY_LSU = '{
+    // protocol
+    DLY: 1,
+    // signal bus widths
+    SLW: 8,
+    ABW: XLEN,
+    DBW: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW)
+    // data packing parameters
+    MOD: TCB_MEMORY,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
 
-// system busses
-tcb_if #(PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
-tcb_if #(PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-tcb_if #(PHY_LSU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
-tcb_if #(PHY_LSU) tcb_mem [2-1:0] (.clk (clk), .rst (rst));
+  // system busses
+  tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+  tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+  tcb_if #(TCB_PHY_LSU) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-r5p_degu #(
-  // RISC-V ISA
-  .XLEN (XLEN),
-  .ISA  (ISA)
-) DUT (
-  // system signals
-  .clk  (clk),
-  .rst  (rst),
-  // system bus
-  .ifb  (tcb_ifu),
-  .lsb  (tcb_lsu)
-);
+  localparam [XLEN-1:0] IFU_RST = 32'h8000_0000;
+  localparam [XLEN-1:0] IFU_MSK = 32'h803f_ffff;
+
+  r5p_degu #(
+    // RISC-V ISA
+    .XLEN (XLEN),
+    .ISA  (ISA)
+  ) dut (
+    // system signals
+    .clk     (clk),
+    .rst     (rst),
+    // TCB system bus
+    .ifb  (tcb_ifu),
+    .lsb  (tcb_lsu)
+  );
 
 ////////////////////////////////////////////////////////////////////////////////
-// load/store bus decoder
+// protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-logic [2-1:0] tcb_lsu_sel;
+  tcb_vip_protocol_checker tcb_mon_ifu (
+    .tcb  (tcb_ifu)
+  );
 
-// decoding memory/controller
-tcb_lib_decoder #(
-  .PHY (PHY_LSU),
-  .SPN (2),
-  .DAM ({{2'b1x, 20'hxxxxx},   // 0x20_0000 ~ 0x2f_ffff - controller
-         {2'b0x, 20'hxxxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
-) tcb_lsu_dec (
-  .tcb  (tcb_lsu    ),
-  .sel  (tcb_lsu_sel)
-);
-
-// demultiplexing memory/controller
-tcb_lib_demultiplexer #(
-  .MPN (2)
-) tcb_lsu_demux (
-  // control
-  .sel  (tcb_lsu_sel),
-  // TCB interfaces
-  .sub  (tcb_lsu),
-  .man  (tcb_dmx)
-);
-
-// passthrough TCB interfaces to array
-tcb_lib_passthrough tcb_pas_ifu (
-  .sub  (tcb_ifu),
-  .man  (tcb_mem[0])
-);
-tcb_lib_passthrough tcb_pas_lsu (
-  .sub  (tcb_dmx[0]),
-  .man  (tcb_mem[1])
-);
+  tcb_vip_protocol_checker tcb_mon_lsu (
+    .tcb  (tcb_lsu)
+  );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-tcb_vip_memory #(
-  .FN   (IFN),
-  .SIZ  (2**IAW)
-) mem (
-  .tcb  (tcb_mem[0:0])
-);
+  // passthrough TCB interfaces to array
+  tcb_lib_passthrough tcb_pas_ifu (
+    .sub  (tcb_ifu),
+    .man  (tcb_mem[0])
+  );
+  tcb_lib_passthrough tcb_pas_lsu (
+    .sub  (tcb_lsu]),
+    .man  (tcb_mem[1])
+  );
 
-// memory initialization file is provided at runtime
-initial
-begin
-  string fn;
-  if ($value$plusargs("FILE_MEM=%s", fn)) begin
-    $display("Loading file into memory: %s", fn);
-    void'(mem.read_bin(fn));
-  end else if (IFN == "") begin
-    $display("ERROR: memory load file argument not found.");
-    $finish;
+  tcb_vip_memory #(
+    .MFN  (IFN),
+    .SPN  (1),
+    .SIZ  (MEM_SIZ)
+  ) mem (
+    .tcb  (tcb_mem[1:0])
+  );
+
+  // memory initialization file is provided at runtime
+  initial
+  begin
+    string fn;
+    if ($value$plusargs("firmware=%s", fn)) begin
+      $display("Loading file into memory: %s", fn);
+      void'(mem.read_bin(fn));
+    end else if (IFN == "") begin
+      $display("ERROR: memory load file argument not found.");
+      $finish;
+    end
   end
-end
+
+////////////////////////////////////////////////////////////////////////////////
+// ELF file symbols
+////////////////////////////////////////////////////////////////////////////////
+
+  // symbol addresses
+  logic [32-1:0] begin_signature;
+  logic [32-1:0] end_signature  ;
+  logic [32-1:0] tohost         ;
+  logic [32-1:0] fromhost       ;
+
+  initial
+  begin
+    // get ELF symbols from plusargs
+    void'($value$plusargs("begin_signature=%0h", begin_signature));
+    void'($value$plusargs("end_signature=%0h"  , end_signature  ));
+    void'($value$plusargs("tohost=%0h"         , tohost         ));
+    void'($value$plusargs("fromhost=%0h"       , fromhost       ));
+    // mask signature symbols with memory size
+    begin_signature = begin_signature & (MEM_SIZ-1);
+    end_signature   = end_signature   & (MEM_SIZ-1);
+    // display ELF symbols
+    $display("begin_signature=%08h", begin_signature);
+    $display("end_signature  =%08h", end_signature  );
+    $display("tohost         =%08h", tohost         );
+    $display("fromhost       =%08h", fromhost       );
+  end
 
 ////////////////////////////////////////////////////////////////////////////////
 // controller
 ////////////////////////////////////////////////////////////////////////////////
 
-logic [DDW-1:0] rvmodel_data_begin;
-logic [DDW-1:0] rvmodel_data_end;
-logic           rvmodel_halt = '0;
+  logic rvmodel_halt = 1'b0;
 
-always_ff @(posedge clk, posedge rst)
-if (rst) begin
-  rvmodel_data_begin <= 'x;
-  rvmodel_data_end   <= 'x;
-  rvmodel_halt       <= '0;
-end else if (bus_mem[1].trn) begin
-  if (bus_mem[1].req.wen) begin
-    // write access
-    case (bus_mem[1].req.adr[5-1:0])
-      5'h00:  rvmodel_data_begin <= bus_mem[1].req.wdt;
-      5'h08:  rvmodel_data_end   <= bus_mem[1].req.wdt;
-      5'h10:  rvmodel_halt       <= bus_mem[1].req.wdt[0];
-      default:  ;  // do nothing
-    endcase
+  always_ff @(posedge clk, posedge rst)
+  if (rst) begin
+    rvmodel_halt <= 1'b0;
+  end else if (bus_lsu.trn) begin
+    if (bus_lsu.req.wen) begin
+      // HTIF tohost
+      if (bus_lsu.req.adr == tohost) rvmodel_halt <= tcb[0].req.wdt[0];
+    end
   end
-end
 
-// controller response is immediate
-assign bus_mem[1].rdy = 1'b1;
+  // controller response is immediate
+  assign bus_mem[1].rdy = 1'b1;
 
-// finish simulation
-always @(posedge clk)
-if (rvmodel_halt | timeout) begin
-  string fn;
-  int tmp_begin;
-  int tmp_end;
-  if (rvmodel_halt)  $display("HALT");
-  if (timeout     )  $display("TIMEOUT");
-  if (rvmodel_data_end < 2**IAW)  tmp_end = rvmodel_data_end;
-  else                            tmp_end = 2**IAW ;
-  if ($value$plusargs("FILE_SIG=%s", fn)) begin
-    $display("Saving signature file with data from 0x%8h to 0x%8h: %s", rvmodel_data_begin, rvmodel_data_end, fn);
-  //void'(mem.write_hex("signature_debug.txt", 'h10000200, 'h1000021c));
-    void'(mem.write_hex(fn, int'(rvmodel_data_begin), int'(tmp_end)));
-    $display("Saving signature file done.");
-  end else begin
-    $display("ERROR: signature save file argument not found.");
+  // finish simulation
+  always @(posedge clk)
+  if (rvmodel_halt | timeout) begin
+    string fn;  // file name
+    if (rvmodel_halt)  $display("HALT");
+    if (timeout     )  $display("TIMEOUT");
+    if ($value$plusargs("signature=%s", fn)) begin
+      $display("Saving signature file with data from 0x%8h to 0x%8h: %s", begin_signature, end_signature, fn);
+      mem.write_hex(fn, int'(begin_signature), int'(end_signature));
+      $display("Saving signature file done.");
+    end else begin
+      $display("ERROR: signature save file argument not found.");
+      $finish;
+    end
+    // TODO: add another clock cycle to avoid cutting off delayed printout from TCB monitor
     $finish;
   end
-// TODO: add another clock cycle to avoid cutting off delayed printout from TCB monitor
-  $finish;
-end
 
-// at the end dump the test signature
-// TODO: not working in Verilator, at least if the C code ends the simulation.
-final begin
-  $display("FINAL");
-//void'(mem.write_hex(FILE_SIG, int'(rvmodel_data_begin), int'(rvmodel_data_end)));
-  $display("TIME: cnt = %d", cnt);
-end
+  // at the end dump the test signature
+  // TODO: not working in Verilator, at least if the C code ends the simulation.
+  final begin
+    $display("FINAL");
+    $display("TIME: cnt = %d", cnt);
+  end
 
 ////////////////////////////////////////////////////////////////////////////////
 // Verbose execution trace
@@ -259,70 +265,57 @@ end
 
 `ifdef TRACE_DEBUG
 
-localparam int unsigned AW = 5;
+  // TODO: instead of an address width decode the ISA
+  localparam int unsigned AW = 5;
 
-logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
-logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
+  logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
+  logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
 
-// hierarchical path to GPR inside RTL
-//assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
-assign gpr_tmp = riscv_tb.DUT.gpr.gen_default.gpr;
-
-// GPR change log
-always_ff @(posedge clk)
-begin
-  // delayed copy of all GPR
-  gpr_dly <= gpr_tmp;
-  // check each GPR for changes
-  for (int unsigned i=0; i<32; i++) begin
-    if (gpr_dly[i] != gpr_tmp[i]) begin
-      $display("%t, Info   %8h <= %s <= %8h", $time, gpr_dly[i], gpr_n(i[5-1:0], 1'b1), gpr_tmp[i]);
+  // GPR change log
+  always_ff @(posedge clk)
+  begin
+    // delayed copy of all GPR
+    gpr_dly <= gpr_tmp;
+    // check each GPR for changes
+    for (int unsigned i=0; i<32; i++) begin
+      if (gpr_dly[i] != gpr_tmp[i]) begin
+        $display("%t, Info   %8h <= %s <= %8h", $time, gpr_dly[i], gpr_n(i[5-1:0], 1'b1), gpr_tmp[i]);
+      end
     end
   end
-end
 
-// instruction fetch monitor
-tcb_mon_riscv #(
-  .NAME ("IFU"),
-  .DLY_IFU (1),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_if (
-  // debug mode enable (must be active with VALID)
-  .dbg_ifu (1'b1),
-  .dbg_lsu (1'b0),
-  .dbg_gpr (1'b0),
-  // system bus
-  .bus  (bus_if)
-);
+  // instruction fetch and load/store bus monitor
+  r5p_degu_tcb_mon #(
+    .ISA  (ISA),
+    .ABI  (ABI)
+  ) r5p_mon (
+    // GPR register file array
+    // hierarchical path to GPR inside RTL
+    .gpr      (dut.gpr.gen_default.gpr)
+    // TCB IFU/LSU system busses
+    .tcb_ifu  (bus_ifu)
+    .tcb_lsu  (bus_lsu)
+  );
 
-// load/store monitor
-tcb_mon_riscv #(
-  .NAME ("LSU"),
-  .DLY_LSU (0),
-  .ISA  (ISA),
-  .ABI  (ABI)
-) mon_ls (
-  // debug mode enable (must be active with VALID)
-  .dbg_ifu (1'b0),
-  .dbg_lsu (1'b1),
-  .dbg_gpr (1'b0),
-  // system bus
-  .bus  (bus_ls)
-);
-
-// time counter
-always_ff @(posedge clk, posedge rst)
-if (rst) begin
-  cnt <= 0;
-end else begin
-  cnt <= cnt+1;
-end
-
-// timeout
-//always @(posedge clk)
-//if (cnt > 5000)  timeout <= 1'b1;
+  // open log file with filename obtained through plusargs
+  initial
+  begin
+    string fn;  // file name
+    if ($value$plusargs("log=%s", fn)) begin
+      r5p_mon.fd = $fopen(fn, "w");
+    end
+  end
 
 `endif
 
+////////////////////////////////////////////////////////////////////////////////
+// Waveforms
+////////////////////////////////////////////////////////////////////////////////
+
+  initial begin
+    $dumpfile("wave.fst");
+    $dumpvars(0);
+  end
+
 endmodule: riscv_tb
+
