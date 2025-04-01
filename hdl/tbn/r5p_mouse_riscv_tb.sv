@@ -132,6 +132,14 @@ import riscv_asm_pkg::*;
   );
 
 ////////////////////////////////////////////////////////////////////////////////
+// protocol checker
+////////////////////////////////////////////////////////////////////////////////
+
+  tcb_vip_protocol_checker tcb_mon (
+    .tcb  (tcb[0])
+  );
+
+  ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -239,7 +247,7 @@ import riscv_asm_pkg::*;
   r5p_mouse_tcb_mon #(
     .ISA  (ISA),
     .ABI  (ABI)
-  ) mon (
+  ) r5p_mon (
     // instruction execution phase
     .pha  (cpu.ctl_pha),
     // TCB system bus
@@ -251,7 +259,7 @@ import riscv_asm_pkg::*;
   begin
     string fn;  // file name
     if ($value$plusargs("log=%s", fn)) begin
-      mon.fd = $fopen(fn, "w");
+      r5p_mon.fd = $fopen(fn, "w");
     end
   end
 
