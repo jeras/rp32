@@ -55,7 +55,7 @@ HDL =${RTL}
 HDL+=${TSV}
 
 # top level file
-TOP ?= riscv_tb
+TOP ?= r5p_mouse_riscv_tb
 
 ################################################################################
 # Verilog toplevel parameter override

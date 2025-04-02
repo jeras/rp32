@@ -62,7 +62,7 @@ HDL =${RTL}
 HDL+=${TSV}
 
 # top level file
-TOP ?= riscv_tb
+TOP ?= r5p_mouse_riscv_tb
 
 ################################################################################
 # Verilator compiler/linker flags
@@ -103,6 +103,8 @@ VFLAGS += --trace-structs
 # Verilog macros
 ################################################################################
 
+# set VERILATOR macro (used to handle tool quirks)
+#MCR += -DVERILATOR
 ifdef TRACE
 MCR += -DTRACE_DEBUG
 endif
@@ -116,7 +118,7 @@ XLEN ?= 32
 PAR += -GXLEN=${XLEN}
 
 ################################################################################
-# Verilog plusargs
+# Verilog $plusargs (runtime arguments)
 ################################################################################
 
 ARG =

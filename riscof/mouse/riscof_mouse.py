@@ -240,3 +240,4 @@ class mouse(pluginTemplate):
         # If target runs are not required then we simply exit as this point after running all the makefile targets.
         if not self.target_run:
             raise SystemExit(0)
+

@@ -18,7 +18,7 @@
 
 module r5p_mouse #(
   // constants used across the design in signal range sizing instead of literals
-  localparam int unsigned XLEN = 32,  // 
+  localparam int unsigned XLEN = 32,
   localparam int unsigned XLOG = $clog2(XLEN),
   localparam int unsigned ILEN = 32,
   // implementation options

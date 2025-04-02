@@ -23,6 +23,19 @@ RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
 RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
+#RTL+=${PATH_RTL}/riscv_csr_adr_map_pkg.sv
+RTL+=${PATH_RTL}/core/r5p_gpr_2r1w.sv
+RTL+=${PATH_RTL}/degu/r5p_pkg.sv
+RTL+=${PATH_RTL}/degu/r5p_bru.sv
+RTL+=${PATH_RTL}/degu/r5p_alu.sv
+RTL+=${PATH_RTL}/degu/r5p_mdu.sv
+#RTL+=${PATH_RTL}/degu/r5p_fpu.sv
+RTL+=${PATH_RTL}/degu/r5p_lsu.sv
+RTL+=${PATH_RTL}/degu/r5p_wbu.sv
+#RTL+=${PATH_RTL}/degu/r5p32_csr_pkg.sv
+#RTL+=${PATH_RTL}/degu/r5p64_csr_pkg.sv
+#RTL+=${PATH_RTL}/degu/r5p_csr.sv
+RTL+=${PATH_RTL}/degu/r5p_degu_pkg.sv
 RTL+=${PATH_RTL}/degu/r5p_degu.sv
 
 # TCB files
@@ -46,19 +59,22 @@ RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
 
 # SoC files
 RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
-#RTL+=${PATH_RTL}/soc/r5p_hamster_soc_top.sv
+#RTL+=${PATH_RTL}/soc/r5p_degu_soc_top.sv
 
 # SystemVerilog bench (Test SV)
+TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
+TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
 TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
-TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
-TSV+=${PATH_TBN}/r5p_hamster_riscv_tb.sv
+#TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
+TSV+=${PATH_TBN}/r5p_degu_riscv_tb.sv
+TSV+=${PATH_TBN}/r5p_degu_tcb_mon.sv
 
 # combined HDL sources
 HDL =${RTL}
 HDL+=${TSV}
 
 # top level file
-TOP ?= riscv_tb
+TOP ?= r5p_degu_riscv_tb
 
 ################################################################################
 # Verilator compiler/linker flags
@@ -114,10 +130,21 @@ XLEN ?= 32
 PAR += -GXLEN=${XLEN}
 
 ################################################################################
-# Verilog $plusargs runtime arguments
+# Verilog $plusargs (runtime arguments)
 ################################################################################
 
-ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
+ARG =
+
+################################################################################
+# CLI arguments from RISCOF
+################################################################################
+
+# Verilog define macros (processed at compile time)
+RISCOF_DEFINES ?= ""
+# Verilog TOP level parameters overrides (processed at compile time)
+RISCOF_PARAMETERS ?= ""
+# Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
+RISCOF_PLUSARGS ?= ""
 
 ################################################################################
 #
@@ -126,11 +153,11 @@ ARG += +FILE_MEM="${FILE_MEM}" +FILE_SIG="${FILE_SIG}"
 all: sim
 
 lint: ${HDL}
-	${VERILATOR} --lint-only ${HDL} --top ${TOP}
+	${VERILATOR} --lint-only ${HDL}  ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP}
 
 compile: ${HDL}
-	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} --top ${TOP} ${HDL}
+	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
 
 sim: compile
-	obj_dir/V${TOP} ${ARG}
+	obj_dir/V${TOP} ${ARG} ${RISCOF_ARGUMENTS}
 #	${VERILATOR_COVERAGE} --annotate logs/annotated logs/coverage.dat

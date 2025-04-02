@@ -45,6 +45,12 @@ class degu(pluginTemplate):
         else:
             self.target_run = True
 
+        # Capture HDL simulator choice.
+        self.simulator = config['simulator']
+
+        # Enable/disable debug functionality
+        self.debug = config['debug']
+
     def initialise(self, suite, work_dir, archtest_env):
 
         # Capture the working directory.
@@ -234,3 +240,4 @@ class degu(pluginTemplate):
         # If target runs are not required then we simply exit as this point after running all the makefile targets.
         if not self.target_run:
             raise SystemExit(0)
+

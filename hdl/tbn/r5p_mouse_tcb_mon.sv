@@ -28,7 +28,7 @@ module r5p_mouse_tcb_mon
   // instruction execution phase
   input logic [3-1:0] pha,
   // TCB system bus
-  tcb_if.sub tcb
+  tcb_if.mon tcb
 );
 
   import riscv_asm_pkg::*;
@@ -67,7 +67,7 @@ module r5p_mouse_tcb_mon
   // delayed signals
   always_ff @(posedge tcb.clk, posedge tcb.rst)
   if (tcb.rst) begin
-    // debug enable
+    // execution phase
     dly_pha <= 'x;
     // TCB
     dly.vld <= '0;
@@ -75,7 +75,7 @@ module r5p_mouse_tcb_mon
     dly.rsp <= '{default: 'x};
     dly.rdy <= '1;
   end else begin
-    // debug enable
+    // execution phase
     dly_pha <= pha;
     // TCB
     dly.vld <= tcb.vld;

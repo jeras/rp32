@@ -17,12 +17,15 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb
+module r5p_mouse_riscv_tb
   import riscv_isa_pkg::*;
   import tcb_pkg::*;
 #(
+  // constants used across the design in signal range sizing instead of literals
+  localparam int unsigned XLEN = 32,
+  localparam int unsigned XLOG = $clog2(XLEN),
+  localparam int unsigned ILEN = 32,
   // RISC-V ISA
-  int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -276,5 +279,5 @@ import riscv_asm_pkg::*;
     $dumpvars(0);
   end
 
-endmodule: riscv_tb
+endmodule: r5p_mouse_riscv_tb
 

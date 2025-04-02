@@ -16,7 +16,20 @@ RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
 RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
-RTL+=${PATH_RTL}/mouse/r5p_mouse.sv
+#RTL+=${PATH_RTL}/riscv_csr_adr_map_pkg.sv
+RTL+=${PATH_RTL}/core/r5p_gpr_2r1w.sv
+RTL+=${PATH_RTL}/degu/r5p_pkg.sv
+RTL+=${PATH_RTL}/degu/r5p_bru.sv
+RTL+=${PATH_RTL}/degu/r5p_alu.sv
+RTL+=${PATH_RTL}/degu/r5p_mdu.sv
+#RTL+=${PATH_RTL}/degu/r5p_fpu.sv
+RTL+=${PATH_RTL}/degu/r5p_lsu.sv
+RTL+=${PATH_RTL}/degu/r5p_wbu.sv
+#RTL+=${PATH_RTL}/degu/r5p32_csr_pkg.sv
+#RTL+=${PATH_RTL}/degu/r5p64_csr_pkg.sv
+#RTL+=${PATH_RTL}/degu/r5p_csr.sv
+RTL+=${PATH_RTL}/degu/r5p_degu_pkg.sv
+RTL+=${PATH_RTL}/degu/r5p_degu.sv
 
 # TCB files
 PATH_TCB=../../submodules/tcb/hdl
@@ -47,15 +60,15 @@ TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
 TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
 #TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
-TSV+=${PATH_TBN}/r5p_mouse_riscv_tb.sv
-TSV+=${PATH_TBN}/r5p_mouse_tcb_mon.sv
+TSV+=${PATH_TBN}/r5p_degu_riscv_tb.sv
+TSV+=${PATH_TBN}/r5p_degu_tcb_mon.sv
 
 # combined HDL sources
 HDL =${RTL}
 HDL+=${TSV}
 
 # top level file
-TOP ?= riscv_tb
+TOP ?= r5p_degu_riscv_tb
 
 ################################################################################
 # Verilog toplevel parameter override
@@ -95,16 +108,10 @@ FLAGS += -suppress 7033
 FLAGS += -voptargs=+acc
 
 all:
-	echo "============="
-	echo ${RISCOF_PLUSARGS}
-	echo "+++++++++++++"
 	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
 gui:
-	echo "============="
-	echo ${RISCOF_PLUSARGS}
-	echo "+++++++++++++"
 	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui

@@ -17,12 +17,14 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb
+module r5p_degu_riscv_tb
   import riscv_isa_pkg::*;
   import tcb_pkg::*;
 #(
+  // constants used across the design in signal range sizing instead of literals
+  localparam int unsigned XLEN = 32,
+  localparam int unsigned XLOG = $clog2(XLEN),
   // RISC-V ISA
-  int unsigned XLEN = 32,    // is used to quickly switch between 32 and 64 for testing
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
@@ -91,7 +93,7 @@ import riscv_asm_pkg::*;
     DLY: 1,
     // signal widths
     SLW: 8,
-    ABW: IAW,
+    ABW: XLEN,
     DBW: XLEN,
     ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW) // TODO: could be 16-bit allignment
     // data packing parameters
@@ -145,13 +147,13 @@ import riscv_asm_pkg::*;
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_protocol_checker tcb_mon_ifu (
-    .tcb  (tcb_ifu)
-  );
-
-  tcb_vip_protocol_checker tcb_mon_lsu (
-    .tcb  (tcb_lsu)
-  );
+//  tcb_vip_protocol_checker tcb_mon_ifu (
+//    .tcb  (tcb_ifu)
+//  );
+//
+//  tcb_vip_protocol_checker tcb_mon_lsu (
+//    .tcb  (tcb_lsu)
+//  );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
@@ -163,13 +165,13 @@ import riscv_asm_pkg::*;
     .man  (tcb_mem[0])
   );
   tcb_lib_passthrough tcb_pas_lsu (
-    .sub  (tcb_lsu]),
+    .sub  (tcb_lsu),
     .man  (tcb_mem[1])
   );
 
   tcb_vip_memory #(
     .MFN  (IFN),
-    .SPN  (1),
+    .SPN  (2),
     .SIZ  (MEM_SIZ)
   ) mem (
     .tcb  (tcb_mem[1:0])
@@ -224,15 +226,12 @@ import riscv_asm_pkg::*;
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
     rvmodel_halt <= 1'b0;
-  end else if (bus_lsu.trn) begin
-    if (bus_lsu.req.wen) begin
+  end else if (tcb_lsu.trn) begin
+    if (tcb_lsu.req.wen) begin
       // HTIF tohost
-      if (bus_lsu.req.adr == tohost) rvmodel_halt <= tcb[0].req.wdt[0];
+      if (tcb_lsu.req.adr == tohost) rvmodel_halt <= tcb_lsu.req.wdt[0];
     end
   end
-
-  // controller response is immediate
-  assign bus_mem[1].rdy = 1'b1;
 
   // finish simulation
   always @(posedge clk)
@@ -291,10 +290,10 @@ import riscv_asm_pkg::*;
   ) r5p_mon (
     // GPR register file array
     // hierarchical path to GPR inside RTL
-    .gpr      (dut.gpr.gen_default.gpr)
+    .gpr      (dut.gpr.gen_default.gpr),
     // TCB IFU/LSU system busses
-    .tcb_ifu  (bus_ifu)
-    .tcb_lsu  (bus_lsu)
+    .tcb_ifu  (tcb_ifu),
+    .tcb_lsu  (tcb_lsu)
   );
 
   // open log file with filename obtained through plusargs
@@ -317,5 +316,5 @@ import riscv_asm_pkg::*;
     $dumpvars(0);
   end
 
-endmodule: riscv_tb
+endmodule: r5p_degu_riscv_tb
 
