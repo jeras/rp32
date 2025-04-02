@@ -39,8 +39,9 @@ module r5p_degu
   isa_t        ISA = '{spec: RV32I, priv: MODES_NONE},
 `endif
 `endif
-  // privilege implementation details
-  logic [XLEN-1:0] PC0 = 'h0000_0000,   // reset vector
+  // system bus implementation details
+  logic [XLEN-1:0] IFU_RST = 32'h0000_0000,  // reset vector
+  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
   // optimizations: timing versus area compromises
   r5p_degu_cfg_t CFG = r5p_degu_cfg_def,
   // implementation device (ASIC/FPGA vendor/device)
@@ -69,11 +70,11 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 ///////////////////////////////////////////////////////////////////////////////
 
 // instruction fetch
-logic                    ifu_run;  // running status
-logic                    ifu_tkn;  // taken
-logic  [ifb.PHY.ABW-1:0] ifu_pc;   // program counter
-logic  [ifb.PHY.ABW-1:0] ifu_pcn;  // program counter next
-logic  [ifb.PHY.ABW-1:0] ifu_pcs;  // program counter sum
+logic            ifu_run;  // running status
+logic            ifu_tkn;  // taken
+logic [XLEN-1:0] ifu_pc;   // program counter
+logic [XLEN-1:0] ifu_pcn;  // program counter next
+logic [XLEN-1:0] ifu_pcs;  // program counter sum
 
 logic            stall;
 
@@ -154,9 +155,9 @@ assign stall = (ifb.vld & ~ifb.rdy) | (lsb.vld & ~lsb.rdy);
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
-if (rst)  ifu_pc <= ifb.PHY.ABW'(PC0);
+if (rst)  ifu_pc <= IFU_RST;
 else begin
-  if (idu_vld & ~stall) ifu_pc <= ifu_pcn;
+  if (idu_vld & ~stall) ifu_pc <= ifu_pcn & IFU_MSK;
 end
 
 generate
@@ -199,14 +200,14 @@ generate
 if (CFG.BRU_BRA) begin: gen_bra_add
   // simultaneous running adders, multiplexer with a late select signal
   // requires more adder logic improves timing
-  logic [ifb.PHY.ABW-1:0] ifu_pci;  // PC incrementer
-  logic [ifb.PHY.ABW-1:0] ifu_pcb;  // PC branch address adder
+  logic [XLEN-1:0] ifu_pci;  // PC incrementer
+  logic [XLEN-1:0] ifu_pcb;  // PC branch address adder
 
   // PC incrementer
-  assign ifu_pci = ifu_pc + ifb.PHY.ABW'(idu_ctl.siz);
+  assign ifu_pci = ifu_pc + XLEN'(idu_ctl.siz);
 
   // branch address
-  assign ifu_pcb = ifu_pc + ifb.PHY.ABW'(idu_ctl.bru.imm);
+  assign ifu_pcb = ifu_pc + XLEN'(idu_ctl.bru.imm);
 
   // PC adder result multiplexer
   assign ifu_pcs = (idu_ctl.opc == BRANCH) & ifu_tkn ? ifu_pcb
@@ -216,11 +217,11 @@ end: gen_bra_add
 else begin: gen_bra_mux
   // the same adder is shared for next and branch address
   // least logic area
-  logic [ifb.PHY.ABW-1:0] ifu_pca;  // PC addend
+  logic [XLEN-1:0] ifu_pca;  // PC addend
 
   // PC addend multiplexer
-  assign ifu_pca = (idu_ctl.opc == BRANCH) & ifu_tkn ? ifb.PHY.ABW'(idu_ctl.bru.imm)
-                                                     : ifb.PHY.ABW'(idu_ctl.siz);
+  assign ifu_pca = (idu_ctl.opc == BRANCH) & ifu_tkn ? XLEN'(idu_ctl.bru.imm)
+                                                     : XLEN'(idu_ctl.siz);
 
   // PC sum
   assign ifu_pcs = ifu_pc + ifu_pca;
@@ -233,10 +234,10 @@ always_comb
 if (ifb.rdy & idu_vld) begin
   unique case (idu_ctl.opc)
     JAL    ,
-    JALR   : ifu_pcn = {alu_sum[ifb.PHY.ABW-1:1], 1'b0};
+    JALR   : ifu_pcn = {alu_sum[XLEN-1:1], 1'b0};
     BRANCH : ifu_pcn = ifu_pcs;
-//  PC_TRP : ifu_pcn = ifb.PHY.ABW'(csr_tvec);
-//  PC_EPC : ifu_pcn = ifb.PHY.ABW'(csr_epc);
+//  PC_TRP : ifu_pcn = XLEN'(csr_tvec);
+//  PC_EPC : ifu_pcn = XLEN'(csr_epc);
     default: ifu_pcn = ifu_pcs;
   endcase
 end else begin
@@ -470,9 +471,9 @@ assign lsu_wdt = gpr_rs2;
 r5p_lsu #(
   .XLEN    (XLEN),
   // data bus
-  .AW      (lsb.PHY.ABW),
-  .DW      (lsb.PHY.DBW),
-  .BW      (lsb.PHY_BEW),
+  .AW      (XLEN),
+  .DW      (XLEN),
+  .BW      (XLEN/8),
   // optimizations
   .CFG_VLD_ILL (CFG.VLD_ILL),
   .CFG_WEN_ILL (CFG.WEN_ILL),

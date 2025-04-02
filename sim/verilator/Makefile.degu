@@ -23,8 +23,7 @@ RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
 RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
 RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
-RTL+=${PATH_RTL}/core/r5p_gpr_1r1w.sv
-RTL+=${PATH_RTL}/hamster/r5p_hamster.sv
+RTL+=${PATH_RTL}/degu/r5p_degu.sv
 
 # TCB files
 PATH_TCB=../../submodules/tcb/hdl

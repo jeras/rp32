@@ -95,16 +95,10 @@ FLAGS += -suppress 7033
 FLAGS += -voptargs=+acc
 
 all:
-	echo "============="
-	echo ${RISCOF_PLUSARGS}
-	echo "+++++++++++++"
 	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
 gui:
-	echo "============="
-	echo ${RISCOF_PLUSARGS}
-	echo "+++++++++++++"
 	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui
