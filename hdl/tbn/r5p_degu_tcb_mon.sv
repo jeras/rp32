@@ -24,13 +24,15 @@ module r5p_degu_tcb_mon
   localparam int unsigned XLOG = $clog2(XLEN),
   // log file name
   string LOG = "",
+  // TODO: check for GPR size differently
+  parameter int unsigned GPRS = 32,
   // RISC-V ISA parameters
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPR names
 )(
   // GPR array
   // TODO: support RV32E
-  input logic [XLEN-1:0] gpr [0:32-1],
+  input logic [XLEN-1:0] gpr [0:GPRS-1],
   // TCB IFU/LSU system busses
   tcb_if.mon tcb_ifu,
   tcb_if.mon tcb_lsu
@@ -48,7 +50,7 @@ module r5p_degu_tcb_mon
   tcb_if #(.PHY (tcb_lsu.PHY)) dly_lsu (.clk (tcb_lsu.clk), .rst (tcb_lsu.rst));
 
   // GPR delayed
-  logic [XLEN-1:0] dly_gpr [0:32-1];
+  logic [XLEN-1:0] dly_gpr [0:GPRS-1];
 
 //  // log signals
 //  logic [tcb.PHY.ABW-1:0] adr;  // address
@@ -98,7 +100,7 @@ module r5p_degu_tcb_mon
   end
 
 ////////////////////////////////////////////////////////////////////////////////
-// logging
+// logging (matching spike simulator logs)
 ////////////////////////////////////////////////////////////////////////////////
 
   // print-out delay queue
@@ -107,52 +109,44 @@ module r5p_degu_tcb_mon
   string str_ld [$];  // load
   string str_st [$];  // store
 
-//  // write/read signals
-//  always_comb
-//  begin
-//    adr <=  dly.req.adr;
-//    wen <=  dly.req.wen;
-//    fn3 <= {dly.req.uns,
-//            dly.req.siz};
-//    if (dly.req.wen) begin
-//      dat <= dly.req.wdt;
-//    end else begin
-//      dat <= tcb.rsp.rdt;
-//    end
-//    err <= tcb.rsp.sts.err;
-//  end
-//
-//  // format GPR string with desired whitespace
-//  function string format_gpr (logic [5-1:0] idx);
-//      if (idx < 10)  return($sformatf("x%0d ", idx));
-//      else           return($sformatf("x%0d", idx));
-//  endfunction: format_gpr
-//
-//  // prepare string for each execution phase
-//  always_ff @(posedge tcb.clk)
-//  begin
-//    if (dly.trn) begin
-//      // instruction fetch
-//      if (dly_pha == IF) begin
-//        str_if.push_front($sformatf(" 0x%8h (0x%8h)", adr, dat));
-//      end
-//      // GPR write-back (rs1/rs2 reads are not logged)
-//      if (dly_pha == WB) begin
-//        // byte enable signals are used to disable write to x0 GPR
-//        if (fn3 == {1'b0, 2'b10}) begin
-//            str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(adr[2+:5]), dat));
-//        end
-//      end
-//      // memory load
-//      if (dly_pha == MLD) begin
-//        str_ld.push_front($sformatf(" mem 0x%8h", adr));
-//      end
-//      // memory store
-//      if (dly_pha == MST) begin
-//        str_st.push_front($sformatf(" mem 0x%8h 0x%8h", adr, dat));
-//      end
-//    end
-//  end
+  // format GPR string with desired whitespace
+  function string format_gpr (logic [5-1:0] idx);
+      if (idx < 10)  return($sformatf("x%0d ", idx));
+      else           return($sformatf("x%0d", idx));
+  endfunction: format_gpr
+
+  // instruction fetch
+  always_ff @(posedge dly_ifu.clk)
+  begin
+    if (dly_ifu.trn) begin
+      str_if.push_front($sformatf(" 0x%8h (0x%8h)", dly_ifu.req.adr, tcb_ifu.rsp.rdt));
+    end
+  end
+
+  // GPR write-back (rs1/rs2 reads are not logged)
+  always_ff @(posedge dly_ifu.clk)
+  begin
+    // ignore GPR x0
+    for (int unsigned i=1; i<GPRS; i++) begin
+      if (dly_gpr[i] != gpr[i]) begin
+          str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(i), dly_gpr[i]));
+      end
+    end
+  end
+
+  // memory load/store
+  always_ff @(posedge dly_lsu.clk)
+  begin
+    if (dly_lsu.trn) begin
+      if (dly_lsu.req.wen) begin
+        // memory store
+        str_st.push_front($sformatf(" mem 0x%8h 0x%8h", dly_lsu.req.adr, tcb_lsu.req.wdt));
+      end else begin
+        // memory load
+        str_if.push_front($sformatf(" 0x%8h (0x%8h)", dly_lsu.req.adr, tcb_lsu.rsp.rdt));
+      end
+    end
+  end
 
   // log file descriptor
   int fd;
@@ -165,28 +159,17 @@ module r5p_degu_tcb_mon
     end
   end
 
-  // skip retirement of reset JAL instruction
-  logic log_trn = 1'b0;
-
-//  // prepare string for each execution phase
-//  always_ff @(posedge tcb.clk)
-//  begin
-//    // only log if a log file was opened
-//    if (fd) begin
-//      // at instruction fetch combine strings from precious instructions
-//      if (dly.trn) begin
-//        // skip retirement of reset JAL instruction
-//        log_trn <= 1'b1;
-//        // instruction fetch
-//        if (dly_pha == IF) begin
-//          // skip first fetch
-//          if (log_trn) begin
-//              $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
-//          end
-//        end
-//      end
-//    end
-//  end
+  // prepare string for each execution phase
+  always_ff @(posedge dly_ifu.clk)
+  begin
+    // only log if a log file was opened
+    if (fd) begin
+      // at instruction fetch combine strings from precious instructions
+      if (dly_ifu.trn) begin
+        $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
+      end
+    end
+  end
 
   final
   begin

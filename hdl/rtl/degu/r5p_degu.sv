@@ -94,7 +94,7 @@ logic [XLEN-1:0] alu_dat;  // register destination
 logic [XLEN-0:0] alu_sum;  // summation result including overflow bit
 
 // MUL/DIV/REM
-logic [XLEN-1:0] mul_dat;  // multiplier unit outpLENt
+logic [XLEN-1:0] mul_dat;  // multiplier unit output
 
 // CSR
 logic [XLEN-1:0] csr_rdt;  // read  data
