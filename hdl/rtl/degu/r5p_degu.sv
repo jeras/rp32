@@ -82,7 +82,7 @@ logic [XLEN-1:0] ifu_pcs;  // program counter sum
 logic            stall;
 
 // instruction decode
-ctl_t            idu_ctl;  // control structure
+dec_t            idu_ctl;  // control structure
 logic            idu_vld;  // instruction valid
 
 // GPR read
@@ -259,7 +259,7 @@ end
 //`else
 //if (1'b1) begin: gen_d16
 //`endif
-//  ctl_t          idu_dec;
+//  dec_t          idu_dec;
 //
 //  // 16/32-bit instruction decoder
 //  always_comb
@@ -295,7 +295,7 @@ end
 //  assign idu_ctl = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
 //
 //// enc32 debug code
-////  ctl_t  idu_dec;
+////  dec_t  idu_dec;
 ////  logic [32-1:0] idu_enc;
 ////  assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
 ////  assign idu_enc = enc32(ISA, idu_dec);
@@ -327,7 +327,7 @@ r5p_gpr_2r1w #(
   // read/write enable
   .e_rs1   (idu_ctl.gpr.ena.rs1),
   .e_rs2   (idu_ctl.gpr.ena.rs2),
-  .e_rd    (        wbu_wen    ),
+  .e_rd    (        wbu_wen    ),  // TODO: should depend on LSU stall
   // read/write address
   .a_rs1   (idu_ctl.gpr.adr.rs1),
   .a_rs2   (idu_ctl.gpr.adr.rs2),

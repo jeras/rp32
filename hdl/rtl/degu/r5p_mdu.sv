@@ -26,7 +26,7 @@ module r5p_mdu
   input  logic            clk,  // clock
   input  logic            rst,  // reset
   // control
-  input  ctl_t            ctl,
+  input  dec_t            ctl,
   // data input/output
   input  logic [XLEN-1:0] rs1,  // source register 1
   input  logic [XLEN-1:0] rs2,  // source register 2

@@ -158,13 +158,13 @@ endfunction: imm_ciu_f
 // verilator lint_off CASEINCOMPLETE
 
 `ifndef LANGUAGE_UNSUPPORTED_UNION
-function automatic ctl_t dec16 (isa_t isa, op16_t op);
+function automatic dec_t dec16 (isa_t isa, op16_t op);
 `else
-function automatic ctl_t dec16 (isa_t isa, logic [16-1:0] op);
+function automatic dec_t dec16 (isa_t isa, logic [16-1:0] op);
 `endif
 
   // temporary variable used only to reduce line length
-  ctl_t t = 'x;
+  dec_t t = 'x;
 
   // GPR configurations
   // the name is constructed as {r (register), _/q (quarter), d (destination), s1/2 (source 1/2)}

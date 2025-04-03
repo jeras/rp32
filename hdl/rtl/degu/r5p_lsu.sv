@@ -35,7 +35,7 @@ module r5p_lsu
   input  logic              clk,  // clock
   input  logic              rst,  // reset
   // control
-  input  ctl_t              ctl,
+  input  dec_t              ctl,
   // data input/output
   input  logic              run,  // illegal
   input  logic              ill,  // illegal

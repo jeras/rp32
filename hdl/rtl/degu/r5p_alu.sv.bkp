@@ -30,7 +30,7 @@ module r5p_alu #(
   input  logic            clk,  // clock
   input  logic            rst,  // reset
   // control structure from instruction decode
-  input  ctl_t            ctl,
+  input  dec_t            ctl,
   // data input/output
   input  logic [XLEN-1:0] pc ,  // PC
   input  logic [XLEN-1:0] rs1,  // source register 1

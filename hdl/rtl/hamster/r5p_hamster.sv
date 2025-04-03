@@ -115,8 +115,8 @@ logic          [32-1:0] ifu_mux;  // instruction buffer
 logic          [32-1:0] ifu_buf;  // instruction buffer
 
 // IDU: instruction decode unit
-ctl_t                   idu_rdt;
-ctl_t                   idu_buf;
+dec_t                   idu_rdt;
+dec_t                   idu_buf;
 logic                   idu_vld;  // instruction valid
 
 // GPR: general purpose registers

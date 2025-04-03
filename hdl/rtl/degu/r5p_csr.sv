@@ -36,11 +36,11 @@ module r5p_csr
   // CSR address map union output
   output csr_map_ut       csr_map,
   // CSR control and data input/output
-  input  ctl_csr_t        csr_ctl,  // CSR instruction control structure
+  input  dec_csr_t        csr_ctl,  // CSR instruction control structure
   input  logic [XLEN-1:0] csr_wdt,  // write data from GPR
   output logic [XLEN-1:0] csr_rdt,  // read  data to   GPR
   // trap handler
-  input  ctl_priv_t       priv_i,  // privileged instruction control structure
+  input  dec_priv_t       priv_i,  // privileged instruction control structure
   input  logic            trap_i,  // 
   input  logic [XLEN-1:0] epc_i ,  // PC increment
   output logic [XLEN-1:0] epc_o ,  // exception program counter
@@ -129,7 +129,7 @@ endfunction: csr_wdt_f
 // *CAUSE
 // TODO: extend with missing causes
 function automatic csr_cause_t cause_f (
-  ctl_priv_t  priv,
+  dec_priv_t  priv,
   isa_level_t level
 );
   unique casez (priv_i.typ)

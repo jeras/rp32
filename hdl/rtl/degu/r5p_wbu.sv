@@ -25,7 +25,7 @@ module r5p_wbu
   input  logic            clk,  // clock
   input  logic            rst,  // reset
   // control structure
-  input  ctl_t            ctl,
+  input  dec_t            ctl,
   // write data inputs
   input  logic [XLEN-1:0] alu,  // ALU destination register
   input  logic [XLEN-1:0] lsu,  // LSU read data

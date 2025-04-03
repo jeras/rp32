@@ -201,7 +201,7 @@ typedef struct packed {
 typedef struct packed {
   gpr_ena_t ena;  // enable
   gpr_adr_t adr;  // address
-} ctl_gpr_t;
+} dec_gpr_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // I base (32E, 32I, 64I, 128I) data types
@@ -214,37 +214,37 @@ typedef op32_op62_et opc_t;
 typedef struct packed {
   fn3_bru_et fn3;  // funct3
   imm_b_t    imm;  // immediate
-} ctl_bru_t;
+} dec_bru_t;
 
 // arithmetic/logic unit
 typedef struct packed {
   fn7_t      fn7;  // funct7 (used for subtraction and arithmetic/logic shifts)
   fn3_alu_et fn3;  // funct3
   imm_i_t    imm;  // immediate
-} ctl_alu_t;
+} dec_alu_t;
 
 // load unit
 typedef struct packed {
   fn3_ldu_et fn3;  // funct3
   imm_l_t    imm;  // immediate
-} ctl_ldu_t;
+} dec_ldu_t;
 
 // store unit
 typedef struct packed {
   fn3_stu_et fn3;  // funct3
   imm_s_t    imm;  // immediate
-} ctl_stu_t;
+} dec_stu_t;
 
 // upper immediate unit
 typedef struct packed {
   imm_u_t    imm;  // immediate
-} ctl_uiu_t;
+} dec_uiu_t;
 
 // jump unit
 typedef struct packed {
   imm_i_t    imm;  // immediate
   imm_j_t    jmp;  // immediate
-} ctl_jmp_t;
+} dec_jmp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // M statndard extension
@@ -283,7 +283,7 @@ typedef enum logic [4-1:0] {
 typedef struct packed {
   logic          ena;  // enable
   isa_priv_typ_t typ;  // type
-} ctl_priv_t;
+} dec_priv_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Zicsr standard extension
@@ -311,7 +311,7 @@ typedef struct packed {
   fn3_csr_et fn3;  // funct3
   csr_adr_t  adr;  // address
   csr_imm_t  imm;  // immediate
-} ctl_csr_t;
+} dec_csr_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // illegal instruction
@@ -335,30 +335,30 @@ typedef struct packed {
   ill_t     ill;     // illegal
   integer   siz;     // instruction size
   opc_t     opc;     // operation code
-  ctl_gpr_t gpr;     // GPR control/address
-  ctl_bru_t bru;     // branch unit
-  ctl_alu_t alu;     // arithmetic/logic unit
-  ctl_ldu_t ldu;     // load unit
-  ctl_stu_t stu;     // store unit
-  ctl_uiu_t uiu;     // upper immediate unit
-  ctl_jmp_t jmp;     // jump unit
+  dec_gpr_t gpr;     // GPR control/address
+  dec_bru_t bru;     // branch unit
+  dec_alu_t alu;     // arithmetic/logic unit
+  dec_ldu_t ldu;     // load unit
+  dec_stu_t stu;     // store unit
+  dec_uiu_t uiu;     // upper immediate unit
+  dec_jmp_t jmp;     // jump unit
 
-//ctl_m_t    m;       // integer multiplication and division
-//ctl_a_t    a;       // atomic
-//ctl_f_t    f;       // single-precision floating-point
-//ctl_d_t    d;       // double-precision floating-point
-//ctl_fnc_t  fnc;     // instruction fence
-  ctl_csr_t csr;     // CSR operation
-//ctl_q_t    q;       // quad-precision floating-point
-//ctl_l_t    l;       // decimal precision floating-point
-//ctl_b_t    b;       // bit manipulation
-//ctl_j_t    j;       // dynamically translated languages
-//ctl_t_t    t;       // transactional memory
-//ctl_p_t    p;       // packed-SIMD
-//ctl_v_t    v;       // vector operations
-//ctl_n_t    n;       // user-level interrupts
-//  ctl_prv_t prv;    // priviliged spec instructions
-} ctl_t;
+//dec_m_t    m;       // integer multiplication and division
+//dec_a_t    a;       // atomic
+//dec_f_t    f;       // single-precision floating-point
+//dec_d_t    d;       // double-precision floating-point
+//dec_fnc_t  fnc;     // instruction fence
+  dec_csr_t csr;     // CSR operation
+//dec_q_t    q;       // quad-precision floating-point
+//dec_l_t    l;       // decimal precision floating-point
+//dec_b_t    b;       // bit manipulation
+//dec_j_t    j;       // dynamically translated languages
+//dec_t_t    t;       // transactional memory
+//dec_p_t    p;       // packed-SIMD
+//dec_v_t    v;       // vector operations
+//dec_n_t    n;       // user-level interrupts
+//  dec_prv_t prv;    // priviliged spec instructions
+} dec_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction decoder
@@ -366,9 +366,9 @@ typedef struct packed {
 
 // instruction decoder
 `ifndef LANGUAGE_UNSUPPORTED_UNION
-function automatic ctl_t dec32 (isa_t isa, op32_t op);
+function automatic dec_t dec32 (isa_t isa, op32_t op);
 `else
-function automatic ctl_t dec32 (isa_t isa, op32_r_t op);
+function automatic dec_t dec32 (isa_t isa, op32_r_t op);
 `endif
 
   // set instruction size
@@ -500,9 +500,9 @@ endfunction: dec32
 ///////////////////////////////////////////////////////////////////////////////
 
 `ifndef LANGUAGE_UNSUPPORTED_UNION
-function automatic op32_t   enc32 (isa_t isa, ctl_t ctl);
+function automatic op32_t   enc32 (isa_t isa, dec_t ctl);
 `else
-function automatic op32_r_t enc32 (isa_t isa, ctl_t ctl);
+function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
 `endif
 
   // idle 

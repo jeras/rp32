@@ -53,7 +53,7 @@ endfunction: csr_n
 
 function automatic string disasm32 (isa_t isa, op32_t op, bit abi=0);
 
-ctl_t t;
+dec_t t;
 t = dec32(isa, op);
 
 // RV32 I base extension
@@ -178,7 +178,7 @@ endfunction: disasm32
 
 function automatic string disasm16 (isa_t isa, op16_t op, bit abi=0);
 
-ctl_t t;
+dec_t t;
 t = dec16(isa, op);
 
 // RV32 C base extension
