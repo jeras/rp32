@@ -26,14 +26,13 @@ module r5p_degu_riscv_tb
   localparam int unsigned XLOG = $clog2(XLEN),
   // RISC-V ISA
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+//  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  isa_ext_t    XTEN = RV_M | RV_Zicsr,
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
-                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
-                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
 `else
   isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
@@ -132,15 +131,14 @@ import riscv_asm_pkg::*;
 
   r5p_degu #(
     // RISC-V ISA
-    .XLEN (XLEN),
     .ISA  (ISA)
   ) dut (
     // system signals
-    .clk     (clk),
-    .rst     (rst),
+    .clk      (clk),
+    .rst      (rst),
     // TCB system bus
-    .ifb  (tcb_ifu),
-    .lsb  (tcb_lsu)
+    .tcb_ifu  (tcb_ifu),
+    .tcb_lsu  (tcb_lsu)
   );
 
 ////////////////////////////////////////////////////////////////////////////////

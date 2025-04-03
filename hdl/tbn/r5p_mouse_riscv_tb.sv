@@ -32,9 +32,7 @@ module r5p_mouse_riscv_tb
   isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = XLEN==32 ? '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
-                   : XLEN==64 ? '{spec: '{base: RV_64I , ext: XTEN}, priv: MODES}
-                              : '{spec: '{base: RV_128I, ext: XTEN}, priv: MODES},
+  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
 `else
   isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif

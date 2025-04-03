@@ -25,8 +25,11 @@ module r5p_degu
   import r5p_degu_pkg::*;
   import tcb_pkg::*;
 #(
+  // constants used across the design in signal range sizing instead of literals
+  localparam int unsigned XLEN = 32,
+  localparam int unsigned XLOG = $clog2(XLEN),
+  localparam int unsigned ILEN = 32,
   // RISC-V ISA
-  int unsigned XLEN = 32,   // is used to quickly switch between 32 and 64 for testing
 `ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
   isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
@@ -50,9 +53,9 @@ module r5p_degu
   // system signals
   input  logic clk,
   input  logic rst,
-  // system bus
-  tcb_if.man   ifb,  // instruction fetch
-  tcb_if.man   lsb   // load/store
+  // TCB system bus
+  tcb_if.man   tcb_ifu,  // instruction fetch
+  tcb_if.man   tcb_lsu   // load/store
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
@@ -126,38 +129,38 @@ if (rst)  ifu_run <= 1'b0;
 else      ifu_run <= 1'b1;
 
 // request becomes active after reset
-assign ifb.vld = ifu_run;
+assign tcb_ifu.vld = ifu_run;
 
 // TODO
-assign ifb.req.cmd = '0;
-assign ifb.req.wen = 1'b0;
-assign ifb.req.ben = '1;
-assign ifb.req.wdt = 'x;
+assign tcb_ifu.req.cmd = '0;
+assign tcb_ifu.req.wen = 1'b0;
+assign tcb_ifu.req.ben = '1;
+assign tcb_ifu.req.wdt = 'x;
 
 // instruction fetch is always little endian
-assign ifb.req.ndn = TCB_LITTLE;
+assign tcb_ifu.req.ndn = TCB_LITTLE;
 
 // PC next is used as IF address
-assign ifb.req.adr = ifu_pcn;
+assign tcb_ifu.req.adr = ifu_pcn;
 
 // instruction valid
 always_ff @ (posedge clk, posedge rst)
 if (rst)  idu_vld <= 1'b0;
-else      idu_vld <= ifb.trn | (idu_vld & stall);
+else      idu_vld <= tcb_ifu.trn | (idu_vld & stall);
 
 ///////////////////////////////////////////////////////////////////////////////
 // program counter
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO:
-assign stall = (ifb.vld & ~ifb.rdy) | (lsb.vld & ~lsb.rdy);
-//assign stall = ifb.stl | lsb.stl;
+assign stall = (tcb_ifu.vld & ~tcb_ifu.rdy) | (tcb_lsu.vld & ~tcb_lsu.rdy);
+//assign stall = tcb_ifu.stl | tcb_lsu.stl;
 
 // program counter
 always_ff @ (posedge clk, posedge rst)
 if (rst)  ifu_pc <= IFU_RST;
 else begin
-  if (idu_vld & ~stall) ifu_pc <= ifu_pcn & IFU_MSK;
+    if (idu_vld & ~stall) ifu_pc <= ifu_pcn & IFU_MSK;  
 end
 
 generate
@@ -231,7 +234,7 @@ endgenerate
 
 // program counter next
 always_comb
-if (ifb.rdy & idu_vld) begin
+if (tcb_ifu.rdy & idu_vld) begin
   unique case (idu_ctl.opc)
     JAL    ,
     JALR   : ifu_pcn = {alu_sum[XLEN-1:1], 1'b0};
@@ -248,56 +251,61 @@ end
 // instruction decode
 ///////////////////////////////////////////////////////////////////////////////
 
-generate
-`ifndef ALTERA_RESERVED_QIS
-if (ISA.spec.ext.C) begin: gen_d16
-`else
-if (1'b1) begin: gen_d16
-`endif
-  ctl_t          idu_dec;
 
-  // 16/32-bit instruction decoder
-  always_comb
-  unique case (opsiz(ifb.rsp.rdt[16-1:0]))
-    2      : idu_dec = dec16(ISA, ifb.rsp.rdt[16-1:0]);  // 16-bit C standard extension
-    4      : idu_dec = dec32(ISA, ifb.rsp.rdt[32-1:0]);  // 32-bit
-    default: idu_dec = 'x;                          // OP sizes above 4 bytes are not supported
-  endcase
+// TODO: uncomment this code
+//generate
+//`ifndef ALTERA_RESERVED_QIS
+//if (ISA.spec.ext.C) begin: gen_d16
+//`else
+//if (1'b1) begin: gen_d16
+//`endif
+//  ctl_t          idu_dec;
+//
+//  // 16/32-bit instruction decoder
+//  always_comb
+//  unique case (opsiz(tcb_ifu.rsp.rdt[16-1:0]))
+//    2      : idu_dec = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
+//    4      : idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
+//    default: idu_dec = 'x;                               // OP sizes above 4 bytes are not supported
+//  endcase
+//
+//  // distributed I/C decoder mux
+////if (CFG.DEC_DIS) begin: gen_dec_dis
+//  if (1'b1) begin: gen_dec_dis
+//    assign idu_ctl = idu_dec;
+//  end: gen_dec_dis
+//  // 32-bit I/C decoder mux
+//  else begin
+//    (* keep = "true" *)
+//    logic [32-1:0] idu_enc;
+//
+//    assign idu_enc = enc32(ISA, idu_dec);
+//    always_comb
+//    begin
+//      idu_ctl     = 'x;
+//      idu_ctl     = dec32(ISA, idu_enc);
+//      idu_ctl.siz = idu_dec.siz;
+//    end
+//  end
+//
+//end: gen_d16
+//else begin: gen_d32
+//
+//  // 32-bit instruction decoder
+//  assign idu_ctl = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+//
+//// enc32 debug code
+////  ctl_t  idu_dec;
+////  logic [32-1:0] idu_enc;
+////  assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+////  assign idu_enc = enc32(ISA, idu_dec);
+////  assign idu_ctl = dec32(ISA, idu_enc);
+//
+//end: gen_d32
+//endgenerate
 
-  // distributed I/C decoder mux
-//if (CFG.DEC_DIS) begin: gen_dec_dis
-  if (1'b1) begin: gen_dec_dis
-    assign idu_ctl = idu_dec;
-  end: gen_dec_dis
-  // 32-bit I/C decoder mux
-  else begin
-    (* keep = "true" *)
-    logic [32-1:0] idu_enc;
-
-    assign idu_enc = enc32(ISA, idu_dec);
-    always_comb
-    begin
-      idu_ctl     = 'x;
-      idu_ctl     = dec32(ISA, idu_enc);
-      idu_ctl.siz = idu_dec.siz;
-    end
-  end
-
-end: gen_d16
-else begin: gen_d32
-
-  // 32-bit instruction decoder
-  assign idu_ctl = dec32(ISA, ifb.rsp.rdt[32-1:0]);
-
-// enc32 debug code
-//  ctl_t  idu_dec;
-//  logic [32-1:0] idu_enc;
-//  assign idu_dec = dec32(ISA, ifb.rsp.rdt[32-1:0]);
-//  assign idu_enc = enc32(ISA, idu_dec);
-//  assign idu_ctl = dec32(ISA, idu_enc);
-
-end: gen_d32
-endgenerate
+// 32-bit instruction decoder
+assign idu_ctl = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -496,19 +504,19 @@ r5p_lsu #(
   .mal     (lsu_mal),
   .rdy     (lsu_rdy),
   // data bus (load/store)
-  .lsb_vld (lsb.vld),
-  .lsb_wen (lsb.req.wen),
-  .lsb_adr (lsb.req.adr),
-  .lsb_ben (lsb.req.ben),
-  .lsb_wdt (lsb.req.wdt),
-  .lsb_rdt (lsb.rsp.rdt),
-  .lsb_err (lsb.rsp.sts.err),
-  .lsb_rdy (lsb.rdy)
+  .lsb_vld (tcb_lsu.vld),
+  .lsb_wen (tcb_lsu.req.wen),
+  .lsb_adr (tcb_lsu.req.adr),
+  .lsb_ben (tcb_lsu.req.ben),
+  .lsb_wdt (tcb_lsu.req.wdt),
+  .lsb_rdt (tcb_lsu.rsp.rdt),
+  .lsb_err (tcb_lsu.rsp.sts.err),
+  .lsb_rdy (tcb_lsu.rdy)
 );
 
 // TODO
-assign lsb.req.cmd = '0;
-assign lsb.req.ndn = TCB_LITTLE;
+assign tcb_lsu.req.cmd = '0;
+assign tcb_lsu.req.ndn = TCB_LITTLE;
 
 ///////////////////////////////////////////////////////////////////////////////
 // write back
