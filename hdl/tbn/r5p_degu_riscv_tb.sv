@@ -131,7 +131,10 @@ import riscv_asm_pkg::*;
 
   r5p_degu #(
     // RISC-V ISA
-    .ISA  (ISA)
+    .ISA  (ISA),
+    // system bus implementation details
+    .IFU_RST (IFU_RST),
+    .IFU_MSK (IFU_MSK)
   ) dut (
     // system signals
     .clk      (clk),
@@ -288,7 +291,9 @@ import riscv_asm_pkg::*;
   ) r5p_mon (
     // GPR register file array
     // hierarchical path to GPR inside RTL
-    .gpr      (dut.gpr.gen_default.gpr),
+    .gpr_wen  (dut.gpr.e_rd),
+    .gpr_wid  (dut.gpr.a_rd),
+    .gpr_wdt  (dut.gpr.d_rd),
     // TCB IFU/LSU system busses
     .tcb_ifu  (tcb_ifu),
     .tcb_lsu  (tcb_lsu)

@@ -529,7 +529,7 @@ r5p_wbu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (idu_ctl),
+  .dec     (idu_ctl),
   // write data inputs
   .alu     (alu_dat),                 // ALU output
   .lsu     (lsu_rdt),                 // LSU load

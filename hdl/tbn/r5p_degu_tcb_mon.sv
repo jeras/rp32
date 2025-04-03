@@ -25,14 +25,16 @@ module r5p_degu_tcb_mon
   // log file name
   string LOG = "",
   // TODO: check for GPR size differently
-  parameter int unsigned GPRS = 32,
+  parameter  int unsigned GNUM = 32,
+  localparam int unsigned GLOG = $clog2(GNUM),
   // RISC-V ISA parameters
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPR names
 )(
   // GPR array
-  // TODO: support RV32E
-  input logic [XLEN-1:0] gpr [0:GPRS-1],
+  input logic            gpr_wen,
+  input logic [GLOG-1:0] gpr_wid,
+  input logic [XLEN-1:0] gpr_wdt,
   // TCB IFU/LSU system busses
   tcb_if.mon tcb_ifu,
   tcb_if.mon tcb_lsu
@@ -49,27 +51,9 @@ module r5p_degu_tcb_mon
   tcb_if #(.PHY (tcb_ifu.PHY)) dly_ifu (.clk (tcb_ifu.clk), .rst (tcb_ifu.rst));
   tcb_if #(.PHY (tcb_lsu.PHY)) dly_lsu (.clk (tcb_lsu.clk), .rst (tcb_lsu.rst));
 
-  // GPR delayed
-  logic [XLEN-1:0] dly_gpr [0:GPRS-1];
-
-//  // log signals
-//  logic [tcb.PHY.ABW-1:0] adr;  // address
-//  logic                   wen;  // write enable
-//  logic           [3-1:0] fn3;  // RISC-V func3
-//  logic [tcb.PHY.DBW-1:0] dat;  // data
-//  logic                   err;  // error
-
 ////////////////////////////////////////////////////////////////////////////////
 // delay TCB signals
 ////////////////////////////////////////////////////////////////////////////////
-
-  // GPR delayed signals
-  always_ff @(posedge tcb_ifu.clk, posedge tcb_ifu.rst)
-  if (tcb_ifu.rst) begin
-    dly_gpr <= '{default: 'x};
-  end else begin
-    dly_gpr <= gpr;
-  end
 
   // TCB IFU delayed signals
   always_ff @(posedge tcb_ifu.clk, posedge tcb_ifu.rst)
@@ -104,10 +88,17 @@ module r5p_degu_tcb_mon
 ////////////////////////////////////////////////////////////////////////////////
 
   // print-out delay queue
-  string str_if [$];  // instruction fetch
-  string str_wb [$];  // GPR write-back
-  string str_ld [$];  // load
-  string str_st [$];  // store
+  string str_ifu [$];  // instruction fetch
+  string str_gpr [$];  // GPR write-back
+  string str_lsu [$];  // load
+
+  // initialize dummy data into the queue to enforce order
+  initial
+  begin
+    str_gpr = '{};
+    str_lsu = '{};
+    str_ifu = '{""};
+  end
 
   // format GPR string with desired whitespace
   function string format_gpr (logic [5-1:0] idx);
@@ -119,17 +110,21 @@ module r5p_degu_tcb_mon
   always_ff @(posedge dly_ifu.clk)
   begin
     if (dly_ifu.trn) begin
-      str_if.push_front($sformatf(" 0x%8h (0x%8h)", dly_ifu.req.adr, tcb_ifu.rsp.rdt));
+      str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", dly_ifu.req.adr, tcb_ifu.rsp.rdt));
     end
   end
 
   // GPR write-back (rs1/rs2 reads are not logged)
   always_ff @(posedge dly_ifu.clk)
   begin
-    // ignore GPR x0
-    for (int unsigned i=1; i<GPRS; i++) begin
-      if (dly_gpr[i] != gpr[i]) begin
-          str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(i), dly_gpr[i]));
+    if (dly_ifu.trn) begin
+      if (gpr_wen) begin
+        // ignore GPR x0
+        if (gpr_wid != 0) begin
+            str_gpr.push_front($sformatf(" %s 0x%8h", format_gpr(gpr_wid), gpr_wdt));
+        end
+      end else begin
+        str_gpr.push_front("");
       end
     end
   end
@@ -140,10 +135,10 @@ module r5p_degu_tcb_mon
     if (dly_lsu.trn) begin
       if (dly_lsu.req.wen) begin
         // memory store
-        str_st.push_front($sformatf(" mem 0x%8h 0x%8h", dly_lsu.req.adr, tcb_lsu.req.wdt));
+        str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", dly_lsu.req.adr, tcb_lsu.req.wdt));
       end else begin
         // memory load
-        str_if.push_front($sformatf(" 0x%8h (0x%8h)", dly_lsu.req.adr, tcb_lsu.rsp.rdt));
+        str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", dly_lsu.req.adr, tcb_lsu.rsp.rdt));
       end
     end
   end
@@ -162,11 +157,14 @@ module r5p_degu_tcb_mon
   // prepare string for each execution phase
   always_ff @(posedge dly_ifu.clk)
   begin
+    $display("str_gpr = %p", str_gpr);
+    $display("str_lsu = %p", str_lsu);
+    $display("str_ifu = %p", str_ifu);
     // only log if a log file was opened
     if (fd) begin
       // at instruction fetch combine strings from precious instructions
       if (dly_ifu.trn) begin
-        $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
+        $fwrite(fd, "core   0: 3%s%s%s\n", str_ifu.pop_back(), str_gpr.pop_back(), str_lsu.pop_back());
       end
     end
   end

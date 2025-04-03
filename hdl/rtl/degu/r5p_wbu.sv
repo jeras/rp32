@@ -24,8 +24,8 @@ module r5p_wbu
   // system signals
   input  logic            clk,  // clock
   input  logic            rst,  // reset
-  // control structure
-  input  dec_t            ctl,
+  // decoder structure
+  input  dec_t            dec,
   // write data inputs
   input  logic [XLEN-1:0] alu,  // ALU destination register
   input  logic [XLEN-1:0] lsu,  // LSU read data
@@ -52,9 +52,9 @@ if (rst) begin
   adr <= 5'd0;
   sel <= opc_t'('0);  // TODO: there might be a better choice
 end else begin
-  wen <= ctl.gpr.ena.rd;
-  adr <= ctl.gpr.adr.rd;
-  sel <= ctl.opc;
+  wen <= dec.gpr.ena.rd;
+  adr <= dec.gpr.adr.rd;
+  sel <= dec.opc;
 end
 
 // pre multiplexer
@@ -62,7 +62,7 @@ always_ff @(posedge clk, posedge rst)
 if (rst) begin
   tmp <= '0;
 end else begin
-  unique case (ctl.opc)
+  unique case (dec.opc)
     AUIPC  ,
     OP     ,
     OP_IMM : tmp <= alu;  // ALU output
