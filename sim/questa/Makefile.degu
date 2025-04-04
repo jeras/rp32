@@ -71,6 +71,29 @@ HDL+=${TSV}
 TOP ?= r5p_degu_riscv_tb
 
 ################################################################################
+# VHDL standard conditional analysis identifiers
+################################################################################
+
+# "SIMULATION", "SYNTHESIS", "FORMAL"
+TOOL_TYPE    := "SIMULATION"
+TOOL_VENDOR  := "Siemens"
+TOOL_NAME    := "questa"
+# TODO: use sed to extract edition/version from stdout string
+TOOL_EDITION := "$(shell qrun -version)"
+TOOL_VERSION := "$(shell qrun -version)"
+
+################################################################################
+# Verilog defines
+################################################################################
+
+# VHDL standard conditional analysis identifiers
+DEF  = -defineall TOOL_TYPE='${TOOL_TYPE}'
+DEF += -defineall TOOL_VENDOR='${TOOL_VENDOR}'
+DEF += -defineall TOOL_NAME='${TOOL_NAME}'
+DEF += -defineall TOOL_EDITION='${TOOL_EDITION}'
+DEF += -defineall TOOL_VERSION='${TOOL_VERSION}'
+
+################################################################################
 # Verilog toplevel parameter override
 ################################################################################
 
@@ -108,11 +131,11 @@ FLAGS += -suppress 7033
 FLAGS += -voptargs=+acc
 
 all:
-	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
 gui:
-	qrun -makelib work -sv ${HDL} -end ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui
 
