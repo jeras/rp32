@@ -57,12 +57,15 @@ localparam int unsigned XLOG = $clog2(XLEN);
 // arithmetic operands multiplexer
 logic        [XLEN-1:0] mux_op1;  // arithmetic operand 1
 logic        [XLEN-1:0] mux_op2 /* synthesis keep */;  // arithmetic operand 2
-// arithmetic operands (sign extended by 1 bit)
-logic signed [XLEN-0:0] add_op1;  // arithmetic operand 1
-logic signed [XLEN-0:0] add_op2;  // arithmetic operand 2
-// arithmetic operation sign/signedness
-logic                   add_inv;
-logic                   add_sgn;
+// arithmetic operation modes
+logic                   add_inv;  // inverted (for subtraction)
+logic                   add_uns;  // unsigned
+// arithmetic operands (extended by 1 bit)
+logic        [XLEN-0:0] add_op1;  // arithmetic operand 1
+logic        [XLEN-0:0] add_op2;  // arithmetic operand 2
+// arithmetic results
+logic        [XLEN-0:0] add_sum;  // arithmetic sum
+logic                   add_sgn;  // arithmetic sign
 
 // logical operations
 logic        [XLEN-1:0] log_op1;  // logical operand 1
@@ -71,7 +74,7 @@ logic        [XLEN-1:0] log_val;  // logical result
 
 // barrel shifter
 logic        [XLEN-1:0] shf_op1;  // shift operand 1
-logic        [XLOG-1:0] shf_amm;  // shift ammount
+logic        [XLOG-1:0] shf_amm;  // shift amount
 logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
 logic signed [XLEN-0:0] shf_ext;
 logic        [XLEN-1:0] shf_val /* synthesis keep */;  // result
@@ -82,15 +85,6 @@ logic [XLEN-1:0] val;
 ///////////////////////////////////////////////////////////////////////////////
 // arithmetic operations
 ///////////////////////////////////////////////////////////////////////////////
-
-// signed/unsigned extension
-function automatic logic [XLEN-0:0] extend (logic [XLEN-1:0] val, logic sgn);
-  unique casez (sgn)
-    1'b1   : extend = (XLEN+1)'(  signed'(val));  //   signed
-    1'b0   : extend = (XLEN+1)'(unsigned'(val));  // unsigned
-    default: extend = 'x;
-  endcase
-endfunction: extend
 
 //  // dedicated logical operand multiplexer
 //  always_comb
@@ -103,8 +97,6 @@ endfunction: extend
 // ALU input multiplexer and signed/unsigned extension
 always_comb
 begin
-  // dafault values
-  begin mux_op1 = 'x; mux_op2 = 'x; end
   // conbinational logic
   unique case (ctl.opc)
     OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2               ; end  // R-type (arithmetic/logic)
@@ -121,52 +113,61 @@ end
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
+//
 always_comb
 begin
-  // dafault values
-  begin add_inv = 1'bx; add_sgn = 1'bx; end
   // conbinational logic
   unique case (ctl.opc)
-    OP     : if (1'b1      )
+    OP     : if (1'b1      ) begin
       unique case (ctl.alu.fn3)
-        ADD    :             begin add_inv = ctl.alu.fn7[5]; add_sgn = 1'b1; end
-        SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
-        SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
-        default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+        ADD    :             begin add_inv = ctl.alu.fn7[5]; add_uns = 1'bx; end
+        SLT    :             begin add_inv = 1'b1; add_uns = 1'b0; end
+        SLTU   :             begin add_inv = 1'b1; add_uns = 1'b1; end
+        default:             begin add_inv = 1'bx; add_uns = 1'bx; end
       endcase
-    OP_IMM : if (1'b1      )
+    end
+    OP_IMM : if (1'b1      ) begin
       unique case (ctl.alu.fn3)
-        ADD    :             begin add_inv = 1'b0; add_sgn = 1'b1; end
-        SLT    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
-        SLTU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
-        default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+        ADD    :             begin add_inv = 1'b0; add_uns = 1'bx; end
+        SLT    :             begin add_inv = 1'b1; add_uns = 1'b0; end
+        SLTU   :             begin add_inv = 1'b1; add_uns = 1'b1; end
+        default:             begin add_inv = 1'bx; add_uns = 1'bx; end
       endcase
-    BRANCH : if (CFG_BRANCH)
+    end
+    BRANCH : if (CFG_BRANCH) begin
       unique case (ctl.bru.fn3)
         BEQ    ,
-        BNE    :             begin add_inv = 1'b1; add_sgn = 1'bx; end
+        BNE    :             begin add_inv = 1'b1; add_uns = 1'bx; end
         BLT    ,
-        BGE    :             begin add_inv = 1'b1; add_sgn = 1'b1; end
+        BGE    :             begin add_inv = 1'b1; add_uns = 1'b0; end
         BLTU   ,
-        BGEU   :             begin add_inv = 1'b1; add_sgn = 1'b0; end
-        default:             begin add_inv = 1'bx; add_sgn = 1'bx; end
+        BGEU   :             begin add_inv = 1'b1; add_uns = 1'b1; end
+        default:             begin add_inv = 1'bx; add_uns = 1'bx; end
       endcase
-    JALR   : if (1'b1      ) begin add_inv = 1'b0; add_sgn = 1'bx; end
-    LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_sgn = 1'b1; end
-    STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_sgn = 1'b1; end
-    AUIPC  : if (CFG_AUIPC ) begin add_inv = 1'b0; add_sgn = 1'bx; end
-    JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_sgn = 1'bx; end
-    default:                 begin add_inv = 1'bx; add_sgn = 1'bx; end
+    end
+    JALR   : if (1'b1      ) begin add_inv = 1'b0; add_uns = 1'bx; end
+    LOAD   : if (CFG_LOAD  ) begin add_inv = 1'b0; add_uns = 1'bx; end
+    STORE  : if (CFG_STORE ) begin add_inv = 1'b0; add_uns = 1'bx; end
+    AUIPC  : if (CFG_AUIPC ) begin add_inv = 1'b0; add_uns = 1'bx; end
+    JAL    : if (CFG_JAL   ) begin add_inv = 1'b0; add_uns = 1'bx; end
+    default:                 begin add_inv = 1'bx; add_uns = 1'bx; end
   endcase
 end
-// TODO: check undefined values
 
-assign add_op1 = extend(mux_op1, add_sgn);
-assign add_op2 = extend(mux_op2, add_sgn);
+// adder operands
+assign add_op1 =             {1'b0, mux_op1};
+assign add_op2 = add_inv ? - {1'b0, mux_op2}
+                         : + {1'b0, mux_op2};
 
-// adder (summation, subtraction)
-assign sum = $signed(add_op1) + $signed(add_inv ? ~add_op2 : add_op2) + $signed((XLEN+1)'(add_inv));
-//assign sum = $signed(add_op1) + (add_inv ? - $signed(add_op2) : + $signed(add_op2));
+// adder sum
+assign add_sum = add_op1 + add_op2 + (XLEN+1)'(add_inv);
+
+// adder sign
+assign add_sgn = add_uns ? add_sum[XLEN]
+                         : add_sum[XLEN] ^ mux_op1[XLEN-1] ^ mux_op2[XLEN-1] ^ add_inv;
+
+// output sum
+assign sum = {add_sgn, add_sum[XLEN-1:0]};
 
 //// https://docs.xilinx.com/v/u/en-US/pg120-c-addsub
 //c_addsub_0 your_instance_name (

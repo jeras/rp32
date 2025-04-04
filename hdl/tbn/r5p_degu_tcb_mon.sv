@@ -135,7 +135,7 @@ module r5p_degu_tcb_mon
     if (dly_lsu.trn) begin
       if (dly_lsu.req.wen) begin
         // memory store
-        str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", dly_lsu.req.adr, tcb_lsu.req.wdt));
+        str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", dly_lsu.req.adr, dly_lsu.req.wdt));
       end else begin
         // memory load
         str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", dly_lsu.req.adr, tcb_lsu.rsp.rdt));

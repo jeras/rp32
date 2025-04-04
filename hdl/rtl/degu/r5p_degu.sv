@@ -82,7 +82,7 @@ logic [XLEN-1:0] ifu_pcs;  // program counter sum
 logic            stall;
 
 // instruction decode
-dec_t            idu_ctl;  // control structure
+dec_t            idu_dec;  // control structure
 logic            idu_vld;  // instruction valid
 
 // GPR read
@@ -171,7 +171,7 @@ if (CFG.BRU_BRU) begin: gen_bru_ena
     .XLEN    (XLEN)
   ) br (
     // control
-    .ctl     (idu_ctl.bru.fn3),
+    .ctl     (idu_dec.bru.fn3),
     // data
     .rs1     (gpr_rs1),
     .rs2     (gpr_rs2),
@@ -183,7 +183,7 @@ end: gen_bru_ena
 else begin: gen_bru_alu
 
   always_comb
-  unique case (idu_ctl.bru.fn3)
+  unique case (idu_dec.bru.fn3)
     BEQ    : ifu_tkn = ~(|alu_sum[XLEN-1:0]);
     BNE    : ifu_tkn =  (|alu_sum[XLEN-1:0]);
     BLT    : ifu_tkn =    alu_sum[XLEN];
@@ -207,13 +207,13 @@ if (CFG.BRU_BRA) begin: gen_bra_add
   logic [XLEN-1:0] ifu_pcb;  // PC branch address adder
 
   // PC incrementer
-  assign ifu_pci = ifu_pc + XLEN'(idu_ctl.siz);
+  assign ifu_pci = ifu_pc + XLEN'(idu_dec.siz);
 
   // branch address
-  assign ifu_pcb = ifu_pc + XLEN'(idu_ctl.bru.imm);
+  assign ifu_pcb = ifu_pc + XLEN'(idu_dec.bru.imm);
 
   // PC adder result multiplexer
-  assign ifu_pcs = (idu_ctl.opc == BRANCH) & ifu_tkn ? ifu_pcb
+  assign ifu_pcs = (idu_dec.opc == BRANCH) & ifu_tkn ? ifu_pcb
                                                      : ifu_pci;
 
 end: gen_bra_add
@@ -223,8 +223,8 @@ else begin: gen_bra_mux
   logic [XLEN-1:0] ifu_pca;  // PC addend
 
   // PC addend multiplexer
-  assign ifu_pca = (idu_ctl.opc == BRANCH) & ifu_tkn ? XLEN'(idu_ctl.bru.imm)
-                                                     : XLEN'(idu_ctl.siz);
+  assign ifu_pca = (idu_dec.opc == BRANCH) & ifu_tkn ? XLEN'(idu_dec.bru.imm)
+                                                     : XLEN'(idu_dec.siz);
 
   // PC sum
   assign ifu_pcs = ifu_pc + ifu_pca;
@@ -235,7 +235,7 @@ endgenerate
 // program counter next
 always_comb
 if (tcb_ifu.rdy & idu_vld) begin
-  unique case (idu_ctl.opc)
+  unique case (idu_dec.opc)
     JAL    ,
     JALR   : ifu_pcn = {alu_sum[XLEN-1:1], 1'b0};
     BRANCH : ifu_pcn = ifu_pcs;
@@ -259,32 +259,32 @@ end
 //`else
 //if (1'b1) begin: gen_d16
 //`endif
-//  dec_t          idu_dec;
+//  dec_t          idu_tmp;
 //
 //  // 16/32-bit instruction decoder
 //  always_comb
 //  unique case (opsiz(tcb_ifu.rsp.rdt[16-1:0]))
-//    2      : idu_dec = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
-//    4      : idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
-//    default: idu_dec = 'x;                               // OP sizes above 4 bytes are not supported
+//    2      : idu_tmp = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
+//    4      : idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
+//    default: idu_tmp = 'x;                               // OP sizes above 4 bytes are not supported
 //  endcase
 //
 //  // distributed I/C decoder mux
 ////if (CFG.DEC_DIS) begin: gen_dec_dis
 //  if (1'b1) begin: gen_dec_dis
-//    assign idu_ctl = idu_dec;
+//    assign idu_dec = idu_tmp;
 //  end: gen_dec_dis
 //  // 32-bit I/C decoder mux
 //  else begin
 //    (* keep = "true" *)
 //    logic [32-1:0] idu_enc;
 //
-//    assign idu_enc = enc32(ISA, idu_dec);
+//    assign idu_enc = enc32(ISA, idu_tmp);
 //    always_comb
 //    begin
-//      idu_ctl     = 'x;
-//      idu_ctl     = dec32(ISA, idu_enc);
-//      idu_ctl.siz = idu_dec.siz;
+//      idu_dec     = 'x;
+//      idu_dec     = dec32(ISA, idu_enc);
+//      idu_dec.siz = idu_tmp.siz;
 //    end
 //  end
 //
@@ -292,20 +292,20 @@ end
 //else begin: gen_d32
 //
 //  // 32-bit instruction decoder
-//  assign idu_ctl = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+//  assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
 //
 //// enc32 debug code
-////  dec_t  idu_dec;
+////  dec_t  idu_tmp;
 ////  logic [32-1:0] idu_enc;
-////  assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
-////  assign idu_enc = enc32(ISA, idu_dec);
-////  assign idu_ctl = dec32(ISA, idu_enc);
+////  assign idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+////  assign idu_enc = enc32(ISA, idu_tmp);
+////  assign idu_dec = dec32(ISA, idu_enc);
 //
 //end: gen_d32
 //endgenerate
 
 // 32-bit instruction decoder
-assign idu_ctl = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute
@@ -325,12 +325,12 @@ r5p_gpr_2r1w #(
   // configuration/control
   .en0     (1'b0),
   // read/write enable
-  .e_rs1   (idu_ctl.gpr.ena.rs1),
-  .e_rs2   (idu_ctl.gpr.ena.rs2),
+  .e_rs1   (idu_dec.gpr.ena.rs1),
+  .e_rs2   (idu_dec.gpr.ena.rs2),
   .e_rd    (        wbu_wen    ),  // TODO: should depend on LSU stall
   // read/write address
-  .a_rs1   (idu_ctl.gpr.adr.rs1),
-  .a_rs2   (idu_ctl.gpr.adr.rs2),
+  .a_rs1   (idu_dec.gpr.adr.rs1),
+  .a_rs2   (idu_dec.gpr.adr.rs2),
   .a_rd    (        wbu_adr    ),
   // read/write data
   .d_rs1   (        gpr_rs1    ),
@@ -358,7 +358,7 @@ r5p_alu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (idu_ctl),
+  .ctl     (idu_dec),
   // data input/output
   .pc      (XLEN'(ifu_pc)),
   .rs1     (gpr_rs1),
@@ -380,7 +380,7 @@ if (ISA.spec.ext.M == 1'b1) begin: gen_mdu
     .clk     (clk),
     .rst     (rst),
     // control
-    .ctl     (idu_ctl.m),
+    .ctl     (idu_dec.m),
     // data input/output
     .rs1     (gpr_rs1),
     .rs2     (gpr_rs2),
@@ -414,12 +414,12 @@ endgenerate
 //    // CSR address map union output
 //    .csr_map (csr_csr),
 //    // CSR control and data input/output
-//    .csr_ctl (idu_ctl.csr),
+//    .csr_ctl (idu_dec.csr),
 //    .csr_wdt (gpr_rs1),
 //    .csr_rdt (csr_rdt),
 //    // trap handler
-//    .priv_i  (idu_ctl.priv),
-//    .trap_i  (idu_ctl.i.pc == PC_TRP),
+//    .priv_i  (idu_dec.priv),
+//    .trap_i  (idu_dec.i.pc == PC_TRP),
 //  //.cause_i (CAUSE_EXC_OP_EBREAK),
 //    .epc_i   (XLEN'(ifu_pc)),
 //    .epc_o   (csr_epc ),
@@ -453,11 +453,11 @@ if (CFG.ALU_LSA) begin: gen_lsa_ena
   logic [XLEN-1:0] lsu_adr_st;  // address store
 
   // dedicated load/store adders
-  assign lsu_adr_ld = gpr_rs1 + XLEN'(idu_ctl.ldu.imm);  // I-type (load)
-  assign lsu_adr_st = gpr_rs1 + XLEN'(idu_ctl.stu.imm);  // S-type (store)
+  assign lsu_adr_ld = gpr_rs1 + XLEN'(idu_dec.ldu.imm);  // I-type (load)
+  assign lsu_adr_st = gpr_rs1 + XLEN'(idu_dec.stu.imm);  // S-type (store)
 
   always_comb
-  unique casez (idu_ctl.opc)
+  unique casez (idu_dec.opc)
     LOAD   : lsu_adr = lsu_adr_ld;  // I-type (load)
     STORE  : lsu_adr = lsu_adr_st;  // S-type (store)
     default: lsu_adr = 'x ;
@@ -493,11 +493,11 @@ r5p_lsu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (idu_ctl),
+  .ctl     (idu_dec),
   // data input/output
   .run     (idu_vld),
   .ill     (1'b0),
-//.ill     (idu_ctl.ill == ILL),
+//.ill     (idu_dec.ill == ILL),
   .adr     (lsu_adr),
   .wdt     (lsu_wdt),
   .rdt     (lsu_rdt),
@@ -529,12 +529,12 @@ r5p_wbu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .dec     (idu_ctl),
+  .dec     (idu_dec),
   // write data inputs
   .alu     (alu_dat),                 // ALU output
   .lsu     (lsu_rdt),                 // LSU load
   .pcs     (XLEN'(ifu_pcs)),          // PC increment
-  .lui     (XLEN'(idu_ctl.uiu.imm)),  // upper immediate
+  .lui     (XLEN'(idu_dec.uiu.imm)),  // upper immediate
   .csr     (csr_rdt),                 // CSR
   .mul     (mul_dat),                 // mul/div/rem
   // GPR write back
