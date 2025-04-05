@@ -157,9 +157,6 @@ module r5p_degu_tcb_mon
   // prepare string for each execution phase
   always_ff @(posedge dly_ifu.clk)
   begin
-    $display("str_gpr = %p", str_gpr);
-    $display("str_lsu = %p", str_lsu);
-    $display("str_ifu = %p", str_ifu);
     // only log if a log file was opened
     if (fd) begin
       // at instruction fetch combine strings from precious instructions

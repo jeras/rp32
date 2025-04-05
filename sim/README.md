@@ -1,0 +1,16 @@
+# Simulator quirks
+
+The HDL code for RTL and testbench can handle simulator quirks by using the following define macros
+(based on VHDL standard conditional analysis identifiers).
+
+* `TOOL_TYPE` can be of value `"SIMULATION"`, `"SYNTHESIS"`, `"FORMAL"`,
+* `TOOL_VENDOR` for example `"Siemens"`, `"Veripool"`, ...
+* `TOOL_NAME` for example `"questa"`, `"verilator"`, ...
+
+TODO: use sed to extract edition/version from stdout string
+
+`TOOL_EDITION` := "$(shell qrun -version)"
+`TOOL_VERSION` := "$(shell qrun -version)"
+
+
+Questa is pripagating `X` to all result bit if addition operands contain `X` at any bit position.

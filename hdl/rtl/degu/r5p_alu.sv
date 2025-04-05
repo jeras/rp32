@@ -94,6 +94,8 @@ logic [XLEN-1:0] val;
 //    default: begin log_op1 = 'x ; log_op2 = 'x;               end
 //  endcase
 
+// TODO: not ALU all paths have to go through the same mux, maybe slit them
+
 // ALU input multiplexer and signed/unsigned extension
 always_comb
 begin
@@ -113,7 +115,6 @@ end
 
 // TODO: check which keywords would best optimize this statement
 // invert arithmetic operand 2 (bit 5 of f7 segment of operand)
-//
 always_comb
 begin
   // conbinational logic
@@ -155,16 +156,15 @@ begin
 end
 
 // adder operands
-assign add_op1 =             {1'b0, mux_op1};
-assign add_op2 = add_inv ? - {1'b0, mux_op2}
-                         : + {1'b0, mux_op2};
+assign add_op1 = {1'b0, mux_op1};
+assign add_op2 = {1'b0, mux_op2} ^ {XLEN+1{add_inv}};
 
 // adder sum
 assign add_sum = add_op1 + add_op2 + (XLEN+1)'(add_inv);
 
 // adder sign
 assign add_sgn = add_uns ? add_sum[XLEN]
-                         : add_sum[XLEN] ^ mux_op1[XLEN-1] ^ mux_op2[XLEN-1] ^ add_inv;
+                         : add_sum[XLEN] ^ mux_op1[XLEN-1] ^ mux_op2[XLEN-1] ^ ~add_inv;
 
 // output sum
 assign sum = {add_sgn, add_sum[XLEN-1:0]};
