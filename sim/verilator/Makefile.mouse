@@ -53,7 +53,6 @@ RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
 TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
-#TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
 TSV+=${PATH_TBN}/r5p_mouse_riscv_tb.sv
 TSV+=${PATH_TBN}/r5p_mouse_tcb_mon.sv
 

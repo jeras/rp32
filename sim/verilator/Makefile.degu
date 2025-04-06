@@ -65,7 +65,6 @@ RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
 TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
-#TSV+=${PATH_TBN}/riscv/tcb_mon_riscv.sv
 TSV+=${PATH_TBN}/r5p_degu_riscv_tb.sv
 TSV+=${PATH_TBN}/r5p_degu_tcb_mon.sv
 
