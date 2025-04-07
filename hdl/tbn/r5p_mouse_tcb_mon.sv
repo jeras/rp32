@@ -54,10 +54,10 @@ module r5p_mouse_tcb_mon
   logic [3-1:0] dly_pha;
 
   // log signals
-  logic [tcb.PHY.ABW-1:0] adr;  // address
+  logic [tcb.PHY.ADR-1:0] adr;  // address
   logic                   wen;  // write enable
   logic           [3-1:0] fn3;  // RISC-V func3
-  logic [tcb.PHY.DBW-1:0] dat;  // data
+  logic [tcb.PHY.DAT-1:0] dat;  // data
   logic                   err;  // error
 
 ////////////////////////////////////////////////////////////////////////////////

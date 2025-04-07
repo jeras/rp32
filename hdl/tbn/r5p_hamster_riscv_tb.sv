@@ -41,7 +41,7 @@ module riscv_tb
   // data bus
   int unsigned DAW = 32,     // data address width
   int unsigned DDW = XLEN,   // data data    width
-  int unsigned DBW = DDW/8,  // data byte en width
+  int unsigned DAT = DDW/8,  // data byte en width
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters
@@ -82,8 +82,8 @@ localparam tcb_par_phy_t PHY_BUS = '{
   DLY: 1,
   // signal bus widths
   SLW: TCB_PAR_PHY_DEF.SLW,
-  ABW: IAW,
-  DBW: IDW,
+  ADR: IAW,
+  DAT: IDW,
   ALW: $clog2(IDW/TCB_PAR_PHY_DEF.SLW),
   // size/mode/order parameters
   SIZ: TCB_PAR_PHY_DEF.SIZ,

@@ -27,8 +27,8 @@ module r5p_soc_memory
 );
 
   localparam int unsigned SLW = tcb.PHY.SLW;
-  localparam int unsigned DBW = tcb.PHY.DBW;
-  localparam int unsigned ABW = $clog2(SIZ);
+  localparam int unsigned DAT = tcb.PHY.DAT;
+  localparam int unsigned ADR = $clog2(SIZ);
 
 ////////////////////////////////////////////////////////////////////////////////
 // TCB interface parameter validation
@@ -39,14 +39,14 @@ module r5p_soc_memory
     // TCB mode must be memory (RISC-V mode is not supported)
     assert (tcb.PHY.MOD == TCB_MEMORY) else $fatal("Unsupported TCB mode in %m.");
     // check if address is wide enough for the memory size
-    assert (tcb.PHY.ABW >= ABW       ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
+    assert (tcb.PHY.ADR >= ADR       ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
   end
 
 ////////////////////////////////////////////////////////////////////////////////
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [DBW-1:0] mem [0:SIZ-1];
+  logic [DAT-1:0] mem [0:SIZ-1];
 
   initial
   begin
@@ -67,13 +67,13 @@ always @(posedge tcb.clk)
 if (tcb.vld) begin
   if (tcb.wen) begin
     // write access
-    mem[tcb.adr[ABW-1:$clog2(DBW/SLW)]] <= tcb.wdt;
+    mem[tcb.adr[ADR-1:$clog2(DAT/SLW)]] <= tcb.wdt;
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
 //  end
   end else begin
     // read access
-    tcb.rdt <= mem[tcb.adr[ABW-1:$clog2(DBW/SLW)]];
+    tcb.rdt <= mem[tcb.adr[ADR-1:$clog2(DAT/SLW)]];
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
 //    else             tcb.rdt[8*b+:8] <= 'x;

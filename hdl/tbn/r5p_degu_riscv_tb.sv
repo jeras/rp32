@@ -91,9 +91,9 @@ import riscv_asm_pkg::*;
     DLY: 1,
     // signal widths
     SLW: 8,
-    ABW: XLEN,
-    DBW: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW) // TODO: could be 16-bit allignment
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW) // TODO: could be 16-bit allignment
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -106,9 +106,9 @@ import riscv_asm_pkg::*;
     DLY: 1,
     // signal bus widths
     SLW: 8,
-    ABW: XLEN,
-    DBW: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW)
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,

@@ -47,14 +47,14 @@ module r5p_degu_soc_top
   parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
   parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
   // IFU memory (size, file name)
-  parameter  int unsigned   IFM_ABW = 14,
-  parameter  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ABW),
+  parameter  int unsigned   IFM_ADR = 14,
+  parameter  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ADR),
   parameter  string         IFM_FNM = "mem_if.vmem",
   // LSU bus
   parameter  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
   // LSU memory (size)
-  parameter  int unsigned   LSM_ABW = 14,
-  parameter  int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ABW),
+  parameter  int unsigned   LSM_ADR = 14,
+  parameter  int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ADR),
   // implementation device (ASIC/FPGA vendor/device)
   parameter  string         CHIP = ""
 )(
@@ -90,9 +90,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DLY: 1,
     // signal widths
     SLW: 8,
-    ABW: XLEN,
-    DBW: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW) // TODO: could be 16-bit alignment
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW) // TODO: could be 16-bit alignment
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -105,9 +105,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DLY: 1,
     // signal bus widths
     SLW: 8,
-    ABW: XLEN,
-    DBW: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW)
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -120,9 +120,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DLY: 1,
     // signal bus widths
     SLW: 8,
-    ABW: XLEN,
-    DBW: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW)
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -135,9 +135,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DLY: 0,
     // signal bus widths
     SLW: 8,
-    ABW: XLEN,
-    DBW: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW)
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,

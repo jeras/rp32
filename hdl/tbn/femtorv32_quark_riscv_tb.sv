@@ -40,7 +40,7 @@ module riscv_tb
   // data bus
   int unsigned DAW = 22,     // data address width
   int unsigned DDW = XLEN,   // data data    width
-  int unsigned DBW = DDW/8,  // data byte en width
+  int unsigned DAT = DDW/8,  // data byte en width
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters

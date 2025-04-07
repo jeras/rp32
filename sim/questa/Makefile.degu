@@ -38,6 +38,7 @@ PATH_TCB=../../submodules/tcb/hdl
 RTL+=${PATH_TCB}/rtl/tcb_pkg.sv
 RTL+=${PATH_TCB}/rtl/tcb_if.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_passthrough.sv
+RTL+=${PATH_TCB}/rtl/lib/tcb_lib_riscv_lsu.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_arbiter.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_multiplexer.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_decoder.sv
