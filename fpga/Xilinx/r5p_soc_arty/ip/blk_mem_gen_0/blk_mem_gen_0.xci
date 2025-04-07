@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "blk_mem_gen_0",
     "component_reference": "xilinx.com:ip:blk_mem_gen:8.4",
-    "ip_revision": "6",
+    "ip_revision": "9",
     "gen_directory": "../../../../r5p_soc_arty.gen/sources_1/ip/blk_mem_gen_0",
     "parameters": {
       "component_parameters": {
@@ -37,8 +37,8 @@
         "Read_Width_A": [ { "value": "32", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Operating_Mode_A": [ { "value": "READ_FIRST", "value_src": "user", "resolve_type": "user", "usage": "all" } ],
         "Enable_A": [ { "value": "Use_ENA_Pin", "resolve_type": "user", "usage": "all" } ],
-        "Write_Width_B": [ { "value": "32", "value_src": "user", "resolve_type": "user", "enabled": false, "usage": "all" } ],
-        "Read_Width_B": [ { "value": "32", "value_src": "user", "resolve_type": "user", "enabled": false, "usage": "all" } ],
+        "Write_Width_B": [ { "value": "32", "resolve_type": "user", "enabled": false, "usage": "all" } ],
+        "Read_Width_B": [ { "value": "32", "resolve_type": "user", "enabled": false, "usage": "all" } ],
         "Operating_Mode_B": [ { "value": "WRITE_FIRST", "resolve_type": "user", "enabled": false, "usage": "all" } ],
         "Enable_B": [ { "value": "Always_Enabled", "resolve_type": "user", "enabled": false, "usage": "all" } ],
         "Register_PortA_Output_of_Memory_Primitives": [ { "value": "false", "value_src": "user", "resolve_type": "user", "format": "bool", "usage": "all" } ],
@@ -168,18 +168,16 @@
         "SIMULATOR_LANGUAGE": [ { "value": "VERILOG" } ],
         "SPEEDGRADE": [ { "value": "-1" } ],
         "STATIC_POWER": [ { "value": "" } ],
-        "TEMPERATURE_GRADE": [ { "value": "" } ],
-        "USE_RDI_CUSTOMIZATION": [ { "value": "TRUE" } ],
-        "USE_RDI_GENERATION": [ { "value": "TRUE" } ]
+        "TEMPERATURE_GRADE": [ { "value": "" } ]
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "6" } ],
+        "IPREVISION": [ { "value": "9" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "../../../../r5p_soc_arty.gen/sources_1/ip/blk_mem_gen_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2023.1" } ],
+        "SWVERSION": [ { "value": "2024.2" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },
@@ -222,6 +220,7 @@
           "abstraction_type": "xilinx.com:interface:bram_rtl:1.0",
           "mode": "slave",
           "parameters": {
+            "MEM_ADDRESS_MODE": [ { "value": "BYTE_ADDRESS", "resolve_type": "user", "usage": "all" } ],
             "MEM_SIZE": [ { "value": "8192", "resolve_type": "generated", "format": "long", "is_ips_inferred": true, "is_static_object": false } ],
             "MEM_WIDTH": [ { "value": "32", "resolve_type": "generated", "format": "long", "is_ips_inferred": true, "is_static_object": false } ],
             "MEM_ECC": [ { "value": "NONE", "resolve_type": "generated", "is_ips_inferred": true, "is_static_object": false } ],

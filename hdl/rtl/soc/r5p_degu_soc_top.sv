@@ -23,6 +23,8 @@ module r5p_degu_soc_top
   // constants used across the design in signal range sizing instead of literals
   localparam int unsigned XLEN = 32,
   localparam int unsigned XLOG = $clog2(XLEN),
+  localparam int unsigned BLEN = XLEN/8,
+  localparam int unsigned BLOG = $clog2(BLEN),
   // SoC peripherals
   bit          ENA_GPIO = 1'b1,
   bit          ENA_UART = 1'b0,
@@ -44,15 +46,15 @@ module r5p_degu_soc_top
 `endif
   // IFU bus
   bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
-  bit [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
-  // IFU memory
+  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
+  // IFU memory (size, file name)
   int unsigned   IFM_ABW = 14,
   int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ABW),
-  string         IFM_NAM = "mem_if.vmem",
+  string         IFM_FNM = "mem_if.vmem",
   // LSU bus
-  bit [XLEN-1:0] LSU_MSK = 32'h803f_ffff,
-  // LSU memory
-  int unsigned   LSM_ABW = 15,
+  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
+  // LSU memory (size)
+  int unsigned   LSM_ABW = 14,
   int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ABW),
   // implementation device (ASIC/FPGA vendor/device)
   string         CHIP = ""
@@ -248,28 +250,28 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // xpm_memory_spram: Single Port RAM
     // Xilinx Parameterized Macro, version 2021.2
     xpm_memory_spram #(
-      .ADDR_WIDTH_A        (IFM_ABW-2),       // DECIMAL
-      .AUTO_SLEEP_TIME     (0),               // DECIMAL
-      .BYTE_WRITE_WIDTH_A  (8),               // DECIMAL
-      .CASCADE_HEIGHT      (0),               // DECIMAL
-      .ECC_MODE            ("no_ecc"),        // String
-      .MEMORY_INIT_FILE    ("imem.mem"),      // String
-      .MEMORY_INIT_PARAM   (""),              // String
-      .MEMORY_OPTIMIZATION ("true"),          // String
-      .MEMORY_PRIMITIVE    ("auto"),          // String
-      .MEMORY_SIZE         (8 * 2**IFM_ABW),  // DECIMAL
-      .MESSAGE_CONTROL     (0),               // DECIMAL
-      .READ_DATA_WIDTH_A   (XLEN),            // DECIMAL
-      .READ_LATENCY_A      (1),               // DECIMAL
-      .READ_RESET_VALUE_A  ("0"),             // String
-      .RST_MODE_A          ("SYNC"),          // String
-      .SIM_ASSERT_CHK      (0),               // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-      .USE_MEM_INIT        (1),               // DECIMAL
-      .USE_MEM_INIT_MMI    (0),               // DECIMAL
-      .WAKEUP_TIME         ("disable_sleep"), // String
-      .WRITE_DATA_WIDTH_A  (XLEN),            // DECIMAL
-      .WRITE_MODE_A        ("read_first"),    // String
-      .WRITE_PROTECT       (1)                // DECIMAL
+      .ADDR_WIDTH_A        ($clog2(IFM_SIZ/BLEN)),  // DECIMAL
+      .AUTO_SLEEP_TIME     (0),                     // DECIMAL
+      .BYTE_WRITE_WIDTH_A  (8),                     // DECIMAL
+      .CASCADE_HEIGHT      (0),                     // DECIMAL
+      .ECC_MODE            ("no_ecc"),              // String
+      .MEMORY_INIT_FILE    ("imem.mem"),            // String
+      .MEMORY_INIT_PARAM   (""),                    // String
+      .MEMORY_OPTIMIZATION ("true"),                // String
+      .MEMORY_PRIMITIVE    ("auto"),                // String
+      .MEMORY_SIZE         (8 * IFM_SIZ),           // DECIMAL
+      .MESSAGE_CONTROL     (0),                     // DECIMAL
+      .READ_DATA_WIDTH_A   (XLEN),                  // DECIMAL
+      .READ_LATENCY_A      (1),                     // DECIMAL
+      .READ_RESET_VALUE_A  ("0"),                   // String
+      .RST_MODE_A          ("SYNC"),                // String
+      .SIM_ASSERT_CHK      (0),                     // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+      .USE_MEM_INIT        (1),                     // DECIMAL
+      .USE_MEM_INIT_MMI    (0),                     // DECIMAL
+      .WAKEUP_TIME         ("disable_sleep"),       // String
+      .WRITE_DATA_WIDTH_A  (XLEN),                  // DECIMAL
+      .WRITE_MODE_A        ("read_first"),          // String
+      .WRITE_PROTECT       (1)                      // DECIMAL
     ) imem (
       // unused control/status signals
       .injectdbiterra (1'b0),
@@ -283,7 +285,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .rsta   (   tcb_ifu.rst),
       .ena    (   tcb_ifu.vld),
       .wea    ({4{tcb_ifu.req.wen}}),
-      .addra  (   tcb_ifu.req.adr[IFM_ABW-1:2]),
+      .addra  (   tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
       .dina   (   tcb_ifu.req.wdt),
       .douta  (   tcb_ifu.rsp.rdt)
     );
@@ -294,28 +296,28 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // xpm_memory_spram: Single Port RAM
     // Xilinx Parameterized Macro, version 2021.2
     xpm_memory_spram #(
-      .ADDR_WIDTH_A        (RAW-$clog2(XLEN)),  // DECIMAL
-      .AUTO_SLEEP_TIME     (0),                 // DECIMAL
-      .BYTE_WRITE_WIDTH_A  (8),                 // DECIMAL
-      .CASCADE_HEIGHT      (0),                 // DECIMAL
-      .ECC_MODE            ("no_ecc"),          // String
-      .MEMORY_INIT_FILE    ("none"),            // String
-      .MEMORY_INIT_PARAM   ("0"),               // String
-      .MEMORY_OPTIMIZATION ("true"),            // String
-      .MEMORY_PRIMITIVE    ("auto"),            // String
-      .MEMORY_SIZE         (8 * 2**RAW),        // DECIMAL
-      .MESSAGE_CONTROL     (0),                 // DECIMAL
-      .READ_DATA_WIDTH_A   (XLEN),              // DECIMAL
-      .READ_LATENCY_A      (1),                 // DECIMAL
-      .READ_RESET_VALUE_A  ("0"),               // String
-      .RST_MODE_A          ("SYNC"),            // String
-      .SIM_ASSERT_CHK      (0),                 // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-      .USE_MEM_INIT        (1),                 // DECIMAL
-      .USE_MEM_INIT_MMI    (0),                 // DECIMAL
-      .WAKEUP_TIME         ("disable_sleep"),   // String
-      .WRITE_DATA_WIDTH_A  (XLEN),              // DECIMAL
-      .WRITE_MODE_A        ("read_first"),      // String
-      .WRITE_PROTECT       (1)                  // DECIMAL
+      .ADDR_WIDTH_A        ($clog2(LSM_SIZ/BLEN)),  // DECIMAL
+      .AUTO_SLEEP_TIME     (0),                     // DECIMAL
+      .BYTE_WRITE_WIDTH_A  (8),                     // DECIMAL
+      .CASCADE_HEIGHT      (0),                     // DECIMAL
+      .ECC_MODE            ("no_ecc"),              // String
+      .MEMORY_INIT_FILE    ("none"),                // String
+      .MEMORY_INIT_PARAM   ("0"),                   // String
+      .MEMORY_OPTIMIZATION ("true"),                // String
+      .MEMORY_PRIMITIVE    ("auto"),                // String
+      .MEMORY_SIZE         (8 * LSM_SIZ),           // DECIMAL
+      .MESSAGE_CONTROL     (0),                     // DECIMAL
+      .READ_DATA_WIDTH_A   (XLEN),                  // DECIMAL
+      .READ_LATENCY_A      (1),                     // DECIMAL
+      .READ_RESET_VALUE_A  ("0"),                   // String
+      .RST_MODE_A          ("SYNC"),                // String
+      .SIM_ASSERT_CHK      (0),                     // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+      .USE_MEM_INIT        (1),                     // DECIMAL
+      .USE_MEM_INIT_MMI    (0),                     // DECIMAL
+      .WAKEUP_TIME         ("disable_sleep"),       // String
+      .WRITE_DATA_WIDTH_A  (XLEN),                  // DECIMAL
+      .WRITE_MODE_A        ("read_first"),          // String
+      .WRITE_PROTECT       (1)                      // DECIMAL
     ) dmem (
       // unused control/status signals
       .injectdbiterra (1'b0),
@@ -329,7 +331,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .rsta   (tcb_mem.rst),
       .ena    (tcb_mem.vld),
       .wea    (tcb_mem.req.ben & {XLEN{tcb_mem.req.wen}}),
-      .addra  (tcb_mem.req.adr[RAW-1:$clog2(XLEN)]),
+      .addra  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
       .dina   (tcb_mem.req.wdt),
       .douta  (tcb_mem.rsp.rdt)
     );
@@ -344,7 +346,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .clka   (   tcb_ifu.clk),
       .ena    (   tcb_ifu.vld),
       .wea    ({4{tcb_ifu.req.wen}}),
-      .addra  (   tcb_ifu.req.adr[IFM_ABW-1:2]),
+      .addra  (   tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
       .dina   (   tcb_ifu.req.wdt),
       .douta  (   tcb_ifu.rsp.rdt)
     );
@@ -357,7 +359,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .ena    (tcb_mem.vld),
       .wea    (tcb_mem.req.ben &
          {XLEN{tcb_mem.req.wen}}),
-      .addra  (tcb_mem.req.adr[RAW-1:$clog2(XLEN)]),
+      .addra  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
       .dina   (tcb_mem.req.wdt),
       .douta  (tcb_mem.rsp.rdt)
     );
@@ -375,7 +377,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .wraddress  ('x),
       .data       ('x),
       // read access
-      .rdaddress  (tcb_ifu.req.adr[IFM_ABW-1:2]),
+      .rdaddress  (tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
       .rden       (tcb_ifu.vld),
       .q          (tcb_ifu.rsp.rdt)
     );
@@ -387,7 +389,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .clock    (tcb_mem.clk),
       .wren     (tcb_mem.vld &  tcb_mem.req.wen),
       .rden     (tcb_mem.vld & ~tcb_mem.req.wen),
-      .address  (tcb_mem.req.adr[RAW-1:$clog2(XLEN)]),
+      .address  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
       .byteena  (tcb_mem.req.ben),
       .data     (tcb_mem.req.wdt),
       .q        (tcb_mem.rsp.rdt)
@@ -401,18 +403,19 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
     // file:///usr/local/diamond/3.12/docs/webhelp/eng/index.htm#page/Reference%20Guides/IPexpress%20Modules/pmi_ram_dp.htm#
     pmi_ram_dp #(
-      .pmi_wr_addr_depth     (8 * 2**RAW),
-      .pmi_wr_addr_width     (RAW-$clog2(XLEN)),
-      .pmi_wr_data_width     (XLEN),
-      .pmi_rd_addr_depth     (8 * 2**RAW),
-      .pmi_rd_addr_width     (RAW-$clog2(XLEN)),
-      .pmi_rd_data_width     (XLEN),
+      .pmi_wr_addr_depth     (8 *    IFM_SIZ      ),
+      .pmi_wr_addr_width     ($clog2(IFM_SIZ/BLEN)),
+      .pmi_wr_data_width     (               XLEN ),
+      .pmi_rd_addr_depth     (8 *    IFM_SIZ      ),
+      .pmi_rd_addr_width     ($clog2(IFM_SIZ/BLEN)),
+      .pmi_rd_data_width     (               XLEN ),
       .pmi_regmode           ("reg"),
       .pmi_gsr               ("disable"),
       .pmi_resetmode         ("sync"),
       .pmi_optimization      ("speed"),
       .pmi_init_file         ("imem.mem"),
       .pmi_init_file_format  ("binary"),
+      .pmi_byte_size         (XLEN),
       .pmi_family            ("ECP5")
     ) imem (
       // write access
@@ -425,7 +428,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .RdClock    (tcb_ifu.clk),
       .RdClockEn  (1'b1),
       .Reset      (tcb_ifu.rst),
-      .RdAddress  (tcb_ifu.req.adr[IFM_ABW-1:2]),
+      .RdAddress  (tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
       .Q          (tcb_ifu.rsp.rdt)
     );
 
@@ -434,12 +437,12 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
     // TODO: use a single port or a true dual port memory
     pmi_ram_dp_be #(
-      .pmi_wr_addr_depth     (8 * 2**RAW),
-      .pmi_wr_addr_width     (RAW-$clog2(XLEN)),
-      .pmi_wr_data_width     (XLEN),
-      .pmi_rd_addr_depth     (8 * 2**RAW),
-      .pmi_rd_addr_width     (RAW-$clog2(XLEN)),
-      .pmi_rd_data_width     (XLEN),
+      .pmi_wr_addr_depth     (8 *    LSM_SIZ      ),
+      .pmi_wr_addr_width     ($clog2(LSM_SIZ/BLEN)),
+      .pmi_wr_data_width     (               XLEN ),
+      .pmi_rd_addr_depth     (8 *    LSM_SIZ      ),
+      .pmi_rd_addr_width     ($clog2(LSM_SIZ/BLEN)),
+      .pmi_rd_data_width     (               XLEN ),
       .pmi_regmode           ("reg"),
       .pmi_gsr               ("disable"),
       .pmi_resetmode         ("sync"),
@@ -452,13 +455,13 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .WrClock    (tcb_mem.clk),
       .WrClockEn  (tcb_mem.vld),
       .WE         (tcb_mem.req.wen),
-      .WrAddress  (tcb_mem.req.adr[RAW-1:$clog2(XLEN)]),
+      .WrAddress  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
       .ByteEn     (tcb_mem.req.ben),
       .Data       (tcb_mem.req.wdt),
       .RdClock    (tcb_mem.clk),
       .RdClockEn  (tcb_mem.vld),
       .Reset      (tcb_mem.rst),
-      .RdAddress  (tcb_mem.req.adr[RAW-1:$clog2(XLEN)]),
+      .RdAddress  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
       .Q          (tcb_mem.rsp.rdt)
     );
 
@@ -469,21 +472,19 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   else begin: gen_default
 
     // instruction memory
-    r5p_soc_mem #(
-      .FN   (IFM_NAM),
-      .AW   (IFM_ABW),
-      .DW   (XLEN)
+    r5p_soc_memory #(
+      .FNM  (IFM_FNM),
+      .SIZ  (IFM_SIZ)
     ) imem (
-      .bus  (tcb_ifu)
+      .tcb  (tcb_ifu)
     );
 
     // data memory
-    r5p_soc_mem #(
-    //.FN   (),
-      .AW   (RAW-1),
-      .DW   (XLEN)
+    r5p_soc_memory #(
+    //.FNM  (),
+      .SIZ  (LSM_SIZ)
     ) dmem (
-      .bus  (tcb_mem)
+      .tcb  (tcb_mem)
     );
 
   end: gen_default

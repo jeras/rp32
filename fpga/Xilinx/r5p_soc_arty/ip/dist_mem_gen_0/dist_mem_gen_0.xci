@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "dist_mem_gen_0",
     "component_reference": "xilinx.com:ip:dist_mem_gen:8.0",
-    "ip_revision": "13",
+    "ip_revision": "15",
     "gen_directory": "../../../../r5p_soc_arty.gen/sources_1/ip/dist_mem_gen_0",
     "parameters": {
       "component_parameters": {
@@ -79,18 +79,16 @@
         "SIMULATOR_LANGUAGE": [ { "value": "VERILOG" } ],
         "SPEEDGRADE": [ { "value": "-1" } ],
         "STATIC_POWER": [ { "value": "" } ],
-        "TEMPERATURE_GRADE": [ { "value": "" } ],
-        "USE_RDI_CUSTOMIZATION": [ { "value": "TRUE" } ],
-        "USE_RDI_GENERATION": [ { "value": "TRUE" } ]
+        "TEMPERATURE_GRADE": [ { "value": "" } ]
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "13" } ],
+        "IPREVISION": [ { "value": "15" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "../../../../r5p_soc_arty.gen/sources_1/ip/dist_mem_gen_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2023.1" } ],
+        "SWVERSION": [ { "value": "2024.2" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },

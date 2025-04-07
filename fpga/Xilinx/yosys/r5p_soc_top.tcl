@@ -32,7 +32,7 @@ read_systemverilog \
 ../../../submodules/tcb/hdl/rtl/uart/tcb_uart_fifo.sv \
 ../../../submodules/tcb/hdl/rtl/uart/tcb_uart.sv \
 ../../../hdl/rtl/soc/tcb_dec_3sp.sv \
-../../../hdl/rtl/soc/r5p_soc_mem.sv \
+../../../hdl/rtl/soc/r5p_soc_memory.sv \
 ../../../hdl/rtl/soc/r5p_soc_top.sv \
 
 synth_xilinx -top r5p_soc_top -edif top.edif

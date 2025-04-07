@@ -229,7 +229,7 @@ end: gen_ecp5
 else begin: gen_default
 
   // data memory
-  r5p_soc_mem #(
+  r5p_soc_memory #(
   //.FN   (),
     .AW   (RAW-1),
     .DW   (DW)

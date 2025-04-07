@@ -58,7 +58,7 @@ RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_fifo.sv
 RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
 
 # SoC files
-RTL+=${PATH_RTL}/soc/r5p_soc_mem.sv
+RTL+=${PATH_RTL}/soc/r5p_soc_memory.sv
 #RTL+=${PATH_RTL}/soc/r5p_degu_soc_top.sv
 
 # SystemVerilog bench (Test SV)
