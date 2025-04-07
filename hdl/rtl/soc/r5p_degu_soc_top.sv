@@ -26,38 +26,38 @@ module r5p_degu_soc_top
   localparam int unsigned BLEN = XLEN/8,
   localparam int unsigned BLOG = $clog2(BLEN),
   // SoC peripherals
-  bit          ENA_GPIO = 1'b1,
-  bit          ENA_UART = 1'b0,
+  parameter  bit          ENA_GPIO = 1'b1,
+  parameter  bit          ENA_UART = 1'b0,
   // GPIO
-  int unsigned GW = 32,
+  parameter  int unsigned GW = 32,
   // RISC-V ISA
 `ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
 //  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
-  isa_ext_t    XTEN = RV_M | RV_Zicsr,
+  parameter  isa_ext_t    XTEN = RV_M | RV_Zicsr,
   // privilige modes
-  isa_priv_t   MODES = MODES_M,
+  parameter  isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
+  parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
 `else
-  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+  parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
 `endif
   // IFU bus
-  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
-  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
+  parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
+  parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
   // IFU memory (size, file name)
-  int unsigned   IFM_ABW = 14,
-  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ABW),
-  string         IFM_FNM = "mem_if.vmem",
+  parameter  int unsigned   IFM_ABW = 14,
+  parameter  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ABW),
+  parameter  string         IFM_FNM = "mem_if.vmem",
   // LSU bus
-  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
+  parameter  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
   // LSU memory (size)
-  int unsigned   LSM_ABW = 14,
-  int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ABW),
+  parameter  int unsigned   LSM_ABW = 14,
+  parameter  int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ABW),
   // implementation device (ASIC/FPGA vendor/device)
-  string         CHIP = ""
+  parameter  string         CHIP = ""
 )(
   // system signals
   input  logic          clk,  // clock
@@ -133,7 +133,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   localparam tcb_par_phy_t TCB_PHY_PER = '{
     // protocol
-    DLY: 1,
+    DLY: 0,
     // signal bus widths
     SLW: 8,
     ABW: XLEN,
@@ -220,7 +220,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   // decoding peripherals (GPIO/UART)
   tcb_lib_decoder #(
-    .PHY (PHY_LSU),
+    .PHY (TCB_PHY_LSU),
     .SPN (2),
     .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
            {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller

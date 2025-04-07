@@ -32,23 +32,23 @@ module r5p_degu
   // RISC-V ISA
 `ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  parameter  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   // privilige modes
-  isa_priv_t   MODES = MODES_M,
+  parameter  isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+  parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
 `else
-  isa_t        ISA = '{spec: RV32I, priv: MODES_NONE},
+  parameter  isa_t        ISA = '{spec: RV32I, priv: MODES_NONE},
 `endif
 `endif
   // system bus implementation details
-  logic [XLEN-1:0] IFU_RST = 32'h0000_0000,  // reset vector
-  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
+  parameter  logic [XLEN-1:0] IFU_RST = 32'h0000_0000,  // reset vector
+  parameter  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
   // optimizations: timing versus area compromises
-  r5p_degu_cfg_t CFG = r5p_degu_cfg_def,
+  parameter  r5p_degu_cfg_t CFG = r5p_degu_cfg_def,
   // implementation device (ASIC/FPGA vendor/device)
-  string       CHIP = ""
+  parameter  string       CHIP = ""
 )(
   // system signals
   input  logic clk,
