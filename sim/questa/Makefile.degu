@@ -73,24 +73,26 @@ TOP ?= r5p_degu_riscv_tb
 # VHDL standard conditional analysis identifiers
 ################################################################################
 
-# "SIMULATION", "SYNTHESIS", "FORMAL"
-TOOL_TYPE    := "SIMULATION"
-TOOL_VENDOR  := "Siemens"
-TOOL_NAME    := "questa"
-# TODO: use sed to extract edition/version from stdout string
-TOOL_EDITION := "$(shell qrun -version)"
-TOOL_VERSION := "$(shell qrun -version)"
+# # "SIMULATION", "SYNTHESIS", "FORMAL"
+# TOOL_TYPE    := "SIMULATION"
+# TOOL_VENDOR  := "Siemens"
+# TOOL_NAME    := "questa"
+# # TODO: use sed to extract edition/version from stdout string
+# TOOL_EDITION := "$(shell qrun -version)"
+# TOOL_VERSION := "$(shell qrun -version)"
+#
+# # VHDL standard conditional analysis identifiers
+# TOOL  = -defineall TOOL_TYPE='${TOOL_TYPE}'
+# TOOL += -defineall TOOL_VENDOR='${TOOL_VENDOR}'
+# TOOL += -defineall TOOL_NAME='${TOOL_NAME}'
+# TOOL += -defineall TOOL_EDITION='${TOOL_EDITION}'
+# TOOL += -defineall TOOL_VERSION='${TOOL_VERSION}'
 
 ################################################################################
 # Verilog defines
 ################################################################################
 
-# VHDL standard conditional analysis identifiers
-DEF  = -defineall TOOL_TYPE='${TOOL_TYPE}'
-DEF += -defineall TOOL_VENDOR='${TOOL_VENDOR}'
-DEF += -defineall TOOL_NAME='${TOOL_NAME}'
-DEF += -defineall TOOL_EDITION='${TOOL_EDITION}'
-DEF += -defineall TOOL_VERSION='${TOOL_VERSION}'
+DEF = -defineall TOOL_QUESTA
 
 ################################################################################
 # Verilog toplevel parameter override
