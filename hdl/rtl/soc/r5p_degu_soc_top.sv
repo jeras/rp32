@@ -33,8 +33,7 @@ module r5p_degu_soc_top
   // RISC-V ISA
 `ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-//  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
-  parameter  isa_ext_t    XTEN = RV_M | RV_Zicsr,
+  parameter  isa_ext_t    XTEN = RV_C,
   // privilige modes
   parameter  isa_priv_t   MODES = MODES_M,
   // ISA

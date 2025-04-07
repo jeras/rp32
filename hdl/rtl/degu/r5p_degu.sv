@@ -32,7 +32,8 @@ module r5p_degu
   // RISC-V ISA
 `ifndef SYNOPSYS_VERILOG_COMPILER
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-  parameter  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+//parameter  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  parameter  isa_ext_t    XTEN = RV_C,
   // privilige modes
   parameter  isa_priv_t   MODES = MODES_M,
   // ISA
@@ -160,7 +161,7 @@ assign stall = (tcb_ifu.vld & ~tcb_ifu.rdy) | (tcb_lsu.vld & ~tcb_lsu.rdy);
 always_ff @ (posedge clk, posedge rst)
 if (rst)  ifu_pc <= IFU_RST;
 else begin
-    if (idu_vld & ~stall) ifu_pc <= ifu_pcn & IFU_MSK;  
+    if (idu_vld & ~stall) ifu_pc <= ifu_pcn & IFU_MSK;
 end
 
 generate
@@ -253,59 +254,56 @@ end
 
 
 // TODO: uncomment this code
-//generate
-//`ifndef ALTERA_RESERVED_QIS
-//if (ISA.spec.ext.C) begin: gen_d16
-//`else
-//if (1'b1) begin: gen_d16
-//`endif
-//  dec_t          idu_tmp;
-//
-//  // 16/32-bit instruction decoder
-//  always_comb
-//  unique case (opsiz(tcb_ifu.rsp.rdt[16-1:0]))
-//    2      : idu_tmp = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
-//    4      : idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
-//    default: idu_tmp = 'x;                               // OP sizes above 4 bytes are not supported
-//  endcase
-//
-//  // distributed I/C decoder mux
-////if (CFG.DEC_DIS) begin: gen_dec_dis
-//  if (1'b1) begin: gen_dec_dis
-//    assign idu_dec = idu_tmp;
-//  end: gen_dec_dis
-//  // 32-bit I/C decoder mux
-//  else begin
-//    (* keep = "true" *)
-//    logic [32-1:0] idu_enc;
-//
-//    assign idu_enc = enc32(ISA, idu_tmp);
-//    always_comb
-//    begin
-//      idu_dec     = 'x;
-//      idu_dec     = dec32(ISA, idu_enc);
-//      idu_dec.siz = idu_tmp.siz;
-//    end
-//  end
-//
-//end: gen_d16
-//else begin: gen_d32
-//
-//  // 32-bit instruction decoder
-//  assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
-//
-//// enc32 debug code
-////  dec_t  idu_tmp;
-////  logic [32-1:0] idu_enc;
-////  assign idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
-////  assign idu_enc = enc32(ISA, idu_tmp);
-////  assign idu_dec = dec32(ISA, idu_enc);
-//
-//end: gen_d32
-//endgenerate
+  generate
+  `ifndef ALTERA_RESERVED_QIS
+  if (ISA.spec.ext.C) begin: gen_d16
+  `else
+  if (1'b1) begin: gen_d16
+  `endif
+    dec_t          idu_tmp;
 
-// 32-bit instruction decoder
-assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+    // 16/32-bit instruction decoder
+    always_comb
+    unique case (opsiz(tcb_ifu.rsp.rdt[16-1:0]))
+      2      : idu_tmp = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
+      4      : idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
+      default: idu_tmp = 'x;                               // OP sizes above 4 bytes are not supported
+    endcase
+
+    // distributed I/C decoder mux
+  //if (CFG.DEC_DIS) begin: gen_dec_dis
+    if (1'b1) begin: gen_dec_dis
+      assign idu_dec = idu_tmp;
+    end: gen_dec_dis
+    // 32-bit I/C decoder mux
+    else begin
+      (* keep = "true" *)
+      logic [32-1:0] idu_enc;
+
+      assign idu_enc = enc32(ISA, idu_tmp);
+      always_comb
+      begin
+        idu_dec     = 'x;
+        idu_dec     = dec32(ISA, idu_enc);
+        idu_dec.siz = idu_tmp.siz;
+      end
+    end
+
+  end: gen_d16
+  else begin: gen_d32
+
+    // 32-bit instruction decoder
+    assign idu_dec = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+
+//  // enc32 debug code
+//  dec_t  idu_tmp;
+//  logic [32-1:0] idu_enc;
+//  assign idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);
+//  assign idu_enc = enc32(ISA, idu_tmp);
+//  assign idu_dec = dec32(ISA, idu_enc);
+
+  end: gen_d32
+  endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // execute

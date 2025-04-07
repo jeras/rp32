@@ -18,6 +18,7 @@
 
 module r5p_degu_tcb_mon
   import riscv_isa_pkg::*;
+  import riscv_isa_i_pkg::*;
 #(
   // constants used across the design in signal range sizing instead of literals
   localparam int unsigned XLEN = 32,
@@ -110,7 +111,11 @@ module r5p_degu_tcb_mon
   always_ff @(posedge dly_ifu.clk)
   begin
     if (dly_ifu.trn) begin
-      str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", dly_ifu.req.adr, tcb_ifu.rsp.rdt));
+      if (opsiz(tcb_ifu.rsp.rdt) == 4) begin
+        str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", dly_ifu.req.adr, tcb_ifu.rsp.rdt));
+      end else begin
+        str_ifu.push_front($sformatf(" 0x%8h (0x%4h)", dly_ifu.req.adr, tcb_ifu.rsp.rdt[16-1:0]));
+      end
     end
   end
 

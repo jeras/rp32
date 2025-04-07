@@ -230,6 +230,7 @@ always_comb
 unique case (dec.fn7[5])
   1'b1   : shf_ext = (XLEN+1)'(  $signed(shf_tmp));
   1'b0   : shf_ext = (XLEN+1)'($unsigned(shf_tmp));
+  default: shf_ext = 'x;
 endcase
 
 generate

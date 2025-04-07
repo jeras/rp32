@@ -67,19 +67,19 @@ typedef enum {
 ///////////////////////////////////////////////////////////////////////////////
 
 // '{sign extended (signed), 6-bit} signed immediate (CI-type)
-function automatic logic signed [6-1:0] imm_ci_f (op16_ci_t op);
+function automatic imm_t imm_ci_f (op16_ci_t op);
   imm_ci_f = $signed({op.imm_12_12, op.imm_06_02});  // signed immediate
 endfunction: imm_ci_f
 
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
-function automatic logic signed [10-1:0] imm_cip_f (op16_ci_t op);
+function automatic imm_t imm_cip_f (op16_ci_t op);
   logic signed [10-1:0] imm = '0;
   {imm[9], imm[4], imm[6], imm[8:7], imm[5]} = {op.imm_12_12, op.imm_06_02};  // C.ADDI16SP
-  return imm;
+  return imm_t'(imm);
 endfunction: imm_cip_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} load immediate (CI_L-type)
-function automatic logic unsigned [12-1:0] imm_cil_f (op16_ci_t op, op16_qlf_t qlf);
+function automatic imm_t imm_cil_f (op16_ci_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
     T_C_W: {imm[5], {imm[4:2], imm[7:6]}} = {op.imm_12_12, op.imm_06_02};  // C.LWSP, C.FLWSP
@@ -87,11 +87,11 @@ function automatic logic unsigned [12-1:0] imm_cil_f (op16_ci_t op, op16_qlf_t q
     T_C_Q: {imm[5], {imm[4:4], imm[9:6]}} = {op.imm_12_12, op.imm_06_02};  // C.LQSP
     default: imm = 'x;
   endcase
-  return imm;
+  return imm_t'(imm);
 endfunction: imm_cil_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4/8/16} store immediate (CSS-type)
-function automatic logic unsigned [12-1:0] imm_css_f (op16_css_t op, op16_qlf_t qlf);
+function automatic immu_t imm_css_f (op16_css_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
     T_C_W: {imm[5:2], imm[7:6]} = op.imm_12_07;  // C.SWSP, C.FSWSP
@@ -99,18 +99,18 @@ function automatic logic unsigned [12-1:0] imm_css_f (op16_css_t op, op16_qlf_t 
     T_C_Q: {imm[5:4], imm[9:6]} = op.imm_12_07;  // C.SQSP
     default: imm = 'x;
   endcase
-  return imm;
+  return immu_t'(imm);
 endfunction: imm_css_f
 
 // '{zero extended (unsigned), 6-bit, scaled by 4} load immediate (CIW-type)
-function automatic logic unsigned [10-1:0] imm_ciw_f (op16_ciw_t op);
+function automatic immu_t imm_ciw_f (op16_ciw_t op);
   logic unsigned [10-1:0] imm = '0;
   {imm[5:4], imm[9:6], imm[2], imm[3]} = op.imm_12_05;
-  return imm;
+  return immu_t'(imm);
 endfunction: imm_ciw_f
 
 // '{zero extended (unsigned), 5-bit, scaled by 4/8/16} store immediate (C[LS]-type)
-function automatic logic unsigned [12-1:0] imm_cls_f (op16_cl_t op, op16_qlf_t qlf);
+function automatic immu_t imm_cls_f (op16_cl_t op, op16_qlf_t qlf);
   logic unsigned [12-1:0] imm = '0;
   case (qlf)
     T_C_W: {imm[5:3], imm[2], imm[  6]} = {op.imm_12_10, op.imm_06_05};  // C.LW, C.SW, C.FLW, C.FSW
@@ -118,27 +118,27 @@ function automatic logic unsigned [12-1:0] imm_cls_f (op16_cl_t op, op16_qlf_t q
     T_C_Q: {imm[5:4], imm[8], imm[7:6]} = {op.imm_12_10, op.imm_06_05};  // C.LQ, C.SQ
     default: imm = 'x;
   endcase
-  return imm;
+  return immu_t'(imm);
 endfunction: imm_cls_f
 
 // branch immediate (CB-type)
-function automatic logic signed [8:0] imm_cb_f (op16_cb_t op);
+function automatic imm_t imm_cb_f (op16_cb_t op);
   logic signed [8:0] imm = '0;
   {imm[8], imm[4:3], imm[7:6], imm[2:1], imm[5]} = {op.off_12_10, op.off_06_02};
-  return imm;
+  return imm_t'(imm);
 endfunction: imm_cb_f
 
 // '{sign extended (signed), 11-bit, scaled by 2} jump immediate (CJ-type)
-function automatic logic signed [12-1:0] imm_cj_f (op16_cj_t op);
+function automatic imm_t imm_cj_f (op16_cj_t op);
   logic signed [12-1:0] imm;
   {imm[11], imm[4], imm[9:8], imm[10], imm[6], imm[7], imm[3:1], imm[5]} = op.off_12_02;
   imm[0] = 1'b0;
-  return imm;
+  return imm_t'(imm);
 endfunction: imm_cj_f
 
 // upper immediate (CI-type)
 function automatic imm_t imm_ciu_f (op16_ci_t op);
-  imm_ciu_f = 32'($signed({op.imm_12_12, op.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
+  imm_ciu_f = imm_t'($signed({op.imm_12_12, op.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
 endfunction: imm_ciu_f
 
 ///////////////////////////////////////////////////////////////////////////////

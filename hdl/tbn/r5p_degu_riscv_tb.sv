@@ -26,7 +26,7 @@ module r5p_degu_riscv_tb
   // RISC-V ISA
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
 //  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
-  isa_ext_t    XTEN = RV_M | RV_Zicsr,
+  isa_ext_t    XTEN = RV_C,
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
@@ -95,7 +95,7 @@ import riscv_asm_pkg::*;
     DBW: XLEN,
     ALW: $clog2(XLEN/8),   // $clog2(DBW/SLW) // TODO: could be 16-bit allignment
     // data packing parameters
-    MOD: TCB_MEMORY,
+    MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX

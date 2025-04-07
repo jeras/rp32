@@ -138,8 +138,9 @@ typedef union packed {
 // 32-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-  // immediate type
+  // immediate signed/unsigned types
   typedef logic signed [32-1:0] imm_t;
+  typedef logic signed [32-1:0] immu_t;
 
   // I-immediate (ALU, load offset)
   function automatic imm_t imm_i_f (op32_i_t op);
@@ -412,7 +413,7 @@ function automatic op32_t   enc32 (isa_t isa, dec_t ctl);
 function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
 `endif
 
-  // idle 
+  // idle
   logic IDL = 1'b0;
 
   // templates
