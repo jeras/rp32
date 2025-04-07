@@ -41,7 +41,7 @@ module r5p_alu
   input  logic            clk,  // clock
   input  logic            rst,  // reset
   // control structure from instruction decode
-  input  dec_t            ctl,
+  input  dec_t            dec,
   // data input/output
   input  logic [XLEN-1:0] pc ,  // PC
   input  logic [XLEN-1:0] rs1,  // source register 1
@@ -88,10 +88,10 @@ logic [XLEN-1:0] val;
 
 //  // dedicated logical operand multiplexer
 //  always_comb
-//  unique casez (ctl.i.opc)
-//    OP     : begin log_op1 = rs1; log_op2 = rs2;              end  // R-type
-//    OP_IMM : begin log_op1 = rs1; log_op2 = XLEN'(ctl.imm.i); end  // I-type (arithmetic/logic)
-//    default: begin log_op1 = 'x ; log_op2 = 'x;               end
+//  unique casez (dec.opc)
+//    OP     : begin log_op1 = rs1; log_op2 = rs2;            end  // R-type
+//    OP_IMM : begin log_op1 = rs1; log_op2 = XLEN'(dec.i_i); end  // I-type (arithmetic/logic)
+//    default: begin log_op1 = 'x ; log_op2 = 'x;             end
 //  endcase
 
 // TODO: not ALU all paths have to go through the same mux, maybe slit them
@@ -100,16 +100,16 @@ logic [XLEN-1:0] val;
 always_comb
 begin
   // conbinational logic
-  unique case (ctl.opc)
-    OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2               ; end  // R-type (arithmetic/logic)
-    BRANCH : if (CFG_BRANCH) begin mux_op1 = rs1; mux_op2 = rs2               ; end  // B-type (branch)
-    JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.jmp.imm); end  // I-type (jump)
-    OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.alu.imm); end  // I-type (arithmetic/logic)
-    LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.ldu.imm); end  // I-type (load)
-    STORE  : if (CFG_STORE ) begin mux_op1 = rs1; mux_op2 = XLEN'(ctl.stu.imm); end  // S-type (store)
-    AUIPC  : if (CFG_AUIPC ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.uiu.imm); end  // U-type
-    JAL    : if (CFG_JAL   ) begin mux_op1 = pc ; mux_op2 = XLEN'(ctl.jmp.jmp); end  // J-type (jump)
-    default:                 begin mux_op1 = 'x ; mux_op2 = 'x                ; end
+  unique case (dec.opc)
+    OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2    ; end  // R-type (arithmetic/logic)
+    BRANCH : if (CFG_BRANCH) begin mux_op1 = rs1; mux_op2 = rs2    ; end  // B-type (branch)
+    JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = dec.i_i; end  // I-type (jump)
+    OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = dec.i_i; end  // I-type (arithmetic/logic)
+    LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = dec.i_l; end  // I-type (load)
+    STORE  : if (CFG_STORE ) begin mux_op1 = rs1; mux_op2 = dec.i_s; end  // S-type (store)
+    AUIPC  : if (CFG_AUIPC ) begin mux_op1 = pc ; mux_op2 = dec.i_u; end  // U-type
+    JAL    : if (CFG_JAL   ) begin mux_op1 = pc ; mux_op2 = dec.i_j; end  // J-type (jump)
+    default:                 begin mux_op1 = 'x ; mux_op2 = 'x     ; end
   endcase
 end
 
@@ -118,17 +118,17 @@ end
 always_comb
 begin
   // conbinational logic
-  unique case (ctl.opc)
+  unique case (dec.opc)
     OP     : if (1'b1      ) begin
-      unique case (ctl.alu.fn3)
-        ADD    :             begin add_inv = ctl.alu.fn7[5]; add_uns = 1'bx; end
+      unique case (fn3_alu_et'(dec.fn3))
+        ADD    :             begin add_inv = dec.fn7[5]; add_uns = 1'bx; end
         SLT    :             begin add_inv = 1'b1; add_uns = 1'b0; end
         SLTU   :             begin add_inv = 1'b1; add_uns = 1'b1; end
         default:             begin add_inv = 1'bx; add_uns = 1'bx; end
       endcase
     end
     OP_IMM : if (1'b1      ) begin
-      unique case (ctl.alu.fn3)
+      unique case (fn3_alu_et'(dec.fn3))
         ADD    :             begin add_inv = 1'b0; add_uns = 1'bx; end
         SLT    :             begin add_inv = 1'b1; add_uns = 1'b0; end
         SLTU   :             begin add_inv = 1'b1; add_uns = 1'b1; end
@@ -136,7 +136,7 @@ begin
       endcase
     end
     BRANCH : if (CFG_BRANCH) begin
-      unique case (ctl.bru.fn3)
+      unique case (fn3_bru_et'(dec.fn3))
         BEQ    ,
         BNE    :             begin add_inv = 1'b1; add_uns = 1'bx; end
         BLT    ,
@@ -188,7 +188,7 @@ assign log_op2 = mux_op2;
 
 // this can be implemented with a single LUT4
 always_comb
-unique case (ctl.alu.fn3)
+unique case (fn3_alu_et'(dec.fn3))
   // bitwise logical operations
   AND    : log_val = log_op1 & log_op2;
   OR     : log_val = log_op1 | log_op2;
@@ -218,7 +218,7 @@ assign shf_amm = mux_op2[XLOG-1:0];
 
 // bit inversion
 always_comb
-unique casez (ctl.alu.fn3)
+unique casez (fn3_alu_et'(dec.fn3))
   // barrel shifter
   SR     : shf_tmp =        shf_op1 ;
   SL     : shf_tmp = bitrev(shf_op1);
@@ -227,7 +227,7 @@ endcase
 
 // sign extension to (XLEN+1)
 always_comb
-unique case (ctl.alu.fn7[5])
+unique case (dec.fn7[5])
   1'b1   : shf_ext = (XLEN+1)'(  $signed(shf_tmp));
   1'b0   : shf_ext = (XLEN+1)'($unsigned(shf_tmp));
 endcase
@@ -287,9 +287,9 @@ endgenerate
 
 // operations
 always_comb
-unique case (ctl.opc)
+unique case (dec.opc)
   OP     ,
-  OP_IMM : unique case (ctl.alu.fn3)
+  OP_IMM : unique case (fn3_alu_et'(dec.fn3))
       // adder based instructions
       ADD : val = XLEN'(sum);
       SLT ,

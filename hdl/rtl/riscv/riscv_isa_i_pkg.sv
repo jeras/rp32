@@ -138,70 +138,47 @@ typedef union packed {
 // 32-bit OP immediate decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// per instruction format type definitions
-typedef logic signed [12  -1:0] imm_i_t;  // 12's
-typedef imm_i_t                 imm_l_t;  // 12's
-typedef logic signed [12  -1:0] imm_s_t;  // 12's
-typedef logic signed [12+1-1:0] imm_b_t;  // 13's
-typedef logic signed [32  -1:0] imm_u_t;  // 32's
-typedef logic signed [20    :0] imm_j_t;  // 21's
-typedef logic signed [ 6  -1:0] imm_a_t;  //  6'u
-// NOTE: there is no load format, 32-bit load instructions use the I-type
+  // immediate type
+  typedef logic signed [32-1:0] imm_t;
 
-// ALU/load immediate (I-type)
-function automatic imm_i_t imm_i_f (op32_i_t op);
-  imm_i_f = $signed({op.imm_11_0});
-endfunction: imm_i_f
+  // I-immediate (ALU, load offset)
+  function automatic imm_t imm_i_f (op32_i_t op);
+    imm_i_f = $signed({op.imm_11_0});
+  endfunction: imm_i_f
 
-// store immediate (S-type)
-function automatic imm_s_t imm_s_f (op32_s_t op);
-  imm_s_f = $signed({op.imm_11_5, op.imm_4_0});
-endfunction: imm_s_f
+  // S-immediate (store offset)
+  function automatic imm_t imm_s_f (op32_s_t op);
+    imm_s_f = $signed({op.imm_11_5, op.imm_4_0});
+  endfunction: imm_s_f
 
-// branch immediate (B-type)
-function automatic imm_b_t imm_b_f (op32_b_t op);
-  imm_b_f = $signed({op.imm_12, op.imm_11, op.imm_10_5, op.imm_4_1, 1'b0});
-endfunction: imm_b_f
+  // B-immediate (branch offset)
+  function automatic imm_t imm_b_f (op32_b_t op);
+    imm_b_f = $signed({op.imm_12, op.imm_11, op.imm_10_5, op.imm_4_1, 1'b0});
+  endfunction: imm_b_f
 
-// ALU upper immediate (must be signed for RV64)
-function automatic imm_u_t imm_u_f (op32_u_t op);
-  imm_u_f = $signed({op.imm_31_12, 12'h000});
-endfunction: imm_u_f
+  // U-immediate (ALU upper)
+  function automatic imm_t imm_u_f (op32_u_t op);
+    imm_u_f = $signed({op.imm_31_12, 12'h000});
+  endfunction: imm_u_f
 
-// ALU jump immediate
-function automatic imm_j_t imm_j_f (op32_j_t op);
-  imm_j_f = $signed({op.imm_20, op.imm_19_12, op.imm_11, op.imm_10_1, 1'b0});
-endfunction: imm_j_f
-// jump addition is done in ALU while the PC adder is used to calculate the link address
-
-// shift ammount immediate (I-type)
-function automatic imm_a_t imm_a_f (op32_i_t op);
-  imm_a_f = op.imm_11_0[6-1:0];
-endfunction: imm_a_f
+  // J-immediate (ALU jump)
+  function automatic imm_t imm_j_f (op32_j_t op);
+    imm_j_f = $signed({op.imm_20, op.imm_19_12, op.imm_11, op.imm_10_1, 1'b0});
+  endfunction: imm_j_f
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit OP GPR decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// TODO: change when Verilator supports unpacked structures
-// GPR enable
-typedef struct packed {
-  logic         rd;   // write enable register destination
-  logic         rs1;  // read  enable register source 1
-  logic         rs2;  // read  enable register source 2
-} gpr_ena_t;
+  typedef logic [5-1:0] gpr_idx_t;
 
-// GPR address
-typedef struct packed {
-  logic [5-1:0] rd ;  // address register destination (write)
-  logic [5-1:0] rs1;  // address register source 1 (read)
-  logic [5-1:0] rs2;  // address register source 2 (read)
-} gpr_adr_t;
-
-typedef struct packed {
-  gpr_ena_t ena;  // enable
-  gpr_adr_t adr;  // address
-} dec_gpr_t;
+  // TODO: change when Verilator supports unpacked structures
+  // GPR enable
+  typedef struct packed {
+    logic         rd;   // write enable register destination
+    logic         rs1;  // read  enable register source 1
+    logic         rs2;  // read  enable register source 2
+  } gpr_ena_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // I base (32E, 32I, 64I, 128I) data types
@@ -210,44 +187,8 @@ typedef struct packed {
 // opcode type is just shorter type name for the full type name
 typedef op32_op62_et opc_t;
 
-// branch unit
-typedef struct packed {
-  fn3_bru_et fn3;  // funct3
-  imm_b_t    imm;  // immediate
-} dec_bru_t;
-
-// arithmetic/logic unit
-typedef struct packed {
-  fn7_t      fn7;  // funct7 (used for subtraction and arithmetic/logic shifts)
-  fn3_alu_et fn3;  // funct3
-  imm_i_t    imm;  // immediate
-} dec_alu_t;
-
-// load unit
-typedef struct packed {
-  fn3_ldu_et fn3;  // funct3
-  imm_l_t    imm;  // immediate
-} dec_ldu_t;
-
-// store unit
-typedef struct packed {
-  fn3_stu_et fn3;  // funct3
-  imm_s_t    imm;  // immediate
-} dec_stu_t;
-
-// upper immediate unit
-typedef struct packed {
-  imm_u_t    imm;  // immediate
-} dec_uiu_t;
-
-// jump unit
-typedef struct packed {
-  imm_i_t    imm;  // immediate
-  imm_j_t    jmp;  // immediate
-} dec_jmp_t;
-
 ///////////////////////////////////////////////////////////////////////////////
-// M statndard extension
+// M standard extension
 ///////////////////////////////////////////////////////////////////////////////
 
 // funct3 multiply/divide/reminder
@@ -278,13 +219,6 @@ typedef enum logic [4-1:0] {
   PRIV_MRET   = {2'b01, LVL_M}
 } isa_priv_typ_t;
 
-// control structure
-// TODO: change when Verilator supports unpacked structures
-typedef struct packed {
-  logic          ena;  // enable
-  isa_priv_typ_t typ;  // type
-} dec_priv_t;
-
 ///////////////////////////////////////////////////////////////////////////////
 // Zicsr standard extension
 ///////////////////////////////////////////////////////////////////////////////
@@ -300,21 +234,15 @@ typedef enum logic [$bits(fn3_t)-1:0] {
   CSRRSI = 3'b110,  //
   CSRRCI = 3'b111   //
 } fn3_csr_et;
-// NOTE: the RV128I instruction LQ (load quad) is under the MISC_MEM opcode
+
+// CSR address
+typedef logic [12-1:0] csr_adr_t;
 
 // CSR immediate (zero extended from 5 to 32 bits
 typedef logic [5-1:0] csr_imm_t;
 
-// control structure
-// TODO: change when Verilator supports unpacked structures
-typedef struct packed {
-  fn3_csr_et fn3;  // funct3
-  csr_adr_t  adr;  // address
-  csr_imm_t  imm;  // immediate
-} dec_csr_t;
-
 ///////////////////////////////////////////////////////////////////////////////
-// illegal instruction
+// illegal/... instruction types
 ///////////////////////////////////////////////////////////////////////////////
 
 typedef enum {
@@ -326,39 +254,33 @@ typedef enum {
 } ill_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-// controller
+// decoder structure
 ///////////////////////////////////////////////////////////////////////////////
 
-// control structure
-// TODO: change when Verilator supports unpacked structures
-typedef struct packed {
-  ill_t     ill;     // illegal
-  integer   siz;     // instruction size
-  opc_t     opc;     // operation code
-  dec_gpr_t gpr;     // GPR control/address
-  dec_bru_t bru;     // branch unit
-  dec_alu_t alu;     // arithmetic/logic unit
-  dec_ldu_t ldu;     // load unit
-  dec_stu_t stu;     // store unit
-  dec_uiu_t uiu;     // upper immediate unit
-  dec_jmp_t jmp;     // jump unit
-
-//dec_m_t    m;       // integer multiplication and division
-//dec_a_t    a;       // atomic
-//dec_f_t    f;       // single-precision floating-point
-//dec_d_t    d;       // double-precision floating-point
-//dec_fnc_t  fnc;     // instruction fence
-  dec_csr_t csr;     // CSR operation
-//dec_q_t    q;       // quad-precision floating-point
-//dec_l_t    l;       // decimal precision floating-point
-//dec_b_t    b;       // bit manipulation
-//dec_j_t    j;       // dynamically translated languages
-//dec_t_t    t;       // transactional memory
-//dec_p_t    p;       // packed-SIMD
-//dec_v_t    v;       // vector operations
-//dec_n_t    n;       // user-level interrupts
-//  dec_prv_t prv;    // priviliged spec instructions
-} dec_t;
+  // TODO: change when Verilator supports unpacked structures
+  typedef struct packed {
+    // instruction encodings
+    ill_t     ill;  // illegal
+    integer   siz;  // instruction size
+    opc_t     opc;  // operation code
+    fn3_t     fn3;  // func3
+    fn7_t     fn7;  // func7
+    // GPR indexes
+    gpr_idx_t rd ;  // destination register index
+    gpr_idx_t rs1;  // register source 1 index
+    gpr_idx_t rs2;  // register source 2 index
+    gpr_ena_t gpr;  // GPR read write enable for {rd, rs1, rs2}
+    // immediates
+    imm_t     i_i;  // I-immediate (ALU)
+    imm_t     i_l;  // I-immediate (load offset) used in C extension
+    imm_t     i_s;  // S-immediate (store offset)
+    imm_t     i_b;  // B-immediate (branch offset)
+    imm_t     i_u;  // U-immediate (ALU upper)
+    imm_t     i_j;  // J-immediate (ALU jump)
+    // CSR
+    csr_adr_t csr;
+    csr_imm_t i_c;
+  } dec_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 32-bit instruction decoder
@@ -426,72 +348,57 @@ function automatic dec_t dec32 (isa_t isa, op32_r_t op);
   dec32.opc = opc_t'(op[6:2]);
   `endif
 
-  // GPR address
+  // GPR index
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.gpr.adr = '{rd: op.r.rd, rs1: op.r.rs1, rs2: op.r.rs2};
+  dec32.rd  = op.r.rd ;
+  dec32.rs1 = op.r.rs1;
+  dec32.rs2 = op.r.rs2;
   `else
-  dec32.gpr.adr = '{rd: op.rd, rs1: op.rs1, rs2: op.rs2};
+  dec32.rd  = op.rd ;
+  dec32.rs1 = op.rs1;
+  dec32.rs2 = op.rs2;
   `endif
 
-  // GPR decoder is based on opcode
+  // GPR enable decoder is based on opcode
   `ifndef LANGUAGE_UNSUPPORTED_UNION
   unique case (opc_t'(op.r.opcode.opc))
   `else
   unique case (opc_t'(op[6:2]))
   `endif
-    //                         rd,rs1,rs2
+    //                     rd,rs1,rs2
     LUI    ,
-    AUIPC  : dec32.gpr.ena = '{'1, '0, '0};
-    JAL    : dec32.gpr.ena = '{'1, '0, '0};
-    JALR   : dec32.gpr.ena = '{'1, '1, '0};
-    BRANCH : dec32.gpr.ena = '{'0, '1, '1};
-    LOAD   : dec32.gpr.ena = '{'1, '1, '0};
-    STORE  : dec32.gpr.ena = '{'0, '1, '1};
-    OP_IMM : dec32.gpr.ena = '{'1, '1, '0};
-    OP     : dec32.gpr.ena = '{'1, '1, '1};
-    default: dec32.gpr.ena = '{'0, '0, '0};
+    AUIPC  : dec32.gpr = '{'1, '0, '0};
+    JAL    : dec32.gpr = '{'1, '0, '0};
+    JALR   : dec32.gpr = '{'1, '1, '0};
+    BRANCH : dec32.gpr = '{'0, '1, '1};
+    LOAD   : dec32.gpr = '{'1, '1, '0};
+    STORE  : dec32.gpr = '{'0, '1, '1};
+    OP_IMM : dec32.gpr = '{'1, '1, '0};
+    OP     : dec32.gpr = '{'1, '1, '1};
+    default: dec32.gpr = '{'0, '0, '0};
   endcase
 
-  // branch unit
+  // func3/func7
   `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.bru.fn3 = fn3_bru_et'(op.b.funct3);
+  dec32.fn3 = op.r.funct3;
+  dec32.fn7 = op.r.funct7;
   `else
-  dec32.bru.fn3 = fn3_bru_et'(op  .funct3);
+  dec32.fn3 = op  .funct3;
+  dec32.fn7 = op  .funct7;
   `endif
-  dec32.bru.imm = imm_b_f(op);
 
-  // arithmetic/logic unit
-  `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.alu.fn7 =             op.r.funct7 ;
-  dec32.alu.fn3 = fn3_alu_et'(op.r.funct3);
-  `else
-  dec32.alu.fn7 =             op  .funct7 ;
-  dec32.alu.fn3 = fn3_alu_et'(op  .funct3);
-  `endif
-  dec32.alu.imm = imm_i_f(op);
+  // immediates
+  dec32.i_b = imm_b_f(op);
+  dec32.i_i = imm_i_f(op);
+  dec32.i_l = imm_i_f(op);
+  dec32.i_s = imm_s_f(op);
+  dec32.i_u = imm_u_f(op);
+  dec32.i_j = imm_j_f(op);
 
-  // load unit
-  `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.ldu.fn3 = fn3_ldu_et'(op.i.funct3);
-  `else
-  dec32.ldu.fn3 = fn3_ldu_et'(op  .funct3);
-  `endif
-  dec32.ldu.imm = imm_i_f(op);
-
-  // store unit
-  `ifndef LANGUAGE_UNSUPPORTED_UNION
-  dec32.stu.fn3 = fn3_stu_et'(op.s.funct3);
-  `else
-  dec32.stu.fn3 = fn3_stu_et'(op.  funct3);
-  `endif
-  dec32.stu.imm = imm_s_f(op);
-
-  // upper immediate unit
-  dec32.uiu.imm = imm_u_f(op);
-
-  // jump unit
-  dec32.jmp.imm = imm_i_f(op);
-  dec32.jmp.jmp = imm_j_f(op);
+  // CSR
+  // TODO: organize better
+  dec32.csr = op[31:20];
+  dec32.i_c = op[19:15];
 
 endfunction: dec32
 
@@ -508,6 +415,7 @@ function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
   // idle 
   logic IDL = 1'b0;
 
+  // templates
   op32_r_t t_op    ;
   op32_i_t t_op_imm;
   op32_i_t t_load  ;
@@ -519,66 +427,66 @@ function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
 
   // OP
   t_op    .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_op    .funct7    = ctl.alu.fn7;
-  t_op    .funct3    = ctl.alu.fn3;
-  t_op    .rs2       = ctl.gpr.adr.rs2;
-  t_op    .rs1       = ctl.gpr.adr.rs1;
-  t_op    .rd        = ctl.gpr.adr.rd;
+  t_op    .funct7    = ctl.fn7;
+  t_op    .funct3    = ctl.fn3;
+  t_op    .rs2       = ctl.rs2;
+  t_op    .rs1       = ctl.rs1;
+  t_op    .rd        = ctl.rd ;
 
   // OP_IMM
   t_op_imm.opcode    = '{opc: ctl.opc, c11: 2'b11};
-  case (ctl.alu.fn3)
-    SR, SL :  t_op_imm.imm_11_0 = {ctl.alu.fn7, ctl.alu.imm[5-1:0]};  // TODO: this at least partially depends on XLEN (shift ammount can be 5 or 6 bits)
-    default:  t_op_imm.imm_11_0 =               ctl.alu.imm;
+  case (ctl.fn3)
+    SR, SL :  t_op_imm.imm_11_0 = {ctl.fn7, ctl.i_i[5-1:0]};  // TODO: this at least partially depends on XLEN (shift ammount can be 5 or 6 bits)
+    default:  t_op_imm.imm_11_0 =           ctl.i_i;
   endcase
-  t_op_imm.funct3    = ctl.alu.fn3;
-  t_op_imm.rs1       = ctl.gpr.adr.rs1;
-  t_op_imm.rd        = ctl.gpr.adr.rd;
+  t_op_imm.funct3    = ctl.fn3;
+  t_op_imm.rs1       = ctl.rs1;
+  t_op_imm.rd        = ctl.rd ;
 
   // LOAD
   t_load  .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_load  .imm_11_0  = ctl.ldu.imm;
-  t_load  .funct3    = ctl.ldu.fn3;
-  t_load  .rs1       = ctl.gpr.adr.rs1;
-  t_load  .rd        = ctl.gpr.adr.rd;
+  t_load  .imm_11_0  = ctl.i_i;
+  t_load  .funct3    = ctl.fn3;
+  t_load  .rs1       = ctl.rs1;
+  t_load  .rd        = ctl.rd ;
 
   // STORE
   t_store .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_store .imm_11_5  = ctl.stu.imm[11:5];
-  t_store .imm_4_0   = ctl.stu.imm[4:0];
-  t_store .funct3    = ctl.stu.fn3;
-  t_store .rs2       = ctl.gpr.adr.rs2;
-  t_store .rs1       = ctl.gpr.adr.rs1;
+  t_store .imm_11_5  = ctl.i_s[11:5];
+  t_store .imm_4_0   = ctl.i_s[4:0];
+  t_store .funct3    = ctl.fn3;
+  t_store .rs2       = ctl.rs2;
+  t_store .rs1       = ctl.rs1;
 
   // BRANCH
   t_branch.opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_branch.imm_12    = ctl.bru.imm[12];
-  t_branch.imm_11    = ctl.bru.imm[11];
-  t_branch.imm_10_5  = ctl.bru.imm[10:5];
-  t_branch.imm_4_1   = ctl.bru.imm[4:1];
-  t_branch.funct3    = ctl.bru.fn3;
-  t_branch.rs2       = ctl.gpr.adr.rs2;
-  t_branch.rs1       = ctl.gpr.adr.rs1;
+  t_branch.imm_12    = ctl.i_b[12];
+  t_branch.imm_11    = ctl.i_b[11];
+  t_branch.imm_10_5  = ctl.i_b[10:5];
+  t_branch.imm_4_1   = ctl.i_b[4:1];
+  t_branch.funct3    = ctl.fn3;
+  t_branch.rs2       = ctl.rs2;
+  t_branch.rs1       = ctl.rs1;
 
   // JAL
   t_jal   .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_jal   .imm_20    = ctl.jmp.jmp[20];
-  t_jal   .imm_10_1  = ctl.jmp.jmp[10:1];
-  t_jal   .imm_11    = ctl.jmp.jmp[11];
-  t_jal   .imm_19_12 = ctl.jmp.jmp[19:12];
-  t_jal   .rd        = ctl.gpr.adr.rd;
+  t_jal   .imm_20    = ctl.i_j[20];
+  t_jal   .imm_10_1  = ctl.i_j[10:1];
+  t_jal   .imm_11    = ctl.i_j[11];
+  t_jal   .imm_19_12 = ctl.i_j[19:12];
+  t_jal   .rd        = ctl.rd ;
 
   // JALR
   t_jalr  .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_jalr  .imm_11_0  = ctl.jmp.imm;
-  t_jalr  .funct3    = {3{IDL}};
-  t_jalr  .rs1       = ctl.gpr.adr.rs1;
-  t_jalr  .rd        = ctl.gpr.adr.rd;
+  t_jalr  .imm_11_0  = ctl.i_i;
+  t_jalr  .funct3    = {3{IDL}};  // TODO: 'x is an option?
+  t_jalr  .rs1       = ctl.rs1;
+  t_jalr  .rd        = ctl.rd ;
 
   // LUI/AUIPC
   t_ui    .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_ui    .imm_31_12 = ctl.uiu.imm[31:12];
-  t_ui    .rd        = ctl.gpr.adr.rd;
+  t_ui    .imm_31_12 = ctl.i_u[31:12];
+  t_ui    .rd        = ctl.rd ;
 
   // multiplexer
   unique case (ctl.opc)
@@ -591,7 +499,7 @@ function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
     JALR   : enc32 = t_jalr  ;
     LUI    ,
     AUIPC  : enc32 = t_ui    ;
-    default: enc32 = '0;
+    default: enc32 = '0;  // TODO: 'x is an option
   endcase
 
 endfunction: enc32

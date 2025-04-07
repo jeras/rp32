@@ -137,7 +137,7 @@ function automatic logic signed [12-1:0] imm_cj_f (op16_cj_t op);
 endfunction: imm_cj_f
 
 // upper immediate (CI-type)
-function automatic imm_u_t imm_ciu_f (op16_ci_t op);
+function automatic imm_t imm_ciu_f (op16_ci_t op);
   imm_ciu_f = 32'($signed({op.imm_12_12, op.imm_06_02, 12'h000}));  // upper immediate for C.LUI instruction
 endfunction: imm_ciu_f
 
@@ -195,62 +195,62 @@ function automatic dec_t dec16 (isa_t isa, logic [16-1:0] op);
 // RV32 I base extension
 if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
   //  fedc_ba98_7654_3210
-//16'b0000_0000_0000_0000: t = '{ill: ILL,                                                                                                                            default: 'x};  // illegal instruction
-//16'b0000_0000_000?_??00: t = '{ill: RES, opc: OP_IMM, gpr: '{3'b110, '{rqd_, 5'd2, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ciw_f(op       ))}, default: 'x};  // C.ADDI4SPN | nzuimm=0
-  16'b000?_????_????_??00: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd_, 5'd2, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ciw_f(op       ))}, default: 'x};  // C.ADDI4SPN | addi rd', x2, nzuimm
-  16'b010?_????_????_??00: t = '{ill: STD, opc: LOAD  , gpr: '{3'b110, '{rqd_, rq_1, 'x  }}, ldu: '{                 fn3: LW  , imm: imm_l_t'(imm_cls_f(op, T_C_W))}, default: 'x};  // C.LW       | lw rd', offset(rs1')
-//16'b100?_????_????_??00: t = '{ill: RES,                                                                                                                            default: 'x};  // Reserved
-  16'b110?_????_????_??00: t = '{ill: STD, opc: STORE , gpr: '{3'b011, '{'x  , rq_1, rq_2}}, stu: '{                 fn3: SW  , imm: imm_s_t'(imm_cls_f(op, T_C_W))}, default: 'x};  // C.SW       | sw rs2', offset(rs1')
-//16'b0000_0000_0000_0001: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.NOP      | rd=x0, nzimm=0
-  16'b000?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.NOP      | rd=x0, nzimm≠0
-//16'b0000_????_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.ADDI     | nzimm=0 // TODO prevent WB
-  16'b000?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.ADDI     | addi rd, rd, nzimm
-  16'b001?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: '{3'b100, '{5'd1, 'x  , 'x  }}, jmp: '{default: 'x,                jmp: imm_j_t'(imm_cj_f (op       ))}, default: 'x};  // C.JAL      | jal x1, offset | only RV32
-//16'b010?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd0, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.LI       | rd=x0
-  16'b010?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd0, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.LI       | addi rd, x0, imm
-//16'b0110_0001_0000_0001: t = '{ill: RES, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_cip_f(op       ))}, default: 'x};  // C.ADDI16SP | nzimm=0
-  16'b011?_0001_0???_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: imm_i_t'(imm_cip_f(op       ))}, default: 'x};  // C.ADDI16SP | addi x2, x2, nzimm
-//16'b0110_????_?000_0001: t = '{ill: RES, opc: LUI   , gpr: '{3'b110, '{r_d1, 'x  , 'x  }}, uiu: '{                            imm:          imm_ciu_f(op       ) }, default: 'x};  // C.LUI      | nzimm=0
-//16'b011?_0000_0???_??01: t = '{ill: HNT, opc: LUI   , gpr: '{3'b110, '{r_d1, 'x  , 'x  }}, uiu: '{                            imm:          imm_ciu_f(op       ) }, default: 'x};  // C.LUI      | rd=x0
-  16'b011?_????_????_??01: t = '{ill: STD, opc: LUI   , gpr: '{3'b110, '{r_d1, 'x  , 'x  }}, uiu: '{                            imm:          imm_ciu_f(op       ) }, default: 'x};  // C.LUI      | lui rd, nzimm
-//16'b1001_00??_????_??01: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SR  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SRLI     | shamt[5]=1           | only RV32
-//16'b1000_00??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SR  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SRLI     | shamt=0              | only RV32/64
-  16'b100?_00??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SR  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SRLI     | srli rd', rd', shamt | only RV32/64
-//16'b1001_01??_?000_0001: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx1xxxxx, fn3: SR  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SRAI     | shamt[5]=1           | only RV32
-//16'b1000_01??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx1xxxxx, fn3: SR  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SRAI     | shamt=0              | only RV32/64
-  16'b100?_01??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx1xxxxx, fn3: SR  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SRAI     | srai rd', rd', shamt | only RV32/64
-  16'b100?_10??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{rqd1, rqd1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: AND , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.ANDI     | andi rd', rd', imm
-  16'b1000_11??_?00?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{fn7: 7'bx1xxxxx, fn3: ADD , imm: 'x                            }, default: 'x};  // C.SUB      | sub rd', rd', rs2'
-  16'b1000_11??_?01?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{fn7: 7'bx0xxxxx, fn3: XOR , imm: 'x                            }, default: 'x};  // C.XOR      | xor rd', rd', rs2'
-  16'b1000_11??_?10?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{fn7: 7'bx0xxxxx, fn3: OR  , imm: 'x                            }, default: 'x};  // C.OR       | or  rd', rd', rs2'
-  16'b1000_11??_?11?_??01: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{rqd1, rqd1, rq_2}}, alu: '{fn7: 7'bx0xxxxx, fn3: AND , imm: 'x                            }, default: 'x};  // C.AND      | and rd', rd', rs2'
-//16'b1001_11??_?00?_??01: t = '{ill: RES,                                                                                                                            default: 'x};  // RES (only RV64/128)
-//16'b1001_11??_?01?_??01: t = '{ill: RES,                                                                                                                            default: 'x};  // RES (only RV64/128)
-//16'b1001_11??_?10?_??01: t = '{ill: RES,                                                                                                                            default: 'x};  // Reserved
-//16'b1001_11??_?11?_??01: t = '{ill: RES,                                                                                                                            default: 'x};  // Reserved
-  16'b101?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: '{3'b100, '{5'd0, 'x  , 'x  }}, jmp: '{default: 'x,                jmp: imm_j_t'(imm_cj_f (op       ))}, default: 'x};  // C.J        | jal x0, offset
-  16'b110?_????_????_??01: t = '{ill: STD, opc: BRANCH, gpr: '{3'b011, '{'x  , rqd1, 5'd0}}, bru: '{                 fn3: BEQ , imm: imm_b_t'(imm_cb_f (op       ))}, default: 'x};  // C.BEQZ     | beq rs1', x0, offset
-  16'b111?_????_????_??01: t = '{ill: STD, opc: BRANCH, gpr: '{3'b011, '{'x  , rqd1, 5'd0}}, bru: '{                 fn3: BNE , imm: imm_b_t'(imm_cb_f (op       ))}, default: 'x};  // C.BNEZ     | bne rs1', x0, offset
-//16'b0001_????_????_??10: t = '{ill: NSE, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SL  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SLLI     | shamt[5]=1     | only RV32
-//16'b0000_0000_0000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SL  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SLLI     | shamt=0, rd=x0
-//16'b0000_????_?000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SL  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SLLI     | shamt=0
-//16'b000?_0000_0???_??10: t = '{ill: HNT, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SL  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SLLI     |          rd=x0
-  16'b000?_????_????_??10: t = '{ill: STD, opc: OP_IMM, gpr: '{3'b110, '{r_d1, r_d1, 'x  }}, alu: '{fn7: 7'bx0xxxxx, fn3: SL  , imm: imm_i_t'(imm_ci_f (op       ))}, default: 'x};  // C.SLLI     | slli rd, rd, shamt
-//16'b010?_0000_0???_??10: t = '{ill: RES, opc: LOAD  , gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, ldu: '{                 fn3: LW  , imm: imm_l_t'(imm_cil_f(op, T_C_W))}, default: 'x};  // C.LWSP     | rd=x0
-  16'b010?_????_????_??10: t = '{ill: STD, opc: LOAD  , gpr: '{3'b110, '{r_d1, 5'd2, 'x  }}, ldu: '{                 fn3: LW  , imm: imm_l_t'(imm_cil_f(op, T_C_W))}, default: 'x};  // C.LWSP     | lw rd, offset(x2)
-//16'b1000_0000_0000_0010: t = '{ill: RES, opc: JALR  , gpr: '{3'b110, '{5'd0, r_d1, 'x  }}, jmp: '{                            imm: '0, default: 'x               }, default: 'x};  // C.JR       | rs1=x0
-  16'b1000_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: '{3'b110, '{5'd0, r_d1, 'x  }}, jmp: '{                            imm: '0, default: 'x               }, default: 'x};  // C.JR       | jalr x0, 0(rs1)
-//16'b1000_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: '{3'b101, '{r_d1, 5'd0, r__2}}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: 'x                            }, default: 'x};  // C.MV       | rd=x0, rs2≠x0
-  16'b1000_????_????_??10: t = '{ill: STD, opc: OP    , gpr: '{3'b101, '{r_d1, 5'd0, r__2}}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: 'x                            }, default: 'x};  // C.MV       | add rd, x0, rs2
-//16'b1001_0000_0000_0010: t = '{ill: STD, opc: OP    , gpr:                                 alu: '{                 fn3: 'x  , imm:   fi = '{T_CR  , T_X_X};  // C.EBREAK   | rs2=x0
-  16'b1001_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: '{3'b110, '{5'd1, r_d1, 'x  }}, jmp: '{                            imm: '0, default: 'x               }, default: 'x};  // C.JALR     | jalr x1, 0(rs1)
-//16'b1001_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: '{3'b111, '{r_d1, r_d1, r__2}}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: 'x                            }, default: 'x};  // C.ADD      | rs2≠x0, rd=x0
-  16'b1001_????_????_??10: t = '{ill: STD, opc: OP    , gpr: '{3'b111, '{r_d1, r_d1, r__2}}, alu: '{fn7: 7'bx0xxxxx, fn3: ADD , imm: 'x                            }, default: 'x};  // C.ADD      | add rd, rd, rs2
-  16'b110?_????_????_??10: t = '{ill: STD, opc: STORE , gpr: '{3'b011, '{'x  , 5'd2, r__2}}, stu: '{                 fn3: SW  , imm: imm_s_t'(imm_css_f(op, T_C_W))}, default: 'x};  // C.SWSP     | sw rs2, offset(x2)
+//16'b0000_0000_0000_0000: t = '{ill: ILL,                                                                                                                  default: 'x};  // illegal instruction
+//16'b0000_0000_000?_??00: t = '{ill: RES, opc: OP_IMM, gpr: 3'b110, rd: rqd_, rs1: 5'd2, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ciw_f(op       ), default: 'x};  // C.ADDI4SPN | nzuimm=0
+  16'b000?_????_????_??00: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: rqd_, rs1: 5'd2, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ciw_f(op       ), default: 'x};  // C.ADDI4SPN | addi rd', x2, nzuimm
+  16'b010?_????_????_??00: t = '{ill: STD, opc: LOAD  , gpr: 3'b110, rd: rqd_, rs1: rq_1, rs2: 'x  ,                  fn3: LW  , i_l: imm_cls_f(op, T_C_W), default: 'x};  // C.LW       | lw rd', offset(rs1')
+//16'b100?_????_????_??00: t = '{ill: RES,                                                                                                                  default: 'x};  // Reserved
+  16'b110?_????_????_??00: t = '{ill: STD, opc: STORE , gpr: 3'b011, rd: 'x  , rs1: rq_1, rs2: rq_2,                  fn3: SW  , i_s: imm_cls_f(op, T_C_W), default: 'x};  // C.SW       | sw rs2', offset(rs1')
+//16'b0000_0000_0000_0001: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.NOP      | rd=x0, nzimm=0
+  16'b000?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.NOP      | rd=x0, nzimm≠0
+//16'b0000_????_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.ADDI     | nzimm=0 // TODO prevent WB
+  16'b000?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.ADDI     | addi rd, rd, nzimm
+  16'b001?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: 3'b100, rd: 5'd1, rs1: 'x  , rs2: 'x  ,                             i_j: imm_cj_f (op       ), default: 'x};  // C.JAL      | jal x1, offset | only RV32
+//16'b010?_0000_0???_??01: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: 5'd0, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.LI       | rd=x0
+  16'b010?_????_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: 5'd0, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.LI       | addi rd, x0, imm
+//16'b0110_0001_0000_0001: t = '{ill: RES, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_cip_f(op       ), default: 'x};  // C.ADDI16SP | nzimm=0
+  16'b011?_0001_0???_??01: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_cip_f(op       ), default: 'x};  // C.ADDI16SP | addi x2, x2, nzimm
+//16'b0110_????_?000_0001: t = '{ill: RES, opc: LUI   , gpr: 3'b110, rd: r_d1, rs1: 'x  , rs2: 'x  ,                             i_u: imm_ciu_f(op       ), default: 'x};  // C.LUI      | nzimm=0
+//16'b011?_0000_0???_??01: t = '{ill: HNT, opc: LUI   , gpr: 3'b110, rd: r_d1, rs1: 'x  , rs2: 'x  ,                             i_u: imm_ciu_f(op       ), default: 'x};  // C.LUI      | rd=x0
+  16'b011?_????_????_??01: t = '{ill: STD, opc: LUI   , gpr: 3'b110, rd: r_d1, rs1: 'x  , rs2: 'x  ,                             i_u: imm_ciu_f(op       ), default: 'x};  // C.LUI      | lui rd, nzimm
+//16'b1001_00??_????_??01: t = '{ill: NSE, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SR  , i_i: imm_ci_f (op       ), default: 'x};  // C.SRLI     | shamt[5]=1           | only RV32
+//16'b1000_00??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SR  , i_i: imm_ci_f (op       ), default: 'x};  // C.SRLI     | shamt=0              | only RV32/64
+  16'b100?_00??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SR  , i_i: imm_ci_f (op       ), default: 'x};  // C.SRLI     | srli rd', rd', shamt | only RV32/64
+//16'b1001_01??_?000_0001: t = '{ill: NSE, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx1xxxxx, fn3: SR  , i_i: imm_ci_f (op       ), default: 'x};  // C.SRAI     | shamt[5]=1           | only RV32
+//16'b1000_01??_?000_0001: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx1xxxxx, fn3: SR  , i_i: imm_ci_f (op       ), default: 'x};  // C.SRAI     | shamt=0              | only RV32/64
+  16'b100?_01??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx1xxxxx, fn3: SR  , i_i: imm_ci_f (op       ), default: 'x};  // C.SRAI     | srai rd', rd', shamt | only RV32/64
+  16'b100?_10??_????_??01: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: rqd1, rs1: rqd1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: AND , i_i: imm_ci_f (op       ), default: 'x};  // C.ANDI     | andi rd', rd', imm
+  16'b1000_11??_?00?_??01: t = '{ill: STD, opc: OP    , gpr: 3'b111, rd: rqd1, rs1: rqd1, rs2: rq_2, fn7: 7'bx1xxxxx, fn3: ADD ,                            default: 'x};  // C.SUB      | sub rd', rd', rs2'
+  16'b1000_11??_?01?_??01: t = '{ill: STD, opc: OP    , gpr: 3'b111, rd: rqd1, rs1: rqd1, rs2: rq_2, fn7: 7'bx0xxxxx, fn3: XOR ,                            default: 'x};  // C.XOR      | xor rd', rd', rs2'
+  16'b1000_11??_?10?_??01: t = '{ill: STD, opc: OP    , gpr: 3'b111, rd: rqd1, rs1: rqd1, rs2: rq_2, fn7: 7'bx0xxxxx, fn3: OR  ,                            default: 'x};  // C.OR       | or  rd', rd', rs2'
+  16'b1000_11??_?11?_??01: t = '{ill: STD, opc: OP    , gpr: 3'b111, rd: rqd1, rs1: rqd1, rs2: rq_2, fn7: 7'bx0xxxxx, fn3: AND ,                            default: 'x};  // C.AND      | and rd', rd', rs2'
+//16'b1001_11??_?00?_??01: t = '{ill: RES,                                                                                                                  default: 'x};  // RES (only RV64/128)
+//16'b1001_11??_?01?_??01: t = '{ill: RES,                                                                                                                  default: 'x};  // RES (only RV64/128)
+//16'b1001_11??_?10?_??01: t = '{ill: RES,                                                                                                                  default: 'x};  // Reserved
+//16'b1001_11??_?11?_??01: t = '{ill: RES,                                                                                                                  default: 'x};  // Reserved
+  16'b101?_????_????_??01: t = '{ill: STD, opc: JAL   , gpr: 3'b100, rd: 5'd0, rs1: 'x  , rs2: 'x  ,                             i_j: imm_cj_f (op       ), default: 'x};  // C.J        | jal x0, offset
+  16'b110?_????_????_??01: t = '{ill: STD, opc: BRANCH, gpr: 3'b011, rd: 'x  , rs1: rqd1, rs2: 5'd0,                  fn3: BEQ , i_b: imm_cb_f (op       ), default: 'x};  // C.BEQZ     | beq rs1', x0, offset
+  16'b111?_????_????_??01: t = '{ill: STD, opc: BRANCH, gpr: 3'b011, rd: 'x  , rs1: rqd1, rs2: 5'd0,                  fn3: BNE , i_b: imm_cb_f (op       ), default: 'x};  // C.BNEZ     | bne rs1', x0, offset
+//16'b0001_????_????_??10: t = '{ill: NSE, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     | shamt[5]=1     | only RV32
+//16'b0000_0000_0000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     | shamt=0, rd=x0
+//16'b0000_????_?000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     | shamt=0
+//16'b000?_0000_0???_??10: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     |          rd=x0
+  16'b000?_????_????_??10: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     | slli rd, rd, shamt
+//16'b010?_0000_0???_??10: t = '{ill: RES, opc: LOAD  , gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  ,                  fn3: LW  , i_l: imm_cil_f(op, T_C_W), default: 'x};  // C.LWSP     | rd=x0
+  16'b010?_????_????_??10: t = '{ill: STD, opc: LOAD  , gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  ,                  fn3: LW  , i_l: imm_cil_f(op, T_C_W), default: 'x};  // C.LWSP     | lw rd, offset(x2)
+//16'b1000_0000_0000_0010: t = '{ill: RES, opc: JALR  , gpr: 3'b110, rd: 5'd0, rs1: r_d1, rs2: 'x  ,                             i_i: '0                  , default: 'x};  // C.JR       | rs1=x0
+  16'b1000_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: 3'b110, rd: 5'd0, rs1: r_d1, rs2: 'x  ,                             i_i: '0                  , default: 'x};  // C.JR       | jalr x0, 0(rs1)
+//16'b1000_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: 3'b101, rd: r_d1, rs1: 5'd0, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.MV       | rd=x0, rs2≠x0
+  16'b1000_????_????_??10: t = '{ill: STD, opc: OP    , gpr: 3'b101, rd: r_d1, rs1: 5'd0, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.MV       | add rd, x0, rs2
+//16'b1001_0000_0000_0010: t = '{ill: STD, opc: OP    , gpr:                                                          fn3: 'x  , imm: '{T_CR  , T_X_X};                    // C.EBREAK   | rs2=x0
+  16'b1001_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: 3'b110, rd: 5'd1, rs1: r_d1, rs2: 'x  ,                             i_i: '0                  , default: 'x};  // C.JALR     | jalr x1, 0(rs1)
+//16'b1001_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: 3'b111, rd: r_d1, rs1: r_d1, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.ADD      | rs2≠x0, rd=x0
+  16'b1001_????_????_??10: t = '{ill: STD, opc: OP    , gpr: 3'b111, rd: r_d1, rs1: r_d1, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.ADD      | add rd, rd, rs2
+  16'b110?_????_????_??10: t = '{ill: STD, opc: STORE , gpr: 3'b011, rd: 'x  , rs1: 5'd2, rs2: r__2,                  fn3: SW  , i_s: imm_css_f(op, T_C_W), default: 'x};  // C.SWSP     | sw rs2, offset(x2)
 `ifdef TOOL_QUESTA
-  default                : t = '{ill: ILL                                                                                                                                        };  // illegal instruction
+  default                : t = '{ill: ILL                                                                                                                              };  // illegal instruction
 `else
-  default                : t = '{ill: ILL                                                                                                                           , default: 'x};  // illegal instruction
+  default                : t = '{ill: ILL,                                                                                                                  default: 'x};  // illegal instruction
 `endif
 endcase end
 

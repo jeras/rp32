@@ -171,7 +171,7 @@ if (CFG.BRU_BRU) begin: gen_bru_ena
     .XLEN    (XLEN)
   ) br (
     // control
-    .ctl     (idu_dec.bru.fn3),
+    .dec     (idu_dec),
     // data
     .rs1     (gpr_rs1),
     .rs2     (gpr_rs2),
@@ -183,7 +183,7 @@ end: gen_bru_ena
 else begin: gen_bru_alu
 
   always_comb
-  unique case (idu_dec.bru.fn3)
+  unique case (fn3_bru_et'(idu_dec.fn3))
     BEQ    : ifu_tkn = ~(|alu_sum[XLEN-1:0]);
     BNE    : ifu_tkn =  (|alu_sum[XLEN-1:0]);
     BLT    : ifu_tkn =    alu_sum[XLEN];
@@ -210,7 +210,7 @@ if (CFG.BRU_BRA) begin: gen_bra_add
   assign ifu_pci = ifu_pc + XLEN'(idu_dec.siz);
 
   // branch address
-  assign ifu_pcb = ifu_pc + XLEN'(idu_dec.bru.imm);
+  assign ifu_pcb = ifu_pc +       idu_dec.i_b ;
 
   // PC adder result multiplexer
   assign ifu_pcs = (idu_dec.opc == BRANCH) & ifu_tkn ? ifu_pcb
@@ -223,7 +223,7 @@ else begin: gen_bra_mux
   logic [XLEN-1:0] ifu_pca;  // PC addend
 
   // PC addend multiplexer
-  assign ifu_pca = (idu_dec.opc == BRANCH) & ifu_tkn ? XLEN'(idu_dec.bru.imm)
+  assign ifu_pca = (idu_dec.opc == BRANCH) & ifu_tkn ?       idu_dec.i_b
                                                      : XLEN'(idu_dec.siz);
 
   // PC sum
@@ -325,17 +325,17 @@ r5p_gpr_2r1w #(
   // configuration/control
   .en0     (1'b0),
   // read/write enable
-  .e_rs1   (idu_dec.gpr.ena.rs1),
-  .e_rs2   (idu_dec.gpr.ena.rs2),
-  .e_rd    (        wbu_wen    ),  // TODO: should depend on LSU stall
+  .e_rs1   (idu_dec.gpr.rs1),
+  .e_rs2   (idu_dec.gpr.rs2),
+  .e_rd    (    wbu_wen    ),  // TODO: should depend on LSU stall
   // read/write address
-  .a_rs1   (idu_dec.gpr.adr.rs1),
-  .a_rs2   (idu_dec.gpr.adr.rs2),
-  .a_rd    (        wbu_adr    ),
+  .a_rs1   (idu_dec.rs1),
+  .a_rs2   (idu_dec.rs2),
+  .a_rd    (    wbu_adr),
   // read/write data
-  .d_rs1   (        gpr_rs1    ),
-  .d_rs2   (        gpr_rs2    ),
-  .d_rd    (        wbu_dat    )
+  .d_rs1   (    gpr_rs1),
+  .d_rs2   (    gpr_rs2),
+  .d_rd    (    wbu_dat)
 );
 
 // base ALU
@@ -358,13 +358,13 @@ r5p_alu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (idu_dec),
+  .dec     (idu_dec),
   // data input/output
   .pc      (XLEN'(ifu_pc)),
   .rs1     (gpr_rs1),
   .rs2     (gpr_rs2),
   .rd      (alu_dat),
-  // side ouputs
+  // side outputs
   .sum     (alu_sum)
 );
 
@@ -453,8 +453,8 @@ if (CFG.ALU_LSA) begin: gen_lsa_ena
   logic [XLEN-1:0] lsu_adr_st;  // address store
 
   // dedicated load/store adders
-  assign lsu_adr_ld = gpr_rs1 + XLEN'(idu_dec.ldu.imm);  // I-type (load)
-  assign lsu_adr_st = gpr_rs1 + XLEN'(idu_dec.stu.imm);  // S-type (store)
+  assign lsu_adr_ld = gpr_rs1 + idu_dec.i_l;  // I-type (load)
+  assign lsu_adr_st = gpr_rs1 + idu_dec.i_s;  // S-type (store)
 
   always_comb
   unique casez (idu_dec.opc)
@@ -493,7 +493,7 @@ r5p_lsu #(
   .clk     (clk),
   .rst     (rst),
   // control
-  .ctl     (idu_dec),
+  .dec     (idu_dec),
   // data input/output
   .run     (idu_vld),
   .ill     (1'b0),
@@ -534,7 +534,7 @@ r5p_wbu #(
   .alu     (alu_dat),                 // ALU output
   .lsu     (lsu_rdt),                 // LSU load
   .pcs     (XLEN'(ifu_pcs)),          // PC increment
-  .lui     (XLEN'(idu_dec.uiu.imm)),  // upper immediate
+  .lui     (idu_dec.i_u),             // upper immediate
   .csr     (csr_rdt),                 // CSR
   .mul     (mul_dat),                 // mul/div/rem
   // GPR write back

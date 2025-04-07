@@ -52,8 +52,8 @@ if (rst) begin
   adr <= 5'd0;
   sel <= opc_t'('0);  // TODO: there might be a better choice
 end else begin
-  wen <= dec.gpr.ena.rd;
-  adr <= dec.gpr.adr.rd;
+  wen <= dec.gpr.rd ;
+  adr <= dec.rd ;
   sel <= dec.opc;
 end
 

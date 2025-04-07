@@ -35,7 +35,7 @@ module r5p_lsu
   input  logic              clk,  // clock
   input  logic              rst,  // reset
   // control
-  input  dec_t              ctl,
+  input  dec_t              dec,
   // data input/output
   input  logic              run,  // illegal
   input  logic              ill,  // illegal
@@ -77,7 +77,7 @@ if (run) begin
     lsb_vld = CFG_VLD_ILL;
     lsb_wen = CFG_WEN_ILL;
   end else begin
-    unique case (ctl.opc)
+    unique case (dec.opc)
       LOAD   : begin lsb_vld = 1'b1; lsb_wen = 1'b0       ; end
       STORE  : begin lsb_vld = 1'b1; lsb_wen = 1'b1       ; end
       default: begin lsb_vld = 1'b0; lsb_wen = CFG_WEN_IDL; end
@@ -94,10 +94,10 @@ assign lsb_adr = {adr[AW-1:WW], WW'('0)};
 // misalignment
 // decodings for read and write access are identical
 always_comb
-unique case (ctl.opc)
+unique case (dec.opc)
   LOAD   : begin
       // read access
-      unique case (ctl.ldu.fn3)
+      unique case (fn3_ldu_et'(dec.fn3))
         LB, LBU: rma = 1'b0;
         LH, LHU: rma = |adr[0:0];
         LW, LWU: rma = |adr[1:0];
@@ -111,7 +111,7 @@ unique case (ctl.opc)
       // read access
       rma = 1'bx;
       // write access
-      unique case (ctl.stu.fn3)
+      unique case (fn3_stu_et'(dec.fn3))
         SB     : wma = 1'b0;
         SH     : wma = |adr[0:0];
         SW     : wma = |adr[1:0];
@@ -138,9 +138,9 @@ end else begin
   // dafault values
   lsb_wdt = 'x;
   // conbinational logic
-  unique case (ctl.opc)
+  unique case (dec.opc)
     LOAD   : begin
-      case (ctl.ldu.fn3)
+      case (fn3_ldu_et'(dec.fn3))
         LB, LBU: case (adr[1:0])
           2'b00: lsb_ben = 4'b0001;
           2'b01: lsb_ben = 4'b0010;
@@ -157,7 +157,7 @@ end else begin
     end
     STORE  :
       // write access
-      case (ctl.stu.fn3)
+      case (fn3_stu_et'(dec.fn3))
         SB     : case (adr[1:0])
           2'b00: begin lsb_wdt[ 7: 0] = wdt[ 7: 0]; lsb_ben = 4'b0001; end
           2'b01: begin lsb_wdt[15: 8] = wdt[ 7: 0]; lsb_ben = 4'b0010; end
@@ -197,7 +197,7 @@ if (rst) begin
 end else if (lsb_rtr) begin
   dly_rma <= rma;
   dly_adr <= adr[WW-1:0];
-  dly_fn3 <= ctl.ldu.fn3;
+  dly_fn3 <= fn3_ldu_et'(dec.fn3);
 end
 
 // read data
