@@ -27,7 +27,7 @@ module r5p_mouse_riscv_tb
   localparam int unsigned ILEN = 32,
   // RISC-V ISA
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  isa_ext_t    XTEN = '0,
   // privilige modes
   isa_priv_t   MODES = MODES_M,
   // ISA
@@ -81,7 +81,7 @@ import riscv_asm_pkg::*;
     cnt <= 0;
   end else begin
     cnt <= cnt+1;
-  end  
+  end
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -137,9 +137,7 @@ import riscv_asm_pkg::*;
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_protocol_checker tcb_mon (
-    .tcb  (tcb[0])
-  );
+  tcb_vip_protocol_checker tcb_mon (.tcb  (tcb[0]));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
@@ -223,6 +221,7 @@ import riscv_asm_pkg::*;
       $display("ERROR: signature save file argument not found.");
       $finish;
     end
+    // TODO: add another clock cycle to avoid cutting off delayed printout from TCB monitor
     $finish;
   end
 
