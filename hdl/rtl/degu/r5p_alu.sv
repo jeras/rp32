@@ -52,7 +52,19 @@ module r5p_alu
   output logic [XLEN-0:0] sum   // summation result including overflow bit
 );
 
-  // ALU shared operand multiplexer
+  // logical operations
+  logic        [XLEN-1:0] log_op1;  // logical operand 1
+  logic        [XLEN-1:0] log_op2;  // logical operand 2
+  logic        [XLEN-1:0] log_val;  // logical result
+
+  // barrel shifter
+  logic        [XLEN-1:0] shf_op1;  // shift operand 1
+  logic        [XLOG-1:0] shf_amm;  // shift amount
+  logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
+  logic signed [XLEN-0:0] shf_ext;
+  logic        [XLEN-1:0] shf_val /* synthesis keep */;  // result
+
+  // arithmetic operand multiplexer
   logic        [XLEN-1:0] mux_op1;  // arithmetic operand 1
   logic        [XLEN-1:0] mux_op2 /* synthesis keep */;  // arithmetic operand 2
 
@@ -68,20 +80,116 @@ module r5p_alu
   logic        [XLEN-0:0] add_sum;  // arithmetic sum
   logic                   add_sgn;  // arithmetic sign
 
-  // logical operations
-  logic        [XLEN-1:0] log_op1;  // logical operand 1
-  logic        [XLEN-1:0] log_op2;  // logical operand 2
-  logic        [XLEN-1:0] log_val;  // logical result
-
-  // barrel shifter
-  logic        [XLEN-1:0] shf_op1;  // shift operand 1
-  logic        [XLOG-1:0] shf_amm;  // shift amount
-  logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
-  logic signed [XLEN-0:0] shf_ext;
-  logic        [XLEN-1:0] shf_val /* synthesis keep */;  // result
-
   // ALU operation result
   logic [XLEN-1:0] val;
+
+///////////////////////////////////////////////////////////////////////////////
+// bitwise logical operations
+///////////////////////////////////////////////////////////////////////////////
+
+  // dedicated logical operand multiplexer
+  always_comb
+  unique casez (dec.opc)
+    OP     : begin log_op1 = rs1; log_op2 = rs2;     end  // R-type
+    OP_IMM ,
+    JALR   : begin log_op1 = rs1; log_op2 = dec.i_i; end  // I-type (arithmetic/logic)
+    LOAD   : begin log_op1 = rs1; log_op2 = dec.i_i; end  // I-type (arithmetic/logic)
+    default: begin log_op1 = 'x ; log_op2 = 'x;      end
+  endcase
+
+  // this can be implemented with a single LUT4
+  always_comb
+  unique case (fn3_alu_et'(dec.fn3))
+    // bitwise logical operations
+    AND    : log_val = log_op1 & log_op2;
+    OR     : log_val = log_op1 | log_op2;
+    XOR    : log_val = log_op1 ^ log_op2;
+    default: log_val = 'x;
+  endcase
+
+///////////////////////////////////////////////////////////////////////////////
+// barrel shifter
+///////////////////////////////////////////////////////////////////////////////
+
+// reverse bit order
+function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
+`ifdef LANGUAGE_UNSUPPORTED_STREAM_OPERATOR
+  for (int unsigned i=0; i<XLEN; i++)  bitrev[i] = val[XLEN-1-i];
+`else
+  bitrev = {<<{val}};
+`endif
+endfunction: bitrev
+
+  // dedicated shift operand multiplexer (actually shared with logical)
+  assign shf_op1 = log_op1;
+  assign shf_amm = log_op2[XLOG-1:0];
+  // NOTE: I would expect it to give better Vivado results, but it does not
+
+  // bit inversion
+  always_comb
+  unique casez (fn3_alu_et'(dec.fn3))
+    // barrel shifter
+    SR     : shf_tmp =        shf_op1 ;
+    SL     : shf_tmp = bitrev(shf_op1);
+    default: shf_tmp = 'x;
+  endcase
+
+  // sign extension to (XLEN+1)
+  always_comb
+  unique case (dec.fn7[5])
+    1'b1   : shf_ext = (XLEN+1)'(  $signed(shf_tmp));
+    1'b0   : shf_ext = (XLEN+1)'($unsigned(shf_tmp));
+    default: shf_ext = 'x;
+  endcase
+
+  generate
+  if (CFG_SHF == 1) begin: gen_shf_1
+  
+    logic signed [XLEN-0:0] shf_tm0;  // operand
+    logic signed [XLEN-0:0] shf_tm1;  // operand
+    logic signed [XLEN-0:0] shf_tm2;  // operand
+    logic signed [XLEN-0:0] shf_tm3;  // operand
+    logic signed [XLEN-0:0] shf_tm4;  // operand
+  
+    // 1-bit shift per stage, LUT4 optimization
+    always_comb
+    begin
+      shf_tm0 = shf_ext >>>  shf_amm[0];
+      shf_tm1 = shf_tm0 >>> {shf_amm[1], 1'b0};
+      shf_tm2 = shf_tm1 >>> {shf_amm[2], 2'b00};
+      shf_tm3 = shf_tm2 >>> {shf_amm[3], 3'b000};
+      shf_tm4 = shf_tm3 >>> {shf_amm[4], 4'b0000};
+    end
+  
+    // remove sign extension from result
+    assign shf_val = shf_tm4[XLEN-1:0];
+  
+  end: gen_shf_1
+  else if (CFG_SHF == 2) begin: gen_shf_2
+  
+    logic signed [XLEN-0:0] shf_tm1;  // operand
+    logic signed [XLEN-0:0] shf_tm3;  // operand
+    logic signed [XLEN-0:0] shf_tm4;  // operand
+  
+    // 2-bit shift per stage, LUT6 optimization
+    always_comb
+    begin
+      shf_tm1 = shf_ext >>>  shf_amm[1:0];
+      shf_tm3 = shf_tm1 >>> {shf_amm[3:2], 2'b00};
+      shf_tm4 = shf_tm3 >>> {shf_amm[  4], 4'b0000};
+    end
+  
+    // remove sign extension from result
+    assign shf_val = shf_tm4[XLEN-1:0];
+  
+  end: gen_shf_2
+  else begin: gen_shf
+  
+    // combined barrel shifter for left/right shifting
+    assign shf_val = XLEN'($signed(shf_ext) >>> shf_amm);
+  
+  end: gen_shf
+  endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // arithmetic operations
@@ -90,13 +198,12 @@ module r5p_alu
   // ALU input multiplexer
   always_comb
   begin
-    // conbinational logic
     unique case (dec.opc)
-      OP     : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = rs2    ; end  // R-type (arithmetic/logic)
+      OP     ,
+      OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = log_op2; end  // I-type (arithmetic/logic)
       BRANCH : if (CFG_BRANCH) begin mux_op1 = rs1; mux_op2 = rs2    ; end  // B-type (branch)
-      JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = dec.i_i; end  // I-type (jump)
-      OP_IMM : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = dec.i_i; end  // I-type (arithmetic/logic)
-      LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = dec.i_l; end  // I-type (load)
+      JALR   : if (1'b1      ) begin mux_op1 = rs1; mux_op2 = log_op2; end  // I-type (jump)
+      LOAD   : if (CFG_LOAD  ) begin mux_op1 = rs1; mux_op2 = log_op2; end  // I-type (load)
       STORE  : if (CFG_STORE ) begin mux_op1 = rs1; mux_op2 = dec.i_s; end  // S-type (store)
       AUIPC  : if (CFG_AUIPC ) begin mux_op1 = pc ; mux_op2 = dec.i_u; end  // U-type
       JAL    : if (CFG_JAL   ) begin mux_op1 = pc ; mux_op2 = dec.i_j; end  // J-type (jump)
@@ -166,138 +273,6 @@ module r5p_alu
 //  .ADD(~add_inv),  // input  wire          ADD
 //  .S  ( sum    )   // output wire [32 : 0] S
 //);
-
-///////////////////////////////////////////////////////////////////////////////
-// bitwise logical operations
-///////////////////////////////////////////////////////////////////////////////
-
-  generate
-  if (CFG_LOM) begin: log_mux_dedicated
-
-    // dedicated logical operand multiplexer
-    always_comb
-    unique casez (dec.opc)
-      OP     : begin log_op1 = rs1; log_op2 = rs2;     end  // R-type
-      OP_IMM : begin log_op1 = rs1; log_op2 = dec.i_i; end  // I-type (arithmetic/logic)
-      default: begin log_op1 = 'x ; log_op2 = 'x;      end
-    endcase
-
-  end: log_mux_dedicated
-  else begin: log_mux_shared
-
-    // shared multiplexer with arithmetic operations
-    assign log_op1 = mux_op1;
-    assign log_op2 = mux_op2;
-
-  end: log_mux_shared
-  endgenerate
-
-  // this can be implemented with a single LUT4
-  always_comb
-  unique case (fn3_alu_et'(dec.fn3))
-    // bitwise logical operations
-    AND    : log_val = log_op1 & log_op2;
-    OR     : log_val = log_op1 | log_op2;
-    XOR    : log_val = log_op1 ^ log_op2;
-    default: log_val = 'x;
-  endcase
-
-///////////////////////////////////////////////////////////////////////////////
-// barrel shifter
-///////////////////////////////////////////////////////////////////////////////
-
-// reverse bit order
-function automatic logic [XLEN-1:0] bitrev (logic [XLEN-1:0] val);
-`ifdef LANGUAGE_UNSUPPORTED_STREAM_OPERATOR
-  for (int unsigned i=0; i<XLEN; i++)  bitrev[i] = val[XLEN-1-i];
-`else
-  bitrev = {<<{val}};
-`endif
-endfunction: bitrev
-
-generate
-  if (CFG_SOM) begin: shf_mux_dedicated
-
-    // dedicated shift operand multiplexer (actually shared with logical)
-    assign shf_op1 = log_op1;
-    assign shf_amm = log_op2[XLOG-1:0];
-    // NOTE: I would expect it to give better Vivado results, but it does not
-
-  end: shf_mux_dedicated
-  else begin: shf_mux_shared
-
-    // shared multiplexer with arithmetic operations
-    assign shf_op1 = mux_op1;
-    assign shf_amm = mux_op2[XLOG-1:0];
-
-  end: shf_mux_shared
-  endgenerate
-
-  // bit inversion
-  always_comb
-  unique casez (fn3_alu_et'(dec.fn3))
-    // barrel shifter
-    SR     : shf_tmp =        shf_op1 ;
-    SL     : shf_tmp = bitrev(shf_op1);
-    default: shf_tmp = 'x;
-  endcase
-
-  // sign extension to (XLEN+1)
-  always_comb
-  unique case (dec.fn7[5])
-    1'b1   : shf_ext = (XLEN+1)'(  $signed(shf_tmp));
-    1'b0   : shf_ext = (XLEN+1)'($unsigned(shf_tmp));
-    default: shf_ext = 'x;
-  endcase
-
-  generate
-  if (CFG_SHF == 1) begin: gen_shf_1
-  
-    logic signed [XLEN-0:0] shf_tm0;  // operand
-    logic signed [XLEN-0:0] shf_tm1;  // operand
-    logic signed [XLEN-0:0] shf_tm2;  // operand
-    logic signed [XLEN-0:0] shf_tm3;  // operand
-    logic signed [XLEN-0:0] shf_tm4;  // operand
-  
-    // 1-bit shift per stage, LUT4 optimization
-    always_comb
-    begin
-      shf_tm0 = shf_ext >>>  shf_amm[0];
-      shf_tm1 = shf_tm0 >>> {shf_amm[1], 1'b0};
-      shf_tm2 = shf_tm1 >>> {shf_amm[2], 2'b00};
-      shf_tm3 = shf_tm2 >>> {shf_amm[3], 3'b000};
-      shf_tm4 = shf_tm3 >>> {shf_amm[4], 4'b0000};
-    end
-  
-    // remove sign extension from result
-    assign shf_val = shf_tm4[XLEN-1:0];
-  
-  end: gen_shf_1
-  else if (CFG_SHF == 2) begin: gen_shf_2
-  
-    logic signed [XLEN-0:0] shf_tm1;  // operand
-    logic signed [XLEN-0:0] shf_tm3;  // operand
-    logic signed [XLEN-0:0] shf_tm4;  // operand
-  
-    // 2-bit shift per stage, LUT6 optimization
-    always_comb
-    begin
-      shf_tm1 = shf_ext >>>  shf_amm[1:0];
-      shf_tm3 = shf_tm1 >>> {shf_amm[3:2], 2'b00};
-      shf_tm4 = shf_tm3 >>> {shf_amm[  4], 4'b0000};
-    end
-  
-    // remove sign extension from result
-    assign shf_val = shf_tm4[XLEN-1:0];
-  
-  end: gen_shf_2
-  else begin: gen_shf
-  
-    // combined barrel shifter for left/right shifting
-    assign shf_val = XLEN'($signed(shf_ext) >>> shf_amm);
-  
-  end: gen_shf
-  endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 // output multiplexer

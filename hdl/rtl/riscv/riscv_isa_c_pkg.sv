@@ -198,7 +198,7 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
 //16'b0000_0000_0000_0000: t = '{ill: ILL,                                                                                                                  default: 'x};  // illegal instruction
 //16'b0000_0000_000?_??00: t = '{ill: RES, opc: OP_IMM, gpr: 3'b110, rd: rqd_, rs1: 5'd2, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ciw_f(op       ), default: 'x};  // C.ADDI4SPN | nzuimm=0
   16'b000?_????_????_??00: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: rqd_, rs1: 5'd2, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ciw_f(op       ), default: 'x};  // C.ADDI4SPN | addi rd', x2, nzuimm
-  16'b010?_????_????_??00: t = '{ill: STD, opc: LOAD  , gpr: 3'b110, rd: rqd_, rs1: rq_1, rs2: 'x  ,                  fn3: LW  , i_l: imm_cls_f(op, T_C_W), default: 'x};  // C.LW       | lw rd', offset(rs1')
+  16'b010?_????_????_??00: t = '{ill: STD, opc: LOAD  , gpr: 3'b110, rd: rqd_, rs1: rq_1, rs2: 'x  ,                  fn3: LW  , i_i: imm_cls_f(op, T_C_W), default: 'x};  // C.LW       | lw rd', offset(rs1')
 //16'b100?_????_????_??00: t = '{ill: RES,                                                                                                                  default: 'x};  // Reserved
   16'b110?_????_????_??00: t = '{ill: STD, opc: STORE , gpr: 3'b011, rd: 'x  , rs1: rq_1, rs2: rq_2,                  fn3: SW  , i_s: imm_cls_f(op, T_C_W), default: 'x};  // C.SW       | sw rs2', offset(rs1')
 //16'b0000_0000_0000_0001: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: ADD , i_i: imm_ci_f (op       ), default: 'x};  // C.NOP      | rd=x0, nzimm=0
@@ -236,8 +236,8 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
 //16'b0000_????_?000_0010: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     | shamt=0
 //16'b000?_0000_0???_??10: t = '{ill: HNT, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     |          rd=x0
   16'b000?_????_????_??10: t = '{ill: STD, opc: OP_IMM, gpr: 3'b110, rd: r_d1, rs1: r_d1, rs2: 'x  , fn7: 7'bx0xxxxx, fn3: SL  , i_i: imm_ci_f (op       ), default: 'x};  // C.SLLI     | slli rd, rd, shamt
-//16'b010?_0000_0???_??10: t = '{ill: RES, opc: LOAD  , gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  ,                  fn3: LW  , i_l: imm_cil_f(op, T_C_W), default: 'x};  // C.LWSP     | rd=x0
-  16'b010?_????_????_??10: t = '{ill: STD, opc: LOAD  , gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  ,                  fn3: LW  , i_l: imm_cil_f(op, T_C_W), default: 'x};  // C.LWSP     | lw rd, offset(x2)
+//16'b010?_0000_0???_??10: t = '{ill: RES, opc: LOAD  , gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  ,                  fn3: LW  , i_i: imm_cil_f(op, T_C_W), default: 'x};  // C.LWSP     | rd=x0
+  16'b010?_????_????_??10: t = '{ill: STD, opc: LOAD  , gpr: 3'b110, rd: r_d1, rs1: 5'd2, rs2: 'x  ,                  fn3: LW  , i_i: imm_cil_f(op, T_C_W), default: 'x};  // C.LWSP     | lw rd, offset(x2)
 //16'b1000_0000_0000_0010: t = '{ill: RES, opc: JALR  , gpr: 3'b110, rd: 5'd0, rs1: r_d1, rs2: 'x  ,                             i_i: '0                  , default: 'x};  // C.JR       | rs1=x0
   16'b1000_????_?000_0010: t = '{ill: STD, opc: JALR  , gpr: 3'b110, rd: 5'd0, rs1: r_d1, rs2: 'x  ,                             i_i: '0                  , default: 'x};  // C.JR       | jalr x0, 0(rs1)
 //16'b1000_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: 3'b101, rd: r_d1, rs1: 5'd0, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.MV       | rd=x0, rs2≠x0
