@@ -23,7 +23,7 @@ package r5p_degu_pkg;
     bit          BRU_BRU;  // enable dedicated BRanch Unit (comparator)
     bit          BRU_BRA;  // enable dedicated BRanch Adder
     // optimizations: ALU
-    bit          ALU_LSA;  // enable dedicated Load/Store Adder
+    bit          ALU_LSA;  // enable dedicated Load/Store Adder (instead of sharing it with ALU)
     bit          ALU_LOM;  // enable dedicated Logical Operand Multiplexer
     bit          ALU_SOM;  // enable dedicated Shift   Operand Multiplexer
     // optimizations: LSU
