@@ -247,11 +247,7 @@ if (|(isa.spec.base & (RV_32I | RV_64I | RV_128I))) begin casez (op)
 //16'b1001_0000_0???_??10: t = '{ill: HNT, opc: OP    , gpr: 3'b111, rd: r_d1, rs1: r_d1, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.ADD      | rs2≠x0, rd=x0
   16'b1001_????_????_??10: t = '{ill: STD, opc: OP    , gpr: 3'b111, rd: r_d1, rs1: r_d1, rs2: r__2, fn7: 7'bx0xxxxx, fn3: ADD ,                            default: 'x};  // C.ADD      | add rd, rd, rs2
   16'b110?_????_????_??10: t = '{ill: STD, opc: STORE , gpr: 3'b011, rd: 'x  , rs1: 5'd2, rs2: r__2,                  fn3: SW  , i_s: imm_css_f(op, T_C_W), default: 'x};  // C.SWSP     | sw rs2, offset(x2)
-`ifdef TOOL_QUESTA
-  default                : t = '{ill: ILL                                                                                                                              };  // illegal instruction
-`else
-  default                : t = '{ill: ILL,                                                                                                                  default: 'x};  // illegal instruction
-`endif
+  default                : t = '{ill: ILL, opc: opc_t'('x),  /* avoiding Questa error on axxingning 'x to an enumerated type */                             default: 'x};  // illegal instruction
 endcase end
 
 /*
