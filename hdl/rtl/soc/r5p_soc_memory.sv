@@ -26,7 +26,7 @@ module r5p_soc_memory
   tcb_if.sub tcb
 );
 
-  localparam int unsigned SLW = tcb.PHY.SLW;
+  localparam int unsigned UNT = tcb.PHY.UNT;
   localparam int unsigned DAT = tcb.PHY.DAT;
   localparam int unsigned ADR = $clog2(SIZ);
 
@@ -67,13 +67,13 @@ always @(posedge tcb.clk)
 if (tcb.vld) begin
   if (tcb.wen) begin
     // write access
-    mem[tcb.adr[ADR-1:$clog2(DAT/SLW)]] <= tcb.wdt;
+    mem[tcb.adr[ADR-1:$clog2(DAT/UNT)]] <= tcb.wdt;
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
 //  end
   end else begin
     // read access
-    tcb.rdt <= mem[tcb.adr[ADR-1:$clog2(DAT/SLW)]];
+    tcb.rdt <= mem[tcb.adr[ADR-1:$clog2(DAT/UNT)]];
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
 //    else             tcb.rdt[8*b+:8] <= 'x;

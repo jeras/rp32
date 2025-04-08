@@ -89,10 +89,10 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // protocol
     DLY: 1,
     // signal widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW) // TODO: could be 16-bit alignment
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -104,10 +104,10 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // protocol
     DLY: 1,
     // signal bus widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -119,10 +119,10 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // protocol
     DLY: 1,
     // signal bus widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -134,10 +134,10 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // protocol
     DLY: 1,
     // signal bus widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -149,10 +149,10 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     // protocol
     DLY: 0,
     // signal bus widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,

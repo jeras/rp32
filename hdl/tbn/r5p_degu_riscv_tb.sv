@@ -90,7 +90,7 @@ import riscv_asm_pkg::*;
     // protocol
     DLY: 1,
     // signal widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
     ALW: $clog2(XLEN/16),
@@ -105,7 +105,7 @@ import riscv_asm_pkg::*;
     // protocol
     DLY: 1,
     // signal widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
     ALW: $clog2(XLEN/16),
@@ -120,10 +120,10 @@ import riscv_asm_pkg::*;
     // protocol
     DLY: 1,
     // signal bus widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: 0,   // $clog2(DAT/SLW)
+    ALW: 0,   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,

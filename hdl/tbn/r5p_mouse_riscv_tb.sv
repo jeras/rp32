@@ -91,10 +91,10 @@ import riscv_asm_pkg::*;
     // protocol
     DLY: 1,
     // signal widths
-    SLW: 8,
+    UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
