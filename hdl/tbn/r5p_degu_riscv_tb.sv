@@ -80,7 +80,7 @@ import riscv_asm_pkg::*;
     cnt <= 0;
   end else begin
     cnt <= cnt+1;
-  end  
+  end
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -96,21 +96,6 @@ import riscv_asm_pkg::*;
     ALW: $clog2(XLEN/16),
     // data packing parameters
     MOD: TCB_RISC_V,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
-  };
-
-  localparam tcb_par_phy_t TCB_PHY_IFM = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    ALW: $clog2(XLEN/16),
-    // data packing parameters
-    MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -162,19 +147,14 @@ import riscv_asm_pkg::*;
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-//  tcb_vip_protocol_checker tcb_mon_ifu (
-//    .tcb  (tcb_ifu)
-//  );
-//
-//  tcb_vip_protocol_checker tcb_mon_lsu (
-//    .tcb  (tcb_lsu)
-//  );
+  tcb_vip_protocol_checker tcb_mon_ifu (.tcb  (tcb_ifu));
+  tcb_vip_protocol_checker tcb_mon_lsu (.tcb  (tcb_lsu));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  // convert from RISC-V to MEMORY mode 
+  // convert from RISC-V to MEMORY mode
   tcb_lib_riscv2memory tcb_cnv_ifu (
     .sub  (tcb_ifu),
     .man  (tcb_mem[0]),

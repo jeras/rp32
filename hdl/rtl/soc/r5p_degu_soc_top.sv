@@ -92,7 +92,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
+    ALW: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -107,7 +107,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    ALW: $clog2(XLEN/16),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -161,10 +161,10 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   };
 
   // system busses
-  tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+  tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit (RISC-V mode)
+  tcb_if #(TCB_PHY_IFM) tcb_ifm         (.clk (clk), .rst (rst));  // instruction fetch unit (MEMORY mode)
   tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
   tcb_if #(TCB_PHY_LSU) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
-  tcb_if #(TCB_PHY_LSM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
   tcb_if #(TCB_PHY_LSM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
   tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
   tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
@@ -193,6 +193,14 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 ////////////////////////////////////////////////////////////////////////////////
 // instruction/fetch TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
+
+  // convert from RISC-V to MEMORY mode
+  tcb_lib_riscv2memory tcb_ifu_converter (
+    .sub  (tcb_ifu),
+    .man  (tcb_ifm),
+    // control/status
+    .mal  ()
+  );
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store TCB interconnect
@@ -223,7 +231,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   );
 
   // convert from TCB_RISC_V to TCB_MEMORY mode
-  //tcb_lib_riscv_lsu tcb_lsu_converter (
+  //tcb_lib_riscv2memory tcb_lsu_converter (
   tcb_lib_passthrough tcb_lsu_converter (
     .sub  (tcb_lsd[0]),
     .man  (tcb_lsm)
@@ -300,17 +308,17 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .sleep          (1'b0),
       .regcea         (1'b1),
       // system bus
-      .clka   (   tcb_ifu.clk),
-      .rsta   (   tcb_ifu.rst),
-      .ena    (   tcb_ifu.vld),
-      .wea    ({4{tcb_ifu.req.wen}}),
-      .addra  (   tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
-      .dina   (   tcb_ifu.req.wdt),
-      .douta  (   tcb_ifu.rsp.rdt)
+      .clka   (   tcb_ifm.clk),
+      .rsta   (   tcb_ifm.rst),
+      .ena    (   tcb_ifm.vld),
+      .wea    ({4{tcb_ifm.req.wen}}),
+      .addra  (   tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .dina   (   tcb_ifm.req.wdt),
+      .douta  (   tcb_ifm.rsp.rdt)
     );
 
-    assign tcb_ifu.rsp.sts.err = 1'b0;
-    assign tcb_ifu.rdy = 1'b1;
+    assign tcb_ifm.rsp.sts.err = 1'b0;
+    assign tcb_ifm.rdy = 1'b1;
 
     // xpm_memory_spram: Single Port RAM
     // Xilinx Parameterized Macro, version 2021.2
@@ -362,16 +370,16 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
 
     blk_mem_gen_0 imem (
-      .clka   (   tcb_ifu.clk),
-      .ena    (   tcb_ifu.vld),
-      .wea    ({4{tcb_ifu.req.wen}}),
-      .addra  (   tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
-      .dina   (   tcb_ifu.req.wdt),
-      .douta  (   tcb_ifu.rsp.rdt)
+      .clka   (   tcb_ifm.clk),
+      .ena    (   tcb_ifm.vld),
+      .wea    ({4{tcb_ifm.req.wen}}),
+      .addra  (   tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .dina   (   tcb_ifm.req.wdt),
+      .douta  (   tcb_ifm.rsp.rdt)
     );
 
-    assign tcb_ifu.rsp.sts.err = 1'b0;
-    assign tcb_ifu.rdy = 1'b1;
+    assign tcb_ifm.rsp.sts.err = 1'b0;
+    assign tcb_ifm.rdy = 1'b1;
 
     blk_mem_gen_0 dmem (
       .clka   (tcb_lsm.clk),
@@ -391,18 +399,18 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
     rom32x4096 imem (
       // write access
-      .clock      (tcb_ifu.clk),
+      .clock      (tcb_ifm.clk),
       .wren       (1'b0),
       .wraddress  ('x),
       .data       ('x),
       // read access
-      .rdaddress  (tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
-      .rden       (tcb_ifu.vld),
-      .q          (tcb_ifu.rsp.rdt)
+      .rdaddress  (tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .rden       (tcb_ifm.vld),
+      .q          (tcb_ifm.rsp.rdt)
     );
 
-    assign tcb_ifu.rsp.sts.err = 1'b0;
-    assign tcb_ifu.rdy = 1'b1;
+    assign tcb_ifm.rsp.sts.err = 1'b0;
+    assign tcb_ifm.rdy = 1'b1;
 
     ram32x4096 dmem (
       .clock    (tcb_lsm.clk),
@@ -438,21 +446,21 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .pmi_family            ("ECP5")
     ) imem (
       // write access
-      .WrClock    (tcb_ifu.clk),
+      .WrClock    (tcb_ifm.clk),
       .WrClockEn  (1'b0),
       .WE         (1'b0),
       .WrAddress  ('x),
       .Data       ('x),
       // read access
-      .RdClock    (tcb_ifu.clk),
+      .RdClock    (tcb_ifm.clk),
       .RdClockEn  (1'b1),
-      .Reset      (tcb_ifu.rst),
-      .RdAddress  (tcb_ifu.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
-      .Q          (tcb_ifu.rsp.rdt)
+      .Reset      (tcb_ifm.rst),
+      .RdAddress  (tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .Q          (tcb_ifm.rsp.rdt)
     );
 
-    assign tcb_ifu.rsp.sts.err = 1'b0;
-    assign tcb_ifu.rdy = 1'b1;
+    assign tcb_ifm.rsp.sts.err = 1'b0;
+    assign tcb_ifm.rdy = 1'b1;
 
     // TODO: use a single port or a true dual port memory
     pmi_ram_dp_be #(
@@ -495,7 +503,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .FNM  (IFM_FNM),
       .SIZ  (IFM_SIZ)
     ) imem (
-      .tcb  (tcb_ifu)
+      .tcb  (tcb_ifm)
     );
 
     // data memory
