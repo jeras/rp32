@@ -26,7 +26,6 @@ package r5p_degu_pkg;
     bit          ALU_LSA;  // enable dedicated Load/Store Adder
     bit          ALU_LOM;  // enable dedicated Logical Operand Multiplexer
     bit          ALU_SOM;  // enable dedicated Shift   Operand Multiplexer
-    bit          ALU_L4M;  // enable dedicated 4 to 1 Logic    Multiplexer
     // optimizations: LSU
     logic        VLD_ILL;  // valid        for illegal instruction
     logic        WEN_ILL;  // write enable for illegal instruction
@@ -43,9 +42,8 @@ package r5p_degu_pkg;
     BRU_BRA: 1'b0,
     // optimizations: ALU
     ALU_LSA: 1'b0,
-    ALU_LOM: 1'b0,
+    ALU_LOM: 1'b1,
     ALU_SOM: 1'b0,
-    ALU_L4M: 1'b1,
     // optimizations: LSU
     VLD_ILL: 1'bx,
     WEN_ILL: 1'bx,
@@ -53,7 +51,7 @@ package r5p_degu_pkg;
     BEN_IDL: 1'bx,
     BEN_ILL: 1'bx,
     // FPGA specific optimizations
-    SHF    : 1
+    SHF    : 2
   };
 
 endpackage: r5p_degu_pkg

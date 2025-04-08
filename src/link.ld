@@ -3,7 +3,7 @@ OUTPUT_ARCH("riscv")
 ENTRY(_start)
 
 MEMORY {
-  mem_if (rx)   : ORIGIN = 0x00000000, LENGTH = 0x10000
+  mem_if (rx)   : ORIGIN = 0x80000000, LENGTH = 0x10000
   mem_ls (rw!x) : ORIGIN = 0x80000000, LENGTH = 0x10000
 }
 

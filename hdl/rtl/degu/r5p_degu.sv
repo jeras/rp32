@@ -125,7 +125,7 @@ logic [XLEN-1:0] wbu_dat;  // data
 ///////////////////////////////////////////////////////////////////////////////
 
 // start running after reset
-always_ff @ (posedge clk, posedge rst)
+always_ff @(posedge clk, posedge rst)
 if (rst)  ifu_run <= 1'b0;
 else      ifu_run <= 1'b1;
 
@@ -147,7 +147,7 @@ assign tcb_ifu.req.ndn = TCB_LITTLE;
 assign tcb_ifu.req.adr = ifu_pcn;
 
 // instruction valid
-always_ff @ (posedge clk, posedge rst)
+always_ff @(posedge clk, posedge rst)
 if (rst)  idu_vld <= 1'b0;
 else      idu_vld <= tcb_ifu.trn | (idu_vld & stall);
 
@@ -160,7 +160,7 @@ assign stall = (tcb_ifu.vld & ~tcb_ifu.rdy) | (tcb_lsu.vld & ~tcb_lsu.rdy);
 //assign stall = tcb_ifu.stl | tcb_lsu.stl;
 
 // program counter
-always_ff @ (posedge clk, posedge rst)
+always_ff @(posedge clk, posedge rst)
 if (rst)  ifu_pc <= IFU_RST;
 else begin
     if (idu_vld & ~stall) ifu_pc <= ifu_pcn & IFU_MSK;
@@ -338,35 +338,33 @@ r5p_gpr_2r1w #(
   .d_rd    (    wbu_dat)
 );
 
-// base ALU
-r5p_alu #(
-  .XLEN    (XLEN),
-  // enable opcode
-  .CFG_BRANCH (~CFG.BRU_BRU),
-  .CFG_LOAD   (~CFG.ALU_LSA),
-  .CFG_STORE  (~CFG.ALU_LSA),
-  .CFG_AUIPC  (1'b1),
-  .CFG_JAL    (1'b1),
-  // FPGA specific optimizations
-  .CFG_SHF (CFG.SHF),
-  // optimizations: timing versus area compromises
-  .CFG_LOM (CFG.ALU_LOM),
-  .CFG_SOM (CFG.ALU_SOM),
-  .CFG_L4M (CFG.ALU_L4M)
-) alu (
-   // system signals
-  .clk     (clk),
-  .rst     (rst),
-  // control
-  .dec     (idu_dec),
-  // data input/output
-  .pc      (XLEN'(ifu_pc)),
-  .rs1     (gpr_rs1),
-  .rs2     (gpr_rs2),
-  .rd      (alu_dat),
-  // side outputs
-  .sum     (alu_sum)
-);
+  // base ALU
+  r5p_alu #(
+    // enable opcode
+    .CFG_BRANCH (~CFG.BRU_BRU),
+    .CFG_LOAD   (~CFG.ALU_LSA),
+    .CFG_STORE  (~CFG.ALU_LSA),
+    .CFG_AUIPC  (1'b1),
+    .CFG_JAL    (1'b1),
+    // optimizations: timing versus area compromises
+    .CFG_LOM (CFG.ALU_LOM),
+    .CFG_SOM (CFG.ALU_SOM),
+    // FPGA specific optimizations
+    .CFG_SHF (CFG.SHF)
+  ) alu (
+     // system signals
+    .clk     (clk),
+    .rst     (rst),
+    // control
+    .dec     (idu_dec),
+    // data input/output
+    .pc      (XLEN'(ifu_pc)),
+    .rs1     (gpr_rs1),
+    .rs2     (gpr_rs2),
+    .rd      (alu_dat),
+    // side outputs
+    .sum     (alu_sum)
+  );
 
 `ifndef ALTERA_RESERVED_QIS
 generate
