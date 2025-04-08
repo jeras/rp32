@@ -133,10 +133,12 @@ else      ifu_run <= 1'b1;
 assign tcb_ifu.vld = ifu_run;
 
 // TODO
-assign tcb_ifu.req.cmd = '0;
-assign tcb_ifu.req.wen = 1'b0;
-assign tcb_ifu.req.ben = '1;
-assign tcb_ifu.req.wdt = 'x;
+assign  tcb_ifu.req.cmd = '0;
+assign  tcb_ifu.req.wen = 1'b0;
+assign {tcb_ifu.req.uns,
+        tcb_ifu.req.siz} = LWU;  // load word unsigned
+assign  tcb_ifu.req.ben = '1;    // TODO: not really used for TCB RISC-V mode
+assign  tcb_ifu.req.wdt = 'x;
 
 // instruction fetch is always little endian
 assign tcb_ifu.req.ndn = TCB_LITTLE;

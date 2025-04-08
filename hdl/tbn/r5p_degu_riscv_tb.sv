@@ -93,9 +93,24 @@ import riscv_asm_pkg::*;
     SLW: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW) // TODO: could be 16-bit allignment
+    ALW: $clog2(XLEN/16),
     // data packing parameters
     MOD: TCB_RISC_V,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
+
+  localparam tcb_par_phy_t TCB_PHY_IFM = '{
+    // protocol
+    DLY: 1,
+    // signal widths
+    SLW: 8,
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/16),
+    // data packing parameters
+    MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -108,7 +123,7 @@ import riscv_asm_pkg::*;
     SLW: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
+    ALW: 0,   // $clog2(DAT/SLW)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -159,11 +174,15 @@ import riscv_asm_pkg::*;
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  // passthrough TCB interfaces to array
-  tcb_lib_passthrough tcb_pas_ifu (
+  // convert from RISC-V to MEMORY mode 
+  tcb_lib_riscv2memory tcb_cnv_ifu (
     .sub  (tcb_ifu),
-    .man  (tcb_mem[0])
+    .man  (tcb_mem[0]),
+    // control/status
+    .mal  ()
   );
+
+  // passthrough TCB LSU to array
   tcb_lib_passthrough tcb_pas_lsu (
     .sub  (tcb_lsu),
     .man  (tcb_mem[1])

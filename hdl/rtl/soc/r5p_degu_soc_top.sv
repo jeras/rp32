@@ -75,7 +75,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
-// local parameters and checks
+// local parameters and parameter validation
 ////////////////////////////////////////////////////////////////////////////////
 
 // TODO: check if instruction address bus width and instruction memory size fit
@@ -93,6 +93,21 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     ADR: XLEN,
     DAT: XLEN,
     ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW) // TODO: could be 16-bit alignment
+    // data packing parameters
+    MOD: TCB_RISC_V,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
+
+  localparam tcb_par_phy_t TCB_PHY_IFM = '{
+    // protocol
+    DLY: 1,
+    // signal bus widths
+    SLW: 8,
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/SLW)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -115,7 +130,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_MEM = '{
+  localparam tcb_par_phy_t TCB_PHY_LSM = '{
     // protocol
     DLY: 1,
     // signal bus widths
@@ -149,7 +164,8 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
   tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
   tcb_if #(TCB_PHY_LSU) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
-  tcb_if #(TCB_PHY_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
+  tcb_if #(TCB_PHY_LSM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
+  tcb_if #(TCB_PHY_LSM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
   tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
   tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
@@ -175,7 +191,11 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   );
 
 ////////////////////////////////////////////////////////////////////////////////
-// load/store bus decoder
+// instruction/fetch TCB interconnect
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// load/store TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
   logic [2-1:0] tcb_lsu_sel;
@@ -206,7 +226,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   //tcb_lib_riscv_lsu tcb_lsu_converter (
   tcb_lib_passthrough tcb_lsu_converter (
     .sub  (tcb_lsd[0]),
-    .man  (tcb_mem)
+    .man  (tcb_lsm)
   );
 
   // register request path to convert from DLY=1 CPU to DLY=0 peripherals
@@ -326,17 +346,17 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .sleep          (1'b0),
       .regcea         (1'b1),
       // system bus
-      .clka   (tcb_mem.clk),
-      .rsta   (tcb_mem.rst),
-      .ena    (tcb_mem.vld),
-      .wea    (tcb_mem.req.ben & {XLEN{tcb_mem.req.wen}}),
-      .addra  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
-      .dina   (tcb_mem.req.wdt),
-      .douta  (tcb_mem.rsp.rdt)
+      .clka   (tcb_lsm.clk),
+      .rsta   (tcb_lsm.rst),
+      .ena    (tcb_lsm.vld),
+      .wea    (tcb_lsm.req.ben & {XLEN{tcb_lsm.req.wen}}),
+      .addra  (tcb_lsm.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .dina   (tcb_lsm.req.wdt),
+      .douta  (tcb_lsm.rsp.rdt)
     );
 
-    assign tcb_mem.rsp.sts.err = 1'b0;
-    assign tcb_mem.rdy = 1'b1;
+    assign tcb_lsm.rsp.sts.err = 1'b0;
+    assign tcb_lsm.rdy = 1'b1;
 
   end: gen_artix_xpm
   else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
@@ -354,17 +374,17 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     assign tcb_ifu.rdy = 1'b1;
 
     blk_mem_gen_0 dmem (
-      .clka   (tcb_mem.clk),
-      .ena    (tcb_mem.vld),
-      .wea    (tcb_mem.req.ben &
-         {XLEN{tcb_mem.req.wen}}),
-      .addra  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
-      .dina   (tcb_mem.req.wdt),
-      .douta  (tcb_mem.rsp.rdt)
+      .clka   (tcb_lsm.clk),
+      .ena    (tcb_lsm.vld),
+      .wea    (tcb_lsm.req.ben &
+         {XLEN{tcb_lsm.req.wen}}),
+      .addra  (tcb_lsm.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .dina   (tcb_lsm.req.wdt),
+      .douta  (tcb_lsm.rsp.rdt)
     );
 
-    assign tcb_mem.rsp.sts.err = 1'b0;
-    assign tcb_mem.rdy = 1'b1;
+    assign tcb_lsm.rsp.sts.err = 1'b0;
+    assign tcb_lsm.rdy = 1'b1;
 
   end: gen_artix_gen
   else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
@@ -385,17 +405,17 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     assign tcb_ifu.rdy = 1'b1;
 
     ram32x4096 dmem (
-      .clock    (tcb_mem.clk),
-      .wren     (tcb_mem.vld &  tcb_mem.req.wen),
-      .rden     (tcb_mem.vld & ~tcb_mem.req.wen),
-      .address  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
-      .byteena  (tcb_mem.req.ben),
-      .data     (tcb_mem.req.wdt),
-      .q        (tcb_mem.rsp.rdt)
+      .clock    (tcb_lsm.clk),
+      .wren     (tcb_lsm.vld &  tcb_lsm.req.wen),
+      .rden     (tcb_lsm.vld & ~tcb_lsm.req.wen),
+      .address  (tcb_lsm.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .byteena  (tcb_lsm.req.ben),
+      .data     (tcb_lsm.req.wdt),
+      .q        (tcb_lsm.rsp.rdt)
     );
 
-    assign tcb_mem.rsp.sts.err = 1'b0;
-    assign tcb_mem.rdy = 1'b1;
+    assign tcb_lsm.rsp.sts.err = 1'b0;
+    assign tcb_lsm.rdy = 1'b1;
 
   end: gen_cyclone_v
   else if (CHIP == "ECP5") begin: gen_ecp5
@@ -451,21 +471,21 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .pmi_byte_size         (8),
       .pmi_family            ("ECP5")
     ) dmem (
-      .WrClock    (tcb_mem.clk),
-      .WrClockEn  (tcb_mem.vld),
-      .WE         (tcb_mem.req.wen),
-      .WrAddress  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
-      .ByteEn     (tcb_mem.req.ben),
-      .Data       (tcb_mem.req.wdt),
-      .RdClock    (tcb_mem.clk),
-      .RdClockEn  (tcb_mem.vld),
-      .Reset      (tcb_mem.rst),
-      .RdAddress  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
-      .Q          (tcb_mem.rsp.rdt)
+      .WrClock    (tcb_lsm.clk),
+      .WrClockEn  (tcb_lsm.vld),
+      .WE         (tcb_lsm.req.wen),
+      .WrAddress  (tcb_lsm.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .ByteEn     (tcb_lsm.req.ben),
+      .Data       (tcb_lsm.req.wdt),
+      .RdClock    (tcb_lsm.clk),
+      .RdClockEn  (tcb_lsm.vld),
+      .Reset      (tcb_lsm.rst),
+      .RdAddress  (tcb_lsm.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .Q          (tcb_lsm.rsp.rdt)
     );
 
-    assign tcb_mem.rsp.sts.err = 1'b0;
-    assign tcb_mem.rdy = 1'b1;
+    assign tcb_lsm.rsp.sts.err = 1'b0;
+    assign tcb_lsm.rdy = 1'b1;
 
   end: gen_ecp5
   else begin: gen_default
@@ -483,7 +503,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     //.FNM  (),
       .SIZ  (LSM_SIZ)
     ) dmem (
-      .tcb  (tcb_mem)
+      .tcb  (tcb_lsm)
     );
 
   end: gen_default

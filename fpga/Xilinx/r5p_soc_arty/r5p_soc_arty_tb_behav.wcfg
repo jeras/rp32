@@ -108,21 +108,21 @@
             <obj_property name="ElementShortName">PHY</obj_property>
             <obj_property name="ObjectShortName">PHY</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_BEW">
-            <obj_property name="ElementShortName">PHY_BEW[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_BEW[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_BEN">
+            <obj_property name="ElementShortName">PHY_BEN[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_BEN[31:0]</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_SZW_LIN">
-            <obj_property name="ElementShortName">PHY_SZW_LIN[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_SZW_LIN[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_SIZ_LIN">
+            <obj_property name="ElementShortName">PHY_SIZ_LIN[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_SIZ_LIN[31:0]</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_SZW_LOG">
-            <obj_property name="ElementShortName">PHY_SZW_LOG[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_SZW_LOG[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_SIZ_LOG">
+            <obj_property name="ElementShortName">PHY_SIZ_LOG[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_SIZ_LOG[31:0]</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_SZW">
-            <obj_property name="ElementShortName">PHY_SZW[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_SZW[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_ifu/PHY_SIZ">
+            <obj_property name="ElementShortName">PHY_SIZ[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_SIZ[31:0]</obj_property>
          </wvobject>
       </wvobject>
       <wvobject type="group" fp_name="group54">
@@ -174,21 +174,21 @@
             <obj_property name="ElementShortName">PHY</obj_property>
             <obj_property name="ObjectShortName">PHY</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_BEW">
-            <obj_property name="ElementShortName">PHY_BEW[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_BEW[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_BEN">
+            <obj_property name="ElementShortName">PHY_BEN[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_BEN[31:0]</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_SZW_LIN">
-            <obj_property name="ElementShortName">PHY_SZW_LIN[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_SZW_LIN[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_SIZ_LIN">
+            <obj_property name="ElementShortName">PHY_SIZ_LIN[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_SIZ_LIN[31:0]</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_SZW_LOG">
-            <obj_property name="ElementShortName">PHY_SZW_LOG[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_SZW_LOG[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_SIZ_LOG">
+            <obj_property name="ElementShortName">PHY_SIZ_LOG[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_SIZ_LOG[31:0]</obj_property>
          </wvobject>
-         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_SZW">
-            <obj_property name="ElementShortName">PHY_SZW[31:0]</obj_property>
-            <obj_property name="ObjectShortName">PHY_SZW[31:0]</obj_property>
+         <wvobject type="array" fp_name="/r5p_soc_arty_tb/DUT/soc/tcb_lsu/PHY_SIZ">
+            <obj_property name="ElementShortName">PHY_SIZ[31:0]</obj_property>
+            <obj_property name="ObjectShortName">PHY_SIZ[31:0]</obj_property>
          </wvobject>
       </wvobject>
    </wvobject>
