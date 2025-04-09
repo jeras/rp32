@@ -104,7 +104,7 @@ import riscv_asm_pkg::*;
   localparam tcb_par_phy_t TCB_PHY_LSU = '{
     // protocol
     DLY: 1,
-    // signal bus widths
+    // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
@@ -147,8 +147,8 @@ import riscv_asm_pkg::*;
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_protocol_checker tcb_mon_ifu (.tcb  (tcb_ifu));
-  tcb_vip_protocol_checker tcb_mon_lsu (.tcb  (tcb_lsu));
+  tcb_vip_protocol_checker tcb_mon_ifu (.tcb (tcb_ifu));
+  tcb_vip_protocol_checker tcb_mon_lsu (.tcb (tcb_lsu));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory

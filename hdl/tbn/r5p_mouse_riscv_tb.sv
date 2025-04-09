@@ -87,7 +87,7 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PHY = '{
+  localparam tcb_par_phy_t TCB_PHY_RISC_V = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -102,8 +102,24 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
+  localparam tcb_par_phy_t TCB_PHY_MEMORY = '{
+    // protocol
+    DLY: 1,
+    // signal widths
+    UNT: 8,
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    // data packing parameters
+    MOD: TCB_MEMORY,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
+
   // system busses
-  tcb_if #(TCB_PHY) tcb [0:0] (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_RISC_V) tcb           (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_MEMORY) tcb_mem [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -122,33 +138,45 @@ import riscv_asm_pkg::*;
     .clk     (clk),
     .rst     (rst),
     // TCB system bus (shared by instruction/load/store)
-    .tcb_vld ( tcb[0].vld ),
-    .tcb_wen ( tcb[0].req.wen ),
-    .tcb_adr ( tcb[0].req.adr ),
-    .tcb_fn3 ({tcb[0].req.uns,
-               tcb[0].req.siz}),
-    .tcb_wdt ( tcb[0].req.wdt ),
-    .tcb_rdt ( tcb[0].rsp.rdt ),
-    .tcb_err ( tcb[0].rsp.sts.err ),
-    .tcb_rdy ( tcb[0].rdy )
+    .tcb_vld ( tcb.vld ),
+    .tcb_wen ( tcb.req.wen ),
+    .tcb_adr ( tcb.req.adr ),
+    .tcb_fn3 ({tcb.req.uns,
+               tcb.req.siz}),
+    .tcb_wdt ( tcb.req.wdt ),
+    .tcb_rdt ( tcb.rsp.rdt ),
+    .tcb_err ( tcb.rsp.sts.err ),
+    .tcb_rdy ( tcb.rdy )
   );
+
+  // signals not provided by the CPU
+  assign tcb.req.ndn = TCB_LITTLE;
 
 ////////////////////////////////////////////////////////////////////////////////
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_protocol_checker tcb_mon (.tcb  (tcb[0]));
+  tcb_vip_protocol_checker tcb_mon     (.tcb (tcb));
+  tcb_vip_protocol_checker tcb_mon_mem (.tcb (tcb_mem[0]));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
+
+  // convert from RISC-V to MEMORY mode
+  tcb_lib_riscv2memory tcb_cnv (
+    .sub  (tcb),
+    .man  (tcb_mem[0]),
+    // control/status
+    .mal  ()
+  );
 
   tcb_vip_memory #(
     .MFN  (IFN),
     .SPN  (1),
     .SIZ  (MEM_SIZ)
   ) mem (
-    .tcb  (tcb[0:0])
+    .tcb  (tcb_mem[0:0])
   );
 
   // memory initialization file is provided at runtime
@@ -200,10 +228,10 @@ import riscv_asm_pkg::*;
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
     rvmodel_halt <= 1'b0;
-  end else if (tcb[0].trn) begin
-    if (tcb[0].req.wen) begin
+  end else if (tcb.trn) begin
+    if (tcb.req.wen) begin
       // HTIF tohost
-      if (tcb[0].req.adr == tohost) rvmodel_halt <= tcb[0].req.wdt[0];
+      if (tcb.req.adr == tohost) rvmodel_halt <= tcb.req.wdt[0];
     end
   end
 
@@ -253,7 +281,7 @@ import riscv_asm_pkg::*;
     // instruction execution phase
     .pha  (dut.ctl_pha),
     // TCB system bus
-    .tcb  (tcb[0])
+    .tcb  (tcb)
   );
 
   // open log file with filename obtained through plusargs
