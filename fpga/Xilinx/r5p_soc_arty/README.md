@@ -4,9 +4,9 @@ To construct a `*.coe` memory coefficient file,
 you can concatenate a `*.coe.head`, hexadecimal memory contents `*.vmem` and a tail `*.coe.tail`.
 
 ```Bash
-cat fpga/Xilinx/r5p_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe.head  > fpga/Xilinx/r5p_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe
-cat src/mem_if.vmem                                                  >> fpga/Xilinx/r5p_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe
-cat fpga/Xilinx/r5p_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe.tail >> fpga/Xilinx/r5p_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe
+cat fpga/Xilinx/r5p_degu_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe.head  > fpga/Xilinx/r5p_degu_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe
+cat src/mem_if.vmem                                                       >> fpga/Xilinx/r5p_degu_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe
+cat fpga/Xilinx/r5p_degu_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe.tail >> fpga/Xilinx/r5p_degu_soc_arty/ip/blk_mem_gen_0/blk_mem_gen_0.coe
 ```
 
 ```

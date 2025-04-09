@@ -25,22 +25,24 @@ module r5p_degu_riscv_tb
   localparam int unsigned XLOG = $clog2(XLEN),
   // RISC-V ISA
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-//  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
-  isa_ext_t    XTEN = RV_C,
+//parameter  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
+  parameter  isa_ext_t    XTEN = RV_C,
   // privilige modes
-  isa_priv_t   MODES = MODES_M,
+  parameter  isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
+  parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
 `else
-  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+  parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
+  parameter  [XLEN-1:0] IFU_RST = 32'h8000_0000,
+  parameter  [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
   // memory size
-  int unsigned MEM_SIZ = 2**22,
+  parameter  int unsigned MEM_SIZ = 2**22,
   // memory configuration
-  string       IFN = "",     // instruction memory file name
+  parameter  string       IFN = "",     // instruction memory file name
   // testbench parameters
-  bit          ABI = 1'b1    // enable ABI translation for GPIO names
+  parameter  bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )();
 
 import riscv_asm_pkg::*;
@@ -125,9 +127,6 @@ import riscv_asm_pkg::*;
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam [XLEN-1:0] IFU_RST = 32'h8000_0000;
-  localparam [XLEN-1:0] IFU_MSK = 32'h803f_ffff;
-
   r5p_degu #(
     // RISC-V ISA
     .ISA  (ISA),
@@ -136,26 +135,26 @@ import riscv_asm_pkg::*;
     .IFU_MSK (IFU_MSK)
   ) dut (
     // system signals
-    .clk      (clk),
-    .rst      (rst),
+    .clk     (clk),
+    .rst     (rst),
     // TCB system bus
-    .tcb_ifu  (tcb_ifu),
-    .tcb_lsu  (tcb_lsu)
+    .tcb_ifu (tcb_ifu),
+    .tcb_lsu (tcb_lsu)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_protocol_checker tcb_mon_ifu (.tcb (tcb_ifu));
-  tcb_vip_protocol_checker tcb_mon_lsu (.tcb (tcb_lsu));
+  tcb_vip_protocol_checker tcb_ifu_chk (.tcb (tcb_ifu));
+  tcb_vip_protocol_checker tcb_lsu_chk (.tcb (tcb_lsu));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from RISC-V to MEMORY mode
-  tcb_lib_riscv2memory tcb_cnv_ifu (
+  tcb_lib_riscv2memory tcb_ifu_cnv (
     .sub  (tcb_ifu),
     .man  (tcb_mem[0]),
     // control/status
@@ -163,7 +162,7 @@ import riscv_asm_pkg::*;
   );
 
   // passthrough TCB LSU to array
-  tcb_lib_passthrough tcb_pas_lsu (
+  tcb_lib_passthrough tcb_lsu_pas (
     .sub  (tcb_lsu),
     .man  (tcb_mem[1])
   );

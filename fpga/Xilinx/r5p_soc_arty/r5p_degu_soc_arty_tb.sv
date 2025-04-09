@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_soc_arty_tb #(
+module r5p_degu_soc_arty_tb #(
   // implementation device (ASIC/FPGA vendor/device)
   string CHIP = "ARTIX_GEN"
 );
@@ -66,4 +66,4 @@ begin
   $finish();
 end
 
-endmodule: r5p_soc_arty_tb
+endmodule: r5p_degu_soc_arty_tb

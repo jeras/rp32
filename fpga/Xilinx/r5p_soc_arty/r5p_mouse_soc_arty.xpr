@@ -4,7 +4,7 @@
 <!-- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.                   -->
 <!-- Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.   -->
 
-<Project Product="Vivado" Version="7" Minor="68" Path="/home/izi/VLSI/rp32/fpga/Xilinx/r5p_soc_arty/r5p_soc_arty.xpr">
+<Project Product="Vivado" Version="7" Minor="68" Path="/home/izi/VLSI/rp32/fpga/Xilinx/r5p_mouse_soc_arty/r5p_mouse_soc_arty.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="0e0faf77b7fc48c5a032dfa2b2033b37"/>
@@ -479,7 +479,7 @@
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1" RelGenDir="$PGENDIR/constrs_1">
       <Filter Type="Constrs"/>
-      <File Path="$PPRDIR/r5p_soc_arty.xdc">
+      <File Path="$PPRDIR/r5p_mouse_soc_arty.xdc">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -491,12 +491,12 @@
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1" RelGenDir="$PGENDIR/sim_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/r5p_soc_arty_tb.sv">
+      <File Path="$PPRDIR/r5p_mouse_soc_arty_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/r5p_soc_arty_tb_behav.wcfg">
+      <File Path="$PPRDIR/r5p_mouse_soc_arty_tb_behav.wcfg">
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -527,7 +527,7 @@
         <Option Name="PamSignalDriverFile" Val="xil_bypass_driver"/>
         <Option Name="PamPseudoTop" Val="pseudo_tb"/>
         <Option Name="SrcSet" Val="sources_1"/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/r5p_soc_arty_tb_behav.wcfg"/>
+        <Option Name="XSimWcfgFile" Val="$PPRDIR/r5p_mouse_soc_arty_tb_behav.wcfg"/>
         <Option Name="CosimPdi" Val=""/>
         <Option Name="CosimPlatform" Val=""/>
         <Option Name="CosimElf" Val=""/>

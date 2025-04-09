@@ -4,7 +4,7 @@
     "xci_name": "dist_mem_gen_0",
     "component_reference": "xilinx.com:ip:dist_mem_gen:8.0",
     "ip_revision": "15",
-    "gen_directory": "../../../../r5p_soc_arty.gen/sources_1/ip/dist_mem_gen_0",
+    "gen_directory": "../../../../r5p_degu_soc_arty.gen/sources_1/ip/dist_mem_gen_0",
     "parameters": {
       "component_parameters": {
         "depth": [ { "value": "32", "value_src": "user", "resolve_type": "user", "format": "long", "usage": "all" } ],
@@ -85,7 +85,7 @@
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
         "IPREVISION": [ { "value": "15" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../r5p_soc_arty.gen/sources_1/ip/dist_mem_gen_0" } ],
+        "OUTPUTDIR": [ { "value": "../../../../r5p_degu_soc_arty.gen/sources_1/ip/dist_mem_gen_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
         "SWVERSION": [ { "value": "2024.2" } ],

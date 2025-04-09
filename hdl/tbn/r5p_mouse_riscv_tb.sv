@@ -1,6 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// RISC-V testbench for core module
-// R5P Mouse as DUT
+// R5P Mouse RISC-V conformance testbench
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -121,7 +120,7 @@ import riscv_asm_pkg::*;
   };
 
   // system busses
-  tcb_if #(TCB_PHY_RISC_V) tcb           (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_RISC_V) tcb_cpu       (.clk (clk), .rst (rst));
   tcb_if #(TCB_PHY_MEMORY) tcb_mem [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,26 +136,26 @@ import riscv_asm_pkg::*;
     .clk     (clk),
     .rst     (rst),
     // TCB system bus (shared by instruction/load/store)
-    .tcb_vld ( tcb.vld ),
-    .tcb_wen ( tcb.req.wen ),
-    .tcb_adr ( tcb.req.adr ),
-    .tcb_fn3 ({tcb.req.uns,
-               tcb.req.siz}),
-    .tcb_wdt ( tcb.req.wdt ),
-    .tcb_rdt ( tcb.rsp.rdt ),
-    .tcb_err ( tcb.rsp.sts.err ),
-    .tcb_rdy ( tcb.rdy )
+    .tcb_vld ( tcb_cpu.vld ),
+    .tcb_wen ( tcb_cpu.req.wen ),
+    .tcb_adr ( tcb_cpu.req.adr ),
+    .tcb_fn3 ({tcb_cpu.req.uns,
+               tcb_cpu.req.siz}),
+    .tcb_wdt ( tcb_cpu.req.wdt ),
+    .tcb_rdt ( tcb_cpu.rsp.rdt ),
+    .tcb_err ( tcb_cpu.rsp.sts.err ),
+    .tcb_rdy ( tcb_cpu.rdy )
   );
 
   // signals not provided by the CPU
-  assign tcb.req.ndn = TCB_LITTLE;
+  assign tcb_cpu.req.ndn = TCB_LITTLE;
 
 ////////////////////////////////////////////////////////////////////////////////
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-  tcb_vip_protocol_checker tcb_mon     (.tcb (tcb));
-  tcb_vip_protocol_checker tcb_mon_mem (.tcb (tcb_mem[0]));
+  tcb_vip_protocol_checker tcb_cpu_chk (.tcb (tcb_cpu));
+  tcb_vip_protocol_checker tcb_mem_chk (.tcb (tcb_mem[0]));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
@@ -164,7 +163,7 @@ import riscv_asm_pkg::*;
 
   // convert from RISC-V to MEMORY mode
   tcb_lib_riscv2memory tcb_cnv (
-    .sub  (tcb),
+    .sub  (tcb_cpu),
     .man  (tcb_mem[0]),
     // control/status
     .mal  ()
@@ -227,10 +226,10 @@ import riscv_asm_pkg::*;
   always_ff @(posedge clk, posedge rst)
   if (rst) begin
     rvmodel_halt <= 1'b0;
-  end else if (tcb.trn) begin
-    if (tcb.req.wen) begin
+  end else if (tcb_cpu.trn) begin
+    if (tcb_cpu.req.wen) begin
       // HTIF tohost
-      if (tcb.req.adr == tohost) rvmodel_halt <= tcb.req.wdt[0];
+      if (tcb_cpu.req.adr == tohost) rvmodel_halt <= tcb_cpu.req.wdt[0];
     end
   end
 
@@ -280,7 +279,7 @@ import riscv_asm_pkg::*;
     // instruction execution phase
     .pha  (dut.ctl_pha),
     // TCB system bus
-    .tcb  (tcb)
+    .tcb  (tcb_cpu)
   );
 
   // open log file with filename obtained through plusargs

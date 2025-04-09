@@ -4,7 +4,7 @@
     "xci_name": "c_addsub_0",
     "component_reference": "xilinx.com:ip:c_addsub:12.0",
     "ip_revision": "15",
-    "gen_directory": "../../../../r5p_soc_arty.gen/sources_1/ip/c_addsub_0",
+    "gen_directory": "../../../../r5p_degu_soc_arty.gen/sources_1/ip/c_addsub_0",
     "parameters": {
       "component_parameters": {
         "Component_Name": [ { "value": "c_addsub_0", "resolve_type": "user", "usage": "all" } ],
@@ -81,7 +81,7 @@
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
         "IPREVISION": [ { "value": "15" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../r5p_soc_arty.gen/sources_1/ip/c_addsub_0" } ],
+        "OUTPUTDIR": [ { "value": "../../../../r5p_degu_soc_arty.gen/sources_1/ip/c_addsub_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
         "SWVERSION": [ { "value": "2023.1" } ],
