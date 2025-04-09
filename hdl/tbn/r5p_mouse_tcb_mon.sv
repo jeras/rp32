@@ -18,6 +18,8 @@
 
 module r5p_mouse_tcb_mon
   import riscv_isa_pkg::*;
+  import riscv_isa_i_pkg::*;
+  import tcb_pkg::*;
 #(
   // log file name
   string LOG = "",
@@ -136,7 +138,11 @@ module r5p_mouse_tcb_mon
       end
       // memory store
       if (dly_pha == MST) begin
-        str_st.push_front($sformatf(" mem 0x%8h 0x%8h", adr, dat));
+        case (fn3_stu_et'(fn3))
+          SB:  str_st.push_front($sformatf(" mem 0x%8h 0x%2h", adr, dat[ 8-1:0]));
+          SH:  str_st.push_front($sformatf(" mem 0x%8h 0x%4h", adr, dat[16-1:0]));
+          SW:  str_st.push_front($sformatf(" mem 0x%8h 0x%8h", adr, dat[32-1:0]));
+        endcase
       end
     end
   end

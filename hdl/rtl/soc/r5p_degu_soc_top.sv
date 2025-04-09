@@ -46,7 +46,7 @@ module r5p_degu_soc_top
   // IFU bus
   parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
   parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
-  // IFU memory (size, file name)
+  // IFU memory (size in bytes, file name)
   parameter  int unsigned   IFM_ADR = 14,
   parameter  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ADR),
   parameter  string         IFM_FNM = "mem_if.vmem",
@@ -60,7 +60,7 @@ module r5p_degu_soc_top
 )(
   // system signals
   input  logic          clk,  // clock
-  input  logic          rst,  // reset (active low)
+  input  logic          rst,  // reset (active high)
   // GPIO
   output logic [GW-1:0] gpio_o,  // output
   output logic [GW-1:0] gpio_e,  // enable
@@ -74,14 +74,14 @@ module r5p_degu_soc_top
 parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 `endif
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // local parameters and parameter validation
 ////////////////////////////////////////////////////////////////////////////////
 
 // TODO: check if instruction address bus width and instruction memory size fit
 // TODO: check if data address bus width and data memory size fit
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -103,7 +103,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   localparam tcb_par_phy_t TCB_PHY_IFM = '{
     // protocol
     DLY: 1,
-    // signal bus widths
+    // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
@@ -118,7 +118,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   localparam tcb_par_phy_t TCB_PHY_LSU = '{
     // protocol
     DLY: 1,
-    // signal bus widths
+    // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
@@ -133,7 +133,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   localparam tcb_par_phy_t TCB_PHY_LSM = '{
     // protocol
     DLY: 1,
-    // signal bus widths
+    // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
@@ -148,7 +148,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   localparam tcb_par_phy_t TCB_PHY_PER = '{
     // protocol
     DLY: 0,
-    // signal bus widths
+    // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
@@ -183,15 +183,15 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     .CHIP    (CHIP)
   ) core (
     // system signals
-    .clk      (clk),
-    .rst      (rst),
+    .clk     (clk),
+    .rst     (rst),
     // TCB system bus
-    .tcb_ifu  (tcb_ifu),
-    .tcb_lsu  (tcb_lsu)
+    .tcb_ifu (tcb_ifu),
+    .tcb_lsu (tcb_lsu)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
-// instruction/fetch TCB interconnect
+// instruction fetch TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from RISC-V to MEMORY mode
@@ -231,10 +231,12 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   );
 
   // convert from TCB_RISC_V to TCB_MEMORY mode
-  //tcb_lib_riscv2memory tcb_lsu_converter (
-  tcb_lib_passthrough tcb_lsu_converter (
+  //tcb_lib_riscv2memory tcb_lsm_converter (
+  tcb_lib_passthrough tcb_lsm_converter (
     .sub  (tcb_lsd[0]),
     .man  (tcb_lsm)
+    // control/status
+//    .mal  ()
   );
 
   // register request path to convert from DLY=1 CPU to DLY=0 peripherals
@@ -308,13 +310,13 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       .sleep          (1'b0),
       .regcea         (1'b1),
       // system bus
-      .clka   (   tcb_ifm.clk),
-      .rsta   (   tcb_ifm.rst),
-      .ena    (   tcb_ifm.vld),
-      .wea    ({4{tcb_ifm.req.wen}}),
-      .addra  (   tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
-      .dina   (   tcb_ifm.req.wdt),
-      .douta  (   tcb_ifm.rsp.rdt)
+      .clka   (tcb_ifm.clk),
+      .rsta   (tcb_ifm.rst),
+      .ena    (tcb_ifm.vld),
+      .wea    (tcb_ifm.req.ben & {4{tcb_ifm.req.wen}}),
+      .addra  (tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .dina   (tcb_ifm.req.wdt),
+      .douta  (tcb_ifm.rsp.rdt)
     );
 
     assign tcb_ifm.rsp.sts.err = 1'b0;
@@ -370,12 +372,12 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   else if (CHIP == "ARTIX_GEN") begin: gen_artix_gen
 
     blk_mem_gen_0 imem (
-      .clka   (   tcb_ifm.clk),
-      .ena    (   tcb_ifm.vld),
-      .wea    ({4{tcb_ifm.req.wen}}),
-      .addra  (   tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
-      .dina   (   tcb_ifm.req.wdt),
-      .douta  (   tcb_ifm.rsp.rdt)
+      .clka   (tcb_ifm.clk),
+      .ena    (tcb_ifm.vld),
+      .wea    (tcb_ifm.req.wen & {4{tcb_ifm.req.wen}}),
+      .addra  (tcb_ifm.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .dina   (tcb_ifm.req.wdt),
+      .douta  (tcb_ifm.rsp.rdt)
     );
 
     assign tcb_ifm.rsp.sts.err = 1'b0;
@@ -398,8 +400,8 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   else if (CHIP == "CYCLONE_V") begin: gen_cyclone_v
 
     rom32x4096 imem (
-      // write access
       .clock      (tcb_ifm.clk),
+      // write access
       .wren       (1'b0),
       .wraddress  ('x),
       .data       ('x),
@@ -414,6 +416,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
     ram32x4096 dmem (
       .clock    (tcb_lsm.clk),
+      // read/write access
       .wren     (tcb_lsm.vld &  tcb_lsm.req.wen),
       .rden     (tcb_lsm.vld & ~tcb_lsm.req.wen),
       .address  (tcb_lsm.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
@@ -597,3 +600,4 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   endgenerate
 
 endmodule: r5p_degu_soc_top
+

@@ -27,21 +27,24 @@ module r5p_mouse_riscv_tb
   localparam int unsigned ILEN = 32,
   // RISC-V ISA
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
-  isa_ext_t    XTEN = '0,
+  parameter  isa_ext_t    XTEN = '0,
   // privilige modes
-  isa_priv_t   MODES = MODES_M,
+  parameter  isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
+  parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
 `else
-  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+  parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
+  parameter  [XLEN-1:0] IFU_RST = 32'h8000_0000,
+  parameter  [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
+  parameter  [XLEN-1:0] GPR_ADR = 32'h801f_ff80,
   // memory size
-  int unsigned MEM_SIZ = 2**22,
+  parameter  int unsigned MEM_SIZ = 2**22,
   // memory configuration
-  string       IFN = "",     // instruction memory file name
+  parameter  string       IFN = "",     // instruction memory file name
   // testbench parameters
-  bit          ABI = 1'b1    // enable ABI translation for GPIO names
+  parameter  bit          ABI = 1'b1    // enable ABI translation for GPIO names
 )();
 
 import riscv_asm_pkg::*;
@@ -124,10 +127,6 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
-
-  localparam [XLEN-1:0] IFU_RST = 32'h8000_0000;
-  localparam [XLEN-1:0] IFU_MSK = 32'h803f_ffff;
-  localparam [XLEN-1:0] GPR_ADR = 32'h801f_ff80;
 
   r5p_mouse #(
     .IFU_RST (IFU_RST),
