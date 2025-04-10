@@ -154,8 +154,6 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
   tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
-  logic tcb_lsu_mal;
-
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Degu core instance
 ////////////////////////////////////////////////////////////////////////////////
@@ -174,8 +172,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     .rst     (rst),
     // TCB system bus
     .tcb_ifu (tcb_ifu),
-    .tcb_lsu (tcb_lsu),
-    .tcb_lsu_mal (tcb_lsu_mal)
+    .tcb_lsu (tcb_lsu)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -185,9 +182,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   // convert from RISC-V to MEMORY mode
   tcb_lib_riscv2memory tcb_ifu_riscv2memory (
     .sub  (tcb_ifu),
-    .man  (tcb_ifm),
-    // control/status
-    .mal  ()
+    .man  (tcb_ifm)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -221,9 +216,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   // convert from TCB_RISC_V to TCB_MEMORY mode
   tcb_lib_riscv2memory tcb_lsm_riscv2memory (
     .sub  (tcb_lsd[0]),
-    .man  (tcb_lsm),
-    // control/status
-    .mal  (tcb_lsu_mal)
+    .man  (tcb_lsm)
   );
 
   // register request path to convert from DLY=1 CPU to DLY=0 peripherals

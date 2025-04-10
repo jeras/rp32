@@ -56,8 +56,7 @@ module r5p_degu
   input  logic rst,
   // TCB system bus
   tcb_if.man   tcb_ifu,  // instruction fetch
-  tcb_if.man   tcb_lsu,  // load/store
-  input  logic tcb_lsu_mal  // misalignment //TODO: should it be part of the response?
+  tcb_if.man   tcb_lsu   // load/store
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
@@ -502,8 +501,7 @@ r5p_lsu #(
   .mal     (lsu_mal),
   .rdy     (lsu_rdy),
   // data bus (load/store)
-  .tcb     (tcb_lsu),
-  .tcb_mal (tcb_lsu_mal)
+  .tcb     (tcb_lsu)
 );
 
 ///////////////////////////////////////////////////////////////////////////////

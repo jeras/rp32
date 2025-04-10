@@ -46,8 +46,7 @@ module r5p_lsu
   output logic              mal,  // misaligned
   output logic              rdy,  // ready
   // TCB system bus (load/store)
-  tcb_if.man                tcb,
-  input  logic              tcb_mal
+  tcb_if.man                tcb
 );
 
 // read/write misalignment
@@ -108,7 +107,7 @@ always_comb begin: blk_rdt
 end: blk_rdt
 
 // misalignment
-assign mal = tcb_mal;
+assign mal = tcb.mal;
 
 // system stall
 assign rdy = tcb.rdy;

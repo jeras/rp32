@@ -138,10 +138,6 @@ import riscv_asm_pkg::*;
   tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
   tcb_if #(TCB_PHY_MEM) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
 
-  // address misalignment
-  logic tcb_ifu_mal;
-  logic tcb_lsu_mal;
-
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,8 +154,7 @@ import riscv_asm_pkg::*;
     .rst     (rst),
     // TCB system bus
     .tcb_ifu (tcb_ifu),
-    .tcb_lsu (tcb_lsu),
-    .tcb_lsu_mal (tcb_lsu_mal)
+    .tcb_lsu (tcb_lsu)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -176,16 +171,13 @@ import riscv_asm_pkg::*;
   // convert from RISC-V to MEMORY mode
   tcb_lib_riscv2memory tcb_ifu_cnv (
     .sub  (tcb_ifu),
-    .man  (tcb_mem[0]),
-    // control/status
-    .mal  (tcb_ifu_mal)
+    .man  (tcb_mem[0])
   );
 
   // convert from RISC-V to MEMORY mode
   tcb_lib_riscv2memory tcb_lsu_cnv (
     .sub  (tcb_lsu),
-    .man  (tcb_mem[1]),
-    .mal  (tcb_lsu_mal)
+    .man  (tcb_mem[1])
   );
 
   tcb_vip_memory #(
