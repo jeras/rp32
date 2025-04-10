@@ -41,7 +41,7 @@ module r5p_mouse #(
   output logic            tcb_vld,  // valid
   output logic            tcb_wen,  // write enable
   output logic [XLEN-1:0] tcb_adr,  // address
-  output logic    [3-1:0] tcb_fn3,  // RISC-V func3
+  output logic    [2-1:0] tcb_siz,  // RISC-V func3[1:0]
   output logic [XLEN-1:0] tcb_wdt,  // write data
   input  logic [XLEN-1:0] tcb_rdt,  // read data
   input  logic            tcb_err,  // error
@@ -139,7 +139,7 @@ logic                   bus_trn;  // transfer
 logic                   bus_vld;  // valid
 logic                   bus_wen;  // write enable
 logic        [XLEN-1:0] bus_adr;  // address
-logic           [3-1:0] bus_fn3;  // RISC-V func3
+logic           [2-1:0] bus_siz;  // RISC-V func3
 logic        [XLEN-1:0] bus_wdt;  // write data
 logic        [XLEN-1:0] bus_rdt;  // read data
 logic                   bus_err;  // error
@@ -373,7 +373,7 @@ begin
   // system bus
   bus_wen =  1'bx;
   bus_adr = 32'hxxxxxxxx;
-  bus_fn3 =  3'bxxx;
+  bus_siz =  2'bxx;
   bus_wdt = 32'hxxxxxxxx;
   // logic operations
   log_op1 = 32'hxxxxxxxx;
@@ -427,7 +427,7 @@ begin
       endcase
       // system bus: instruction fetch
       bus_wen = 1'b0;
-      bus_fn3 = LW;
+      bus_siz = LW[1:0];
       bus_wdt = 32'hxxxxxxxx;
       // PC next
       ctl_pcn = bus_adr;
@@ -443,7 +443,7 @@ begin
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[XLEN-1:5+2], bus_rd , 2'b00};
-          bus_fn3 = SW;
+          bus_siz = SW[1:0];
           case (bus_opc)
             LUI: begin
               // GPR rd write (upper immediate)
@@ -486,7 +486,7 @@ begin
           // rs1 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[XLEN-1:5+2], bus_rs1, 2'b00};
-          bus_fn3 = LW;
+          bus_siz = LW[1:0];
           bus_wdt = 32'hxxxxxxxx;
         end
         MISC_MEM: begin
@@ -519,7 +519,7 @@ begin
           // load
           bus_wen = 1'b0;
           bus_adr = add_sum[XLEN-1:0];
-          bus_fn3 = dec_fn3;
+          bus_siz = dec_fn3[1:0];
         end
         BRANCH, STORE, OP_32: begin
           // control (phase)
@@ -528,7 +528,7 @@ begin
           // GPR rs2 read
           bus_wen = 1'b0;
           bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rs2, 2'b00};
-          bus_fn3 = LW;
+          bus_siz = LW[1:0];
           bus_wdt = 32'hxxxxxxxx;
         end
         default: begin
@@ -551,7 +551,7 @@ begin
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
-          bus_fn3 = SW;
+          bus_siz = SW[1:0];
           bus_wdt = add_sum[XLEN-1:0];
         end
         OP_32, OP_IMM_32: begin
@@ -561,7 +561,7 @@ begin
           // GPR rd write
           bus_wen =1'b1;
           bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
-          bus_fn3 = SW;
+          bus_siz = SW[1:0];
           case (dec_opc)
             OP_32: begin
               // arithmetic operations
@@ -645,8 +645,15 @@ begin
           // GPR rd write
           bus_wen = 1'b1;
           bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
-          bus_fn3 = SW;
-          bus_wdt = bus_rdt;
+          bus_siz = SW[1:0];
+          case (dec_fn3)
+            LB : bus_wdt =   $signed(bus_rdt[ 8-1:0]);
+            LH : bus_wdt =   $signed(bus_rdt[16-1:0]);
+            LW : bus_wdt =   $signed(bus_rdt[32-1:0]);
+            LBU: bus_wdt = $unsigned(bus_rdt[ 8-1:0]);
+            LHU: bus_wdt = $unsigned(bus_rdt[16-1:0]);
+            default: bus_wdt = 32'hxxxxxxxx;
+          endcase
         end
         STORE: begin
           // control (phase)
@@ -658,7 +665,7 @@ begin
           // store
           bus_wen = 1'b1;
           bus_adr = add_sum[XLEN-1:0];
-          bus_fn3 = dec_fn3;
+          bus_siz = dec_fn3[1:0];
           bus_wdt = bus_rdt;
         end
         BRANCH: begin
@@ -715,7 +722,7 @@ end
 assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
 assign tcb_wen =           bus_wen               ;
 assign tcb_adr =           bus_adr               ;
-assign tcb_fn3 =           bus_fn3               ;
+assign tcb_siz =           bus_siz               ;
 assign tcb_wdt =           bus_wdt               ;
 assign bus_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
 assign bus_err =           tcb_err               ;

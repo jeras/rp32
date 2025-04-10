@@ -58,7 +58,7 @@ module r5p_mouse_tcb_mon
   // log signals
   logic [tcb.PHY.ADR-1:0] adr;  // address
   logic                   wen;  // write enable
-  logic           [3-1:0] fn3;  // RISC-V func3
+  logic           [2-1:0] siz;  // RISC-V func3
   logic [tcb.PHY.DAT-1:0] dat;  // data
   logic                   err;  // error
 
@@ -99,10 +99,9 @@ module r5p_mouse_tcb_mon
   // write/read signals
   always_comb
   begin
-    adr <=  dly.req.adr;
-    wen <=  dly.req.wen;
-    fn3 <= {dly.req.uns,
-            dly.req.siz};
+    adr <= dly.req.adr;
+    wen <= dly.req.wen;
+    siz <= dly.req.siz;
     if (dly.req.wen) begin
       dat <= dly.req.wdt;
     end else begin
@@ -127,10 +126,7 @@ module r5p_mouse_tcb_mon
       end
       // GPR write-back (rs1/rs2 reads are not logged)
       if (dly_pha == WB) begin
-        // byte enable signals are used to disable write to x0 GPR
-        if (fn3 == {1'b0, 2'b10}) begin
-            str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(adr[2+:5]), dat));
-        end
+        str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(adr[2+:5]), dat));
       end
       // memory load
       if (dly_pha == MLD) begin
@@ -138,10 +134,10 @@ module r5p_mouse_tcb_mon
       end
       // memory store
       if (dly_pha == MST) begin
-        case (fn3_stu_et'(fn3))
-          SB:  str_st.push_front($sformatf(" mem 0x%8h 0x%2h", adr, dat[ 8-1:0]));
-          SH:  str_st.push_front($sformatf(" mem 0x%8h 0x%4h", adr, dat[16-1:0]));
-          SW:  str_st.push_front($sformatf(" mem 0x%8h 0x%8h", adr, dat[32-1:0]));
+        case (siz)
+          2'd0: str_st.push_front($sformatf(" mem 0x%8h 0x%2h", adr, dat[ 8-1:0]));
+          2'd1: str_st.push_front($sformatf(" mem 0x%8h 0x%4h", adr, dat[16-1:0]));
+          2'd2: str_st.push_front($sformatf(" mem 0x%8h 0x%8h", adr, dat[32-1:0]));
         endcase
       end
     end

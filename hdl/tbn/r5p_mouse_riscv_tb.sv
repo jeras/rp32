@@ -136,15 +136,14 @@ import riscv_asm_pkg::*;
     .clk     (clk),
     .rst     (rst),
     // TCB system bus (shared by instruction/load/store)
-    .tcb_vld ( tcb_cpu.vld ),
-    .tcb_wen ( tcb_cpu.req.wen ),
-    .tcb_adr ( tcb_cpu.req.adr ),
-    .tcb_fn3 ({tcb_cpu.req.uns,
-               tcb_cpu.req.siz}),
-    .tcb_wdt ( tcb_cpu.req.wdt ),
-    .tcb_rdt ( tcb_cpu.rsp.rdt ),
-    .tcb_err ( tcb_cpu.rsp.sts.err ),
-    .tcb_rdy ( tcb_cpu.rdy )
+    .tcb_vld (tcb_cpu.vld),
+    .tcb_wen (tcb_cpu.req.wen),
+    .tcb_adr (tcb_cpu.req.adr),
+    .tcb_siz (tcb_cpu.req.siz),
+    .tcb_wdt (tcb_cpu.req.wdt),
+    .tcb_rdt (tcb_cpu.rsp.rdt),
+    .tcb_err (tcb_cpu.rsp.sts.err ),
+    .tcb_rdy (tcb_cpu.rdy)
   );
 
   // signals not provided by the CPU
