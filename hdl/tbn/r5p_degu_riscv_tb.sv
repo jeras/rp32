@@ -97,7 +97,7 @@ import riscv_asm_pkg::*;
     DAT: XLEN,
     ALN: $clog2(XLEN/16),
     // data packing parameters
-    MOD: TCB_RISC_V,
+    MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -112,7 +112,7 @@ import riscv_asm_pkg::*;
     DAT: XLEN,
     ALN: 0,   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_RISC_V,
+    MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -127,7 +127,7 @@ import riscv_asm_pkg::*;
     DAT: XLEN,
     ALN: 0,   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_MEMORY,
+    MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -169,13 +169,13 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from RISC-V to MEMORY mode
-  tcb_lib_riscv2memory tcb_ifu_cnv (
+  tcb_lib_logsize2byteena tcb_ifu_cnv (
     .sub  (tcb_ifu),
     .man  (tcb_mem[0])
   );
 
   // convert from RISC-V to MEMORY mode
-  tcb_lib_riscv2memory tcb_lsu_cnv (
+  tcb_lib_logsize2byteena tcb_lsu_cnv (
     .sub  (tcb_lsu),
     .man  (tcb_mem[1])
   );

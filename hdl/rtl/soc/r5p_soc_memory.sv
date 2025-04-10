@@ -37,9 +37,9 @@ module r5p_soc_memory
   initial
   begin
     // TCB mode must be memory (RISC-V mode is not supported)
-    assert (tcb.PHY.MOD == TCB_MEMORY) else $fatal("Unsupported TCB mode in %m.");
+    assert (tcb.PHY.MOD == TCB_BYTE_ENA) else $fatal("Unsupported TCB mode in %m.");
     // check if address is wide enough for the memory size
-    assert (tcb.PHY.ADR >= ADR       ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
+    assert (tcb.PHY.ADR >= ADR         ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
   end
 
 ////////////////////////////////////////////////////////////////////////////////

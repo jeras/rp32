@@ -94,7 +94,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DAT: XLEN,
     ALN: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
     // data packing parameters
-    MOD: TCB_RISC_V,
+    MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -109,7 +109,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DAT: XLEN,
     ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_RISC_V,
+    MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -124,7 +124,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DAT: XLEN,
     ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_MEMORY,
+    MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -139,7 +139,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DAT: XLEN,
     ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_RISC_V,
+    MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -180,7 +180,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from RISC-V to MEMORY mode
-  tcb_lib_riscv2memory tcb_ifu_riscv2memory (
+  tcb_lib_logsize2byteena tcb_ifu_logsize2byteena (
     .sub  (tcb_ifu),
     .man  (tcb_ifm)
   );
@@ -213,8 +213,8 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     .man  (tcb_lsd)
   );
 
-  // convert from TCB_RISC_V to TCB_MEMORY mode
-  tcb_lib_riscv2memory tcb_lsm_riscv2memory (
+  // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
+  tcb_lib_logsize2byteena tcb_lsm_logsize2byteena (
     .sub  (tcb_lsd[0]),
     .man  (tcb_lsm)
   );
