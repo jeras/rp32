@@ -112,6 +112,21 @@ import riscv_asm_pkg::*;
     DAT: XLEN,
     ALW: 0,   // $clog2(DAT/UNT)
     // data packing parameters
+    MOD: TCB_RISC_V,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
+
+  localparam tcb_par_phy_t TCB_PHY_MEM = '{
+    // protocol
+    DLY: 1,
+    // signal widths
+    UNT: 8,
+    ADR: XLEN,
+    DAT: XLEN,
+    ALW: 0,   // $clog2(DAT/UNT)
+    // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -121,7 +136,11 @@ import riscv_asm_pkg::*;
   // system busses
   tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
   tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-  tcb_if #(TCB_PHY_LSU) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
+  tcb_if #(TCB_PHY_MEM) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
+
+  // address misalignment
+  logic tcb_ifu_mal;
+  logic tcb_lsu_mal;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -139,7 +158,8 @@ import riscv_asm_pkg::*;
     .rst     (rst),
     // TCB system bus
     .tcb_ifu (tcb_ifu),
-    .tcb_lsu (tcb_lsu)
+    .tcb_lsu (tcb_lsu),
+    .tcb_lsu_mal (tcb_lsu_mal)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,13 +178,14 @@ import riscv_asm_pkg::*;
     .sub  (tcb_ifu),
     .man  (tcb_mem[0]),
     // control/status
-    .mal  ()
+    .mal  (tcb_ifu_mal)
   );
 
-  // passthrough TCB LSU to array
-  tcb_lib_passthrough tcb_lsu_pas (
+  // convert from RISC-V to MEMORY mode
+  tcb_lib_riscv2memory tcb_lsu_cnv (
     .sub  (tcb_lsu),
-    .man  (tcb_mem[1])
+    .man  (tcb_mem[1]),
+    .mal  (tcb_lsu_mal)
   );
 
   tcb_vip_memory #(

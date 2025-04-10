@@ -46,23 +46,13 @@ module r5p_lsu
   output logic              mal,  // misaligned
   output logic              rdy,  // ready
   // TCB system bus (load/store)
-  tcb_if.man                tcb
+  tcb_if.man                tcb,
+  input  logic              tcb_mal
 );
 
-// word address width
-localparam int unsigned WW = $clog2(BW);
-
-// read/write missalignment
+// read/write misalignment
 logic rma;  // read  misaligned
 logic wma;  // write misaligned
-
-// read/write transfer
-logic lsb_rtr;
-logic lsb_wtr;
-
-// read/write transfer
-assign lsb_rtr = tcb.trn & ~tcb.req.wen;
-assign lsb_wtr = tcb.trn &  tcb.req.wen;
 
 // valid and write anable
 always_comb
@@ -83,137 +73,42 @@ end else begin
 end
 
 // address
-assign tcb.req.adr = {adr[AW-1:WW], WW'('0)};
+assign tcb.req.adr = adr;
 
-// misalignment
-// decodings for read and write access are identical
-always_comb
-unique case (dec.opc)
-  LOAD   : begin
-      // read access
-      unique case (fn3_ldu_et'(dec.fn3))
-        LB, LBU: rma = 1'b0;
-        LH, LHU: rma = |adr[0:0];
-        LW, LWU: rma = |adr[1:0];
-      //LD, LDU: rma = |adr[2:0];
-        default: rma = 1'bx;
-      endcase
-      // write access
-      wma = 1'bx;
-    end
-  STORE  : begin
-      // read access
-      rma = 1'bx;
-      // write access
-      unique case (fn3_stu_et'(dec.fn3))
-        SB     : wma = 1'b0;
-        SH     : wma = |adr[0:0];
-        SW     : wma = |adr[1:0];
-      //SD     : wma = |adr[2:0];
-        default: wma = 1'bx;
-      endcase
-    end
-  default: begin
-      // read access
-      rma = 1'bx;
-      // write access
-      wma = 1'bx;
-    end
-endcase
+// transfer size
+assign tcb.req.siz = dec.fn3[1:0];
 
-assign mal = wma | rma;
-
-// write data and byte select
-always_comb
-if (ill) begin
-  tcb.req.wdt = 'x;
-  tcb.req.ben = {BW{CFG_BEN_ILL}};
-end else begin
-  // dafault values
-  tcb.req.wdt = 'x;
-  // conbinational logic
-  unique case (dec.opc)
-    LOAD   : begin
-      case (fn3_ldu_et'(dec.fn3))
-        LB, LBU: case (adr[1:0])
-          2'b00: tcb.req.ben = 4'b0001;
-          2'b01: tcb.req.ben = 4'b0010;
-          2'b10: tcb.req.ben = 4'b0100;
-          2'b11: tcb.req.ben = 4'b1000;
-        endcase
-        LH, LHU: case (adr[1])
-          1'b0 : tcb.req.ben = 4'b0011;
-          1'b1 : tcb.req.ben = 4'b1100;
-        endcase
-        LW, LWU: tcb.req.ben = 4'b1111;
-        default: tcb.req.ben = 4'bxxxx;
-      endcase
-    end
-    STORE  :
-      // write access
-      case (fn3_stu_et'(dec.fn3))
-        SB     : case (adr[1:0])
-          2'b00: begin tcb.req.wdt[ 7: 0] = wdt[ 7: 0]; tcb.req.ben = 4'b0001; end
-          2'b01: begin tcb.req.wdt[15: 8] = wdt[ 7: 0]; tcb.req.ben = 4'b0010; end
-          2'b10: begin tcb.req.wdt[23:16] = wdt[ 7: 0]; tcb.req.ben = 4'b0100; end
-          2'b11: begin tcb.req.wdt[31:24] = wdt[ 7: 0]; tcb.req.ben = 4'b1000; end
-        endcase
-        SH     : case (adr[1])
-          1'b0 : begin tcb.req.wdt[15: 0] = wdt[15: 0]; tcb.req.ben = 4'b0011; end
-          1'b1 : begin tcb.req.wdt[31:16] = wdt[15: 0]; tcb.req.ben = 4'b1100; end
-        endcase
-        SW     : begin tcb.req.wdt[31: 0] = wdt[31: 0]; tcb.req.ben = 4'b1111; end
-        default: begin tcb.req.wdt[31: 0] = 'x        ; tcb.req.ben = 4'bxxxx; end
-      endcase
-    default: begin
-      tcb.req.wdt = 'x;
-      tcb.req.ben = {BW{CFG_BEN_IDL}};
-    end
-  endcase
-end
+// write data
+assign tcb.req.wdt = wdt;
 
 // read alignment delayed signals
-logic            dly_rma;
-logic   [WW-1:0] dly_adr;
-fn3_ldu_et       dly_fn3;
-
-logic [XLEN-1:0] dly_dat;  // data
-logic   [32-1:0] dly_dtw;  // data word
-logic   [16-1:0] dly_dth;  // data half
-logic   [ 8-1:0] dly_dtb;  // data byte
+fn3_ldu_et dly_fn3;
 
 // read alignment
 always_ff @ (posedge clk, posedge rst)
 if (rst) begin
-  dly_rma <= 1'b0;
-  dly_adr <= '0;
   dly_fn3 <= XLEN == 32 ? LW : LD;
-end else if (lsb_rtr) begin
-  dly_rma <= rma;
-  dly_adr <= adr[WW-1:0];
+end else if (tcb.trn & ~tcb.req.wen) begin
   dly_fn3 <= fn3_ldu_et'(dec.fn3);
 end
 
 // read data
 always_comb begin: blk_rdt
-  // read data multiplexer
-  dly_dtw = tcb.rsp.rdt[31: 0];
-  dly_dth = dly_adr[1] ? dly_dtw[31:16] : dly_dtw[15: 0];
-  dly_dtb = dly_adr[0] ? dly_dth[15: 8] : dly_dth[ 7: 0];
-  // read data multiplexer
-  dly_dat = {dly_dtw[31:16], dly_dth[15: 8], dly_dtb[ 7: 0]};
   // sign extension
   // NOTE: this is a good fit for LUT4
   unique case (dly_fn3)
-    LB     : rdt = DW'(  $signed( 8'(dly_dat)));
-    LH     : rdt = DW'(  $signed(16'(dly_dat)));
-    LW     : rdt = DW'(  $signed(32'(dly_dat)));
-    LBU    : rdt = DW'($unsigned( 8'(dly_dat)));
-    LHU    : rdt = DW'($unsigned(16'(dly_dat)));
-    LWU    : rdt = DW'($unsigned(32'(dly_dat)));  // Quartus does a better job if this line is present
+    LB     : rdt = DW'(  $signed( 8'(tcb.rsp.rdt)));
+    LH     : rdt = DW'(  $signed(16'(tcb.rsp.rdt)));
+    LW     : rdt = DW'(  $signed(32'(tcb.rsp.rdt)));
+    LBU    : rdt = DW'($unsigned( 8'(tcb.rsp.rdt)));
+    LHU    : rdt = DW'($unsigned(16'(tcb.rsp.rdt)));
+    LWU    : rdt = DW'($unsigned(32'(tcb.rsp.rdt)));  // Quartus does a better job if this line is present
     default: rdt = 'x;
   endcase
 end: blk_rdt
+
+// misalignment
+assign mal = tcb_mal;
 
 // system stall
 assign rdy = tcb.rdy;

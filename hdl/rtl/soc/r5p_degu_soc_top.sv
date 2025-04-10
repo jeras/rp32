@@ -100,21 +100,6 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_IFM = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    ALW: $clog2(XLEN/16),   // $clog2(DAT/UNT)
-    // data packing parameters
-    MOD: TCB_MEMORY,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
-  };
-
   localparam tcb_par_phy_t TCB_PHY_LSU = '{
     // protocol
     DLY: 1,
@@ -124,13 +109,13 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DAT: XLEN,
     ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_MEMORY,
+    MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_LSM = '{
+  localparam tcb_par_phy_t TCB_PHY_MEM = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -154,7 +139,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     DAT: XLEN,
     ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
-    MOD: TCB_MEMORY,
+    MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
@@ -162,12 +147,14 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   // system busses
   tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit (RISC-V mode)
-  tcb_if #(TCB_PHY_IFM) tcb_ifm         (.clk (clk), .rst (rst));  // instruction fetch unit (MEMORY mode)
+  tcb_if #(TCB_PHY_MEM) tcb_ifm         (.clk (clk), .rst (rst));  // instruction fetch unit (MEMORY mode)
   tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
   tcb_if #(TCB_PHY_LSU) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
-  tcb_if #(TCB_PHY_LSM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
+  tcb_if #(TCB_PHY_MEM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
   tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
   tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
+
+  logic tcb_lsu_mal;
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Degu core instance
@@ -187,7 +174,8 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     .rst     (rst),
     // TCB system bus
     .tcb_ifu (tcb_ifu),
-    .tcb_lsu (tcb_lsu)
+    .tcb_lsu (tcb_lsu),
+    .tcb_lsu_mal (tcb_lsu_mal)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -195,7 +183,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from RISC-V to MEMORY mode
-  tcb_lib_riscv2memory tcb_ifu_converter (
+  tcb_lib_riscv2memory tcb_ifu_riscv2memory (
     .sub  (tcb_ifu),
     .man  (tcb_ifm),
     // control/status
@@ -231,12 +219,11 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   );
 
   // convert from TCB_RISC_V to TCB_MEMORY mode
-  //tcb_lib_riscv2memory tcb_lsm_converter (
-  tcb_lib_passthrough tcb_lsm_converter (
+  tcb_lib_riscv2memory tcb_lsm_riscv2memory (
     .sub  (tcb_lsd[0]),
-    .man  (tcb_lsm)
+    .man  (tcb_lsm),
     // control/status
-//    .mal  ()
+    .mal  (tcb_lsu_mal)
   );
 
   // register request path to convert from DLY=1 CPU to DLY=0 peripherals
