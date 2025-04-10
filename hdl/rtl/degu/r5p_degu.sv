@@ -501,19 +501,8 @@ r5p_lsu #(
   .mal     (lsu_mal),
   .rdy     (lsu_rdy),
   // data bus (load/store)
-  .lsb_vld (tcb_lsu.vld),
-  .lsb_wen (tcb_lsu.req.wen),
-  .lsb_adr (tcb_lsu.req.adr),
-  .lsb_ben (tcb_lsu.req.ben),
-  .lsb_wdt (tcb_lsu.req.wdt),
-  .lsb_rdt (tcb_lsu.rsp.rdt),
-  .lsb_err (tcb_lsu.rsp.sts.err),
-  .lsb_rdy (tcb_lsu.rdy)
+  .tcb     (tcb_lsu)
 );
-
-// TODO
-assign tcb_lsu.req.cmd = '0;
-assign tcb_lsu.req.ndn = TCB_LITTLE;
 
 ///////////////////////////////////////////////////////////////////////////////
 // write back

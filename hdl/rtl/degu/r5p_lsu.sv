@@ -18,6 +18,7 @@
 
 module r5p_lsu
   import riscv_isa_i_pkg::*;
+  import tcb_pkg::*;
 #(
   int unsigned XLEN = 32,  // XLEN
   // data bus
@@ -44,15 +45,8 @@ module r5p_lsu
   output logic   [XLEN-1:0] rdt,  // read data
   output logic              mal,  // misaligned
   output logic              rdy,  // ready
-  // data bus (load/store)
-  output logic          lsb_vld,  // valid
-  output logic          lsb_wen,  // write enable
-  output logic [AW-1:0] lsb_adr,  // address
-  output logic [BW-1:0] lsb_ben,  // byte enable
-  output logic [DW-1:0] lsb_wdt,  // write data
-  input  logic [DW-1:0] lsb_rdt,  // read data
-  input  logic          lsb_err,  // error
-  input  logic          lsb_rdy   // ready
+  // TCB system bus (load/store)
+  tcb_if.man                tcb
 );
 
 // word address width
@@ -67,29 +61,29 @@ logic lsb_rtr;
 logic lsb_wtr;
 
 // read/write transfer
-assign lsb_rtr = lsb_vld & lsb_rdy & ~lsb_wen;
-assign lsb_wtr = lsb_vld & lsb_rdy &  lsb_wen;
+assign lsb_rtr = tcb.trn & ~tcb.req.wen;
+assign lsb_wtr = tcb.trn &  tcb.req.wen;
 
 // valid and write anable
 always_comb
 if (run) begin
   if (ill) begin
-    lsb_vld = CFG_VLD_ILL;
-    lsb_wen = CFG_WEN_ILL;
+    tcb.vld     = CFG_VLD_ILL;
+    tcb.req.wen = CFG_WEN_ILL;
   end else begin
     unique case (dec.opc)
-      LOAD   : begin lsb_vld = 1'b1; lsb_wen = 1'b0       ; end
-      STORE  : begin lsb_vld = 1'b1; lsb_wen = 1'b1       ; end
-      default: begin lsb_vld = 1'b0; lsb_wen = CFG_WEN_IDL; end
+      LOAD   : begin tcb.vld = 1'b1; tcb.req.wen = 1'b0       ; end
+      STORE  : begin tcb.vld = 1'b1; tcb.req.wen = 1'b1       ; end
+      default: begin tcb.vld = 1'b0; tcb.req.wen = CFG_WEN_IDL; end
     endcase
   end
 end else begin
-  lsb_vld = 1'b0;
-  lsb_wen = CFG_WEN_ILL;
+  tcb.vld     = 1'b0;
+  tcb.req.wen = CFG_WEN_ILL;
 end
 
 // address
-assign lsb_adr = {adr[AW-1:WW], WW'('0)};
+assign tcb.req.adr = {adr[AW-1:WW], WW'('0)};
 
 // misalignment
 // decodings for read and write access are identical
@@ -132,48 +126,48 @@ assign mal = wma | rma;
 // write data and byte select
 always_comb
 if (ill) begin
-  lsb_wdt = 'x;
-  lsb_ben = {BW{CFG_BEN_ILL}};
+  tcb.req.wdt = 'x;
+  tcb.req.ben = {BW{CFG_BEN_ILL}};
 end else begin
   // dafault values
-  lsb_wdt = 'x;
+  tcb.req.wdt = 'x;
   // conbinational logic
   unique case (dec.opc)
     LOAD   : begin
       case (fn3_ldu_et'(dec.fn3))
         LB, LBU: case (adr[1:0])
-          2'b00: lsb_ben = 4'b0001;
-          2'b01: lsb_ben = 4'b0010;
-          2'b10: lsb_ben = 4'b0100;
-          2'b11: lsb_ben = 4'b1000;
+          2'b00: tcb.req.ben = 4'b0001;
+          2'b01: tcb.req.ben = 4'b0010;
+          2'b10: tcb.req.ben = 4'b0100;
+          2'b11: tcb.req.ben = 4'b1000;
         endcase
         LH, LHU: case (adr[1])
-          1'b0 : lsb_ben = 4'b0011;
-          1'b1 : lsb_ben = 4'b1100;
+          1'b0 : tcb.req.ben = 4'b0011;
+          1'b1 : tcb.req.ben = 4'b1100;
         endcase
-        LW, LWU: lsb_ben = 4'b1111;
-        default: lsb_ben = 4'bxxxx;
+        LW, LWU: tcb.req.ben = 4'b1111;
+        default: tcb.req.ben = 4'bxxxx;
       endcase
     end
     STORE  :
       // write access
       case (fn3_stu_et'(dec.fn3))
         SB     : case (adr[1:0])
-          2'b00: begin lsb_wdt[ 7: 0] = wdt[ 7: 0]; lsb_ben = 4'b0001; end
-          2'b01: begin lsb_wdt[15: 8] = wdt[ 7: 0]; lsb_ben = 4'b0010; end
-          2'b10: begin lsb_wdt[23:16] = wdt[ 7: 0]; lsb_ben = 4'b0100; end
-          2'b11: begin lsb_wdt[31:24] = wdt[ 7: 0]; lsb_ben = 4'b1000; end
+          2'b00: begin tcb.req.wdt[ 7: 0] = wdt[ 7: 0]; tcb.req.ben = 4'b0001; end
+          2'b01: begin tcb.req.wdt[15: 8] = wdt[ 7: 0]; tcb.req.ben = 4'b0010; end
+          2'b10: begin tcb.req.wdt[23:16] = wdt[ 7: 0]; tcb.req.ben = 4'b0100; end
+          2'b11: begin tcb.req.wdt[31:24] = wdt[ 7: 0]; tcb.req.ben = 4'b1000; end
         endcase
         SH     : case (adr[1])
-          1'b0 : begin lsb_wdt[15: 0] = wdt[15: 0]; lsb_ben = 4'b0011; end
-          1'b1 : begin lsb_wdt[31:16] = wdt[15: 0]; lsb_ben = 4'b1100; end
+          1'b0 : begin tcb.req.wdt[15: 0] = wdt[15: 0]; tcb.req.ben = 4'b0011; end
+          1'b1 : begin tcb.req.wdt[31:16] = wdt[15: 0]; tcb.req.ben = 4'b1100; end
         endcase
-        SW     : begin lsb_wdt[31: 0] = wdt[31: 0]; lsb_ben = 4'b1111; end
-        default: begin lsb_wdt[31: 0] = 'x        ; lsb_ben = 4'bxxxx; end
+        SW     : begin tcb.req.wdt[31: 0] = wdt[31: 0]; tcb.req.ben = 4'b1111; end
+        default: begin tcb.req.wdt[31: 0] = 'x        ; tcb.req.ben = 4'bxxxx; end
       endcase
     default: begin
-      lsb_wdt = 'x;
-      lsb_ben = {BW{CFG_BEN_IDL}};
+      tcb.req.wdt = 'x;
+      tcb.req.ben = {BW{CFG_BEN_IDL}};
     end
   endcase
 end
@@ -203,7 +197,7 @@ end
 // read data
 always_comb begin: blk_rdt
   // read data multiplexer
-  dly_dtw = lsb_rdt[31: 0];
+  dly_dtw = tcb.rsp.rdt[31: 0];
   dly_dth = dly_adr[1] ? dly_dtw[31:16] : dly_dtw[15: 0];
   dly_dtb = dly_adr[0] ? dly_dth[15: 8] : dly_dth[ 7: 0];
   // read data multiplexer
@@ -222,6 +216,10 @@ always_comb begin: blk_rdt
 end: blk_rdt
 
 // system stall
-assign rdy = lsb_rdy;
+assign rdy = tcb.rdy;
+
+// TODO
+assign tcb.req.cmd = '0;
+assign tcb.req.ndn = TCB_LITTLE;
 
 endmodule: r5p_lsu
