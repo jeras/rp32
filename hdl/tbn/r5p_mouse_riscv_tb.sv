@@ -96,7 +96,7 @@ import riscv_asm_pkg::*;
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -111,7 +111,7 @@ import riscv_asm_pkg::*;
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,

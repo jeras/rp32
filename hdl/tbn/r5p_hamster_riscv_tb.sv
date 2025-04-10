@@ -84,7 +84,7 @@ localparam tcb_par_phy_t PHY_BUS = '{
   UNT: TCB_PAR_PHY_DEF.UNT,
   ADR: IAW,
   DAT: IDW,
-  ALW: $clog2(IDW/TCB_PAR_PHY_DEF.UNT),
+  ALN: $clog2(IDW/TCB_PAR_PHY_DEF.UNT),
   // size/mode/order parameters
   SIZ: TCB_PAR_PHY_DEF.SIZ,
   MOD: TCB_PAR_PHY_DEF.MOD,

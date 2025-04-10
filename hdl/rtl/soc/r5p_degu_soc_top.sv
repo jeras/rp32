@@ -92,7 +92,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
+    ALN: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -107,7 +107,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,
@@ -122,7 +122,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_MEMORY,
     ORD: TCB_DESCENDING,
@@ -137,7 +137,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALW: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
     MOD: TCB_RISC_V,
     ORD: TCB_DESCENDING,

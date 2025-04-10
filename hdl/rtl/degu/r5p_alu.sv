@@ -252,13 +252,13 @@ generate
 
   generate
   if (CFG_SHF == 1) begin: gen_shf_1
-  
+
     logic signed [XLEN-0:0] shf_tm0;  // operand
     logic signed [XLEN-0:0] shf_tm1;  // operand
     logic signed [XLEN-0:0] shf_tm2;  // operand
     logic signed [XLEN-0:0] shf_tm3;  // operand
     logic signed [XLEN-0:0] shf_tm4;  // operand
-  
+
     // 1-bit shift per stage, LUT4 optimization
     always_comb
     begin
@@ -268,17 +268,17 @@ generate
       shf_tm3 = shf_tm2 >>> {shf_amm[3], 3'b000};
       shf_tm4 = shf_tm3 >>> {shf_amm[4], 4'b0000};
     end
-  
+
     // remove sign extension from result
     assign shf_val = shf_tm4[XLEN-1:0];
-  
+
   end: gen_shf_1
   else if (CFG_SHF == 2) begin: gen_shf_2
-  
+
     logic signed [XLEN-0:0] shf_tm1;  // operand
     logic signed [XLEN-0:0] shf_tm3;  // operand
     logic signed [XLEN-0:0] shf_tm4;  // operand
-  
+
     // 2-bit shift per stage, LUT6 optimization
     always_comb
     begin
@@ -286,16 +286,16 @@ generate
       shf_tm3 = shf_tm1 >>> {shf_amm[3:2], 2'b00};
       shf_tm4 = shf_tm3 >>> {shf_amm[  4], 4'b0000};
     end
-  
+
     // remove sign extension from result
     assign shf_val = shf_tm4[XLEN-1:0];
-  
+
   end: gen_shf_2
   else begin: gen_shf
-  
+
     // combined barrel shifter for left/right shifting
     assign shf_val = XLEN'($signed(shf_ext) >>> shf_amm);
-  
+
   end: gen_shf
   endgenerate
 

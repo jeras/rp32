@@ -107,7 +107,7 @@ always_comb begin: blk_rdt
 end: blk_rdt
 
 // misalignment
-assign mal = tcb.mal;
+assign mal = |tcb.dly[0].aln;
 
 // system stall
 assign rdy = tcb.rdy;
