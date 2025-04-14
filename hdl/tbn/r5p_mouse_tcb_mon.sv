@@ -143,16 +143,9 @@ module r5p_mouse_tcb_mon
     end
   end
 
-  // log file descriptor
+  // log file name and descriptor
+  string fn;  // file name
   int fd;
-
-  // open log file if name is given by parameter
-  initial
-  begin
-    if (LOG) begin
-      fd = $fopen(LOG, "w");
-    end
-  end
 
   // skip retirement of reset JAL instruction
   logic log_trn = 1'b0;
@@ -177,9 +170,28 @@ module r5p_mouse_tcb_mon
     end
   end
 
+  initial
+  begin
+    // log file if name is given by parameter
+    if ($value$plusargs("log=%s", fn)) begin
+      r5p_mon.fd = $fopen(fn, "w");
+    end
+    // log file with filename obtained through plusargs
+    else if (LOG) begin
+      fn = LOG;
+    end
+    if (fn) begin
+      fd = $fopen(fn, "w");
+      $display("LOGGING: opened log file: '%s'.", fn);
+    end else begin
+      $display("LOGGING: no log file name was provided.");
+    end
+  end
+
   final
   begin
     $fclose(fd);
+    $display("LOGGING: closed log file: '%s'.", fn);
   end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -187,3 +199,4 @@ module r5p_mouse_tcb_mon
 ////////////////////////////////////////////////////////////////////////////////
 
 endmodule: r5p_mouse_tcb_mon
+
