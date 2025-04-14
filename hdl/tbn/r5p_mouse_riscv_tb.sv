@@ -77,7 +77,7 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PHY_LOG_SIZE = '{
+  localparam tcb_phy_t TCB_PHY_LOG_SIZE = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -92,7 +92,7 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_BYTE_ENA = '{
+  localparam tcb_phy_t TCB_PHY_BYTE_ENA = '{
     // protocol
     DLY: 1,
     // signal widths

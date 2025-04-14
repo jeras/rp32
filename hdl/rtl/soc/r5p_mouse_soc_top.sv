@@ -64,7 +64,7 @@ module r5p_mouse_soc_top
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PHY_CPU = '{
+  localparam tcb_phy_t TCB_PHY_CPU = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -79,7 +79,7 @@ module r5p_mouse_soc_top
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_MEM = '{
+  localparam tcb_phy_t TCB_PHY_MEM = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -94,7 +94,7 @@ module r5p_mouse_soc_top
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_PER = '{
+  localparam tcb_phy_t TCB_PHY_PER = '{
     // protocol
     DLY: 0,
     // signal widths

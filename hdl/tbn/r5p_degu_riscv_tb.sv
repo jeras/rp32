@@ -76,7 +76,7 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PHY_IFU = '{
+  localparam tcb_phy_t TCB_PHY_IFU = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -91,7 +91,7 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_LSU = '{
+  localparam tcb_phy_t TCB_PHY_LSU = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -106,7 +106,7 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_MEM = '{
+  localparam tcb_phy_t TCB_PHY_MEM = '{
     // protocol
     DLY: 1,
     // signal widths

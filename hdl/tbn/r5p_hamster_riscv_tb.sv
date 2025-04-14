@@ -77,7 +77,7 @@ end
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-localparam tcb_par_phy_t PHY_BUS = '{
+localparam tcb_phy_t PHY_BUS = '{
   // protocol
   DLY: 1,
   // signal bus widths
