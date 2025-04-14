@@ -33,9 +33,10 @@ module r5p_mouse_soc_top
   // TCB bus
   parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
   parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
+  parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
   // TCB memory (size in bytes, file name)
   parameter  int unsigned   MEM_ADR = 14,
-  parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**IFM_ADR),
+  parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**MEM_ADR),
   parameter  string         MEM_FNM = "mem_if.vmem",
   // implementation device (ASIC/FPGA vendor/device)
   parameter  string         CHIP = ""
@@ -63,7 +64,7 @@ module r5p_mouse_soc_top
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PHY_RISC_V = '{
+  localparam tcb_par_phy_t TCB_PHY_CPU = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -78,7 +79,7 @@ module r5p_mouse_soc_top
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_MEMORY = '{
+  localparam tcb_par_phy_t TCB_PHY_MEM = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -93,12 +94,27 @@ module r5p_mouse_soc_top
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
+  localparam tcb_par_phy_t TCB_PHY_PER = '{
+    // protocol
+    DLY: 0,
+    // signal widths
+    UNT: 8,
+    ADR: XLEN,
+    DAT: XLEN,
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    // data packing parameters
+    MOD: TCB_LOG_SIZE,
+    ORD: TCB_DESCENDING,
+    // channel configuration
+    CHN: TCB_COMMON_HALF_DUPLEX
+  };
+
   // system busses
-  tcb_if #(TCB_PHY_RISC_V) tcb_cpu (.clk (clk), .rst (rst));
-  tcb_if #(TCB_PHY_RISC_V) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
-  tcb_if #(TCB_PHY_MEMORY) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
-  tcb_if #(TCB_PHY_RISC_V) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
-  tcb_if #(TCB_PHY_RISC_V) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
+  tcb_if #(TCB_PHY_CPU) tcb_cpu         (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_CPU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
+  tcb_if #(TCB_PHY_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
+  tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
+  tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Mouse core instance
@@ -107,23 +123,20 @@ module r5p_mouse_soc_top
   r5p_mouse #(
     .IFU_RST (IFU_RST),
     .IFU_MSK (IFU_MSK),
-    .GPR_ADR (GPR_ADR),
-    // implementation device (ASIC/FPGA vendor/device)
-    .CHIP    (CHIP)
+    .GPR_ADR (GPR_ADR)
   ) core (
     // system signals
     .clk     (clk),
     .rst     (rst),
     // TCB system bus (shared by instruction/load/store)
-    .tcb_vld ( tcb_cpu.vld ),
-    .tcb_wen ( tcb_cpu.req.wen ),
-    .tcb_adr ( tcb_cpu.req.adr ),
-    .tcb_fn3 ({tcb_cpu.req.uns,
-               tcb_cpu.req.siz}),
-    .tcb_wdt ( tcb_cpu.req.wdt ),
-    .tcb_rdt ( tcb_cpu.rsp.rdt ),
-    .tcb_err ( tcb_cpu.rsp.sts.err ),
-    .tcb_rdy ( tcb_cpu.rdy )
+    .tcb_vld (tcb_cpu.vld),
+    .tcb_wen (tcb_cpu.req.wen),
+    .tcb_adr (tcb_cpu.req.adr),
+    .tcb_siz (tcb_cpu.req.siz),
+    .tcb_wdt (tcb_cpu.req.wdt),
+    .tcb_rdt (tcb_cpu.rsp.rdt),
+    .tcb_err (tcb_cpu.rsp.sts.err),
+    .tcb_rdy (tcb_cpu.rdy)
   );
 
   // signals not provided by the CPU
@@ -137,7 +150,7 @@ module r5p_mouse_soc_top
 
   // decoding memory/peripherals
   tcb_lib_decoder #(
-    .PHY (TCB_PHY_RISC_V),
+    .PHY (TCB_PHY_CPU),
     .SPN (2),
     .DAM ({{17'b0, 1'b1, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
            {17'b0, 1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
@@ -157,12 +170,10 @@ module r5p_mouse_soc_top
     .man  (tcb_dmx)
   );
 
-  // convert from RISC-V to MEMORY mode
+  // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
   tcb_lib_logsize2byteena tcb_mem_converter (
     .sub  (tcb_dmx[0]),
-    .man  (tcb_mem),
-    // control/status
-    .mal  ()
+    .man  (tcb_mem)
   );
 
   // register request path to convert from DLY=1 CPU to DLY=0 peripherals
@@ -175,7 +186,7 @@ module r5p_mouse_soc_top
 
   // decoding peripherals (GPIO/UART)
   tcb_lib_decoder #(
-    .PHY (TCB_PHY_LSU),
+    .PHY (TCB_PHY_CPU),
     .SPN (2),
     .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
            {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
@@ -254,8 +265,8 @@ module r5p_mouse_soc_top
     blk_mem_gen_0 mem (
       .clka   (tcb_mem.clk),
       .ena    (tcb_mem.vld),
-      .wea    (tcb_mem.req.ben & {4{tcb_mem[0].wen}}),
-      .addra  (tcb_mem.req.adr[$clog2(IFM_SIZ)-1:BLOG]),
+      .wea    (tcb_mem.req.ben & {4{tcb_mem.req.wen}}),
+      .addra  (tcb_mem.req.adr[$clog2(MEM_SIZ)-1:BLOG]),
       .dina   (tcb_mem.req.wdt),
       .douta  (tcb_mem.rsp.rdt)
     );
@@ -339,7 +350,7 @@ module r5p_mouse_soc_top
   if (ENA_GPIO) begin: gen_gpio
 
     // GPIO controller
-    tcb_gpio #(
+    tcb_cmn_gpio #(
       .GW          (GW),
       .CFG_RSP_MIN (1'b1),
       .CHIP        (CHIP)
@@ -349,14 +360,14 @@ module r5p_mouse_soc_top
       .gpio_e  (gpio_e),
       .gpio_i  (gpio_i),
       // bus interface
-      .tcb     (tcb_mem[1])
+      .tcb     (tcb_per[0])
     );
 
   end: gen_gpio
   else begin: gen_gpio_err
 
     // error response
-    tcb_lib_error gpio_err (.sub (tcb_mem[1]));
+    tcb_lib_error gpio_err (.sub (tcb_per[0]));
 
     // GPIO signals
     assign gpio_o = '0;
@@ -394,14 +405,14 @@ module r5p_mouse_soc_top
       .uart_txd (uart_txd),
       .uart_rxd (uart_rxd),
       // system bus interface
-      .tcb      (tcb_mem[2])
+      .tcb      (tcb_per[1])
     );
 
   end: gen_uart
   else begin: gen_uart_err
 
     // error response
-    tcb_lib_error uart_err (.sub (tcb_mem[2]));
+    tcb_lib_error uart_err (.sub (tcb_per[1]));
 
     // GPIO signals
     assign uart_txd = 1'b1;
