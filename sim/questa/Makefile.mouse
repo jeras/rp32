@@ -45,6 +45,7 @@ RTL+=${PATH_R5P}/rtl/mouse/r5p_mouse.sv
 
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
+TSV+=${PATH_R5P}/tbn/r5p_riscof.sv
 TSV+=${PATH_R5P}/tbn/r5p_mouse_riscv_tb.sv
 TSV+=${PATH_R5P}/tbn/r5p_mouse_tcb_mon.sv
 
@@ -85,8 +86,8 @@ DEF = -defineall TOOL_QUESTA
 ################################################################################
 
 # set XLEN parameter
-XLEN ?= 32
-PAR += -GXLEN=${XLEN}
+#XLEN ?= 32
+#PAR += -GXLEN=${XLEN}
 
 ################################################################################
 # Verilog plusargs
