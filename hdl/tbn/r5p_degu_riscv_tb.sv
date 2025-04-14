@@ -51,10 +51,6 @@ import riscv_asm_pkg::*;
   logic clk = 1'b1;  // clock
   logic rst = 1'b1;  // reset
 
-  // clock period counter
-  int unsigned cnt;
-  bit timeout = 1'b0;
-
 ////////////////////////////////////////////////////////////////////////////////
 // test sequence
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,18 +66,10 @@ import riscv_asm_pkg::*;
     // synchronous reset release
     rst <= 1'b0;
     repeat (10000) @(posedge clk);
-    timeout <= 1'b1;
+    $display("ERROR: reached simulation timeout!");
     repeat (4) @(posedge clk);
     $finish();
     /* verilator lint_on INITIALDLY */
-  end
-
-  // time counter
-  always_ff @(posedge clk, posedge rst)
-  if (rst) begin
-    cnt <= 0;
-  end else begin
-    cnt <= cnt+1;
   end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -195,6 +183,7 @@ import riscv_asm_pkg::*;
     if ($value$plusargs("firmware=%s", fn)) begin
       $display("Loading file into memory: %s", fn);
       void'(mem.read_bin(fn));
+      void'(r5p_riscof.read_bin(fn));
     end else if (IFN == "") begin
       $display("ERROR: memory load file argument not found.");
       $finish;
@@ -202,72 +191,18 @@ import riscv_asm_pkg::*;
   end
 
 ////////////////////////////////////////////////////////////////////////////////
-// ELF file symbols
+// RISCOF
 ////////////////////////////////////////////////////////////////////////////////
 
-  // symbol addresses
-  logic [32-1:0] begin_signature;
-  logic [32-1:0] end_signature  ;
-  logic [32-1:0] tohost         ;
-  logic [32-1:0] fromhost       ;
-
-  initial
-  begin
-    // get ELF symbols from plusargs
-    void'($value$plusargs("begin_signature=%0h", begin_signature));
-    void'($value$plusargs("end_signature=%0h"  , end_signature  ));
-    void'($value$plusargs("tohost=%0h"         , tohost         ));
-    void'($value$plusargs("fromhost=%0h"       , fromhost       ));
-    // mask signature symbols with memory size
-    begin_signature = begin_signature & (MEM_SIZ-1);
-    end_signature   = end_signature   & (MEM_SIZ-1);
-    // display ELF symbols
-    $display("begin_signature=%08h", begin_signature);
-    $display("end_signature  =%08h", end_signature  );
-    $display("tohost         =%08h", tohost         );
-    $display("fromhost       =%08h", fromhost       );
-  end
-
-////////////////////////////////////////////////////////////////////////////////
-// controller
-////////////////////////////////////////////////////////////////////////////////
-
-  logic rvmodel_halt = 1'b0;
-
-  always_ff @(posedge clk, posedge rst)
-  if (rst) begin
-    rvmodel_halt <= 1'b0;
-  end else if (tcb_lsu.trn) begin
-    if (tcb_lsu.req.wen) begin
-      // HTIF tohost
-      if (tcb_lsu.req.adr == tohost) rvmodel_halt <= tcb_lsu.req.wdt[0];
-    end
-  end
-
-  // finish simulation
-  always @(posedge clk)
-  if (rvmodel_halt | timeout) begin
-    string fn;  // file name
-    if (rvmodel_halt)  $display("HALT");
-    if (timeout     )  $display("TIMEOUT");
-    if ($value$plusargs("signature=%s", fn)) begin
-      $display("Saving signature file with data from 0x%8h to 0x%8h: %s", begin_signature, end_signature, fn);
-      mem.write_hex(fn, int'(begin_signature), int'(end_signature));
-      $display("Saving signature file done.");
-    end else begin
-      $display("ERROR: signature save file argument not found.");
-      $finish;
-    end
-    // TODO: add another clock cycle to avoid cutting off delayed printout from TCB monitor
-    $finish;
-  end
-
-  // at the end dump the test signature
-  // TODO: not working in Verilator, at least if the C code ends the simulation.
-  final begin
-    $display("FINAL");
-    $display("TIME: cnt = %d", cnt);
-  end
+  r5p_riscof #(
+    // memory
+    .MEM_ADR (IFU_RST),
+    .MEM_SIZ (MEM_SIZ),
+    // miscellaneous
+    .TIMEOUT (20000)
+  ) r5p_riscof (
+    .tcb (tcb_lsu)
+  );
 
 ////////////////////////////////////////////////////////////////////////////////
 // Verbose execution trace

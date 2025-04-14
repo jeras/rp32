@@ -17,13 +17,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_riscof
-import riscv_isa_pkg::*;
-import tcb_pkg::*;
+  import riscv_isa_pkg::*;
+  import tcb_pkg::*;
 #(
   // constants used across the design in signal range sizing instead of literals
   localparam int unsigned XLEN = 32,
   localparam int unsigned XLOG = $clog2(XLEN),
-  // miscelaneous
+  // memory
+  parameter  int unsigned MEM_ADR,
+  parameter  int unsigned MEM_SIZ,
+  // miscellaneous
   parameter  int unsigned TIMEOUT
 )(
   // TCB system bus
@@ -73,8 +76,7 @@ import tcb_pkg::*;
   logic [XLEN-1:0] fromhost       ;
 
   // signature memory
-  int unsigned signature_size;
-  logic [8-1:0] signature [];
+  logic [8-1:0] mem [MEM_ADR:MEM_ADR+MEM_SIZ-1];
 
   initial
   begin
@@ -84,28 +86,29 @@ import tcb_pkg::*;
     void'($value$plusargs("tohost=%0h"         , tohost         ));
     void'($value$plusargs("fromhost=%0h"       , fromhost       ));
     // display ELF symbols
-    $display("begin_signature = 0x%08h", begin_signature);
-    $display("end_signature   = 0x%08h", end_signature  );
-    $display("tohost          = 0x%08h", tohost         );
-    $display("fromhost        = 0x%08h", fromhost       );
-    // allocate signature memory
-    signature_size = int'(end_signature) - int'(begin_signature);
-    signature = new[signature_size];
+    $display("RISCOF: begin_signature = 0x%08h", begin_signature);
+    $display("RISCOF: end_signature   = 0x%08h", end_signature  );
+    $display("RISCOF: tohost          = 0x%08h", tohost         );
+    $display("RISCOF: fromhost        = 0x%08h", fromhost       );
   end
 
 ////////////////////////////////////////////////////////////////////////////////
 // signature memory
 ////////////////////////////////////////////////////////////////////////////////
 
+  // local copies of TCB PHY parameters
+  localparam UNT = tcb.PHY.UNT;
+  localparam BEN = tcb.PHY_BEN;
+
   // request address and size (TCB_LOG_SIZE mode)
   int unsigned adr;
   int unsigned siz;
 
   // read/write data packed arrays
-  logic [tcb.PHY_BEN-1:0][tcb.PHY.UNT-1:0] wdt;
+  logic [BEN-1:0][UNT-1:0] wdt;
 
   // request address and size (TCB_LOG_SIZE mode)
-  assign adr =    int'(tcb.req.adr) - int'(begin_signature);
+  assign adr =    int'(tcb.req.adr);
   assign siz = 2**int'(tcb.req.siz);
 
   // map write data to a packed array
@@ -115,26 +118,49 @@ import tcb_pkg::*;
   always @(posedge tcb.clk)
   if (tcb.trn) begin
     if (tcb.req.wen) begin: write
-      for (int unsigned b=0; b<tcb.PHY_BEN; b++) begin: bytes
-        if (adr+b < signature_size) begin: decode
-          case (tcb.PHY.MOD)
-            TCB_LOG_SIZE: begin: log_size
-              // write only transfer size bytes
-              // TODO: Questa: Non-blocking assignment to elements of dynamic arrays is not currently supported.
-              //if (b < siz)  signature[adr+b] <= wdt[b];
-              if (b < siz)  signature[adr+b] = wdt[b];
-            end: log_size
-            TCB_BYTE_ENA: begin: byte_ena
-              // write only enabled bytes
-              // TODO: Questa: Non-blocking assignment to elements of dynamic arrays is not currently supported.
-              //if (tcb.req.ben[(adr+b)%tcb.PHY_BEN])  signature[adr+b] <= wdt[(adr+b)%tcb.PHY_BEN];
-              if (tcb.req.ben[(adr+b)%tcb.PHY_BEN])  signature[adr+b] = wdt[(adr+b)%tcb.PHY_BEN];
-            end: byte_ena
-          endcase
-        end: decode
+      for (int unsigned b=0; b<BEN; b++) begin: bytes
+        case (tcb.PHY.MOD)
+          TCB_LOG_SIZE: begin: log_size
+            // write only transfer size bytes
+            if (b < siz)  mem[adr+b] <= wdt[b];
+          end: log_size
+          TCB_BYTE_ENA: begin: byte_ena
+            // write only enabled bytes
+            if (tcb.req.ben[(adr+b)%BEN])  mem[adr+b] <= wdt[(adr+b)%BEN];
+          end: byte_ena
+        endcase
       end: bytes
     end: write
   end
+
+  // read binary into memory
+  function int read_bin (string fn);
+    int code;  // status code
+    int fd;    // file descriptor
+    bit [640-1:0] err;
+    fd = $fopen(fn, "rb");
+    code = $fread(mem, fd);
+  `ifndef VERILATOR
+    if (code == 0) begin
+      code = $ferror(fd, err);
+      $display("RISCOF: read_bin: code = %d, err = %s", code, err);
+    end else begin
+      $display("RISCOF: read %dB from binary file", code);
+    end
+  `endif
+    $fclose(fd);
+    return code;
+  endfunction: read_bin
+
+  // dump
+  function void write_hex (string fn);
+    int fd;    // file descriptor
+    fd = $fopen(fn, "w");
+    for (int unsigned addr=begin_signature; addr<end_signature; addr+=4) begin
+      $fwrite(fd, "%h%h%h%h\n", mem[addr+3], mem[addr+2], mem[addr+1], mem[addr+0]);
+    end
+    $fclose(fd);
+  endfunction: write_hex
 
 ////////////////////////////////////////////////////////////////////////////////
 // HTIF
@@ -152,16 +178,6 @@ import tcb_pkg::*;
     end
   end
 
-  // dump
-  function void write_hex (string fn);
-    int fd;    // file descriptor
-    fd = $fopen(fn, "w");
-    for (int unsigned addr=0; addr<signature_size; addr+=4) begin
-      $fwrite(fd, "%h%h%h%h\n", signature[addr+3], signature[addr+2], signature[addr+1], signature[addr+0]);
-    end
-    $fclose(fd);
-  endfunction: write_hex
-
   // finish simulation
   always @(posedge tcb.clk)
   if (htif_halt | timeout) begin
@@ -171,7 +187,6 @@ import tcb_pkg::*;
     if ($value$plusargs("signature=%s", fn)) begin
       $display("RISCOF: Saving signature file with data from 0x%8h to 0x%8h: %s", begin_signature, end_signature, fn);
       write_hex(fn);
-      $display("RISCOF: Saving signature to file: '%s'.", fn);
     end else begin
       $display("RISCOF: ERROR: signature save file plusarg not found.");
       $finish;
