@@ -69,27 +69,22 @@ module r5p_riscof
 // ELF file symbols
 ////////////////////////////////////////////////////////////////////////////////
 
+  // signature memory
+  logic [8-1:0] mem [MEM_ADR:MEM_ADR+MEM_SIZ-1];
+
   // symbol addresses
   logic [XLEN-1:0] begin_signature;
   logic [XLEN-1:0] end_signature  ;
   logic [XLEN-1:0] tohost         ;
   logic [XLEN-1:0] fromhost       ;
 
-  // signature memory
-  logic [8-1:0] mem [MEM_ADR:MEM_ADR+MEM_SIZ-1];
-
   initial
   begin
-    // get ELF symbols from plusargs
-    void'($value$plusargs("begin_signature=%0h", begin_signature));
-    void'($value$plusargs("end_signature=%0h"  , end_signature  ));
-    void'($value$plusargs("tohost=%0h"         , tohost         ));
-    void'($value$plusargs("fromhost=%0h"       , fromhost       ));
-    // display ELF symbols
-    $display("RISCOF: begin_signature = 0x%08h", begin_signature);
-    $display("RISCOF: end_signature   = 0x%08h", end_signature  );
-    $display("RISCOF: tohost          = 0x%08h", tohost         );
-    $display("RISCOF: fromhost        = 0x%08h", fromhost       );
+    // get/display ELF symbols from plusargs
+    if ($value$plusargs("begin_signature=%0h", begin_signature))  $display("RISCOF: begin_signature = 0x%08h", begin_signature);
+    if ($value$plusargs("end_signature=%0h"  , end_signature  ))  $display("RISCOF: end_signature   = 0x%08h", end_signature  );
+    if ($value$plusargs("tohost=%0h"         , tohost         ))  $display("RISCOF: tohost          = 0x%08h", tohost         );
+    if ($value$plusargs("fromhost=%0h"       , fromhost       ))  $display("RISCOF: fromhost        = 0x%08h", fromhost       );
   end
 
 ////////////////////////////////////////////////////////////////////////////////
