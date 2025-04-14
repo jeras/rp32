@@ -89,7 +89,7 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_par_phy_t TCB_PHY_RISC_V = '{
+  localparam tcb_par_phy_t TCB_PHY_LOG_SIZE = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -104,7 +104,7 @@ import riscv_asm_pkg::*;
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_par_phy_t TCB_PHY_MEMORY = '{
+  localparam tcb_par_phy_t TCB_PHY_BYTE_ENA = '{
     // protocol
     DLY: 1,
     // signal widths
@@ -120,8 +120,8 @@ import riscv_asm_pkg::*;
   };
 
   // system busses
-  tcb_if #(TCB_PHY_RISC_V) tcb_cpu       (.clk (clk), .rst (rst));
-  tcb_if #(TCB_PHY_MEMORY) tcb_mem [0:0] (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_LOG_SIZE) tcb_cpu       (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_BYTE_ENA) tcb_mem [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -163,9 +163,7 @@ import riscv_asm_pkg::*;
   // convert from RISC-V to MEMORY mode
   tcb_lib_logsize2byteena tcb_cnv (
     .sub  (tcb_cpu),
-    .man  (tcb_mem[0]),
-    // control/status
-    .mal  ()
+    .man  (tcb_mem[0])
   );
 
   tcb_vip_memory #(
