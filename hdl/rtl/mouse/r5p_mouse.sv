@@ -22,17 +22,16 @@ module r5p_mouse #(
   localparam int unsigned XLOG = $clog2(XLEN),
   localparam int unsigned ILEN = 32,
   // implementation options
-  bit IMP_NOP   = 1'b0,  // single clock cycle NOP (otherwise a 3 phase ADDI x0, x0, 0)
-  bit IMP_FENCE = 1'b1,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
-  bit IMP_CSR   = 1'b0,  // TODO
+  parameter  bit IMP_NOP   = 1'b0,  // single clock cycle NOP (otherwise a 3 phase ADDI x0, x0, 0)
+  parameter  bit IMP_FENCE = 1'b1,  // FENCE instruction implemented as NOP (otherwise illegal with undefined behavior)
+  parameter  bit IMP_CSR   = 1'b0,  // TODO
   // instruction fetch unit
-  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,  // PC reset address
-  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
+  parameter  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,  // PC reset address
+  parameter  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
   // general purpose register
-  logic [XLEN-1:0] GPR_ADR = 32'h803f_ff80,  // GPR address
+  parameter  logic [XLEN-1:0] GPR_ADR = 32'h803f_ff80,  // GPR address
   // load/store unit
-  logic [XLEN-1:0] LSU_MSK = '1              // TODO: implement and check whether it affects synthesis
-
+  parameter  logic [XLEN-1:0] LSU_MSK = '1              // TODO: implement and check whether it affects synthesis
 )(
   // system signals
   input  logic            clk,
