@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P degu: testbench for SoC
+// R5P mouse: testbench for SoC
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_degu_soc_arty_tb #(
+module r5p_mouse_soc_arty_tb #(
   // implementation device (ASIC/FPGA vendor/device)
   string CHIP = "ARTIX_GEN"
 );
@@ -34,7 +34,7 @@ module r5p_degu_soc_arty_tb #(
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-  r5p_degu_soc_arty #(
+  r5p_mouse_soc_arty #(
     .CHIP         (CHIP)
   ) DUT (
     // system signals
@@ -67,5 +67,5 @@ module r5p_degu_soc_arty_tb #(
     $finish();
   end
 
-endmodule: r5p_degu_soc_arty_tb
+endmodule: r5p_mouse_soc_arty_tb
 
