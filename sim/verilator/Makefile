@@ -58,17 +58,17 @@ VFLAGS += --trace-structs
 # DEF += -Dmacro
 # DEF += -Dmacro=value
 
-# define macro VERILATOR is already predefined in Verilator
-
-# define TOOL_VERILATOR macro (used to handle tool quirks)
+# define TOOL_* macro (used to handle tool quirks)
 DEF = -DTOOL_VERILATOR
+
+# define macro VERILATOR is already predefined in Verilator
 
 ################################################################################
 # Verilog toplevel parameter override
 ################################################################################
 
 # example
-# PAR += -Ggeneric/parameter=value
+# PAR += -Gparameter=value
 
 ################################################################################
 # Verilog plusargs

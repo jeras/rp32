@@ -27,22 +27,27 @@ FLAGS += -voptargs=+acc
 # Verilog define macros
 ################################################################################
 
-# define TOOL_QUESTA macro (used to handle tool quirks)
+# example
+# DEF += -defineall macro
+# DEF += -defineall macro=value
+
+# define TOOL_* macro (used to handle tool quirks)
 DEF = -defineall TOOL_QUESTA
 
 ################################################################################
 # Verilog toplevel parameter override
 ################################################################################
 
-# set XLEN parameter
-#XLEN ?= 32
-#PAR += -GXLEN=${XLEN}
+# example
+# PAR += -Gparameter=value
 
 ################################################################################
 # Verilog plusargs
 ################################################################################
 
-ARG =
+# example
+# ARG += +key
+# ARG += +key=value
 
 ################################################################################
 # CLI arguments from RISCOF
@@ -59,7 +64,11 @@ RISCOF_PLUSARGS ?=
 # targets
 ################################################################################
 
-all: ${HDL}
+# uncomment the GUI target for debugging purposes
+#all: gui
+all: run
+
+run: ${HDL}
 	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 

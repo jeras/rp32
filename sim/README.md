@@ -14,3 +14,17 @@ TODO: use sed to extract edition/version from stdout string
 
 
 Questa is pripagating `X` to all result bit if addition operands contain `X` at any bit position.
+
+## Vivado simulator $plusargs
+
+Vivado simulator is not parsing `$plusargs` if the code is:
+
+```SystemVerilog
+$value$plusargs("begin_signature=%0h", begin_signature)
+```
+
+It works well with:
+
+```SystemVerilog
+$value$plusargs("begin_signature=%h", begin_signature)
+```

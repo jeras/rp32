@@ -31,7 +31,7 @@ include ../Makefile-sources-${DUT}
 # DEF += -d macro
 # DEF += -d macro=value
 
-# define TOOL_VIVADO_SIMULATOR macro (used to handle tool quirks)
+# define TOOL_* macro (used to handle tool quirks)
 DEF = -d TOOL_VIVADO_SIMULATOR
 
 ################################################################################
@@ -39,7 +39,7 @@ DEF = -d TOOL_VIVADO_SIMULATOR
 ################################################################################
 
 # example
-# PAR += -generic_top "generic/parameter=value"
+# PAR += -generic_top generic/parameter=value
 
 ################################################################################
 # Verilog plusargs
@@ -64,7 +64,8 @@ RISCOF_PLUSARGS ?=
 # targets
 ################################################################################
 
-all: gui
+# uncomment the GUI target for debugging purposes
+#all: gui
 all: simulate
 
 compile: ${HDL}
@@ -77,4 +78,4 @@ simulate: elaborate
 	xsim ${ARG} ${RISCOF_PLUSARGS} ${TOP} -R
 
 gui: elaborate
-	xsim ${ARG} ${RISCOF_PLUSARGS} ${TOP} -R -gui
+	xsim ${ARG} ${RISCOF_PLUSARGS} ${TOP} -gui
