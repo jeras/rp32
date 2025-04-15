@@ -1,4 +1,8 @@
 ################################################################################
+# documentation
+################################################################################
+
+################################################################################
 # DUT, TOP and source files
 ################################################################################
 
@@ -12,7 +16,7 @@ TOP ?= r5p_${DUT}_riscv_tb
 include ../Makefile-sources-${DUT}
 
 ################################################################################
-# Verilator compiler/linker flags
+# tool specific flags
 ################################################################################
 
 # specify SystemVerilog LRM version
@@ -50,6 +54,10 @@ VFLAGS += --trace-structs
 # Verilog define macros
 ################################################################################
 
+# example
+# DEF += -Dmacro
+# DEF += -Dmacro=value
+
 # define macro VERILATOR is already predefined in Verilator
 
 # define TOOL_VERILATOR macro (used to handle tool quirks)
@@ -59,32 +67,33 @@ DEF = -DTOOL_VERILATOR
 # Verilog toplevel parameter override
 ################################################################################
 
-# set XLEN parameter
-#XLEN ?= 32
-#PAR += -GXLEN=${XLEN}
+# example
+# PAR += -Ggeneric/parameter=value
 
 ################################################################################
 # Verilog plusargs
 ################################################################################
 
-ARG =
+# example
+# ARG += +key
+# ARG += +key=value
 
 ################################################################################
 # CLI arguments from RISCOF
 ################################################################################
 
 # Verilog define macros (processed at compile time)
-RISCOF_DEFINES ?= ""
+RISCOF_DEFINES ?=
 # Verilog TOP level parameters overrides (processed at compile time)
-RISCOF_PARAMETERS ?= ""
+RISCOF_PARAMETERS ?=
 # Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
-RISCOF_PLUSARGS ?= ""
+RISCOF_PLUSARGS ?=
 
 ################################################################################
 # targets
 ################################################################################
 
-all: sim
+all: simulate
 
 lint: ${HDL}
 	verilator --lint-only ${DEF} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
@@ -92,6 +101,6 @@ lint: ${HDL}
 compile: ${HDL}
 	verilator ${VFLAGS} ${DEF} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
 
-sim: compile
-	obj_dir/V${TOP} ${ARG} ${RISCOF_ARGUMENTS}
+simulate: compile
+	obj_dir/V${TOP} ${ARG} ${RISCOF_PLUSARGS}
 #	verilator_coverage --annotate logs/annotated logs/coverage.dat

@@ -49,11 +49,11 @@ ARG =
 ################################################################################
 
 # Verilog define macros (processed at compile time)
-RISCOF_DEFINES ?= ""
+RISCOF_DEFINES ?=
 # Verilog TOP level parameters overrides (processed at compile time)
-RISCOF_PARAMETERS ?= ""
+RISCOF_PARAMETERS ?=
 # Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
-RISCOF_PLUSARGS ?= ""
+RISCOF_PLUSARGS ?=
 
 ################################################################################
 # targets

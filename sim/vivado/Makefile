@@ -1,84 +1,80 @@
 ################################################################################
-# top
+# documentation
 ################################################################################
 
-# design under test
-DUT ?= mouse
+# https://docs.amd.com/r/en-US/ug900-vivado-logic-simulation/Vivado-Simulator-Quick-Reference-Guide
+# https://docs.amd.com/r/en-US/ug900-vivado-logic-simulation/Elaborating-and-Generating-a-Design-Snapshot-xelab
+# https://docs.amd.com/r/en-US/ug900-vivado-logic-simulation/Simulating-the-Design-Snapshot-xsim
 
-# top level file
+################################################################################
+# DUT, TOP and source files
+################################################################################
+
+# design under test, must be provided as environment variable
+DUT ?=
+
+# top level file (an alternative TOP can be provided as environment variable)
 TOP ?= r5p_${DUT}_riscv_tb
 
 # include source file list in ${HDL} variable
 include ../Makefile-sources-${DUT}
 
 ################################################################################
-# VHDL standard conditional analysis identifiers
+# tool specific flags
 ################################################################################
 
-# # "SIMULATION", "SYNTHESIS", "FORMAL"
-# TOOL_TYPE    := "SIMULATION"
-# TOOL_VENDOR  := "Siemens"
-# TOOL_NAME    := "questa"
-# # TODO: use sed to extract edition/version from stdout string
-# TOOL_EDITION := "$(shell qrun -version)"
-# TOOL_VERSION := "$(shell qrun -version)"
-#
-# # VHDL standard conditional analysis identifiers
-# TOOL  = -defineall TOOL_TYPE='${TOOL_TYPE}'
-# TOOL += -defineall TOOL_VENDOR='${TOOL_VENDOR}'
-# TOOL += -defineall TOOL_NAME='${TOOL_NAME}'
-# TOOL += -defineall TOOL_EDITION='${TOOL_EDITION}'
-# TOOL += -defineall TOOL_VERSION='${TOOL_VERSION}'
-
 ################################################################################
-# Verilog defines
+# Verilog define macros
 ################################################################################
 
-DEF = -defineall TOOL_QUESTA
+# example
+# DEF += -d macro
+# DEF += -d macro=value
+
+# define TOOL_VIVADO_SIMULATOR macro (used to handle tool quirks)
+DEF = -d TOOL_VIVADO_SIMULATOR
 
 ################################################################################
 # Verilog toplevel parameter override
 ################################################################################
 
-# set XLEN parameter
-#XLEN ?= 32
-#PAR += -GXLEN=${XLEN}
+# example
+# PAR += -generic_top "generic/parameter=value"
 
 ################################################################################
 # Verilog plusargs
 ################################################################################
 
-ARG =
+# example
+# ARG += -testplusarg key
+# ARG += -testplusarg key=value
 
 ################################################################################
 # CLI arguments from RISCOF
 ################################################################################
 
 # Verilog define macros (processed at compile time)
-RISCOF_DEFINES ?= ""
+RISCOF_DEFINES ?=
 # Verilog TOP level parameters overrides (processed at compile time)
-RISCOF_PARAMETERS ?= ""
+RISCOF_PARAMETERS ?=
 # Verilog plusarg-s (firmware/signature binary/hex file) (processed at run time)
-RISCOF_PLUSARGS ?= ""
+RISCOF_PLUSARGS ?=
 
 ################################################################################
-#
+# targets
 ################################################################################
 
-# TODO: add comment regarding this flag.
-# I think it is suppressing errors on clock transition at time 0.
-FLAGS  = -suppress 13178
-# suppress error caused by mixing combinational/sequential elements in the same unpacked array
-FLAGS += -suppress 7033
-# disable optimizations
-FLAGS += -voptargs=+acc
+all: gui
+all: simulate
 
-all:
-	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
-	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
+compile: ${HDL}
+	xvlog ${FLAGS} ${DEF} ${RISCOF_DEFINES} -sv ${HDL}
 
-gui:
-	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
-	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
-	-gui
+elaborate: compile
+	xelab ${PAR} ${RISCOF_PARAMETERS} work.${TOP} -s ${TOP}
 
+simulate: elaborate
+	xsim ${ARG} ${RISCOF_PLUSARGS} ${TOP} -R
+
+gui: elaborate
+	xsim ${ARG} ${RISCOF_PLUSARGS} ${TOP} -R -gui

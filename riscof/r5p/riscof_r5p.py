@@ -70,11 +70,11 @@ class r5p(pluginTemplate):
         # In case of an iss or emulator, this variable could point to where the iss binary is located.
         # If PATH variable is missing in the config.ini we can hardcode the alternate here.
         # TODO: PATH?
-        if   (self.simulator == 'questa'):
+        if   self.simulator == 'questa':
             self.dut_exe = f'DUT={self.dut} make -C {os.path.join(self.work_dir, "../../sim/questa/")} -f Makefile'
-        elif (self.simulator == 'verilator'):
+        elif self.simulator == 'verilator':
             self.dut_exe = f'DUT={self.dut} make -C {os.path.join(self.work_dir, "../../sim/verilator/")} -f Makefile'
-        elif (self.simulator == 'vivado'):
+        elif self.simulator == 'vivado':
             self.dut_exe = f'DUT={self.dut} make -C {os.path.join(self.work_dir, "../../sim/vivado/")} -f Makefile'
         else:
             # TODO: __model__ ?
@@ -191,8 +191,12 @@ class r5p(pluginTemplate):
 
             # Convert define macro dictionary into CLI
             # TODO: properly handle define macros without value
-            if self.simulator == 'questa':
+            if   self.simulator == 'questa':
                 simulate_defines = ' '.join([f'-defineall {key}={val}' for key, val in simulate_defines_dict.items()])
+            elif self.simulator == 'verilator':
+                simulate_defines = ' '.join([f'-D{key}={val}'          for key, val in simulate_defines_dict.items()])
+            elif self.simulator == 'vivado':
+                simulate_defines = ' '.join([f'-d {key}={val}'          for key, val in simulate_defines_dict.items()])
 
             # Construct Verilog plusargs dictionary containing file paths.
             simulate_plusargs_dict = {
@@ -209,7 +213,10 @@ class r5p(pluginTemplate):
             simulate_plusargs_dict.update({})
 
             # Convert Verilog plusargs dictionary into CLI
-            simulate_plusargs = ' '.join([f'+{key}={val}' for key, val in simulate_plusargs_dict.items()])
+            if   self.simulator in ('questa', 'verilator'):
+                simulate_plusargs = ' '.join([f'+{key}={val}' for key, val in simulate_plusargs_dict.items()])
+            elif self.simulator == 'vivado':
+                simulate_plusargs = ' '.join([f'-testplusarg {key}={val}' for key, val in simulate_plusargs_dict.items()])
 
 	        # If the user wants to disable running the tests and only compile the tests,
             # then the "else" clause is executed below assigning the sim command to simple no action echo statement.
