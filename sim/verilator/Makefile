@@ -1,67 +1,15 @@
 ################################################################################
-# HDL source files
+# DUT, TOP and source files
 ################################################################################
 
-VERILATOR?=verilator
-VERILATOR_COVERAGE?=verilator_coverage
+# design under test, must be provided as environment variable
+DUT ?=
 
-################################################################################
-# HDL source files
-################################################################################
+# top level file (an alternative TOP can be provided as environment variable)
+TOP ?= r5p_${DUT}_riscv_tb
 
-PATH_RTL=../../hdl/rtl
-PATH_TBN=../../hdl/tbn
-PATH_SRC=../../hdl/src
-
-# R5P files
-PATH_R5P=../../hdl
-
-# SystemVerilog RTL
-RTL+=${PATH_RTL}/riscv/riscv_isa_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_priv_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_isa_i_pkg.sv
-RTL+=${PATH_RTL}/riscv/riscv_isa_c_pkg.sv
-RTL+=${PATH_RTL}/riscv/rv32_csr_pkg.sv
-RTL+=${PATH_RTL}/riscv/rv64_csr_pkg.sv
-RTL+=${PATH_RTL}/mouse/r5p_mouse.sv
-
-# TCB files
-PATH_TCB=../../submodules/tcb/hdl
-
-# SystemVerilog RTL
-RTL+=${PATH_TCB}/rtl/tcb_pkg.sv
-RTL+=${PATH_TCB}/rtl/tcb_if.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_passthrough.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_arbiter.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_multiplexer.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_decoder.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_demultiplexer.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_register_request.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_error.sv
-RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_cmn_gpio.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_ser.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_des.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_fifo.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
-
-# SoC files
-#RTL+=${PATH_RTL}/soc/tcb_dec_3sp.sv
-#RTL+=${PATH_RTL}/soc/r5p_soc_memory.sv
-#RTL+=${PATH_RTL}/soc/r5p_mouse_soc_top.sv
-
-# SystemVerilog bench (Test SV)
-TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
-TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
-TSV+=${PATH_TBN}/riscv/riscv_asm_pkg.sv
-TSV+=${PATH_TBN}/r5p_mouse_riscv_tb.sv
-TSV+=${PATH_TBN}/r5p_mouse_tcb_mon.sv
-
-# combined HDL sources
-HDL =${RTL}
-HDL+=${TSV}
-
-# top level file
-TOP ?= r5p_mouse_riscv_tb
+# include source file list in ${HDL} variable
+include ../Makefile-sources-${DUT}
 
 ################################################################################
 # Verilator compiler/linker flags
@@ -93,31 +41,30 @@ VFLAGS += --assert
 #VFLAGS += --gdbbt
 
 # Make waveforms
-#ifdef TRACE
+#ifdef TRACE_DEBUG
 VFLAGS += --trace-fst
 VFLAGS += --trace-structs
 #endif
 
 ################################################################################
-# Verilog macros
+# Verilog define macros
 ################################################################################
 
-# set VERILATOR macro (used to handle tool quirks)
-#MCR += -DVERILATOR
-ifdef TRACE
-MCR += -DTRACE_DEBUG
-endif
+# define macro VERILATOR is already predefined in Verilator
+
+# define TOOL_VERILATOR macro (used to handle tool quirks)
+DEF = -DTOOL_VERILATOR
 
 ################################################################################
 # Verilog toplevel parameter override
 ################################################################################
 
 # set XLEN parameter
-XLEN ?= 32
-PAR += -GXLEN=${XLEN}
+#XLEN ?= 32
+#PAR += -GXLEN=${XLEN}
 
 ################################################################################
-# Verilog $plusargs (runtime arguments)
+# Verilog plusargs
 ################################################################################
 
 ARG =
@@ -134,17 +81,17 @@ RISCOF_PARAMETERS ?= ""
 RISCOF_PLUSARGS ?= ""
 
 ################################################################################
-#
+# targets
 ################################################################################
 
 all: sim
 
 lint: ${HDL}
-	${VERILATOR} --lint-only ${HDL}  ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP}
+	verilator --lint-only ${DEF} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
 
 compile: ${HDL}
-	${VERILATOR} ${VFLAGS} ${MCR} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
+	verilator ${VFLAGS} ${DEF} ${PAR} ${RISCOF_DEFINES} ${RISCOF_PARAMETERS} --top ${TOP} ${HDL}
 
 sim: compile
 	obj_dir/V${TOP} ${ARG} ${RISCOF_ARGUMENTS}
-#	${VERILATOR_COVERAGE} --annotate logs/annotated logs/coverage.dat
+#	verilator_coverage --annotate logs/annotated logs/coverage.dat

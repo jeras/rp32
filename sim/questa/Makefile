@@ -1,5 +1,5 @@
 ################################################################################
-# DUT and TOP
+# DUT, TOP and source files
 ################################################################################
 
 # design under test, must be provided as environment variable
@@ -12,28 +12,22 @@ TOP ?= r5p_${DUT}_riscv_tb
 include ../Makefile-sources-${DUT}
 
 ################################################################################
-# VHDL standard conditional analysis identifiers
+# tool specific flags
 ################################################################################
 
-# # "SIMULATION", "SYNTHESIS", "FORMAL"
-# TOOL_TYPE    := "SIMULATION"
-# TOOL_VENDOR  := "Siemens"
-# TOOL_NAME    := "questa"
-# # TODO: use sed to extract edition/version from stdout string
-# TOOL_EDITION := "$(shell qrun -version)"
-# TOOL_VERSION := "$(shell qrun -version)"
-#
-# # VHDL standard conditional analysis identifiers
-# TOOL  = -defineall TOOL_TYPE='${TOOL_TYPE}'
-# TOOL += -defineall TOOL_VENDOR='${TOOL_VENDOR}'
-# TOOL += -defineall TOOL_NAME='${TOOL_NAME}'
-# TOOL += -defineall TOOL_EDITION='${TOOL_EDITION}'
-# TOOL += -defineall TOOL_VERSION='${TOOL_VERSION}'
+# TODO: add comment regarding this flag.
+# I think it is suppressing errors on clock transition at time 0.
+FLAGS  = -suppress 13178
+# suppress error caused by mixing combinational/sequential elements in the same unpacked array
+FLAGS += -suppress 7033
+# disable optimizations
+FLAGS += -voptargs=+acc
 
 ################################################################################
-# Verilog defines
+# Verilog define macros
 ################################################################################
 
+# define TOOL_QUESTA macro (used to handle tool quirks)
 DEF = -defineall TOOL_QUESTA
 
 ################################################################################
@@ -62,22 +56,14 @@ RISCOF_PARAMETERS ?= ""
 RISCOF_PLUSARGS ?= ""
 
 ################################################################################
-#
+# targets
 ################################################################################
 
-# TODO: add comment regarding this flag.
-# I think it is suppressing errors on clock transition at time 0.
-FLAGS  = -suppress 13178
-# suppress error caused by mixing combinational/sequential elements in the same unpacked array
-FLAGS += -suppress 7033
-# disable optimizations
-FLAGS += -voptargs=+acc
-
-all:
+all: ${HDL}
 	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
-gui:
+gui: ${HDL}
 	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui
