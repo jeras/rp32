@@ -140,9 +140,9 @@ logic                   bus_wen;  // write enable
 logic        [XLEN-1:0] bus_adr;  // address
 logic           [2-1:0] bus_siz;  // RISC-V func3
 logic        [XLEN-1:0] bus_wdt;  // write data
-logic        [XLEN-1:0] bus_rdt;  // read data
+logic        [XLEN-1:0] dec_rdt;  // read data
 logic                   bus_err;  // error
-logic                   bus_rdy;  // ready
+logic                   dec_rdy;  // ready
 
 // FSM (finite state machine) and phases
 logic           [2-1:0] ctl_fsm;  // FSM state register
@@ -158,12 +158,9 @@ logic                   ctl_bvr;
 logic        [XLEN-1:0] ctl_pcr;  // ctl_pcr register
 logic        [XLEN-1:0] ctl_pcn;  // ctl_pcr next
 // TODO: rename, also in GTKWave savefile
-logic        [ILEN-1:0] inw_buf;  // instruction word buffer
+logic        [ILEN-1:0] ifu_buf;  // instruction fetch unit buffer
+logic        [XLEN-1:0] ifu_mux;  // instruction multiplexer
 
-// decoder (from bus read data)
-logic           [5-1:0] bus_opc;  // OP code
-logic           [5-1:0] bus_rd ;  // GPR `rd`  address
-logic           [5-1:0] bus_rs1;  // GPR `rs1` address
 // decoder (from buffer)
 logic           [5-1:0] dec_opc;  // OP code
 logic           [5-1:0] dec_rd ;  // GPR `rd`  address
@@ -172,9 +169,6 @@ logic           [5-1:0] dec_rs2;  // GPR `rs2` address
 logic           [3-1:0] dec_fn3;  // funct3
 logic           [7-1:0] dec_fn7;  // funct7
 
-// immediates (from bus read data)
-logic signed [XLEN-1:0] bus_imi;  // decoder immediate I (integer, load, jump)
-logic signed [XLEN-1:0] bus_imu;  // decoder immediate U (upper)
 // immediates (from buffer)
 logic signed [XLEN-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
 logic signed [XLEN-1:0] dec_imb;  // decoder immediate B (branch)
@@ -216,36 +210,31 @@ logic                   buf_tkn;
 // TCL system bus
 ///////////////////////////////////////////////////////////////////////////////
 
-assign bus_trn = bus_vld & bus_rdy;
+assign bus_trn = bus_vld & dec_rdy;
 
 ///////////////////////////////////////////////////////////////////////////////
 // decoder
 ///////////////////////////////////////////////////////////////////////////////
 
-// GPR address (from bus read data)
-assign bus_rd  = bus_rdt[11: 7];  // decoder GPR `rd`  address
-assign bus_rs1 = bus_rdt[19:15];  // decoder GPR `rs1` address
-// GPR address (from buffer)
-assign dec_rd  = inw_buf[11: 7];  // decoder GPR `rd`  address
-assign dec_rs1 = inw_buf[19:15];  // decoder GPR `rs1` address
-assign dec_rs2 = inw_buf[24:20];  // decoder GPR `rs2` address
+// instruction multiplexer
+assign ifu_mux = (ctl_fsm == ST1) ? dec_rdt : ifu_buf;
 
-// OP and functions (from bus read data)
-assign bus_opc = bus_rdt[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
-// OP and functions (from buffer)
-assign dec_opc = inw_buf[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
-assign dec_fn3 = inw_buf[14:12];  // funct3
-assign dec_fn7 = inw_buf[31:25];  // funct7
+// GPR address
+assign dec_rd  = ifu_mux[11: 7];  // decoder GPR `rd`  address
+assign dec_rs1 = ifu_mux[19:15];  // decoder GPR `rs1` address
+assign dec_rs2 = ifu_mux[24:20];  // decoder GPR `rs2` address
 
-// immediates (from bus read data)
-assign bus_imi = {{21{bus_rdt[31]}}, bus_rdt[30:20]};  // I (integer, load, jump)
-assign bus_imu = {bus_rdt[31:12], 12'd0};  // U (upper)
-// immediates (from buffer)
-assign dec_imi = {{21{inw_buf[31]}}, inw_buf[30:20]};  // I (integer, load, jump)
-assign dec_imb = {{20{inw_buf[31]}}, inw_buf[7], inw_buf[30:25], inw_buf[11:8], 1'b0};  // B (branch)
-assign dec_ims = {{21{inw_buf[31]}}, inw_buf[30:25], inw_buf[11:7]};  // S (store)
-assign dec_imu = {inw_buf[31:12], 12'd0};  // U (upper)
-assign dec_imj = {{12{inw_buf[31]}}, inw_buf[19:12], inw_buf[20], inw_buf[30:21], 1'b0};  // J (jump)
+// OP and functions
+assign dec_opc = ifu_mux[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
+assign dec_fn3 = ifu_mux[14:12];  // funct3
+assign dec_fn7 = ifu_mux[31:25];  // funct7
+
+// immediates
+assign dec_imi = {{21{ifu_mux[31]}}, ifu_mux[30:20]};  // I (integer, load, jump)
+assign dec_imb = {{20{ifu_mux[31]}}, ifu_mux[7], ifu_mux[30:25], ifu_mux[11:8], 1'b0};  // B (branch)
+assign dec_ims = {{21{ifu_mux[31]}}, ifu_mux[30:25], ifu_mux[11:7]};  // S (store)
+assign dec_imu = {ifu_mux[31:12], 12'd0};  // U (upper)
+assign dec_imj = {{12{ifu_mux[31]}}, ifu_mux[19:12], ifu_mux[20], ifu_mux[30:21], 1'b0};  // J (jump)
 
 ///////////////////////////////////////////////////////////////////////////////
 // ALU adder
@@ -316,7 +305,7 @@ if (rst) begin
   // PC
   ctl_pcr <= IFU_RST;
   // instruction buffer
-  inw_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
+  ifu_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
   // data buffer
   buf_dat <= '0;
   // load address buffer
@@ -338,18 +327,18 @@ end else begin
     end
     if (ctl_fsm == ST1) begin
       // load the buffer when the instruction is available on the bus
-      inw_buf <= bus_rdt;
+      ifu_buf <= dec_rdt;
     end
     // load the buffer when the data is available on the bus
     if (ctl_fsm == ST2) begin
       // load the buffer when the data is available on the bus
-      buf_dat <= bus_rdt;
+      buf_dat <= dec_rdt;
       // load address buffer
       buf_adr <= add_sum[1:0];
     end
     if (ctl_fsm == ST3) begin
       // load the buffer when the data is available on the bus
-      buf_dat <= bus_rdt;
+      buf_dat <= dec_rdt;
       // branch taken bit for branch address calculation
       buf_tkn <= bru_tkn;
     end
@@ -433,26 +422,26 @@ begin
     end
     ST1: begin
       // adder, system bus
-      case (bus_opc)
+      case (dec_opc)
         LUI, AUIPC, JAL: begin
           // control (FSM, phase)
           ctl_nxt = ST0;
           ctl_pha = WB;
-          ctl_bvc = |bus_rd;
+          ctl_bvc = |dec_rd;
           // GPR rd write
           bus_wen = 1'b1;
-          bus_adr = {GPR_ADR[XLEN-1:5+2], bus_rd , 2'b00};
+          bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
           bus_siz = SW[1:0];
-          case (bus_opc)
+          case (dec_opc)
             LUI: begin
               // GPR rd write (upper immediate)
-              bus_wdt = bus_imu;
+              bus_wdt = dec_imu;
             end
             AUIPC: begin
               // adder (PC + upper immediate)
               add_inc = 1'b0;
               add_op1 = ext_sgn(ctl_pcr);
-              add_op2 = ext_sgn(bus_imu);
+              add_op2 = ext_sgn(dec_imu);
               // GPR rd write (PC + upper immediate)
               bus_wdt = add_sum[32-1:0];
             end
@@ -470,7 +459,7 @@ begin
         end
         JALR, BRANCH, LOAD, STORE, OP_IMM_32, OP_32: begin
           // control (FSM)
-          case (bus_opc)
+          case (dec_opc)
             BRANCH   ,
             LOAD     ,
             STORE    ,
@@ -481,10 +470,10 @@ begin
           endcase
           // control (phase)
           ctl_pha = RS1;
-          ctl_bvc = |bus_rs1;
+          ctl_bvc = |dec_rs1;
           // rs1 read
           bus_wen = 1'b0;
-          bus_adr = {GPR_ADR[XLEN-1:5+2], bus_rs1, 2'b00};
+          bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rs1, 2'b00};
           bus_siz = LW[1:0];
           bus_wdt = 32'hxxxxxxxx;
         end
@@ -513,7 +502,7 @@ begin
           ctl_pha = MLD;
           // arithmetic operations
           add_inc = 1'b0;
-          add_op1 = ext_sgn(bus_rdt);
+          add_op1 = ext_sgn(dec_rdt);
           add_op2 = ext_sgn(dec_imi);
           // load
           bus_wen = 1'b0;
@@ -568,61 +557,61 @@ begin
                 ADD    : begin
                   add_inc = dec_fn7[5];
                   add_op1 = ext_sgn(buf_dat);
-                  add_op2 = ext_sgn(bus_rdt ^ {XLEN{dec_fn7[5]}});
+                  add_op2 = ext_sgn(dec_rdt ^ {XLEN{dec_fn7[5]}});
                 end
                 SLT    : begin
                   add_inc = 1'b1;
                   add_op1 = ext_sgn( buf_dat);
-                  add_op2 = ext_sgn(~bus_rdt);
+                  add_op2 = ext_sgn(~dec_rdt);
                 end
                 SLTU   : begin
                   add_inc = 1'b1;
                   add_op1 = {1'b0,  buf_dat};
-                  add_op2 = {1'b1, ~bus_rdt};
+                  add_op2 = {1'b1, ~dec_rdt};
                 end
                 default: begin
                 end
               endcase
               // logic operations
               log_op1 = buf_dat;
-              log_op2 = bus_rdt;
+              log_op2 = dec_rdt;
               // shift operations
               shf_op1 = buf_dat;
-              shf_op2 = bus_rdt[XLOG-1:0];
+              shf_op2 = dec_rdt[XLOG-1:0];
             end
             OP_IMM_32: begin
               // arithmetic operations
               case (dec_fn3)
                 ADD    : begin
                   add_inc = 1'b0;
-                  add_op1 = ext_sgn(bus_rdt);
+                  add_op1 = ext_sgn(dec_rdt);
                   add_op2 = ext_sgn(dec_imi);
                 end
                 SLT    : begin
                   add_inc = 1'b1;
-                  add_op1 = ext_sgn( bus_rdt);
+                  add_op1 = ext_sgn( dec_rdt);
                   add_op2 = ext_sgn(~dec_imi);
                 end
                 SLTU   : begin
                   add_inc = 1'b1;
-                  add_op1 = {1'b0,  bus_rdt};
+                  add_op1 = {1'b0,  dec_rdt};
                   add_op2 = {1'b1, ~dec_imi};
                 end
                 default: begin
                 end
               endcase
               // logic operations
-              log_op1 = bus_rdt;
+              log_op1 = dec_rdt;
               log_op2 = dec_imi;
               // shift operations
-              shf_op1 = bus_rdt;
+              shf_op1 = dec_rdt;
               shf_op2 = dec_imi[XLOG-1:0];
             end
             default: begin
             end
           endcase
           case (dec_fn3)
-            // adder based inw_buf functions
+            // adder based ifu_buf functions
             ADD : bus_wdt = add_sum[XLEN-1:0];
             SLT ,
             SLTU: bus_wdt = {31'd0, add_sum[XLEN]};
@@ -646,11 +635,11 @@ begin
           bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
           bus_siz = SW[1:0];
           case (dec_fn3)
-            LB : bus_wdt =   $signed(bus_rdt[ 8-1:0]);
-            LH : bus_wdt =   $signed(bus_rdt[16-1:0]);
-            LW : bus_wdt =   $signed(bus_rdt[32-1:0]);
-            LBU: bus_wdt = $unsigned(bus_rdt[ 8-1:0]);
-            LHU: bus_wdt = $unsigned(bus_rdt[16-1:0]);
+            LB : bus_wdt =   $signed(dec_rdt[ 8-1:0]);
+            LH : bus_wdt =   $signed(dec_rdt[16-1:0]);
+            LW : bus_wdt =   $signed(dec_rdt[32-1:0]);
+            LBU: bus_wdt = $unsigned(dec_rdt[ 8-1:0]);
+            LHU: bus_wdt = $unsigned(dec_rdt[16-1:0]);
             default: bus_wdt = 32'hxxxxxxxx;
           endcase
         end
@@ -665,7 +654,7 @@ begin
           bus_wen = 1'b1;
           bus_adr = add_sum[XLEN-1:0];
           bus_siz = dec_fn3[1:0];
-          bus_wdt = bus_rdt;
+          bus_wdt = dec_rdt;
         end
         BRANCH: begin
           // control (phase)
@@ -680,12 +669,12 @@ begin
             BLT    ,
             BGE    : begin
               add_op1 = ext_sgn( buf_dat);
-              add_op2 = ext_sgn(~bus_rdt);
+              add_op2 = ext_sgn(~dec_rdt);
             end
             BLTU   ,
             BGEU   : begin
               add_op1 = {1'b0,  buf_dat};
-              add_op2 = {1'b1, ~bus_rdt};
+              add_op2 = {1'b1, ~dec_rdt};
             end
             default: begin
               add_op1 = 33'dx;
@@ -723,9 +712,9 @@ assign tcb_wen =           bus_wen               ;
 assign tcb_adr =           bus_adr               ;
 assign tcb_siz =           bus_siz               ;
 assign tcb_wdt =           bus_wdt               ;
-assign bus_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
+assign dec_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
 assign bus_err =           tcb_err               ;
-assign bus_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
+assign dec_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store unit
