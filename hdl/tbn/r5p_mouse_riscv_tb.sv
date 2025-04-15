@@ -148,7 +148,7 @@ import riscv_asm_pkg::*;
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  // convert from RISC-V to MEMORY mode
+  // convert from LOG_SIZE to BYTE_ENA mode
   tcb_lib_logsize2byteena tcb_cnv (
     .sub  (tcb_cpu),
     .man  (tcb_mem[0])
@@ -156,8 +156,8 @@ import riscv_asm_pkg::*;
 
   tcb_vip_memory #(
     .MFN  (IFN),
-    .SPN  (1),
-    .SIZ  (MEM_SIZ)
+    .SIZ  (MEM_SIZ),
+    .SPN  (1)
   ) mem (
     .tcb  (tcb_mem[0:0])
   );

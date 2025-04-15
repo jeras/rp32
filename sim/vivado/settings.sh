@@ -1,0 +1,1 @@
+../../fpga/Xilinx/settings.sh

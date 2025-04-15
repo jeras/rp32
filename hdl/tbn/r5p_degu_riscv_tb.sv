@@ -35,8 +35,8 @@ module r5p_degu_riscv_tb
 `else
   parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
-  parameter  [XLEN-1:0] IFU_RST = 32'h8000_0000,
-  parameter  [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
+  parameter  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,
+  parameter  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
   // memory size
   parameter  int unsigned MEM_SIZ = 2**22,
   // memory configuration
@@ -156,13 +156,13 @@ import riscv_asm_pkg::*;
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  // convert from RISC-V to MEMORY mode
+  // convert from LOG_SIZE to BYTE_ENA mode
   tcb_lib_logsize2byteena tcb_ifu_cnv (
     .sub  (tcb_ifu),
     .man  (tcb_mem[0])
   );
 
-  // convert from RISC-V to MEMORY mode
+  // convert from LOG_SIZE to BYTE_ENA mode
   tcb_lib_logsize2byteena tcb_lsu_cnv (
     .sub  (tcb_lsu),
     .man  (tcb_mem[1])
@@ -170,8 +170,9 @@ import riscv_asm_pkg::*;
 
   tcb_vip_memory #(
     .MFN  (IFN),
+    .SIZ  (MEM_SIZ),
     .SPN  (2),
-    .SIZ  (MEM_SIZ)
+    .WRM  (2'b10)
   ) mem (
     .tcb  (tcb_mem[1:0])
   );
