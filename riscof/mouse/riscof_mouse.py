@@ -99,6 +99,7 @@ class mouse(pluginTemplate):
         self.compile_exe = f'riscv{self.xlen}-unknown-elf-gcc'
         self.objcopy_exe = f'riscv{self.xlen}-unknown-elf-objcopy'
         self.objdump_exe = f'riscv{self.xlen}-unknown-elf-objdump'
+        self.symbols_exe = f'riscv{self.xlen}-unknown-elf-nm'
 
     def runTests(self, testList):
 
@@ -172,9 +173,12 @@ class mouse(pluginTemplate):
             symbols_list = ['begin_signature', 'end_signature', 'tohost', 'fromhost']
             # construct dictionary of listed symbols
             symbols_cmd = []
+            # get symbol list from elf file
+            cmd = self.symbols_exe + f' {elf} > dut.symbols'
+            symbols_cmd.append(cmd)
             for symbol in symbols_list:
-                # get symbols from elf file
-                cmd = f'{symbol}=$$(riscv{self.xlen}-unknown-elf-nm {elf} | grep -w {symbol} | cut -c 1-8)'
+                # get symbols from symbol list file
+                cmd = f'{symbol}=$$(grep -w {symbol} dut.symbols | cut -c 1-8)'
                 symbols_cmd.append(cmd)
 
             # Simulation define macros.
