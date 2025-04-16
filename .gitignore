@@ -1,3 +1,21 @@
-# Vivado
+# Vivado synthesis
 *.log
 *.jou
+.Xil
+vivado_pid*.str
+*.gen
+*.cache
+*.hw
+*.ip_user_files
+*.runs
+*.sim
+# Vivado simulator
+xvlog.pb
+xelab.pb
+xsim.dir/
+# Python
+**/__pycache__
+**/.venv
+# RISCOF
+riscof/riscof_work
+riscof/transcript
