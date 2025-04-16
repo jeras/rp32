@@ -111,7 +111,7 @@ module r5p_degu_tcb_mon
         str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb_lsu.req.adr), $past(tcb_lsu.req.wdt)));
       end else begin
         // memory load
-        str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_lsu.req.adr), tcb_lsu.rsp.rdt)));
+        str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_lsu.req.adr), tcb_lsu.rsp.rdt));
       end
     end
   end
