@@ -33,6 +33,10 @@ module r5p_mouse_tcb_mon
   tcb_if.mon tcb
 );
 
+////////////////////////////////////////////////////////////////////////////////
+// local parameters and signals
+////////////////////////////////////////////////////////////////////////////////
+
   import riscv_asm_pkg::*;
   import tcb_pkg::*;
 
@@ -45,50 +49,9 @@ module r5p_mouse_tcb_mon
   localparam logic [3-1:0] EXE = 3'b011;  // execute (only used to evaluate branching condition)
   localparam logic [3-1:0] WB  = 3'b100;  // GPR write-back
 
-////////////////////////////////////////////////////////////////////////////////
-// local signals
-////////////////////////////////////////////////////////////////////////////////
-
-  // TCB system bus delayed by DLY clock periods
-  tcb_if #(.PHY (tcb.PHY)) dly (.clk (tcb.clk), .rst (tcb.rst));
-
-  // phase delayed by DLY clock periods
-  logic [3-1:0] dly_pha;
-
-  // log signals
-  logic [tcb.PHY.ADR-1:0] adr;  // address
-  logic                   wen;  // write enable
-  logic           [2-1:0] siz;  // RISC-V func3
-  logic [tcb.PHY.DAT-1:0] dat;  // data
-  logic                   err;  // error
-
-////////////////////////////////////////////////////////////////////////////////
-// delay TCB signals
-////////////////////////////////////////////////////////////////////////////////
-
-  // delayed signals
-  always_ff @(posedge tcb.clk, posedge tcb.rst)
-  if (tcb.rst) begin
-    // execution phase
-    dly_pha <= 'x;
-    // TCB
-    dly.vld <= '0;
-    dly.req <= '{default: 'x};
-    dly.rsp <= '{default: 'x};
-    dly.rdy <= '1;
-  end else begin
-    // execution phase
-    dly_pha <= pha;
-    // TCB
-    dly.vld <= tcb.vld;
-    dly.req <= tcb.req;
-    dly.rsp <= tcb.rsp;
-    dly.rdy <= tcb.rdy;
-  end
-
-////////////////////////////////////////////////////////////////////////////////
-// logging
-////////////////////////////////////////////////////////////////////////////////
+  // log file name and descriptor
+  string fn;  // file name
+  int fd;
 
   // print-out delay queue
   string str_if [$];  // instruction fetch
@@ -96,19 +59,9 @@ module r5p_mouse_tcb_mon
   string str_ld [$];  // load
   string str_st [$];  // store
 
-  // write/read signals
-  always_comb
-  begin
-    adr <= dly.req.adr;
-    wen <= dly.req.wen;
-    siz <= dly.req.siz;
-    if (dly.req.wen) begin
-      dat <= dly.req.wdt;
-    end else begin
-      dat <= tcb.rsp.rdt;
-    end
-    err <= tcb.rsp.sts.err;
-  end
+////////////////////////////////////////////////////////////////////////////////
+// logging (matching spike simulator logs)
+////////////////////////////////////////////////////////////////////////////////
 
   // format GPR string with desired whitespace
   function string format_gpr (logic [5-1:0] idx);
@@ -119,50 +72,41 @@ module r5p_mouse_tcb_mon
   // prepare string for each execution phase
   always_ff @(posedge tcb.clk)
   begin
-    if (dly.trn) begin
+    if ($past(tcb.trn)) begin
       // instruction fetch
-      if (dly_pha == IF) begin
-        str_if.push_front($sformatf(" 0x%8h (0x%8h)", adr, dat));
+      if ($past(pha) == IF) begin
+        str_if.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb.req.adr), tcb.rsp.rdt));
       end
       // GPR write-back (rs1/rs2 reads are not logged)
-      if (dly_pha == WB) begin
-        str_wb.push_front($sformatf(" %s 0x%8h", format_gpr(adr[2+:5]), dat));
+      if ($past(pha) == WB) begin
+        str_wb.push_front($sformatf(" %s 0x%8h", format_gpr($past(tcb.req.adr[2+:5])), $past(tcb.req.wdt)));
       end
       // memory load
-      if (dly_pha == MLD) begin
-        str_ld.push_front($sformatf(" mem 0x%8h", adr));
+      if ($past(pha) == MLD) begin
+        str_ld.push_front($sformatf(" mem 0x%8h", $past(tcb.req.adr)));
       end
       // memory store
-      if (dly_pha == MST) begin
-        case (siz)
-          2'd0: str_st.push_front($sformatf(" mem 0x%8h 0x%2h", adr, dat[ 8-1:0]));
-          2'd1: str_st.push_front($sformatf(" mem 0x%8h 0x%4h", adr, dat[16-1:0]));
-          2'd2: str_st.push_front($sformatf(" mem 0x%8h 0x%8h", adr, dat[32-1:0]));
+      if ($past(pha) == MST) begin
+        case ($past(tcb.req.siz))
+          2'd0: str_st.push_front($sformatf(" mem 0x%8h 0x%2h", $past(tcb.req.adr), $past(tcb.req.wdt[ 8-1:0])));
+          2'd1: str_st.push_front($sformatf(" mem 0x%8h 0x%4h", $past(tcb.req.adr), $past(tcb.req.wdt[16-1:0])));
+          2'd2: str_st.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb.req.adr), $past(tcb.req.wdt[32-1:0])));
         endcase
       end
     end
   end
 
-  // log file name and descriptor
-  string fn;  // file name
-  int fd;
-
-  // skip retirement of reset JAL instruction
-  logic log_trn = 1'b0;
-
-  // prepare string for each execution phase
+  // prepare string for committed instruction
   always_ff @(posedge tcb.clk)
   begin
     // only log if a log file was opened
     if (fd) begin
-      // at instruction fetch combine strings from precious instructions
-      if (dly.trn) begin
-        // skip retirement of reset JAL instruction
-        log_trn <= 1'b1;
+      // at instruction fetch combine strings from previous instructions
+      if ($past(tcb.trn)) begin
         // instruction fetch
-        if (dly_pha == IF) begin
+        if ($past(pha) == IF) begin
           // skip first fetch
-          if (log_trn) begin
+          if (~$past(tcb.rst,3)) begin
               $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
           end
         end
@@ -170,6 +114,7 @@ module r5p_mouse_tcb_mon
     end
   end
 
+  // open log file if name is given by parameter
   initial
   begin
     // log file if name is given by parameter

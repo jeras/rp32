@@ -245,15 +245,6 @@ import riscv_asm_pkg::*;
     .tcb_lsu  (tcb_lsu)
   );
 
-  // open log file with filename obtained through plusargs
-  initial
-  begin
-    string fn;  // file name
-    if ($value$plusargs("log=%s", fn)) begin
-      r5p_mon.fd = $fopen(fn, "w");
-    end
-  end
-
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
