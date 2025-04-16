@@ -1,2 +1,2 @@
-export LM_LICENSE_FILE=$HOME/intelFPGA_pro/License.dat
-export PATH="$HOME/intelFPGA_pro/24.3.1/questa_fse/bin:$PATH"
+export LM_LICENSE_FILE=$HOME/altera_pro/License.dat
+export PATH="$HOME/altera_pro/25.1/questa_fse/bin:$PATH"
