@@ -12,6 +12,7 @@ TODO: use sed to extract edition/version from stdout string
 `TOOL_EDITION` := "$(shell qrun -version)"
 `TOOL_VERSION` := "$(shell qrun -version)"
 
+## Questa `X` propagation
 
 Questa is pripagating `X` to all result bit if addition operands contain `X` at any bit position.
 
