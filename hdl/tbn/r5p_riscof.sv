@@ -81,10 +81,10 @@ module r5p_riscof
   initial
   begin
     // get/display ELF symbols from plusargs
-    if ($value$plusargs("begin_signature=%h", begin_signature))  $display("RISCOF: begin_signature = 0x%08h", begin_signature);  else  $fatal("RISCOF: ERROR: begin_signature $plusarg not found!");
-    if ($value$plusargs("end_signature=%h"  , end_signature  ))  $display("RISCOF: end_signature   = 0x%08h", end_signature  );  else  $fatal("RISCOF: ERROR: end_signature   $plusarg not found!");
-    if ($value$plusargs("tohost=%h"         , tohost         ))  $display("RISCOF: tohost          = 0x%08h", tohost         );  else  $fatal("RISCOF: ERROR: tohost          $plusarg not found!");
-    if ($value$plusargs("fromhost=%h"       , fromhost       ))  $display("RISCOF: fromhost        = 0x%08h", fromhost       );  else  $fatal("RISCOF: ERROR: fromhost        $plusarg not found!");
+    if ($value$plusargs("begin_signature=%h", begin_signature))  $display("RISCOF: begin_signature = 0x%08h", begin_signature);  else  $fatal(0, "RISCOF: ERROR: begin_signature $plusarg not found!");
+    if ($value$plusargs("end_signature=%h"  , end_signature  ))  $display("RISCOF: end_signature   = 0x%08h", end_signature  );  else  $fatal(0, "RISCOF: ERROR: end_signature   $plusarg not found!");
+    if ($value$plusargs("tohost=%h"         , tohost         ))  $display("RISCOF: tohost          = 0x%08h", tohost         );  else  $fatal(0, "RISCOF: ERROR: tohost          $plusarg not found!");
+    if ($value$plusargs("fromhost=%h"       , fromhost       ))  $display("RISCOF: fromhost        = 0x%08h", fromhost       );  else  $fatal(0, "RISCOF: ERROR: fromhost        $plusarg not found!");
   end
 
 ////////////////////////////////////////////////////////////////////////////////
