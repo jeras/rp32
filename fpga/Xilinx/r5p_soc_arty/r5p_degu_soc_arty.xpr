@@ -459,7 +459,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/tbn/r5p_degu_riscv_tb.sv">
+      <File Path="$PPRDIR/../../../hdl/tbn/r5p_degu_riscof_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -496,7 +496,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/tbn/r5p_degu_tcb_mon.sv">
+      <File Path="$PPRDIR/../../../hdl/tbn/r5p_degu_trace_logger.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

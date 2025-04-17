@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P Degu RISC-V conformance testbench
+// R5P Degu RISCOF testbench
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_degu_riscv_tb
+module r5p_degu_riscof_tb
   import riscv_isa_pkg::*;
   import tcb_pkg::*;
 #(
@@ -184,7 +184,7 @@ import riscv_asm_pkg::*;
     if ($value$plusargs("firmware=%s", fn)) begin
       $display("Loading file into memory: %s", fn);
       void'(mem.read_bin(fn));
-      void'(r5p_riscof.read_bin(fn));
+      void'(r5p_htif.read_bin(fn));
     end else if (IFN == "") begin
       $display("ERROR: memory load file argument not found.");
       $finish;
@@ -195,13 +195,13 @@ import riscv_asm_pkg::*;
 // RISCOF
 ////////////////////////////////////////////////////////////////////////////////
 
-  r5p_riscof #(
+  r5p_htif #(
     // memory
     .MEM_ADR (IFU_RST),
     .MEM_SIZ (MEM_SIZ),
     // miscellaneous
     .TIMEOUT (20000)
-  ) r5p_riscof (
+  ) r5p_htif (
     .tcb (tcb_lsu)
   );
 
@@ -231,10 +231,10 @@ import riscv_asm_pkg::*;
   end
 
   // instruction fetch and load/store bus monitor
-  r5p_degu_tcb_mon #(
+  r5p_degu_trace_logger #(
     .ISA  (ISA),
     .ABI  (ABI)
-  ) r5p_mon (
+  ) r5p_log (
     // GPR register file array
     // hierarchical path to GPR inside RTL
     .gpr_wen  (dut.gpr.e_rd),
@@ -256,5 +256,5 @@ import riscv_asm_pkg::*;
     $dumpvars(0);
   end
 
-endmodule: r5p_degu_riscv_tb
+endmodule: r5p_degu_riscof_tb
 

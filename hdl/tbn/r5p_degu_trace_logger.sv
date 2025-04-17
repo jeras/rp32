@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P-mouse TCB monitor and execution logger
+// R5P-degu TCB monitor and execution trace logger
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,21 +16,29 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_mouse_tcb_mon
+module r5p_degu_trace_logger
   import riscv_isa_pkg::*;
   import riscv_isa_i_pkg::*;
-  import tcb_pkg::*;
 #(
+  // constants used across the design in signal range sizing instead of literals
+  localparam int unsigned XLEN = 32,
+  localparam int unsigned XLOG = $clog2(XLEN),
   // log file name
   string LOG = "",
+  // TODO: check for GPR size differently
+  parameter  int unsigned GNUM = 32,
+  localparam int unsigned GLOG = $clog2(GNUM),
   // RISC-V ISA parameters
   isa_t  ISA,
   bit    ABI = 1'b1   // enable ABI translation for GPR names
 )(
-  // instruction execution phase
-  input logic [3-1:0] pha,
-  // TCB system bus
-  tcb_if.mon tcb
+  // GPR array
+  input logic            gpr_wen,
+  input logic [GLOG-1:0] gpr_wid,
+  input logic [XLEN-1:0] gpr_wdt,
+  // TCB IFU/LSU system busses
+  tcb_if.mon tcb_ifu,
+  tcb_if.mon tcb_lsu
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,28 +48,26 @@ module r5p_mouse_tcb_mon
   import riscv_asm_pkg::*;
   import tcb_pkg::*;
 
-  // FSM phases (GPR access phases can be decoded from a single bit)
-  localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
-  localparam logic [3-1:0] RS1 = 3'b101;  // read register source 1
-  localparam logic [3-1:0] RS2 = 3'b110;  // read register source 1
-  localparam logic [3-1:0] MLD = 3'b001;  // memory load
-  localparam logic [3-1:0] MST = 3'b010;  // memory store
-  localparam logic [3-1:0] EXE = 3'b011;  // execute (only used to evaluate branching condition)
-  localparam logic [3-1:0] WB  = 3'b100;  // GPR write-back
-
   // log file name and descriptor
   string fn;  // file name
   int fd;
 
   // print-out delay queue
-  string str_if [$];  // instruction fetch
-  string str_wb [$];  // GPR write-back
-  string str_ld [$];  // load
-  string str_st [$];  // store
+  string str_ifu [$];  // instruction fetch
+  string str_gpr [$];  // GPR write-back
+  string str_lsu [$];  // load
 
 ////////////////////////////////////////////////////////////////////////////////
 // logging (matching spike simulator logs)
 ////////////////////////////////////////////////////////////////////////////////
+
+  // initialize dummy data into the queue to enforce order
+  initial
+  begin
+    str_gpr = '{};
+    str_lsu = '{};
+    str_ifu = '{""};
+  end
 
   // format GPR string with desired whitespace
   function string format_gpr (logic [5-1:0] idx);
@@ -69,47 +75,55 @@ module r5p_mouse_tcb_mon
       else           return($sformatf("x%0d", idx));
   endfunction: format_gpr
 
-  // prepare string for each execution phase
-  always_ff @(posedge tcb.clk)
+  // instruction fetch
+  always_ff @(posedge tcb_ifu.clk)
   begin
-    if ($past(tcb.trn)) begin
-      // instruction fetch
-      if ($past(pha) == IF) begin
-        str_if.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb.req.adr), tcb.rsp.rdt));
+    if ($past(tcb_ifu.trn)) begin
+      if (opsiz(tcb_ifu.rsp.rdt) == 4) begin
+        str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt));
+      end else begin
+        str_ifu.push_front($sformatf(" 0x%8h (0x%4h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt[16-1:0]));
       end
-      // GPR write-back (rs1/rs2 reads are not logged)
-      if ($past(pha) == WB) begin
-        str_wb.push_front($sformatf(" %s 0x%8h", format_gpr($past(tcb.req.adr[2+:5])), $past(tcb.req.wdt)));
+    end
+  end
+
+  // GPR write-back (rs1/rs2 reads are not logged)
+  always_ff @(posedge tcb_ifu.clk)
+  begin
+    if ($past(tcb_ifu.trn)) begin
+      if (gpr_wen) begin
+        // ignore GPR x0
+        if (gpr_wid != 0) begin
+            str_gpr.push_front($sformatf(" %s 0x%8h", format_gpr(gpr_wid), gpr_wdt));
+        end
+      end else begin
+        str_gpr.push_front("");
       end
-      // memory load
-      if ($past(pha) == MLD) begin
-        str_ld.push_front($sformatf(" mem 0x%8h", $past(tcb.req.adr)));
-      end
-      // memory store
-      if ($past(pha) == MST) begin
-        case ($past(tcb.req.siz))
-          2'd0: str_st.push_front($sformatf(" mem 0x%8h 0x%2h", $past(tcb.req.adr), $past(tcb.req.wdt[ 8-1:0])));
-          2'd1: str_st.push_front($sformatf(" mem 0x%8h 0x%4h", $past(tcb.req.adr), $past(tcb.req.wdt[16-1:0])));
-          2'd2: str_st.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb.req.adr), $past(tcb.req.wdt[32-1:0])));
-        endcase
+    end
+  end
+
+  // memory load/store
+  always_ff @(posedge tcb_lsu.clk)
+  begin
+    if ($past(tcb_lsu.trn)) begin
+      if ($past(tcb_lsu.req.wen)) begin
+        // memory store
+        str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb_lsu.req.adr), $past(tcb_lsu.req.wdt)));
+      end else begin
+        // memory load
+        str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_lsu.req.adr), tcb_lsu.rsp.rdt));
       end
     end
   end
 
   // prepare string for committed instruction
-  always_ff @(posedge tcb.clk)
+  always_ff @(posedge tcb_ifu.clk)
   begin
     // only log if a log file was opened
     if (fd) begin
       // at instruction fetch combine strings from previous instructions
-      if ($past(tcb.trn)) begin
-        // instruction fetch
-        if ($past(pha) == IF) begin
-          // skip first fetch
-          if (~$past(tcb.rst,3)) begin
-              $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
-          end
-        end
+      if ($past(tcb_ifu.trn)) begin
+        $fwrite(fd, "core   0: 3%s%s%s\n", str_ifu.pop_back(), str_gpr.pop_back(), str_lsu.pop_back());
       end
     end
   end
@@ -143,4 +157,4 @@ module r5p_mouse_tcb_mon
 // statistics
 ////////////////////////////////////////////////////////////////////////////////
 
-endmodule: r5p_mouse_tcb_mon
+endmodule: r5p_degu_trace_logger
