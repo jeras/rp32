@@ -14,7 +14,7 @@
 DUT ?=
 
 # top level file (an alternative TOP can be provided as environment variable)
-TOP ?= r5p_${DUT}_riscv_tb
+TOP ?= r5p_${DUT}_riscof_tb
 
 # include source file list in ${HDL} variable
 include ../Makefile-sources-${DUT}
