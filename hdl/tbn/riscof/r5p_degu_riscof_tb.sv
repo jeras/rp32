@@ -160,7 +160,9 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from LOG_SIZE to BYTE_ENA mode
-  tcb_lib_logsize2byteena tcb_ifu_cnv (
+  tcb_lib_logsize2byteena #(
+    .ALLIGNED (1'b0)
+  ) tcb_ifu_cnv (
     .sub  (tcb_ifu),
     .man  (tcb_mem[0])
   );
