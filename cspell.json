@@ -1,0 +1,20 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [],
+    "dictionaries": [],
+    "words": [
+        "AMBA",
+        "ASIC",
+        "backpressure",
+        "combinational",
+        "endianness",
+        "SRAM",
+        "synthesizable",
+        "testbench",
+        "Verilog",
+        "VHDL"
+    ],
+    "ignoreWords": [],
+    "import": []
+}
