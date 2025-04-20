@@ -106,7 +106,7 @@ typedef enum logic [$bits(isa_ext_t)-1:0] {
   RV_Zam      = 19'b0000_00_00000000000_10,  // Misaligned Atomics
   RV_Ztso     = 19'b0000_00_00000000000_01,  // Total Store Ordering
   //                MAFD_ZZ_QLCBJTPVNHS_ZZ
-  RV_G        = 19'b1111_11_00000000000_00,  // general-purpose standard extenssion combination (G = IMAFDZicsrZifencei)
+  RV_G        = 19'b1111_11_00000000000_00,  // general-purpose standard extension combination (G = IMAFDZicsrZifencei)
   RV_NONE     = 19'b0000_00_00000000000_00   // no standard extensions
 } isa_ext_et;
 

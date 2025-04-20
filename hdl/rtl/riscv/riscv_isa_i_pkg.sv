@@ -63,7 +63,7 @@ typedef struct packed {
   logic [1:0]  c11;  // constant 2'b11 got
 } op32_opcode_t;
 
-// funct3 arithetic/logic unit (R/I-type)
+// funct3 arithmetic/logic unit (R/I-type)
 typedef enum logic [$bits(fn3_t)-1:0] {
   ADD   = 3'b000,  // funct7[5] ? SUB : ADD
   SL    = 3'b001,  //
