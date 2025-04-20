@@ -42,8 +42,8 @@ pip3 install git+https://github.com/riscv/riscof.git@d38859f
 Setup the `PATH` environment variable to gain access to tool executables.
 
 ```sh
-../settings-questa.sh
-../settings-vivado.sh
+source ../settings-questa.sh
+source ../settings-vivado.sh
 export PATH=/opt/riscv-isa-sim/bin/:$PATH
 export PATH=/opt/riscv-gcc/bin/:$PATH
 export PATH=`git rev-parse --show-toplevel`/submodules/sail-riscv/build/c_emulator/:$PATH
