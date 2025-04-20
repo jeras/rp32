@@ -17,7 +17,7 @@ DUT ?=
 TOP ?= r5p_${DUT}_riscof_tb
 
 # include source file list in ${HDL} variable
-include ../Makefile-sources-${DUT}
+include ../sources-${DUT}.mk
 
 ################################################################################
 # tool specific flags
