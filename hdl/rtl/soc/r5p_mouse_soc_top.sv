@@ -224,7 +224,7 @@ module r5p_mouse_soc_top
       .BYTE_WRITE_WIDTH_A  (8),                     // DECIMAL
       .CASCADE_HEIGHT      (0),                     // DECIMAL
       .ECC_MODE            ("no_ecc"),              // String
-      .MEMORY_INIT_FILE    ("mem.mem"),             // String
+      .MEMORY_INIT_FILE    (MEM_FNM),               // String
       .MEMORY_INIT_PARAM   (""),                    // String
       .MEMORY_OPTIMIZATION ("true"),                // String
       .MEMORY_PRIMITIVE    ("auto"),                // String
@@ -318,13 +318,13 @@ module r5p_mouse_soc_top
       .WrClock    (tcb_mem.clk),
       .WrClockEn  (tcb_mem.vld),
       .WE         (tcb_mem.req.wen),
-      .WrAddress  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .WrAddress  (tcb_mem.req.adr[$clog2(MEM_SIZ)-1:BLOG]),
       .ByteEn     (tcb_mem.req.ben),
       .Data       (tcb_mem.req.wdt),
       .RdClock    (tcb_mem.clk),
       .RdClockEn  (tcb_mem.vld),
       .Reset      (tcb_mem.rst),
-      .RdAddress  (tcb_mem.req.adr[$clog2(LSM_SIZ)-1:BLOG]),
+      .RdAddress  (tcb_mem.req.adr[$clog2(MEM_SIZ)-1:BLOG]),
       .Q          (tcb_mem.rsp.rdt)
     );
  
@@ -336,7 +336,7 @@ module r5p_mouse_soc_top
 
     // shared memory
     r5p_soc_memory #(
-    //.FNM  (),
+      .FNM  (MEM_FNM),
       .SIZ  (MEM_SIZ)
     ) mem (
       .tcb  (tcb_mem)
@@ -407,6 +407,9 @@ module r5p_mouse_soc_top
       // UART signals
       .uart_txd (uart_txd),
       .uart_rxd (uart_rxd),
+      // interrupts
+      .irq_tx (),
+      .irq_rx (),
       // system bus interface
       .tcb      (tcb_per[1])
     );

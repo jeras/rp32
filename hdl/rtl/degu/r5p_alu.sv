@@ -319,6 +319,7 @@ generate
         // barrel shifter
         SR  : val =        shf_val ;
         SL  : val = bitrev(shf_val);
+        default: val = 'x;
       endcase
     AUIPC  : val = XLEN'(sum);
     default: val = 'x;

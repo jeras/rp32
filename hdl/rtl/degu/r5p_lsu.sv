@@ -21,10 +21,6 @@ module r5p_lsu
   import tcb_pkg::*;
 #(
   int unsigned XLEN = 32,  // XLEN
-  // data bus
-  int unsigned AW = 32,    // address width
-  int unsigned DW = XLEN,  // data    width
-  int unsigned BW = DW/8,  // byte en width
   // optimizations
   logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
@@ -49,71 +45,67 @@ module r5p_lsu
   tcb_if.man                tcb
 );
 
-// read/write misalignment
-logic rma;  // read  misaligned
-logic wma;  // write misaligned
-
-// valid and write anable
-always_comb
-if (run) begin
-  if (ill) begin
-    tcb.vld     = CFG_VLD_ILL;
-    tcb.req.wen = CFG_WEN_ILL;
+  // valid and write anable
+  always_comb
+  if (run) begin
+    if (ill) begin
+      tcb.vld     = CFG_VLD_ILL;
+      tcb.req.wen = CFG_WEN_ILL;
+    end else begin
+      unique case (dec.opc)
+        LOAD   : begin tcb.vld = 1'b1; tcb.req.wen = 1'b0       ; end
+        STORE  : begin tcb.vld = 1'b1; tcb.req.wen = 1'b1       ; end
+        default: begin tcb.vld = 1'b0; tcb.req.wen = CFG_WEN_IDL; end
+      endcase
+    end
   end else begin
-    unique case (dec.opc)
-      LOAD   : begin tcb.vld = 1'b1; tcb.req.wen = 1'b0       ; end
-      STORE  : begin tcb.vld = 1'b1; tcb.req.wen = 1'b1       ; end
-      default: begin tcb.vld = 1'b0; tcb.req.wen = CFG_WEN_IDL; end
-    endcase
+    tcb.vld     = 1'b0;
+    tcb.req.wen = CFG_WEN_ILL;
   end
-end else begin
-  tcb.vld     = 1'b0;
-  tcb.req.wen = CFG_WEN_ILL;
-end
 
-// address
-assign tcb.req.adr = adr;
+  // address
+  assign tcb.req.adr = adr;
 
-// transfer size
-assign tcb.req.siz = dec.fn3[1:0];
+  // transfer size
+  assign tcb.req.siz = dec.fn3[1:0];
 
-// write data
-assign tcb.req.wdt = wdt;
+  // write data
+  assign tcb.req.wdt = wdt;
 
-// read alignment delayed signals
-fn3_ldu_et dly_fn3;
+  // read alignment delayed signals
+  fn3_ldu_et dly_fn3;
 
-// read alignment
-always_ff @ (posedge clk, posedge rst)
-if (rst) begin
-  dly_fn3 <= XLEN == 32 ? LW : LD;
-end else if (tcb.trn & ~tcb.req.wen) begin
-  dly_fn3 <= fn3_ldu_et'(dec.fn3);
-end
+  // read alignment
+  always_ff @ (posedge clk, posedge rst)
+  if (rst) begin
+    dly_fn3 <= XLEN == 32 ? LW : LD;
+  end else if (tcb.trn & ~tcb.req.wen) begin
+    dly_fn3 <= fn3_ldu_et'(dec.fn3);
+  end
 
-// read data
-always_comb begin: blk_rdt
-  // sign extension
-  // NOTE: this is a good fit for LUT4
-  unique case (dly_fn3)
-    LB     : rdt = DW'(  $signed( 8'(tcb.rsp.rdt)));
-    LH     : rdt = DW'(  $signed(16'(tcb.rsp.rdt)));
-    LW     : rdt = DW'(  $signed(32'(tcb.rsp.rdt)));
-    LBU    : rdt = DW'($unsigned( 8'(tcb.rsp.rdt)));
-    LHU    : rdt = DW'($unsigned(16'(tcb.rsp.rdt)));
-    LWU    : rdt = DW'($unsigned(32'(tcb.rsp.rdt)));  // Quartus does a better job if this line is present
-    default: rdt = 'x;
-  endcase
-end: blk_rdt
+  // read data
+  always_comb begin: blk_rdt
+    // sign extension
+    // NOTE: this is a good fit for LUT4
+    unique case (dly_fn3)
+      LB     : rdt = XLEN'(  $signed( 8'(tcb.rsp.rdt)));
+      LH     : rdt = XLEN'(  $signed(16'(tcb.rsp.rdt)));
+      LW     : rdt = XLEN'(  $signed(32'(tcb.rsp.rdt)));
+      LBU    : rdt = XLEN'($unsigned( 8'(tcb.rsp.rdt)));
+      LHU    : rdt = XLEN'($unsigned(16'(tcb.rsp.rdt)));
+      LWU    : rdt = XLEN'($unsigned(32'(tcb.rsp.rdt)));  // Quartus does a better job if this line is present
+      default: rdt = 'x;
+    endcase
+  end: blk_rdt
 
-// misalignment
-assign mal = |tcb.dly[0].aln;
+  // misalignment
+  assign mal = |tcb.dly[0].aln;
 
-// system stall
-assign rdy = tcb.rdy;
+  // system stall
+  assign rdy = tcb.rdy;
 
-// TODO
-assign tcb.req.cmd = '0;
-assign tcb.req.ndn = TCB_LITTLE;
+  // TODO
+  assign tcb.req.cmd = '0;
+  assign tcb.req.ndn = TCB_LITTLE;
 
 endmodule: r5p_lsu

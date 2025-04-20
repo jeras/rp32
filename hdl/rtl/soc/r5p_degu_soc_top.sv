@@ -92,8 +92,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
     // data packing parameters
+    ALN: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
+    MIN: 2,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -107,8 +108,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    MIN: 0,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -122,8 +124,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    MIN: 0,
     MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -137,8 +140,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+    MIN: 0,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration

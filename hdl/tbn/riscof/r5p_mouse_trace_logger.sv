@@ -22,10 +22,7 @@ module r5p_mouse_trace_logger
   import tcb_pkg::*;
 #(
   // log file name
-  string LOG = "",
-  // RISC-V ISA parameters
-  isa_t  ISA,
-  bit    ABI = 1'b1   // enable ABI translation for GPR names
+  string LOG = ""
 )(
   // instruction execution phase
   input logic [3-1:0] pha,

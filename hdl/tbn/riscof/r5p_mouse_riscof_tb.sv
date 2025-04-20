@@ -221,10 +221,7 @@ import riscv_asm_pkg::*;
   assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
   // system bus monitor
-  r5p_mouse_trace_logger #(
-    .ISA  (ISA),
-    .ABI  (ABI)
-  ) r5p_log (
+  r5p_mouse_trace_logger r5p_log (
     // instruction execution phase
     .pha  (dut.ctl_pha),
     // TCB system bus

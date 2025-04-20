@@ -116,7 +116,7 @@ import riscv_asm_pkg::*;
     ADR: XLEN,
     DAT: XLEN,
     // data packing parameters
-    ALN: 2,
+    ALN: 0,
     MIN: 0,
     MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
@@ -234,10 +234,7 @@ import riscv_asm_pkg::*;
   end
 
   // instruction fetch and load/store bus monitor
-  r5p_degu_trace_logger #(
-    .ISA  (ISA),
-    .ABI  (ABI)
-  ) r5p_log (
+  r5p_degu_trace_logger r5p_log (
     // GPR register file array
     // hierarchical path to GPR inside RTL
     .gpr_wen  (dut.gpr.e_rd),

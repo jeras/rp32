@@ -27,10 +27,7 @@ module r5p_degu_trace_logger
   string LOG = "",
   // TODO: check for GPR size differently
   parameter  int unsigned GNUM = 32,
-  localparam int unsigned GLOG = $clog2(GNUM),
-  // RISC-V ISA parameters
-  isa_t  ISA,
-  bit    ABI = 1'b1   // enable ABI translation for GPR names
+  localparam int unsigned GLOG = $clog2(GNUM)
 )(
   // GPR array
   input logic            gpr_wen,

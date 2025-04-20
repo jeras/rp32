@@ -63,17 +63,17 @@ module r5p_soc_memory
 // load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-always @(posedge tcb.clk)
+always_ff @(posedge tcb.clk)
 if (tcb.vld) begin
-  if (tcb.wen) begin
+  if (tcb.req.wen) begin
     // write access
-    mem[tcb.adr[ADR-1:$clog2(DAT/UNT)]] <= tcb.wdt;
+    mem[tcb.req.adr[ADR-1:$clog2(DAT/UNT)]] <= tcb.req.wdt;
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
 //  end
   end else begin
     // read access
-    tcb.rdt <= mem[tcb.adr[ADR-1:$clog2(DAT/UNT)]];
+    tcb.rsp.rdt <= mem[tcb.req.adr[ADR-1:$clog2(DAT/UNT)]];
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
 //    else             tcb.rdt[8*b+:8] <= 'x;

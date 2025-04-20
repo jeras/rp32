@@ -475,10 +475,6 @@ assign lsu_wdt = gpr_rs2;
 // load/store unit
 r5p_lsu #(
   .XLEN    (XLEN),
-  // data bus
-  .AW      (XLEN),
-  .DW      (XLEN),
-  .BW      (XLEN/8),
   // optimizations
   .CFG_VLD_ILL (CFG.VLD_ILL),
   .CFG_WEN_ILL (CFG.WEN_ILL),
