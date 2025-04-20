@@ -77,30 +77,32 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_phy_t TCB_PHY_LOG_SIZE = '{
+  localparam tcb_phy_t TCB_PHY_CPU = '{
     // protocol
     DLY: 1,
     // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 0,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
   };
 
-  localparam tcb_phy_t TCB_PHY_BYTE_ENA = '{
+  localparam tcb_phy_t TCB_PHY_MEM = '{
     // protocol
     DLY: 1,
     // signal widths
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 0,
     MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -108,8 +110,8 @@ import riscv_asm_pkg::*;
   };
 
   // system busses
-  tcb_if #(TCB_PHY_LOG_SIZE) tcb_cpu       (.clk (clk), .rst (rst));
-  tcb_if #(TCB_PHY_BYTE_ENA) tcb_mem [0:0] (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_CPU) tcb_cpu       (.clk (clk), .rst (rst));
+  tcb_if #(TCB_PHY_MEM) tcb_mem [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -148,11 +150,26 @@ import riscv_asm_pkg::*;
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-  // convert from LOG_SIZE to BYTE_ENA mode
-  tcb_lib_logsize2byteena tcb_cnv (
-    .sub  (tcb_cpu),
-    .man  (tcb_mem[0])
-  );
+  generate
+  if (tcb_mem[0].PHY.MOD == TCB_BYTE_ENA) begin: mem_byte_ena
+
+    // convert from LOG_SIZE to BYTE_ENA mode
+    tcb_lib_logsize2byteena tcb_cnv (
+      .sub  (tcb_cpu),
+      .man  (tcb_mem[0])
+    );
+
+  end: mem_byte_ena
+  else begin: mem_log_size
+
+    // no TCB mode conversion, just map to interface vector
+    tcb_lib_passthrough tcb_cnv (
+      .sub  (tcb_cpu),
+      .man  (tcb_mem[0])
+    );
+
+  end: mem_log_size
+  endgenerate
 
   tcb_vip_memory #(
     .MFN  (IFN),

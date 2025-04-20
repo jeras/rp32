@@ -71,8 +71,9 @@ module r5p_mouse_soc_top
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 0,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -86,8 +87,9 @@ module r5p_mouse_soc_top
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 0,
     MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -101,8 +103,9 @@ module r5p_mouse_soc_top
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 2,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration

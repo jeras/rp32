@@ -120,7 +120,6 @@ module r5p_mouse_trace_logger
   begin
     // log file if name is given by parameter
     if ($value$plusargs("log=%s", fn)) begin
-      r5p_mon.fd = $fopen(fn, "w");
     end
     // log file with filename obtained through plusargs
     else if (LOG) begin

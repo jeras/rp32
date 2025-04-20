@@ -83,8 +83,9 @@ import riscv_asm_pkg::*;
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: $clog2(XLEN/16),
     // data packing parameters
+    ALN: 1,
+    MIN: 2,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -98,8 +99,9 @@ import riscv_asm_pkg::*;
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: 0,   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 0,
     MOD: TCB_LOG_SIZE,
     ORD: TCB_DESCENDING,
     // channel configuration
@@ -113,8 +115,9 @@ import riscv_asm_pkg::*;
     UNT: 8,
     ADR: XLEN,
     DAT: XLEN,
-    ALN: 0,   // $clog2(DAT/UNT)
     // data packing parameters
+    ALN: 2,
+    MIN: 0,
     MOD: TCB_BYTE_ENA,
     ORD: TCB_DESCENDING,
     // channel configuration
