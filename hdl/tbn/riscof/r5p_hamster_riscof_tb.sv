@@ -17,7 +17,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_tb
+module r5p_hamster_riscof_tb
   import riscv_isa_pkg::*;
   import tcb_pkg::*;
 #(
@@ -45,7 +45,7 @@ module riscv_tb
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters
-  bit          ABI = 1'b1    // enable ABI translation for GPIO names
+  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
 
 import riscv_asm_pkg::*;
@@ -258,8 +258,8 @@ logic [XLEN-1:0] gpr_tmp [0:2**AW-1];
 logic [XLEN-1:0] gpr_dly [0:2**AW-1] = '{default: '0};
 
 // hierarchical path to GPR inside RTL
-//assign gpr_tmp = top.riscv_tb.DUT.gpr.gen_default.gpr;
-assign gpr_tmp = riscv_tb.DUT.gpr.gen_default.gpr;
+//assign gpr_tmp = top.r5p_hamster_riscof_tb.DUT.gpr.gen_default.gpr;
+assign gpr_tmp = r5p_hamster_riscof_tb.DUT.gpr.gen_default.gpr;
 
 // GPR change log
 always_ff @(posedge clk)
@@ -303,4 +303,4 @@ if (cnt > 20000)  timeout <= 1'b1;
 
 `endif
 
-endmodule: riscv_tb
+endmodule: r5p_hamster_riscof_tb

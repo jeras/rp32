@@ -4,11 +4,17 @@
   <Mappings Location="Common Libraries/IEEE Synopsys" Library="ieee"/>
   <Mappings Location="Common Libraries" Library="not mapped"/>
   <Mappings Location="doc" Library="not mapped"/>
+  <Mappings Location="issues" Library="not mapped"/>
   <Mappings Location="riscof" Library="not mapped"/>
   <Mappings Location="sim" Library="not mapped"/>
   <Mappings Location="src" Library="not mapped"/>
+  <Mappings Location="submodules/learn-fpga" Library="not mapped"/>
+  <Mappings Location="submodules/riscv-arch-test" Library="not mapped"/>
+  <Mappings Location="submodules/sail-riscv" Library="not mapped"/>
   <Mappings Location="submodules/tcb/doc" Library="not mapped"/>
   <Mappings Location="submodules/tcb/sim" Library="not mapped"/>
+  <Mappings Location="submodules/verilator" Library="not mapped"/>
+  <Mappings Location="submodules/yosys" Library="not mapped"/>
   <Mappings Location="Common Libraries/STD" Library="std"/>
   <Mappings Location="" Library="work"/>
 </com.sigasi.hdt.shared.librarymapping.model:LibraryMappings>

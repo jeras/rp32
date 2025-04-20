@@ -43,7 +43,7 @@ module r5p_mouse_riscof_tb
   // memory configuration
   parameter  string       IFN = "",     // instruction memory file name
   // testbench parameters
-  parameter  bit          ABI = 1'b1    // enable ABI translation for GPIO names
+  parameter  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
 
 import riscv_asm_pkg::*;

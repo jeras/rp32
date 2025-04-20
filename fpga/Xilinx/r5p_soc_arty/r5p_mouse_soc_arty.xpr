@@ -285,7 +285,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/tbn/r5p_mouse_riscof_tb.sv">
+      <File Path="$PPRDIR/../../../hdl/tbn/riscof/r5p_mouse_riscof_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>

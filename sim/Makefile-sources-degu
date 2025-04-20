@@ -59,8 +59,8 @@ RTL+=${PATH_R5P}/rtl/degu/r5p_degu.sv
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
 TSV+=${PATH_R5P}/tbn/htif/r5p_htif.sv
-TSV+=${PATH_R5P}/tbn/r5p_degu_riscof_tb.sv
-TSV+=${PATH_R5P}/tbn/r5p_degu_trace_logger.sv
+TSV+=${PATH_R5P}/tbn/riscof/r5p_degu_riscof_tb.sv
+TSV+=${PATH_R5P}/tbn/riscof/r5p_degu_trace_logger.sv
 
 # combined HDL sources
 HDL =${RTL}

@@ -44,7 +44,7 @@ module riscv_tb
   // memory configuration
   string       IFN = "",     // instruction memory file name
   // testbench parameters
-  bit          ABI = 1'b1    // enable ABI translation for GPIO names
+  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
 
 import riscv_asm_pkg::*;
