@@ -89,5 +89,42 @@ The SystemVerilog testbench is composed from the following modules:
 | memory model     | [`tcb_vip_memory` 1 IF](../submodules/tcb/hdl/tbn/vip/tcb_vip_memory.sv) | [`tcb_vip_memory` 2 IF](../submodules/tcb/hdl/tbn/vip/tcb_vip_memory.sv) |
 | TCB interconnect | ... | ... |
 
+## HDL simulator `Makefile`
+
+Further details on how the simulator Makefile works see the [`README`](../sim/README.md).
+
+The RISCOF framework is passing additional arguments to the HDL testbench.
+In case of SystemVerilog this are runtime arguments (`$plusargs`).
+
+This arguments are:
+
+- symbols from the Elf file:
+  - HTIF interface `tohost`/`fromhost`,
+  - signature start/stop,
+- file paths:
+  - Elf dump in `bin`/`hex` format,
+  - execution trace log.
+
 ## Debugging
+
+RISCOF with details from the `ini` and Python plugin will generate a Makefile (`riscof_work/Makefile.DUT-r5p`)
+containing individual tests from `riscv-arch-test` as numbered targets.
+
+You can rerun an individual target for a failing testcase.
+Search `riscof_work/Makefile.DUT-r5p` for the testcase name and remember the targer number.
+
+```sh
+make -C riscof_work/ -f Makefile.DUT-r5p TARGET0
+```
+
+The Questa and Vivado simulator makefiles have a `gui` target,
+if uncommented, the Makefile will open the GUI, where you can observe waveforms.
+
+To identify the point where DUT simulation strts diferring from the reference,
+go to the testcase folder (in the given example TARGET0 matches `riscof_work/rv32i_m/I/src/add-01.S/`).
+Using your preferred diff tool compare the execution trace log produced by the reference against the DUT log.
+
+```sh
+diff ref/ref.log dut/dut.log
+```
 
