@@ -1,0 +1,16 @@
+= Address mask
+
+== Introduction
+
+The aim is to generalize the idea of limiting the address space to less than XLEN address bits.
+The address mask would be applied to both the instruction fetch unit (IFU) and load/store unit (LSU).
+
+== Considerations
+
+* review all PC related instructions,
+* review all load/store (memory) instructions,
+* RISCOF related considetations
+
+== Implementation
+
+* special timing constrains?
