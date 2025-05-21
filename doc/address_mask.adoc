@@ -3,14 +3,100 @@
 == Introduction
 
 The aim is to generalize the idea of limiting the address space to less than XLEN address bits.
-The address mask would be applied to both the instruction fetch unit (IFU) and load/store unit (LSU).
+The address mask would be applied to both the instruction fetch unit (IFU)
+program counter (PC) and load/store unit (LSU).
 
-== Considerations
+Advantages:
+
+* The mask cuts off the adder cary propagation from covering the entire XLEN, thus improving timing.
+* The masked parts don't require adder logic or flip-flops, thus reducing area.
+* The masks do not inherently reduce toggling, but some power savings can be expected
+  from the area and timing improvements.
+
+Disadvantages:
+
+* Extra consideration is required to not introduce issues.
+
+Considerations:
 
 * review all PC related instructions,
 * review all load/store (memory) instructions,
-* RISCOF related considetations
+* RISCOF related considerations
 
-== Implementation
+Implementation:
 
-* special timing constrains?
+* Special timing constrains on shared resources?
+
+== IFU (PC)
+
+The examples are for a RV32 processor.
+
+The address space used for examples is similar to what RISC-V simulators `spike` and `sail` use.
+There is a 64kB ROM at address `0x00000000` and a 64kB RAM at address `0x80000000`.
+The reset address is set to `0x00000000`.
+
+.IFU address space
+[%autowidth]
+|===
+| address                     | memory
+| `0x00000000` ~ `0x0000ffff` | boot ROM
+| `0x80000000` ~ `0x8000ffff` | instruction RAM  
+|===
+
+Two parameters are used to define the reset address and mask.
+
+.IFU parameters
+[%autowidth]
+|===
+| parameter   | value        | description
+| `IFU_RESET` | `0x00000000` | IFU reset address, PC reset value
+| `IFU_MASK`  | `0x8000FFFF` | IFU address and PC mask
+|===
+
+The PC `pc` points to the currently executing instruction `op`.
+The IFU address `ifu_addr` points to the next instruction.
+The current instruction size in bytes is `ilen`.
+
+The Verilog based pseudocode is a bit simplified,
+for example the case where `op` is a branch, the branch is taken.
+
+The IFU address is a combinational assignment.
+The PC is synchronously loaded with the IFU address.
+
+[source,verilog]
+----
+// IFU address
+always_comb
+case (op)
+    JAL    : ifu_addr = pc + imm_j;   // signed offset[20:1]
+    JALR   : ifu_addr = rs1 + imm_i;  // signed offset[11:0]
+    BRANCH : ifu_addr = pc + imm_b;   // signed offset[12:1]
+    TRAP   : ifu_addr = csr_tvec;
+    default: ifu_addr = pc + ilen;
+endcase
+
+// link GPR
+always_ff @(posedge clk)
+case (op)
+    JAL    : rd <= pc + ilen;
+    JALR   : rd <= pc + ilen;
+endcase
+
+// xEPC CSR
+
+// program counter
+always_ff @(posedge clk, posedge rst)
+if (rst) pc <= IFU_RESET;
+else     pc <= ifu_addr;
+----
+
+==== Instructions incrementing PC by ILEN
+
+[source,verilog]
+----
+assign ifu_addr = pc + ilen;
+
+always_ff @(posedge clk, posedge rst)
+if (rst) pc = IFU_RESET
+----
+
