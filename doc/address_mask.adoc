@@ -116,10 +116,16 @@ while the remaining XLEN-12 bits are a potentially simpler incrementer/decrement
 == IFU (PC)
 
 The examples are for a RV32 processor (`XLEN=32`).
+The RAM/ROM sizes are similar to small microcontrollers on the market.
 
 The address space used for examples is similar to what RISC-V simulators `spike` and `sail` use.
 There is a 4kB ROM at address `0x00000000` and a 64kB RAM at address `0x80000000`.
 The reset address is set to `0x00000000`.
+
+NOTE: I was thinking of adding an XIP SPI Flash,
+      but those flash devices are in the range of 8MB~128MB,
+      so very few address bits would be unused
+      thus missing the point of address masking.
 
 .IFU address space
 [%autowidth]
@@ -188,3 +194,10 @@ always_ff @(posedge clk, posedge rst)
 if (rst) pc = IFU_RESET
 ----
 
+== References
+
+QUAD SPI Flash for XIP:
+https://www.infineon.com/cms/en/product/memories/nor-flash/serial-nor-flash/quad-spi-flash/
+
+CH32V003 microcontroller:
+https://www.wch-ic.com/downloads/CH32V003DS0_PDF.html
