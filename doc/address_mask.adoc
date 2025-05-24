@@ -1,4 +1,5 @@
 = Address mask
+:toc:
 
 == Introduction
 
@@ -117,6 +118,9 @@ while the remaining XLEN-12 bits are a potentially simpler incrementer/decrement
 
 The examples are for a RV32 processor (`XLEN=32`).
 The RAM/ROM sizes are similar to small microcontrollers on the market.
+The few microcontrollers I looked into also have a full 32-bit address space with sparse contents,
+meaning LSB address bits are used to decode within memory/peripheral sections
+and MSB address bits are used to decode the choice of section.
 
 The address space used for examples is similar to what RISC-V simulators `spike` and `sail` use.
 There is a 4kB ROM at address `0x00000000` and a 64kB RAM at address `0x80000000`.
@@ -157,6 +161,7 @@ for example the case where `op` is a branch, the branch is taken.
 The IFU address is a combinational assignment.
 The PC is synchronously loaded with the IFU address.
 
+.IFU implementation without masking (simplified code)
 [source,verilog]
 ----
 // IFU address
@@ -184,15 +189,159 @@ if (rst) pc <= IFU_RESET;
 else     pc <= ifu_addr;
 ----
 
-=== Instructions incrementing PC by `ILEN`
+=== Instructions incrementing `PC` by `ILEN`
 
+The mask is applied to the `PC` while calculating the IFU address.
+No masking is applied to the unsigned `ilen`, at least not in a reasonably configured system.
+Each `0` bit in the mask will prevent carry propagation.
+`PC` MSB bits (any bits beyond the first `0` in the mask) will not change,
+and would not be affected by carry propagation timing.
+
+.Instructions incrementing PC by `ILEN` with masking
 [source,verilog]
 ----
-assign ifu_addr = pc + ilen;
+ifu_addr = (pc & IFU_MASK + ilen) & IFU_MASK;
 
 always_ff @(posedge clk, posedge rst)
-if (rst) pc = IFU_RESET
+if (rst) pc <= IFU_RESET;
+else     pc <= (ifu_addr & IFU_MASK) | (IFU_RESET & ~IFU_MASK);
 ----
+
+As long as the `PC` is within it based decoded memory region,
+the behavior matches a maskless system.
+
+While it would be possible to create an assembly program crossing the barrier
+between the base and partially decoded copies (something like loop unwinding),
+I doubt a compiler would create such code.
+In such a case, after the execution would reach the end of the partially decoded memory
+it would wrap to its beginning.
+In a masked system, the `PC` would also wrap, while in an maskless system it would continue incrementing.
+
+=== Branch instructions
+
+For the IFU address calculation the mask is applied to both the `PC`
+and the 12-bit signed branch immediate.
+Each `0` bit in the mask beyond index 12 will prevent carry propagation.
+
+.Branch instructions with masking
+[source,verilog]
+----
+// version which allows a late taken signal, but implements two adders
+ifu_addr = (taken) ? (pc & IFU_MASK + imm_b & IFU_MASK) & IFU_MASK
+                   : (pc & IFU_MASK + ilen            ) & IFU_MASK;
+
+// version with a single adder, but adds the adder delay to the taken delay
+ifu_addr = (pc & IFU_MASK + (taken) ? imm_b & IFU_MASK : ilen) & IFU_MASK;
+
+always_ff @(posedge clk, posedge rst)
+if (rst) pc <= IFU_RESET;
+else     pc <= (ifu_addr & IFU_MASK) | (IFU_RESET & ~IFU_MASK);
+----
+
+Same reasoning as for incrementing `PC` by `ILEN`.
+As long as 12+1 LSB mask bits are `1`, there is also no possibility
+of a branch moving execution between separate partially decoded memory blocks.
+
+=== JAL
+
+Both the `pc` and the 20-bit sign extended offset are masked.
+Each `0` bit in the mask beyond index 21 will prevent carry propagation.
+
+.JAL with masking
+[source,verilog]
+----
+ifu_addr = (pc & IFU_MASK + imm_j & IFU_MASK) & IFU_MASK;   // signed offset[20:1]
+
+always_ff @(posedge clk)
+rd <= (pc & IFU_MASK + ilen) & IFU_MASK;  // link
+
+always_ff @(posedge clk, posedge rst)
+if (rst) pc <= IFU_RESET;
+else     pc <= (ifu_addr & IFU_MASK) | (IFU_RESET & ~IFU_MASK);
+----
+
+=== JALR
+
+Both the `rs1` and the 12-bit sign extended offset are masked.
+Each `0` bit in the mask beyond index 12 will prevent carry propagation.
+
+.JALR with masking
+[source,verilog]
+----
+ifu_addr = (rs1 & IFU_MASK + imm_i & IFU_MASK) & IFU_MASK;   // signed offset[11:0]
+
+always_ff @(posedge clk)
+rd <= (pc & IFU_MASK + ilen) & IFU_MASK;  // link
+
+always_ff @(posedge clk, posedge rst)
+if (rst) pc <= IFU_RESET;
+else     pc <= (ifu_addr & IFU_MASK) | (IFU_RESET & ~IFU_MASK);
+----
+
+=== TRAPS
+
+Trap related registers would have fewer nonzero bits.
+
+== LSU
+
+In addition to the memories, the LSU address space contains peripherals 
+
+.IFU address space
+[%autowidth]
+|===
+| address                     | memory
+| `0x00000000` ~ `0x00000fff` | boot ROM 4kB (`2**12`)
+| `0x00010000` ~ `0x7fffffff` | boot ROM (`2**(32-1-12)-1` partially decoded copies)
+| `0x80000000` ~ `0x8000ffff` | instruction RAM 64kB (`2**16`)
+| `0x80010000` ~ `0x80010fff` | peripherals 4kB (`2**12`)
+| `0x80011000` ~ `0x8001ffff` | peripherals 4kB (`2**(16-12)-1` partially decoded copies)
+| `0x80020000` ~ `0xffffffff` | instruction RAM and partially decoded peripherals 128kB (`2**(32-1-17)-1` partially decoded copies)
+|===
+
+Parameter are used to define the address mask.
+Compared to the IFU address space one more bit is unmasked.
+
+.LSU parameters
+[%autowidth]
+|===
+| parameter   | value        | description
+| `LSU_MASK`  | `0x8001FFFF` | IFU address and PC mask
+|===
+
+The full implementation requires a full 32-bit carry chain propagation
+to calculate the MSB address bit.
+
+.load/store without masking
+[source,verilog]
+always_comb
+case (op)
+    LOAD : lsu_addr = rs1 + imm_j;
+    STORE: lsu_addr = rs1 + imm_s;
+endcase
+
+By applying the mask the carry propagation is blocked.
+
+.load/store with masking
+[source,verilog]
+always_comb
+case (op)
+    LOAD : lsu_addr = (rs1 & LSU_MASK + imm_j) & LSU_MASK;
+    STORE: lsu_addr = (rs1 & LSU_MASK + imm_s) & LSU_MASK;
+endcase
+
+A different approach would also be possible,
+where the unmasked part of the address would come from addition,
+while the masked part of the address would come directly from `rs1`.
+
+There would be advantages and disadvantages to this approach.
+
+.load/store alternative masking
+[source,verilog]
+always_comb
+case (op)
+    LOAD : lsu_addr = (rs1 & ~LSU_MASK) | (rs1 & LSU_MASK + imm_j) & LSU_MASK;
+    STORE: lsu_addr = (rs1 & ~LSU_MASK) | (rs1 & LSU_MASK + imm_s) & LSU_MASK;
+endcase
 
 == References
 

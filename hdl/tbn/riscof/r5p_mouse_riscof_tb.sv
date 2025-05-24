@@ -77,6 +77,7 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
+  /* verilator lint_off WIDTHCONCAT */
   localparam tcb_phy_t TCB_PHY_CPU = '{
     // protocol
     DLY: 1,
@@ -108,6 +109,7 @@ import riscv_asm_pkg::*;
     // channel configuration
     CHN: TCB_COMMON_HALF_DUPLEX
   };
+  /* verilator lint_on WIDTHCONCAT */
 
   // system busses
   tcb_if #(TCB_PHY_CPU) tcb_cpu       (.clk (clk), .rst (rst));
@@ -151,7 +153,7 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
   generate
-  if (tcb_mem[0].PHY.MOD == TCB_BYTE_ENA) begin: mem_byte_ena
+  if (TCB_PHY_MEM.MOD == TCB_BYTE_ENA) begin: mem_byte_ena
 
     // convert from LOG_SIZE to BYTE_ENA mode
     tcb_lib_logsize2byteena tcb_cnv (
