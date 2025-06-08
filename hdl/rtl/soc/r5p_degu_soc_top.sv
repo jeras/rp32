@@ -85,78 +85,122 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_phy_t TCB_PHY_IFU = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: $clog2(XLEN/16),   // $clog2(DAT/UNT) // TODO: could be 16-bit alignment
-    MIN: 2,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_IFU = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 1,
+      HLD: 0
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_LOG_SIZE,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+//    // data packing parameters
+//    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+//    MIN: 2,
   };
 
-  localparam tcb_phy_t TCB_PHY_LSU = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
-    MIN: 0,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_LSU = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 1,
+      HLD: 0
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_LOG_SIZE,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+//    // data packing parameters
+//    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+//    MIN: 0,
   };
 
-  localparam tcb_phy_t TCB_PHY_MEM = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
-    MIN: 0,
-    MOD: TCB_BYTE_ENA,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_MEM = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 1,
+      HLD: 1
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_BYTE_ENA,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+//    // data packing parameters
+//    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+//    MIN: 0,
   };
 
-  localparam tcb_phy_t TCB_PHY_PER = '{
-    // protocol
-    DLY: 0,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
-    MIN: 0,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_PER = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 0,
+      HLD: 0
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_BYTE_ENA,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+//    // data packing parameters
+//    ALN: $clog2(XLEN/8),   // $clog2(DAT/UNT)
+//    MIN: 0,
   };
 
   // system busses
-  tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit (RISC-V mode)
-  tcb_if #(TCB_PHY_MEM) tcb_ifm         (.clk (clk), .rst (rst));  // instruction fetch unit (MEMORY mode)
-  tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-  tcb_if #(TCB_PHY_LSU) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
-  tcb_if #(TCB_PHY_MEM) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
-  tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
-  tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
+  tcb_if #(.CFG (CFG_IFU)) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit (RISC-V mode)
+  tcb_if #(.CFG (CFG_MEM)) tcb_ifm         (.clk (clk), .rst (rst));  // instruction fetch unit (MEMORY mode)
+  tcb_if #(.CFG (CFG_LSU)) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+  tcb_if #(.CFG (CFG_LSU)) tcb_lsd [2-1:0] (.clk (clk), .rst (rst));  // load/store demultiplexer
+  tcb_if #(.CFG (CFG_MEM)) tcb_lsm         (.clk (clk), .rst (rst));  // memory bus DLY=1
+  tcb_if #(.CFG (CFG_PER)) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
+  tcb_if #(.CFG (CFG_PER)) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Degu core instance
@@ -197,8 +241,8 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   // decoding memory/peripherals
   tcb_lib_decoder #(
-    .PHY (TCB_PHY_LSU),
-    .SPN (2),
+    .ADR (CFG_LSU.BUS.ADR),
+    .IFN (2),
     .DAM ({{17'b0, 1'b1, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
            {17'b0, 1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
   ) tcb_lsu_dec (
@@ -208,7 +252,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   // demultiplexing memory/peripherals
   tcb_lib_demultiplexer #(
-    .MPN (2)
+    .IFN (2)
   ) tcb_lsu_demux (
     // control
     .sel  (tcb_lsu_sel),
@@ -233,8 +277,8 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   // decoding peripherals (GPIO/UART)
   tcb_lib_decoder #(
-    .PHY (TCB_PHY_LSU),
-    .SPN (2),
+    .ADR (CFG_LSU.BUS.ADR),
+    .IFN (2),
     .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
            {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
   ) tcb_pb0_dec (
@@ -244,7 +288,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 
   // demultiplexing peripherals (GPIO/UART)
   tcb_lib_demultiplexer #(
-    .MPN (2)
+    .IFN (2)
   ) tcb_pb0_demux (
     // control
     .sel  (tcb_pb0_sel),
@@ -512,7 +556,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   if (ENA_GPIO) begin: gen_gpio
 
     // GPIO controller
-    tcb_cmn_gpio #(
+    tcb_peri_gpio #(
       .GW          (GW),
       .CFG_RSP_MIN (1'b1),
       .CHIP        (CHIP)
@@ -551,7 +595,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     localparam int unsigned BCW = $clog2(BDR);  // a 9-bit counter is required
 
     // UART controller
-    tcb_cmn_uart #(
+    tcb_peri_uart #(
       // UART parameters
       .CW       (BCW),
       // configuration register parameters (write enable, reset value)

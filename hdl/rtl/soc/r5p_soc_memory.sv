@@ -26,8 +26,7 @@ module r5p_soc_memory
   tcb_if.sub tcb
 );
 
-  localparam int unsigned UNT = tcb.PHY.UNT;
-  localparam int unsigned DAT = tcb.PHY.DAT;
+  localparam int unsigned DAT = tcb.CFG.BUS.DAT;
   localparam int unsigned ADR = $clog2(SIZ);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,9 +36,9 @@ module r5p_soc_memory
   initial
   begin
     // TCB mode must be memory (RISC-V mode is not supported)
-    assert (tcb.PHY.MOD == TCB_BYTE_ENA) else $fatal("Unsupported TCB mode in %m.");
+    assert (tcb.CFG.BUS.MOD == TCB_MOD_BYTE_ENA) else $fatal("Unsupported TCB mode in %m.");
     // check if address is wide enough for the memory size
-    assert (tcb.PHY.ADR >= ADR         ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
+    assert (tcb.CFG.BUS.ADR >= ADR             ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
   end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,13 +66,13 @@ always_ff @(posedge tcb.clk)
 if (tcb.vld) begin
   if (tcb.req.wen) begin
     // write access
-    mem[tcb.req.adr[ADR-1:$clog2(DAT/UNT)]] <= tcb.req.wdt;
+    mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]] <= tcb.req.wdt;
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
 //  end
   end else begin
     // read access
-    tcb.rsp.rdt <= mem[tcb.req.adr[ADR-1:$clog2(DAT/UNT)]];
+    tcb.rsp.rdt <= mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]];
 //  for (int unsigned b=0; b<tcb.BW; b++) begin
 //    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
 //    else             tcb.rdt[8*b+:8] <= 'x;
