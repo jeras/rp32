@@ -16,11 +16,11 @@ RTL+=${PATH_TCB}/rtl/lib/tcb_lib_decoder.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_demultiplexer.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_register_request.sv
 RTL+=${PATH_TCB}/rtl/lib/tcb_lib_error.sv
-RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_cmn_gpio.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_ser.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_des.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_uart_fifo.sv
-RTL+=${PATH_TCB}/rtl/peri/uart/tcb_cmn_uart.sv
+RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_peri_gpio.sv
+RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart_ser.sv
+RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart_des.sv
+RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart_fifo.sv
+RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart.sv
 
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv

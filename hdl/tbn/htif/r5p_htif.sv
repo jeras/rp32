@@ -92,15 +92,14 @@ module r5p_htif
 ////////////////////////////////////////////////////////////////////////////////
 
   // local copies of TCB PHY parameters
-  localparam UNT = tcb.PHY.UNT;
-  localparam BEN = tcb.PHY_BEN;
+  localparam BYT = tcb.CFG_BUS_BYT;
 
   // request address and size (TCB_LOG_SIZE mode)
   int unsigned adr;
   int unsigned siz;
 
   // read/write data packed arrays
-  logic [BEN-1:0][UNT-1:0] wdt;
+  logic [BYT-1:0][8-1:0] wdt;
 
   // request address and size (TCB_LOG_SIZE mode)
   assign adr =    int'(tcb.req.adr);
@@ -113,15 +112,15 @@ module r5p_htif
   always @(posedge tcb.clk)
   if (tcb.trn) begin
     if (tcb.req.wen) begin: write
-      for (int unsigned b=0; b<BEN; b++) begin: bytes
-        case (tcb.PHY.MOD)
-          TCB_LOG_SIZE: begin: log_size
+      for (int unsigned b=0; b<BYT; b++) begin: bytes
+        case (tcb.CFG.BUS.MOD)
+          TCB_MOD_LOG_SIZE: begin: log_size
             // write only transfer size bytes
             if (b < siz)  mem[adr+b] <= wdt[b];
           end: log_size
-          TCB_BYTE_ENA: begin: byte_ena
+          TCB_MOD_BYTE_ENA: begin: byte_ena
             // write only enabled bytes
-            if (tcb.req.ben[(adr+b)%BEN])  mem[adr+b] <= wdt[(adr+b)%BEN];
+            if (tcb.req.byt[(adr+b)%BYT])  mem[adr+b] <= wdt[(adr+b)%BYT];
           end: byte_ena
         endcase
       end: bytes

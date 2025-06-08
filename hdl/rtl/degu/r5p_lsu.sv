@@ -63,6 +63,9 @@ module r5p_lsu
     tcb.req.wen = CFG_WEN_ILL;
   end
 
+  // lock
+  assign tcb.req.lck = 1'b0;
+
   // address
   assign tcb.req.adr = adr;
 
@@ -99,13 +102,14 @@ module r5p_lsu
   end: blk_rdt
 
   // misalignment
-  assign mal = |tcb.dly[0].aln;
+  //assign mal = |tcb.dly[0].aln;
+  // TODO
+  assign mal = 1'b0;
 
   // system stall
   assign rdy = tcb.rdy;
 
   // TODO
-  assign tcb.req.cmd = '0;
   assign tcb.req.ndn = TCB_LITTLE;
 
 endmodule: r5p_lsu

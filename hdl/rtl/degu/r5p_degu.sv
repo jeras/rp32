@@ -133,8 +133,10 @@ else      ifu_run <= 1'b1;
 assign tcb_ifu.vld = ifu_run;
 
 // TODO
-assign tcb_ifu.req.cmd = '0;
+assign tcb_ifu.req.lck = 1'b0;
+assign tcb_ifu.req.ren = 1'b1;
 assign tcb_ifu.req.wen = 1'b0;
+assign tcb_ifu.req.xen = 1'b1;
 assign tcb_ifu.req.siz = 2'b10;  // 32-bit transfer size
 assign tcb_ifu.req.ben = 'x;     // TODO: not really used for TCB RISC-V mode
 assign tcb_ifu.req.wdt = 'x;

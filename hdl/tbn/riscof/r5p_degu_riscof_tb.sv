@@ -40,7 +40,7 @@ module r5p_degu_riscof_tb
   // memory size
   parameter  int unsigned MEM_SIZ = 2**22,
   // memory configuration
-  parameter  string       IFN = "",     // instruction memory file name
+  parameter  string       MFN = "",     // instruction memory file name
   // testbench parameters
   parameter  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
@@ -76,58 +76,83 @@ import riscv_asm_pkg::*;
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_phy_t TCB_PHY_IFU = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: 1,
-    MIN: 2,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_IFU = '{
+    // handshake parameter
+    HSK: TCB_HSK_DEF,
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_LOG_SIZE,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+//    // data packing parameters
+//    ALN: 1,
+//    MIN: 2,
   };
 
-  localparam tcb_phy_t TCB_PHY_LSU = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: 2,
-    MIN: 0,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_LSU = '{
+    // handshake parameter
+    HSK: TCB_HSK_DEF,
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_LOG_SIZE,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+//    // data packing parameters
+//    ALN: 2,
+//    MIN: 0,
   };
 
-  localparam tcb_phy_t TCB_PHY_MEM = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: 0,
-    MIN: 0,
-    MOD: TCB_BYTE_ENA,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_MEM = '{
+    // handshake parameter
+    HSK: TCB_HSK_DEF,
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_BYTE_ENA,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
+  };
+
+  localparam tcb_vip_t VIP = '{
+    DRV: 1'b1
   };
 
   // system busses
-  tcb_if #(TCB_PHY_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
-  tcb_if #(TCB_PHY_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-  tcb_if #(TCB_PHY_MEM) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
+  tcb_if #(.CFG (CFG_IFU)            ) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+  tcb_if #(.CFG (CFG_LSU)            ) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+  tcb_if #(.CFG (CFG_MEM), .VIP (VIP)) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -160,9 +185,7 @@ import riscv_asm_pkg::*;
 ////////////////////////////////////////////////////////////////////////////////
 
   // convert from LOG_SIZE to BYTE_ENA mode
-  tcb_lib_logsize2byteena #(
-    .ALLIGNED (1'b0)
-  ) tcb_ifu_cnv (
+  tcb_lib_logsize2byteena tcb_ifu_cnv (
     .sub  (tcb_ifu),
     .man  (tcb_mem[0])
   );
@@ -174,9 +197,9 @@ import riscv_asm_pkg::*;
   );
 
   tcb_vip_memory #(
-    .MFN  (IFN),
+    .MFN  (MFN),
     .SIZ  (MEM_SIZ),
-    .SPN  (2),
+    .IFN  (2),
     .WRM  (2'b10)
   ) mem (
     .tcb  (tcb_mem[1:0])
@@ -190,7 +213,7 @@ import riscv_asm_pkg::*;
       $display("Loading file into memory: %s", fn);
       void'(mem.read_bin(fn));
       void'(r5p_htif.read_bin(fn));
-    end else if (IFN == "") begin
+    end else if (MFN == "") begin
       $display("ERROR: memory load file argument not found.");
       $finish;
     end
