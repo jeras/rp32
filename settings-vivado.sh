@@ -1,1 +1,1 @@
-. /tools/Xilinx/Vivado/2024.2/settings64.sh
+. /tools/Xilinx/2025.1/Vivado/settings64.sh
