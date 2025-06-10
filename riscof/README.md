@@ -128,3 +128,9 @@ Using your preferred diff tool compare the execution trace log produced by the r
 diff ref/ref.log dut/dut.log
 ```
 
+# References
+
+Alternative approach to a written execution trace log, by compiling `spike` as a library:
+
+https://spinalhdl.github.io/NaxRiscv-Rtd/main/NaxRiscv/simulation/index.html
+

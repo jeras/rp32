@@ -7,10 +7,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module riscv_gdb_stub #(
-    parameter  int unsigned XLEN = 32,
-    parameter  string       PTS = "port_stub",
-    // DEBUG parameters
-    parameter  bit DEBUG_LOG = 1'b1
+  parameter  int unsigned XLEN = 32,
+  parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
+  parameter  string       PTS = "port_stub",
+  // DEBUG parameters
+  parameter  bit DEBUG_LOG = 1'b1
 )(
   // system signals
   output logic clk,  // clock
@@ -181,15 +182,15 @@ module riscv_gdb_stub #(
   );
     int code;
     int status;
-    logic [XLEN-1:0] adr;
-    logic [XLEN-1:0] len;
+    SIZE_T adr;
+    SIZE_T len;
 
     // memory address and length
     code = $sscanf(pkt, "m%d=%d", adr, len);
-    
+
     // read memory
     pkt = {len{"XX"}};
-  	for (int unsigned i=0; i<len; i++) begin
+  	for (SIZE_T i=0; i<len; i++) begin
       string tmp = "XX";
       tmp = $sformatf("%02h", mem[adr+i]);
       pkt[(adr+i)*2+0] = tmp[0];
@@ -207,14 +208,14 @@ module riscv_gdb_stub #(
   );
     int code;
     int status;
-    logic [XLEN-1:0] adr;
-    logic [XLEN-1:0] len;
+    SIZE_T adr;
+    SIZE_T len;
 
     // memory address and length
     code = $sscanf(pkt, "M%d=%d:", adr, len);
 
     // write memory
-  	for (int unsigned i=0; i<len; i++) begin
+  	for (SIZE_T i=0; i<len; i++) begin
       status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%02h", mem[adr+i]);
     end
 
@@ -231,7 +232,7 @@ module riscv_gdb_stub #(
   function automatic int gdb_reg_readall ();
     int status;
     string pkt = "";
-    
+
     // GPR
   	for (int unsigned i=0; i<32; i++) begin
       case (XLEN)
@@ -375,7 +376,7 @@ module riscv_gdb_stub #(
       endcase
     end
     /* verilator lint_on INFINITELOOP */
-    
+
     // remove named pipe
     $fclose(fd);
   end
