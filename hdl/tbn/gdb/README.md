@@ -24,54 +24,44 @@ socat pty,rawer,echo=0,link=port_gdb pty,rawer,echo=0,link=port_stub
 (gdb) load
 ```
 
+```
+set $pc = 0x0000ff4C
+```
+
 Additional `maintenance` commands can be found here:
 
 https://sourceware.org/gdb/current/onlinedocs/gdb.html/Maintenance-Commands.html
 
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-00000000
-00000000
-00000000
-
-00000000
-
-
 # References
 
 https://medium.com/@tatsuo.nomura/implement-gdb-remote-debug-protocol-stub-from-scratch-2-5e3025f0e987
+
+
+37085c7d
+1308b8dd
+93587800
+93579801
+b3e8f800
+13d97800
+93d79801
+3369f900
+93597900
+93579901
+b3e9f900
+13da7900
+93d79901
+336afa00
+935a7a00
+93579a01
+b3eafa00
+13db7a00
+93d79a01
+336bfb00
+935b7b00
+93579b01
+b3ebfb00
+13dc7b00
+93d79b01
+336cfc00
+935c7c00
+93579c01

@@ -186,7 +186,14 @@ module riscv_gdb_stub #(
     SIZE_T len;
 
     // memory address and length
-    code = $sscanf(pkt, "m%d=%d", adr, len);
+`ifdef VERILATOR
+    code = $sscanf(pkt, "m%h=%h", adr, len);
+`else
+    case (XLEN)
+      32: code = $sscanf(pkt, "m%8h=%8h", adr, len);
+      64: code = $sscanf(pkt, "m%16h=%16h", adr, len);
+    endcase
+`endif
 
     // read memory
     pkt = {len{"XX"}};
@@ -212,11 +219,18 @@ module riscv_gdb_stub #(
     SIZE_T len;
 
     // memory address and length
-    code = $sscanf(pkt, "M%d=%d:", adr, len);
+`ifdef VERILATOR
+    code = $sscanf(pkt, "M%h=%h:", adr, len);
+`else
+    case (XLEN)
+      32:     code = $sscanf(pkt, "M%8h=%8h:", adr, len);
+      64:     code = $sscanf(pkt, "M%16h=%16h:", adr, len);
+    endcase
+`endif
 
     // write memory
   	for (SIZE_T i=0; i<len; i++) begin
-      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%02h", mem[adr+i]);
+      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%2h", mem[adr+i]);
     end
 
     // send response
@@ -261,14 +275,24 @@ module riscv_gdb_stub #(
     // GPR
   	for (int unsigned i=0; i<32; i++) begin
       case (XLEN)
-        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%08h", gpr[i]);
-        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%016h", gpr[i]);
+`ifdef VERILATOR
+        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", gpr[i]);
+        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", gpr[i]);
+`else
+        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%8h", gpr[i]);
+        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%16h", gpr[i]);
+`endif
       endcase
     end
     // PC
     case (XLEN)
-      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%08h", pc);
-      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%016h", pc);
+`ifdef VERILATOR
+      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", pc);
+      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", pc);
+`else
+      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%8h", pc);
+      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%16h", pc);
+`endif
     endcase
 
     // send response
@@ -284,7 +308,7 @@ module riscv_gdb_stub #(
     int unsigned idx;
 
     // register index
-    status = $sscanf(pkt, "p%08h", idx);
+    status = $sscanf(pkt, "p%h", idx);
 
   	if (idx<32) begin
       // GPR
@@ -315,9 +339,16 @@ module riscv_gdb_stub #(
 
     // register index and value
     case (XLEN)
-      32: status = $sscanf(pkt, "P%d=%08h", idx, val);
-      64: status = $sscanf(pkt, "P%d=%016h", idx, val);
+`ifdef VERILATOR
+      32: status = $sscanf(pkt, "P%h=%h", idx, val);
+      64: status = $sscanf(pkt, "P%h=%h", idx, val);
+`else
+      32: status = $sscanf(pkt, "P%h=%8h", idx, val);
+      64: status = $sscanf(pkt, "P%h=%16h", idx, val);
+`endif
     endcase
+
+    $display("DEBUG: P%d=%08h", idx, val);
 
   	if (idx<32) begin
       // GPR
