@@ -8,7 +8,9 @@
 
 module riscv_gdb_stub #(
     parameter  int unsigned XLEN = 32,
-    parameter  string       PTS = "port_stub"
+    parameter  string       PTS = "port_stub",
+    // DEBUG parameters
+    parameter  bit DEBUG_LOG = 1'b1
 )(
   // system signals
   output logic clk,  // clock
@@ -27,9 +29,6 @@ module riscv_gdb_stub #(
   // PC
   logic [XLEN-1:0] pc = '0;
 
-  // memory
-  logic [8-1:0] mem [0:2**16-1];
-
 ///////////////////////////////////////////////////////////////////////////////
 // GDB character get/put
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,7 +37,6 @@ module riscv_gdb_stub #(
     int c;
     c = $fgetc(fd);
     gdb_getc = c[7:0];
-//    $display("%0s (0x%02h)", gdb_getc, gdb_getc);
   endfunction: gdb_getc
 
   function automatic void gdb_write (string str);
@@ -73,6 +71,10 @@ module riscv_gdb_stub #(
       end
     end while (ch != "#");
 
+    if (DEBUG_LOG) begin
+      $display("DEBUG: <- %p", pkt);
+    end
+
     // Get checksum now
     checksum_ref =                string'(gdb_getc()) ;
     checksum_ref = {checksum_ref, string'(gdb_getc())};
@@ -97,6 +99,10 @@ module riscv_gdb_stub #(
     byte   ch;
     byte   checksum = 0;
     string checksum_str;
+
+    if (DEBUG_LOG) begin
+      $display("DEBUG: -> %p", pkt);
+    end
 
     // Send packet start
     gdb_write("$");
@@ -162,63 +168,6 @@ module riscv_gdb_stub #(
     int status;
     status = gdb_send_packet("");
   endfunction: gdb_v_packet
-
-///////////////////////////////////////////////////////////////////////////////
-// GDB memory access
-///////////////////////////////////////////////////////////////////////////////
-
-  function automatic int gdb_mem_read (
-    input string pkt
-  );
-    int code;
-    int status;
-    logic [XLEN-1:0] adr;
-    logic [XLEN-1:0] len;
-    byte array [];
-
-    // memory address and length
-    code = $sscanf(pkt, "m%d=%d", adr, len);
-    
-    // read memory
-    array = new[2*len];
-  	for (int unsigned i=0; i<len; i++) begin
-      string str = "XX";
-      str = $sformatf("%02h", mem[adr+i]);
-      array[(adr+i)*2+0] = str[0];
-      array[(adr+i)*2+1] = str[1];
-    end
-
-    // cast array into string
-//    pkt = {>>{array}};
-
-    // send response
-    status = gdb_send_packet(pkt);
-
-    return(len);
-  endfunction: gdb_mem_read
-
-  function automatic int gdb_mem_write (
-    input string pkt
-  );
-    int code;
-    int status;
-    logic [XLEN-1:0] adr;
-    logic [XLEN-1:0] len;
-    byte array [];
-
-    // memory address and length
-    code = $sscanf(pkt, "M%d=%d", adr, len);
-
-    // write memory
-  	for (int unsigned i=0; i<len; i++) begin
-      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%02h", mem[adr+i]);
-    end
-
-    // send response
-    status = gdb_send_packet("OK");
-
-    return(len);
-  endfunction: gdb_mem_write
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB register access
@@ -339,17 +288,12 @@ module riscv_gdb_stub #(
   initial begin
     int status;
 
-    // Check if PTS file exists
-    fd = $fopen(PTS, "r");
-    assert (fd != 0) else $fatal(0, "PTS node '%0s' in not present.", PTS);
-    $fclose(fd);
-
-    $finish();
+    $display("DEBUG: start.");
     // open named pipe for R/W
-    fd = $fopen(PTS, "wb+");
-    // TODO: add proper checks, file must exist
-    assert(fd != 0) $info("Connected to '%0s'.", PTS);
-    else            $error("Could not open '%s' device node.", PTS);
+    fd = $fopen(PTS, "r+");
+    $display("DEBUG: fd = '%08h'.", fd);
+    if (fd != 0) $info("Connected to '%0s'.", PTS);
+    else         $error("Could not open '%s' device node.", PTS);
 
     // display received characters
     /* verilator lint_off INFINITELOOP */
@@ -358,12 +302,9 @@ module riscv_gdb_stub #(
 
       // wait for a packet
       status = gdb_get_packet(pkt);
-      $display("DEBUG: %p\n", pkt);
 
       // parse command
       case (pkt[0])
-        "m": status = gdb_mem_read(pkt);
-        "M": status = gdb_mem_write(pkt);
         "g": status = gdb_reg_readall();
         "G": status = gdb_reg_writeall(pkt);
         "p": status = gdb_reg_readone(pkt);
