@@ -29,6 +29,9 @@ module riscv_gdb_stub #(
   // PC
   logic [XLEN-1:0] pc = '0;
 
+  // memory
+  logic [8-1:0] mem [0:2**16-1];
+
 ///////////////////////////////////////////////////////////////////////////////
 // GDB character get/put
 ///////////////////////////////////////////////////////////////////////////////
@@ -170,6 +173,58 @@ module riscv_gdb_stub #(
   endfunction: gdb_v_packet
 
 ///////////////////////////////////////////////////////////////////////////////
+// GDB memory access
+///////////////////////////////////////////////////////////////////////////////
+
+  function automatic int gdb_mem_read (
+    input string pkt
+  );
+    int code;
+    int status;
+    logic [XLEN-1:0] adr;
+    logic [XLEN-1:0] len;
+
+    // memory address and length
+    code = $sscanf(pkt, "m%d=%d", adr, len);
+    
+    // read memory
+    pkt = {len{"XX"}};
+  	for (int unsigned i=0; i<len; i++) begin
+      string tmp = "XX";
+      tmp = $sformatf("%02h", mem[adr+i]);
+      pkt[(adr+i)*2+0] = tmp[0];
+      pkt[(adr+i)*2+1] = tmp[1];
+    end
+
+    // send response
+    status = gdb_send_packet(pkt);
+
+    return(len);
+  endfunction: gdb_mem_read
+
+  function automatic int gdb_mem_write (
+    input string pkt
+  );
+    int code;
+    int status;
+    logic [XLEN-1:0] adr;
+    logic [XLEN-1:0] len;
+
+    // memory address and length
+    code = $sscanf(pkt, "M%d=%d:", adr, len);
+
+    // write memory
+  	for (int unsigned i=0; i<len; i++) begin
+      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%02h", mem[adr+i]);
+    end
+
+    // send response
+    status = gdb_send_packet("OK");
+
+    return(len);
+  endfunction: gdb_mem_write
+
+///////////////////////////////////////////////////////////////////////////////
 // GDB register access
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -305,6 +360,8 @@ module riscv_gdb_stub #(
 
       // parse command
       case (pkt[0])
+        "m": status = gdb_mem_read(pkt);
+        "M": status = gdb_mem_write(pkt);
         "g": status = gdb_reg_readall();
         "G": status = gdb_reg_writeall(pkt);
         "p": status = gdb_reg_readone(pkt);
