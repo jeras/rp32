@@ -27,6 +27,9 @@ module riscv_gdb_stub #(
   // PC
   logic [XLEN-1:0] pc = '0;
 
+  // memory
+  logic [8-1:0] mem [0:2**16-1];
+
 ///////////////////////////////////////////////////////////////////////////////
 // GDB character get/put
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,7 +38,7 @@ module riscv_gdb_stub #(
     int c;
     c = $fgetc(fd);
     gdb_getc = c[7:0];
-    $display("%0s (0x%02h)", gdb_getc, gdb_getc);
+//    $display("%0s (0x%02h)", gdb_getc, gdb_getc);
   endfunction: gdb_getc
 
   function automatic void gdb_write (string str);
@@ -71,8 +74,8 @@ module riscv_gdb_stub #(
     end while (ch != "#");
 
     // Get checksum now
-    checksum_ref =                gdb_getc() ;
-    checksum_ref = {checksum_ref, gdb_getc()};
+    checksum_ref =                string'(gdb_getc()) ;
+    checksum_ref = {checksum_ref, string'(gdb_getc())};
 
     // Verify checksum
     checksum_str = $sformatf("%02h", checksum);
@@ -101,7 +104,7 @@ module riscv_gdb_stub #(
     // Send packet data and calculate checksum
     foreach (pkt[i]) begin
       checksum += pkt[i];
-      gdb_write(pkt[i]);
+      gdb_write(string'(pkt[i]));
     end
 
     // Send packet end
@@ -160,6 +163,67 @@ module riscv_gdb_stub #(
     status = gdb_send_packet("");
   endfunction: gdb_v_packet
 
+///////////////////////////////////////////////////////////////////////////////
+// GDB memory access
+///////////////////////////////////////////////////////////////////////////////
+
+  function automatic int gdb_mem_read (
+    input string pkt
+  );
+    int code;
+    int status;
+    logic [XLEN-1:0] adr;
+    logic [XLEN-1:0] len;
+    byte array [];
+
+    // memory address and length
+    code = $sscanf(pkt, "m%d=%d", adr, len);
+    
+    // read memory
+    array = new[2*len];
+  	for (int unsigned i=0; i<len; i++) begin
+      string str = "XX";
+      str = $sformatf("%02h", mem[adr+i]);
+      array[(adr+i)*2+0] = str[0];
+      array[(adr+i)*2+1] = str[1];
+    end
+
+    // cast array into string
+//    pkt = {>>{array}};
+
+    // send response
+    status = gdb_send_packet(pkt);
+
+    return(len);
+  endfunction: gdb_mem_read
+
+  function automatic int gdb_mem_write (
+    input string pkt
+  );
+    int code;
+    int status;
+    logic [XLEN-1:0] adr;
+    logic [XLEN-1:0] len;
+    byte array [];
+
+    // memory address and length
+    code = $sscanf(pkt, "M%d=%d", adr, len);
+
+    // write memory
+  	for (int unsigned i=0; i<len; i++) begin
+      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%02h", mem[adr+i]);
+    end
+
+    // send response
+    status = gdb_send_packet("OK");
+
+    return(len);
+  endfunction: gdb_mem_write
+
+///////////////////////////////////////////////////////////////////////////////
+// GDB register access
+///////////////////////////////////////////////////////////////////////////////
+
   function automatic int gdb_reg_readall ();
     int status;
     string pkt = "";
@@ -182,14 +246,6 @@ module riscv_gdb_stub #(
 
     return(32+1);
   endfunction: gdb_reg_readall
-
-///////////////////////////////////////////////////////////////////////////////
-// GDB memory access
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// GDB register access
-///////////////////////////////////////////////////////////////////////////////
 
   function automatic int gdb_reg_writeall (
     input string pkt
@@ -273,15 +329,27 @@ module riscv_gdb_stub #(
   endfunction: gdb_reg_writeone
 
 ///////////////////////////////////////////////////////////////////////////////
+// GDB breakpoints/watchpoints
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
 
   initial begin
     int status;
 
+    // Check if PTS file exists
+    fd = $fopen(PTS, "r");
+    assert (fd != 0) else $fatal(0, "PTS node '%0s' in not present.", PTS);
+    $fclose(fd);
+
+    $finish();
     // open named pipe for R/W
-    fd = $fopen(PTS, "rb+");
-    $display("DEBUG: connected to '%0s'.", PTS);
+    fd = $fopen(PTS, "wb+");
+    // TODO: add proper checks, file must exist
+    assert(fd != 0) $info("Connected to '%0s'.", PTS);
+    else            $error("Could not open '%s' device node.", PTS);
 
     // display received characters
     /* verilator lint_off INFINITELOOP */
@@ -294,6 +362,8 @@ module riscv_gdb_stub #(
 
       // parse command
       case (pkt[0])
+        "m": status = gdb_mem_read(pkt);
+        "M": status = gdb_mem_write(pkt);
         "g": status = gdb_reg_readall();
         "G": status = gdb_reg_writeall(pkt);
         "p": status = gdb_reg_readone(pkt);
@@ -309,7 +379,7 @@ module riscv_gdb_stub #(
     /* verilator lint_on INFINITELOOP */
     
     // remove named pipe
-    $system($sformatf("rm %s", PTS));
+    $fclose(fd);
   end
 
 endmodule: riscv_gdb_stub

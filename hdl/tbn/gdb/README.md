@@ -24,6 +24,49 @@ socat pty,rawer,echo=0,link=port_gdb pty,rawer,echo=0,link=port_stub
 "qSupported:multiprocess+;swbreak+;hwbreak+;qRelocInsn+;fork-events+;vfork-events+;exec-events+;vContSupported+;QThreadEvents+;QThreadOptions+;no-resumed+;memory-tagging+"
 
 
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+00000000
+00000000
+00000000
+
+00000000
+
+
 # References
 
 https://medium.com/@tatsuo.nomura/implement-gdb-remote-debug-protocol-stub-from-scratch-2-5e3025f0e987
