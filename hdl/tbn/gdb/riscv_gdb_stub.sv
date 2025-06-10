@@ -16,13 +16,16 @@ module riscv_gdb_stub #(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
-
+// local signals
 ///////////////////////////////////////////////////////////////////////////////
 
   // named pipe file descriptor
   int fd;
-  byte c;
-  int unsigned i = 0;
+
+  // GPR
+  logic [XLEN-1:0] gpr [0:32-1] = '{default: 'x};
+  // PC
+  logic [XLEN-1:0] pc = '0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB character get/put
@@ -123,7 +126,7 @@ module riscv_gdb_stub #(
     input byte   exception
   );
     int status;
-    status = gdb_send_packet($sformatf("S %02h", exception));
+    status = gdb_send_packet($sformatf("S%02h", exception));
 	  return(status);
   endfunction: gdb_send_exception
 
@@ -157,6 +160,118 @@ module riscv_gdb_stub #(
     status = gdb_send_packet("");
   endfunction: gdb_v_packet
 
+  function automatic int gdb_reg_readall ();
+    int status;
+    string pkt = "";
+    
+    // GPR
+  	for (int unsigned i=0; i<32; i++) begin
+      case (XLEN)
+        32: pkt = {pkt, $sformatf("%08h", gpr[i])};
+        64: pkt = {pkt, $sformatf("%016h", gpr[i])};
+      endcase
+    end
+    // PC
+    case (XLEN)
+      32: pkt = {pkt, $sformatf("%08h", pc)};
+      64: pkt = {pkt, $sformatf("%016h", pc)};
+    endcase
+
+    // send response
+    status = gdb_send_packet(pkt);
+
+    return(32+1);
+  endfunction: gdb_reg_readall
+
+///////////////////////////////////////////////////////////////////////////////
+// GDB memory access
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// GDB register access
+///////////////////////////////////////////////////////////////////////////////
+
+  function automatic int gdb_reg_writeall (
+    input string pkt
+  );
+    int status;
+    int unsigned len = XLEN/8*2;
+
+    // GPR
+  	for (int unsigned i=0; i<32; i++) begin
+      case (XLEN)
+        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%08h", gpr[i]);
+        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%016h", gpr[i]);
+      endcase
+    end
+    // PC
+    case (XLEN)
+      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%08h", pc);
+      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%016h", pc);
+    endcase
+
+    // send response
+    status = gdb_send_packet("OK");
+
+    return(32+1);
+  endfunction: gdb_reg_writeall
+
+  function automatic int gdb_reg_readone (
+    input string pkt
+  );
+    int status;
+    int unsigned idx;
+
+    // register index
+    status = $sscanf(pkt, "p%08h", idx);
+
+  	if (idx<32) begin
+      // GPR
+      case (XLEN)
+        32: pkt = {pkt, $sformatf("%08h", gpr[idx])};
+        64: pkt = {pkt, $sformatf("%016h", gpr[idx])};
+      endcase
+    end else begin
+      // PC
+      case (XLEN)
+        32: pkt = {pkt, $sformatf("%08h", pc)};
+        64: pkt = {pkt, $sformatf("%016h", pc)};
+      endcase
+    end
+
+    // send response
+    status = gdb_send_packet(pkt);
+
+    return(1);
+  endfunction: gdb_reg_readone
+
+  function automatic int gdb_reg_writeone (
+    input string pkt
+  );
+    int status;
+    int unsigned idx;
+    logic [XLEN-1:0] val;
+
+    // register index and value
+    case (XLEN)
+      32: status = $sscanf(pkt, "P%d=%08h", idx, val);
+      64: status = $sscanf(pkt, "P%d=%016h", idx, val);
+    endcase
+
+  	if (idx<32) begin
+      // GPR
+      gpr[idx] = val;
+    end else begin
+      // PC
+      pc = val;
+    end
+
+    // send response
+    status = gdb_send_packet("OK");
+
+    return(1);
+  endfunction: gdb_reg_writeone
+
 ///////////////////////////////////////////////////////////////////////////////
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
@@ -167,7 +282,7 @@ module riscv_gdb_stub #(
     // open named pipe for R/W
     fd = $fopen(PTS, "rb+");
     $display("DEBUG: connected to '%0s'.", PTS);
-//    gdb_putc("+");
+
     // display received characters
     /* verilator lint_off INFINITELOOP */
     forever begin
@@ -179,7 +294,11 @@ module riscv_gdb_stub #(
 
       // parse command
       case (pkt[0])
-        "?": status = gdb_send_exception(pkt, 0);  // TODO: add exception
+        "g": status = gdb_reg_readall();
+        "G": status = gdb_reg_writeall(pkt);
+        "p": status = gdb_reg_readone(pkt);
+        "P": status = gdb_reg_writeone(pkt);
+        "?": status = gdb_send_exception(pkt, 5);  // TODO: add exception
         "Q",
         "q": gdb_q_packet(pkt);
         "v": gdb_v_packet(pkt);

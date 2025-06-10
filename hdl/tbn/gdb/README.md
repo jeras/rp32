@@ -17,6 +17,8 @@ socat pty,rawer,echo=0,link=port_gdb pty,rawer,echo=0,link=port_stub
 (gdb) set logging enabled on
 (gdb) set debug remote 1
 (gdb) target remote port_gdb
+(gdb) file ../../../riscof/riscof_work/rv32i_m/I/src/add-01.S/dut/dut.elf
+(gdb) load
 ```
 
 "qSupported:multiprocess+;swbreak+;hwbreak+;qRelocInsn+;fork-events+;vfork-events+;exec-events+;vContSupported+;QThreadEvents+;QThreadOptions+;no-resumed+;memory-tagging+"
