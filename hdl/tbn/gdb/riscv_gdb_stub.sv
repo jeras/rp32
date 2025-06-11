@@ -140,7 +140,7 @@ module riscv_gdb_stub #(
   );
     int status;
     status = gdb_send_packet($sformatf("S%02h", exception));
-	  return(status);
+    return(status);
   endfunction: gdb_send_exception
 
   function automatic bit gdb_qsupported(
@@ -151,7 +151,7 @@ module riscv_gdb_stub #(
       status = gdb_send_packet("");
       return(1'b1);
     end else begin
-	    return(1'b0);
+      return(1'b0);
     end
   endfunction: gdb_qsupported
 
@@ -159,8 +159,8 @@ module riscv_gdb_stub #(
     input string pkt
   );
     int status;
-	  if (gdb_qsupported(pkt)) begin
-		  return;
+    if (gdb_qsupported(pkt)) begin
+      return;
     end else begin
       status = gdb_send_packet("");
     end
@@ -174,7 +174,7 @@ module riscv_gdb_stub #(
   endfunction: gdb_v_packet
 
 ///////////////////////////////////////////////////////////////////////////////
-// GDB memory access
+// GDB memory access (hexadecimal)
 ///////////////////////////////////////////////////////////////////////////////
 
   function automatic int gdb_mem_read (
@@ -187,21 +187,21 @@ module riscv_gdb_stub #(
 
     // memory address and length
 `ifdef VERILATOR
-    code = $sscanf(pkt, "m%h=%h", adr, len);
+    code = $sscanf(pkt, "m%h,%h", adr, len);
 `else
     case (XLEN)
-      32: code = $sscanf(pkt, "m%8h=%8h", adr, len);
-      64: code = $sscanf(pkt, "m%16h=%16h", adr, len);
+      32: code = $sscanf(pkt, "m%8h,%8h", adr, len);
+      64: code = $sscanf(pkt, "m%16h,%16h", adr, len);
     endcase
 `endif
 
     // read memory
     pkt = {len{"XX"}};
-  	for (SIZE_T i=0; i<len; i++) begin
+    for (SIZE_T i=0; i<len; i++) begin
       string tmp = "XX";
       tmp = $sformatf("%02h", mem[adr+i]);
-      pkt[(adr+i)*2+0] = tmp[0];
-      pkt[(adr+i)*2+1] = tmp[1];
+      pkt[i*2+0] = tmp[0];
+      pkt[i*2+1] = tmp[1];
     end
 
     // send response
@@ -220,17 +220,21 @@ module riscv_gdb_stub #(
 
     // memory address and length
 `ifdef VERILATOR
-    code = $sscanf(pkt, "M%h=%h:", adr, len);
+    code = $sscanf(pkt, "M%h,%h:", adr, len);
 `else
     case (XLEN)
-      32:     code = $sscanf(pkt, "M%8h=%8h:", adr, len);
-      64:     code = $sscanf(pkt, "M%16h=%16h:", adr, len);
+      32:     code = $sscanf(pkt, "M%8h,%8h:", adr, len);
+      64:     code = $sscanf(pkt, "M%16h,%16h:", adr, len);
     endcase
 `endif
 
     // write memory
-  	for (SIZE_T i=0; i<len; i++) begin
+    for (SIZE_T i=0; i<len; i++) begin
+`ifdef VERILATOR
       status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%2h", mem[adr+i]);
+`else
+      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%h", mem[adr+i]);
+`endif
     end
 
     // send response
@@ -238,6 +242,69 @@ module riscv_gdb_stub #(
 
     return(len);
   endfunction: gdb_mem_write
+
+///////////////////////////////////////////////////////////////////////////////
+// GDB memory access (binary)
+///////////////////////////////////////////////////////////////////////////////
+
+  function automatic int gdb_mem_bin_read (
+    input string pkt
+  );
+    int code;
+    int status;
+    SIZE_T adr;
+    SIZE_T len;
+
+    // memory address and length
+`ifdef VERILATOR
+    code = $sscanf(pkt, "x%h,%h", adr, len);
+`else
+    case (XLEN)
+      32: code = $sscanf(pkt, "x%8h,%8h", adr, len);
+      64: code = $sscanf(pkt, "x%16h,%16h", adr, len);
+    endcase
+`endif
+
+    // read memory
+    pkt = {len{8'h00}};
+    for (SIZE_T i=0; i<len; i++) begin
+      pkt[i] = mem[adr+i];
+    end
+
+    // send response
+    status = gdb_send_packet(pkt);
+
+    return(len);
+  endfunction: gdb_mem_bin_read
+
+  function automatic int gdb_mem_bin_write (
+    input string pkt
+  );
+    int code;
+    int status;
+    SIZE_T adr;
+    SIZE_T len;
+
+    // memory address and length
+`ifdef VERILATOR
+    code = $sscanf(pkt, "X%h,%h:", adr, len);
+`else
+    case (XLEN)
+      32:     code = $sscanf(pkt, "X%8h,%8h:", adr, len);
+      64:     code = $sscanf(pkt, "X%16h,%16h:", adr, len);
+    endcase
+`endif
+
+    // write memory
+    for (SIZE_T i=0; i<len; i++) begin
+      mem[adr+i] = pkt[code+i];
+    end
+
+    // send response
+    status = gdb_send_packet("OK");
+
+    return(len);
+  endfunction: gdb_mem_bin_write
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB register access
@@ -249,7 +316,7 @@ module riscv_gdb_stub #(
     logic [XLEN-1:0] val;
 
     // GPR
-  	for (int unsigned i=0; i<32; i++) begin
+    for (int unsigned i=0; i<32; i++) begin
       // swap byte order since they are sent LSB first
       val = {<<8{gpr[i]}};
       case (XLEN)
@@ -279,7 +346,7 @@ module riscv_gdb_stub #(
     logic [XLEN-1:0] val;
 
     // GPR
-  	for (int unsigned i=0; i<32; i++) begin
+    for (int unsigned i=0; i<32; i++) begin
       case (XLEN)
 `ifdef VERILATOR
         32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", val);
@@ -321,7 +388,7 @@ module riscv_gdb_stub #(
     // register index
     status = $sscanf(pkt, "p%h", idx);
 
-  	if (idx<32) begin
+    if (idx<32) begin
       // GPR
       // swap byte order since they are sent LSB first
       val = {<<8{gpr[idx]}};
@@ -364,7 +431,7 @@ module riscv_gdb_stub #(
     endcase
 
     // write registers
-  	if (idx<32) begin
+    if (idx<32) begin
       // GPR
       // swap byte order since they are sent LSB first
       gpr[idx] = {<<8{val}};
@@ -416,6 +483,8 @@ module riscv_gdb_stub #(
 
       // parse command
       case (pkt[0])
+        "x": status = gdb_mem_bin_read(pkt);
+        "X": status = gdb_mem_bin_write(pkt);
         "m": status = gdb_mem_read(pkt);
         "M": status = gdb_mem_write(pkt);
         "g": status = gdb_reg_readall();
