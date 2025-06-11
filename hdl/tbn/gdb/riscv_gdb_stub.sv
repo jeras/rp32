@@ -26,7 +26,7 @@ module riscv_gdb_stub #(
   int fd;
 
   // GPR
-  logic [XLEN-1:0] gpr [0:32-1] = '{default: 'x};
+  logic [XLEN-1:0] gpr [0:32-1] = '{default: '0};
   // PC
   logic [XLEN-1:0] pc = '0;
 
@@ -246,18 +246,23 @@ module riscv_gdb_stub #(
   function automatic int gdb_reg_readall ();
     int status;
     string pkt = "";
+    logic [XLEN-1:0] val;
 
     // GPR
   	for (int unsigned i=0; i<32; i++) begin
+      // swap byte order since they are sent LSB first
+      val = {<<8{gpr[i]}};
       case (XLEN)
-        32: pkt = {pkt, $sformatf("%08h", gpr[i])};
-        64: pkt = {pkt, $sformatf("%016h", gpr[i])};
+        32: pkt = {pkt, $sformatf("%08h", val)};
+        64: pkt = {pkt, $sformatf("%016h", val)};
       endcase
     end
     // PC
+    // swap byte order since they are sent LSB first
+    val = {<<8{pc}};
     case (XLEN)
-      32: pkt = {pkt, $sformatf("%08h", pc)};
-      64: pkt = {pkt, $sformatf("%016h", pc)};
+      32: pkt = {pkt, $sformatf("%08h", val)};
+      64: pkt = {pkt, $sformatf("%016h", val)};
     endcase
 
     // send response
@@ -271,29 +276,34 @@ module riscv_gdb_stub #(
   );
     int status;
     int unsigned len = XLEN/8*2;
+    logic [XLEN-1:0] val;
 
     // GPR
   	for (int unsigned i=0; i<32; i++) begin
       case (XLEN)
 `ifdef VERILATOR
-        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", gpr[i]);
-        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", gpr[i]);
+        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", val);
+        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", val);
 `else
-        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%8h", gpr[i]);
-        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%16h", gpr[i]);
+        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%8h", val);
+        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%16h", val);
 `endif
       endcase
+      // swap byte order since they are sent LSB first
+      gpr[i] = {<<8{val}};
     end
     // PC
     case (XLEN)
 `ifdef VERILATOR
-      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", pc);
-      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", pc);
+      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", val);
+      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", val);
 `else
-      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%8h", pc);
-      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%16h", pc);
+      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%8h", val);
+      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%16h", val);
 `endif
     endcase
+    // swap byte order since they are sent LSB first
+    pc = {<<8{val}};
 
     // send response
     status = gdb_send_packet("OK");
@@ -306,21 +316,26 @@ module riscv_gdb_stub #(
   );
     int status;
     int unsigned idx;
+    logic [XLEN-1:0] val;
 
     // register index
     status = $sscanf(pkt, "p%h", idx);
 
   	if (idx<32) begin
       // GPR
+      // swap byte order since they are sent LSB first
+      val = {<<8{gpr[idx]}};
       case (XLEN)
-        32: pkt = {pkt, $sformatf("%08h", gpr[idx])};
-        64: pkt = {pkt, $sformatf("%016h", gpr[idx])};
+        32: pkt = {pkt, $sformatf("%08h", val)};
+        64: pkt = {pkt, $sformatf("%016h", val)};
       endcase
     end else begin
       // PC
+      // swap byte order since they are sent LSB first
+      val = {<<8{pc}};
       case (XLEN)
-        32: pkt = {pkt, $sformatf("%08h", pc)};
-        64: pkt = {pkt, $sformatf("%016h", pc)};
+        32: pkt = {pkt, $sformatf("%08h", val)};
+        64: pkt = {pkt, $sformatf("%016h", val)};
       endcase
     end
 
@@ -348,14 +363,23 @@ module riscv_gdb_stub #(
 `endif
     endcase
 
-    $display("DEBUG: P%d=%08h", idx, val);
-
+    // write registers
   	if (idx<32) begin
       // GPR
-      gpr[idx] = val;
+      // swap byte order since they are sent LSB first
+      gpr[idx] = {<<8{val}};
+      case (XLEN)
+        32: $display("DEBUG: GPR[%0d] <= 32'h%08h", idx, val);
+        64: $display("DEBUG: GPR[%0d] <= 64'h%016h", idx, val);
+      endcase
     end else begin
       // PC
-      pc = val;
+      // swap byte order since they are sent LSB first
+      pc = {<<8{val}};
+      case (XLEN)
+        32: $display("DEBUG: PC <= 32'h%08h", val);
+        64: $display("DEBUG: PC <= 64'h%016h", val);
+      endcase
     end
 
     // send response
