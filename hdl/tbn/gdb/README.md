@@ -18,6 +18,7 @@ socat pty,rawer,echo=0,link=port_gdb pty,rawer,echo=0,link=port_stub
 (gdb) set debug remote 1
 (gdb) set arch riscv:rv32
 (gdb) target remote port_gdb
+(gdb) set riscv numeric-register-names on
 (gdb) info registers
 (gdb) i r
 (gdb) file ../../../riscof/riscof_work/rv32i_m/I/src/add-01.S/dut/dut.elf
