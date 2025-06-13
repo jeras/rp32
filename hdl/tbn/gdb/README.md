@@ -66,3 +66,38 @@ b3ebfb00
 336cfc00
 935c7c00
 93579c01
+
+Verilator issue
+length, *, return code
+ask about str = {str, ...}
+
+
+
+(gdb) show remote memory-read-packet-size
+(gdb) show remote memory-write-packet-size
+
+
+Flushing STDOUT in Questa does not help.
+$fflush(32'h8000_0001);
+
+```
+    typedef byte unsigned bytes[];
+    string str_hello = "Hello worls!";
+    byte tmp_hello [12] = '{8'h48, 8'h65, 8'h6C, 8'h6C, 8'h6F, 8'h20, 8'h77, 8'h6F, 8'h72, 8'h6C, 8'h64, 8'h21};
+    string str;
+    byte unsigned tmp [];
+
+    tmp = bytes'(str_hello);
+
+    $display("DEBUG: tmp = %p", tmp);
+    $display("DEBUG: tmp = %s", tmp);
+    $display("DEBUG: tmp = %02h", tmp);
+    $display("DEBUG: tmp = %0d", tmp);
+
+    str = string'(tmp_hello);
+
+    $display("DEBUG: str = %p"  , str);
+    $display("DEBUG: str = %s"  , str);
+    $display("DEBUG: str = %02h", str);
+    $display("DEBUG: str = %0d" , str);
+```

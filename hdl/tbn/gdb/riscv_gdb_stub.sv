@@ -379,6 +379,7 @@ module riscv_gdb_stub #(
 // GDB register access
 ///////////////////////////////////////////////////////////////////////////////
 
+  // "g" packet
   function automatic int gdb_reg_readall ();
     int status;
     string pkt;
