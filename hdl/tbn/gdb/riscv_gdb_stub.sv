@@ -25,6 +25,9 @@ module riscv_gdb_stub #(
 // local signals
 ///////////////////////////////////////////////////////////////////////////////
 
+  // byte dynamic array type for casting to/from string
+  typedef byte array_t [];
+
   // named pipe file descriptor
   int fd;
 
@@ -549,12 +552,16 @@ module riscv_gdb_stub #(
     int status;
     int code;
 
-    $display("DEBUG: start.");
-    // open named pipe for R/W
+    // open character device for R/W
     fd = $fopen(PTS, "r+");
     $display("DEBUG: fd = '%08h'.", fd);
-    if (fd != 0) $info("Connected to '%0s'.", PTS);
-    else         $error("Could not open '%s' device node.", PTS);
+
+    // check if device was found
+    if (fd == 0) begin
+      $fatal(0, "Could not open '%s' device node.", PTS);
+    end else begin
+      $info("Connected to '%0s'.", PTS);
+    end
 
     // display received characters
     /* verilator lint_off INFINITELOOP */

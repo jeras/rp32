@@ -1,5 +1,9 @@
 # GDB stub
 
+```sh
+sudo apt install socat
+```
+
 This is a GDB stub written in SystemVerilog.
 
 ```bash
