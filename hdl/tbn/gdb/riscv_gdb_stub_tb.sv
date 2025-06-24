@@ -14,6 +14,8 @@ module riscv_gdb_stub_tb #(
   parameter  bit DEBUG_LOG = 1'b1
 );
 
+  import socket_dpi_pkg::*;
+
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,12 +42,15 @@ module riscv_gdb_stub_tb #(
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
 
+//  process io;
+
   // clock
   always #(20ns/2) clk = ~clk;
 
   // reset
   initial
   begin: process_reset
+//    $display("io.status.name=%s", io.status().name());
     /* verilator lint_off INITIALDLY */
     repeat (4) @(posedge clk);
     // synchronous reset release
@@ -59,25 +64,52 @@ module riscv_gdb_stub_tb #(
 
   initial
   begin: process_io
+    byte buffer [];
     int status;
     int code;
     int ch;
     int fd;
 
-    fd = 32'h8000_0001;
-    // open character device for R/W
-    fd = $fopen(PTS, "r+");
-    $display("DEBUG: fd = '%08h'.", fd);
+    // test
+    $display("TEST: test(10) = %0d", test(10));
 
-    // check if device was found
-    if (fd == 0) begin
-      $fatal(0, "Could not open '%s' device node.", PTS);
-    end else begin
-      $info("Connected to '%0s'.", PTS);
-    end
+    // start server
+    fd = server_start("riscv_gdb_stub");
 
-    ch = $fgetc(fd);
-    $display("DEBUG: '%s' (0x%02h)", ch, ch);
+    // send data
+    buffer = new[5]('{"A", "B", "C", "D", 0});
+    $display("DEBUG: buffer = %s", buffer);
+    status = server_send(fd, buffer, 0);
+    $display("DEBUG: send status = %0d", status);
+
+    // receive data
+    status = server_recv(fd, buffer, 0);
+    $display("DEBUG: recv status = %0d", status);
+    $display("DEBUG: buffer = %s", buffer);
+
+
+    // stop server
+    $display("DEBUG: stop server.");
+    status = server_stop(fd);
+
+////    fd = 32'h8000_0001;
+//    // open character device for R/W
+//    fd = $fopen(PTS, "r+");
+//    $display("DEBUG: fd = '%08h'.", fd);
+//
+//    // check if device was found
+//    if (fd == 0) begin
+//      $fatal(0, "Could not open '%s' device node.", PTS);
+//    end else begin
+//      $info("Connected to '%0s'.", PTS);
+//    end
+//
+//    for (int i=0; i<8; i++) begin
+//      code = $fread(buffer, fd, , 1);
+//      $display("DEBUG: '%0d' (0x%08h), buffer = %p", code, code, buffer);
+////      ch = $fgetc(fd);
+////      $display("DEBUG: '%s' (0x%02h)", ch, ch);
+//    end
   end: process_io
 
 endmodule: riscv_gdb_stub_tb

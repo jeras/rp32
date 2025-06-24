@@ -18,6 +18,8 @@ socat pty,rawer,echo=0,link=port_gdb pty,rawer,echo=0,link=port_stub
 ```
 /opt/riscv-gcc/bin/riscv32-unknown-elf-gdb
 
+source riscv_gdb_stub.cmd
+
 (gdb) set logging enabled on
 (gdb) set debug remote 1
 (gdb) set arch riscv:rv32
@@ -108,6 +110,8 @@ $fflush(32'h8000_0001);
 
 # References
 
+https://verificationacademy.com/forums/t/how-to-pass-time-in-systemverilog-while-waiting-for-data-on-a-socket-in-dpi/37817/2
+
 Linux [`socket`](https://man7.org/linux/man-pages/man2/socket.2.html)
 [`send`](https://man7.org/linux/man-pages/man2/send.2.html) and
 [`recv`](https://man7.org/linux/man-pages/man2/recv.2.html).
@@ -131,3 +135,19 @@ Connecting to Python:
 - https://www.consulting.amiq.com/2019/03/22/how-to-connect-systemverilog-with-python/
 - https://github.com/xver/Shunt
 - https://github.com/witchard/sock.sv
+
+
+
+```
+./run-verilator.sh 
+%Error: riscv_gdb_stub_tb.sv:86:33: syntax error, unexpected ',', expecting IDENTIFIER-for-type
+   86 |       code = $fread(buffer, fd, , 1);
+      |                                 ^
+        ... See the manual at https://verilator.org/verilator_doc.html?v=5.037 for more assistance.
+%Error: Exiting due to 1 error(s)
+./run-verilator.sh: line 6: obj_dir/Vriscv_gdb_stub_tb: No such file or directory
+```
+
+
+Questa GCC issue:
+https://www.reddit.com/r/FPGA/comments/nfkuq6/modelsim_fatal_vsim3828_could_not_link_vsim_auto/

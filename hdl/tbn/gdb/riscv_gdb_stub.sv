@@ -568,6 +568,8 @@ module riscv_gdb_stub #(
     forever begin
       byte ch;
 
+      // Questa quirk, flush STDOUT
+      $fflush(32'h00000002);
       ch = gdb_getc();
       if (ch == "+") begin
         $display("DEBUG: unexpected \"+\".");
