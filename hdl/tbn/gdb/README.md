@@ -105,3 +105,29 @@ $fflush(32'h8000_0001);
     $display("DEBUG: str = %02h", str);
     $display("DEBUG: str = %0d" , str);
 ```
+
+# References
+
+Linux [`socket`](https://man7.org/linux/man-pages/man2/socket.2.html)
+[`send`](https://man7.org/linux/man-pages/man2/send.2.html) and
+[`recv`](https://man7.org/linux/man-pages/man2/recv.2.html).
+
+Non-blocking:
+https://stackoverflow.com/questions/20588002/nonblocking-get-character
+
+https://www.consulting.amiq.com/2020/08/14/non-blocking-socket-communication-in-systemverilog-using-dpi-c/
+
+SV socket DPI:
+https://github.com/witchard/sock.sv
+https://github.com/xver/Shunt
+
+
+This links are CPU intensive:
+https://www.geeksforgeeks.org/tcp-server-client-implementation-in-c/
+https://www.geeksforgeeks.org/computer-networks/simple-client-server-application-in-c/
+
+Connecting to Python:
+
+- https://www.consulting.amiq.com/2019/03/22/how-to-connect-systemverilog-with-python/
+- https://github.com/xver/Shunt
+- https://github.com/witchard/sock.sv
