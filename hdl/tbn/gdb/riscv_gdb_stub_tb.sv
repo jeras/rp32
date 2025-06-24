@@ -9,7 +9,7 @@
 module riscv_gdb_stub_tb #(
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
-  parameter  string       PTS = "port_stub",
+  parameter  string       SOCKET = "gdb_stub_socket",
   // DEBUG parameters
   parameter  bit DEBUG_LOG = 1'b1
 );
@@ -85,6 +85,7 @@ module riscv_gdb_stub_tb #(
     // receive data
     status = server_recv(fd, buffer, 0);
     $display("DEBUG: recv status = %0d", status);
+    $display("DEBUG: buffer = %p", buffer);
     $display("DEBUG: buffer = %s", buffer);
 
 
@@ -92,24 +93,6 @@ module riscv_gdb_stub_tb #(
     $display("DEBUG: stop server.");
     status = server_stop(fd);
 
-////    fd = 32'h8000_0001;
-//    // open character device for R/W
-//    fd = $fopen(PTS, "r+");
-//    $display("DEBUG: fd = '%08h'.", fd);
-//
-//    // check if device was found
-//    if (fd == 0) begin
-//      $fatal(0, "Could not open '%s' device node.", PTS);
-//    end else begin
-//      $info("Connected to '%0s'.", PTS);
-//    end
-//
-//    for (int i=0; i<8; i++) begin
-//      code = $fread(buffer, fd, , 1);
-//      $display("DEBUG: '%0d' (0x%08h), buffer = %p", code, code, buffer);
-////      ch = $fgetc(fd);
-////      $display("DEBUG: '%s' (0x%02h)", ch, ch);
-//    end
   end: process_io
 
 endmodule: riscv_gdb_stub_tb

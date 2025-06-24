@@ -9,7 +9,7 @@
 module riscv_gdb_stub #(
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
-  parameter  string       PTS = "port_stub",
+  parameter  string       SOCKET = "gdb_stub_socket",
   // DEBUG parameters
   parameter  bit DEBUG_LOG = 1'b1
 )(
@@ -20,6 +20,8 @@ module riscv_gdb_stub #(
   output logic dbg_req,  // request (behaves like VALID)
   output logic dbg_grt   // grant   (behaves like VALID)
 );
+
+  import socket_dpi_pkg::*;
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -69,27 +71,10 @@ module riscv_gdb_stub #(
 // GDB character get/put
 ///////////////////////////////////////////////////////////////////////////////
 
-  function automatic byte gdb_getc ();
-    int c;
-    c = $fgetc(fd);
-    gdb_getc = c[7:0];
-//  $display("DEBUG: '%s' (0x%02h)", gdb_getc, gdb_getc);
-  endfunction: gdb_getc
-
-  function automatic int gdb_ungetc (
-    byte ch
-  );
-    int c;
-    int code;
-    c = {24'h000000, ch};
-    code = $ungetc(c, fd);
-    // TODO: error handling
-    return code;
-  endfunction: gdb_ungetc
-
   function automatic void gdb_write (string str);
     int status;
-    $fwrite(fd, str);
+    byte buffer [] = new[str.len()](array_t'(str));
+    status = server_send(fd, buffer, 0);
   endfunction: gdb_write
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,34 +84,30 @@ module riscv_gdb_stub #(
   function automatic int gdb_get_packet(
     output string pkt
   );
-    byte   ch;
+    int status;
+    int unsigned len;
+    byte   buffer [] = new[512];
+    byte   cmd [];
+    string str;
     byte   checksum = 0;
     string checksum_ref;
     string checksum_str;
 
     // wait for the start character, ignore the rest
     // TODO: error handling?
-    do begin
-      ch = gdb_getc();
-    end while (ch != "$");
+    status = server_recv(fd, buffer, 0);
+    len = status;
+    $display("DEBUG: buffer = %p", buffer);
 
-    // Read until receive '#'
-    pkt = "";
-    do begin
-      ch = gdb_getc();
-      if (ch != "#") begin
-        pkt = {pkt, ch};
-        checksum += ch;
-      end
-    end while (ch != "#");
-
+    str = string'(buffer);
+    cmd = new[len-4](array_t'(str.substr(1,len-4)));
+    checksum = cmd.sum();
     if (DEBUG_LOG) begin
-      $display("DEBUG: <- %p", pkt);
+      $display("DEBUG: <- %s", str.substr(1,len-4));
     end
 
     // Get checksum now
-    checksum_ref =                string'(gdb_getc()) ;
-    checksum_ref = {checksum_ref, string'(gdb_getc())};
+    checksum_ref = str.substr(len-2,len-1);
 
     // Verify checksum
     checksum_str = $sformatf("%02h", checksum);
@@ -145,7 +126,8 @@ module riscv_gdb_stub #(
   function automatic int gdb_send_packet(
     input string pkt
   );
-    byte   ch;
+    int status;
+    byte   ch [] = new[1];
     byte   checksum = 0;
     string checksum_str;
 
@@ -169,8 +151,8 @@ module riscv_gdb_stub #(
     gdb_write($sformatf("%02h", checksum));
 
     // Check response
-    ch = gdb_getc();
-    if (ch == "+")  return(0);
+    status = server_recv(fd, ch, 0);
+    if (ch[0] == "+")  return(0);
     else            return(-1);
   endfunction: gdb_send_packet
 
@@ -549,46 +531,44 @@ module riscv_gdb_stub #(
 ///////////////////////////////////////////////////////////////////////////////
 
   initial begin
+    static byte ch [] = new[1];
+    static byte bf [] = new[2];
     int status;
     int code;
 
     // open character device for R/W
-    fd = $fopen(PTS, "r+");
+    fd = server_start("riscv_gdb_stub");
     $display("DEBUG: fd = '%08h'.", fd);
 
     // check if device was found
+    // TODO: check for actual return values
     if (fd == 0) begin
-      $fatal(0, "Could not open '%s' device node.", PTS);
+      $fatal(0, "Could not open '%s' device node.", SOCKET);
     end else begin
-      $info("Connected to '%0s'.", PTS);
+      $info("Connected to '%0s'.", SOCKET);
     end
 
     // display received characters
     /* verilator lint_off INFINITELOOP */
     forever begin
-      byte ch;
 
       // Questa quirk, flush STDOUT
       $fflush(32'h00000002);
-      ch = gdb_getc();
-      if (ch == "+") begin
+      status = server_recv(fd, ch, MSG_PEEK);
+      if (ch[0] == "+") begin
+        status = server_recv(fd, ch, 0);
         $display("DEBUG: unexpected \"+\".");
       end else
-      if (ch == SIGQUIT) begin  // 0x03
+      if (ch[0] == SIGQUIT) begin  // 0x03
         state = SIGINT;
         $error("Interrupt SIGQUIT (0x03) (Ctrl+c).");
         // fake empty packet
-        code = gdb_ungetc("$");
-        code = gdb_ungetc("#");
         status = gdb_stop_reply();
       end else
-      if (ch == "$") begin
-        ch = gdb_getc();
-        code = gdb_ungetc(ch);
-        code = gdb_ungetc("$");
-
+      if (ch[0] == "$") begin
+        status = server_recv(fd, bf, MSG_PEEK);
         // parse command
-        case (ch)
+        case (bf[1])
           "x": status = gdb_mem_bin_read();
           "X": status = gdb_mem_bin_write();
           "m": status = gdb_mem_read();
