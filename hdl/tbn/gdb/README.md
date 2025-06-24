@@ -23,7 +23,7 @@ source riscv_gdb_stub.cmd
 (gdb) set logging enabled on
 (gdb) set debug remote 1
 (gdb) set arch riscv:rv32
-(gdb) target remote port_gdb
+(gdb) target remote riscv_gdb_stub
 (gdb) set riscv numeric-register-names on
 (gdb) info registers
 (gdb) i r
@@ -136,7 +136,8 @@ Connecting to Python:
 - https://github.com/xver/Shunt
 - https://github.com/witchard/sock.sv
 
-
+Talk about adding socket support to SystemVerilog
+https://www.accellera.org/images/eda/sv-ec/0074.html
 
 ```
 ./run-verilator.sh 

@@ -36,6 +36,11 @@ int server_start(const char* name) {
     return -1;
   }
 
+  // delete socket file if it exists
+  if (remove(name) == -1 && errno != ENOENT) {
+    printf("failed to remove file %s\n", name);
+  }
+
   int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
   printf("Socket fd = %d\n", sfd);
 

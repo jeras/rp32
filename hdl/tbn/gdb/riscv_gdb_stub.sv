@@ -97,7 +97,6 @@ module riscv_gdb_stub #(
     // TODO: error handling?
     status = server_recv(fd, buffer, 0);
     len = status;
-    $display("DEBUG: buffer = %p", buffer);
 
     str = string'(buffer);
     cmd = new[len-4](array_t'(str.substr(1,len-4)));
@@ -595,8 +594,13 @@ module riscv_gdb_stub #(
     end
     /* verilator lint_on INFINITELOOP */
 
-    // remove named pipe
-    $fclose(fd);
+  end
+
+  final
+  begin
+    // stop server (close socket)
+    server_stop(fd);
+    $display("DEBUG: stopped server and closed socket.");
   end
 
 endmodule: riscv_gdb_stub
