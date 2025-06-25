@@ -178,11 +178,11 @@ module riscv_gdb_stub #(
   endfunction: gdb_state
 
   // Send a exception packet "T <value>"
-  function automatic int gdb_stop_reply();
-    int status;
-    // reply with current state
-    status = gdb_send_packet($sformatf("S%02h", state));
-    return(status);
+  function automatic int gdb_stop_reply(
+    input byte signal = state
+  );
+    // reply with signal (current state by default)
+    return(gdb_send_packet($sformatf("S%02h", signal)));
   endfunction: gdb_stop_reply
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -279,12 +279,14 @@ module riscv_gdb_stub #(
   function automatic int gdb_mem_write ();
     int code;
     string pkt;
+    string dat;
     int status;
     SIZE_T adr;
     SIZE_T len;
 
     // read packet
     status = gdb_get_packet(pkt);
+//    $display("DBG: gdb_mem_write: pkt = %s", pkt);
 
     // memory address and length
 `ifdef VERILATOR
@@ -295,14 +297,21 @@ module riscv_gdb_stub #(
       64:     code = $sscanf(pkt, "M%16h,%16h:", adr, len);
     endcase
 `endif
+//    $display("DBG: gdb_mem_write: adr = 'h%08h, len = 'd%0d", adr, len);
+
+    // remove the header from the packet, only data remains
+    dat = pkt.substr(pkt.len() - 2*len, pkt.len() - 1);
+//    $display("DBG: gdb_mem_write: dat = %s", dat);
 
     // write memory
     for (SIZE_T i=0; i<len; i++) begin
+//      $display("DBG: gdb_mem_write: adr+i = 'h%08h, mem[adr+i] = 'h%02h", adr+i, mem[adr+i]);
 `ifdef VERILATOR
-      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%2h", mem[adr+i]);
+      status = $sscanf(dat.substr(i*2, i*2+1), "%2h", mem[adr+i]);
 `else
-      status = $sscanf(pkt.substr(code+(adr+i)*2, code+(adr+i)*2+1), "%h", mem[adr+i]);
+      status = $sscanf(dat.substr(i*2, i*2+1), "%h", mem[adr+i]);
 `endif
+//      $display("DBG: gdb_mem_write: adr+i = 'h%08h, mem[adr+i] = 'h%02h", adr+i, mem[adr+i]);
     end
 
     // send response
@@ -566,6 +575,7 @@ module riscv_gdb_stub #(
     case (pkt[0])
       "s": begin
         status = $sscanf(pkt, "s%h", addr);
+        state = SIGTRAP;
         if (status == 1) begin
           pc = addr;
         end
@@ -619,7 +629,7 @@ module riscv_gdb_stub #(
     endcase
 
     // send response
-    status = gdb_stop_reply();
+    status = gdb_stop_reply(SIGTRAP);
 
     return(1);
   endfunction: gdb_continue
@@ -679,8 +689,8 @@ module riscv_gdb_stub #(
           status = server_recv(fd, bf, MSG_PEEK);
           // parse command
           case (bf[1])
-            "x": status = gdb_mem_bin_read();
-            "X": status = gdb_mem_bin_write();
+//            "x": status = gdb_mem_bin_read();
+//            "X": status = gdb_mem_bin_write();
             "m": status = gdb_mem_read();
             "M": status = gdb_mem_write();
             "g": status = gdb_reg_readall();

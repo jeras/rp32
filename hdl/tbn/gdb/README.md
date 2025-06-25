@@ -31,8 +31,17 @@ source riscv_gdb_stub.cmd
 (gdb) load
 ```
 
-```
+Manipulating registers:
+
+```gdb
 set $pc = 0x0000ff4C
+```
+
+Manipulating memory locations:
+
+```gdb
+set {int}0x0 = 0x01234567
+
 ```
 
 Additional `maintenance` commands can be found here:
@@ -110,7 +119,18 @@ $fflush(32'h8000_0001);
 
 # References
 
+## Various stub implementations
+
+- https://github.com/zephyrproject-rtos/zephyr/blob/64ac57abcb90cebdc3e9ed8ea07784134a19a242/subsys/debug/gdbstub/gdbstub.c#L623
+- https://github.com/riscv-collab/riscv-openocd/blob/1aebdf8e3025e8a2ac65a1ebcdccd11448d9b46e/src/server/gdb_server.c#L2917
+- https://github.com/agra-uni-bremen/riscv-vp/tree/48b2f5877b2368cc466fb0da155db349e676c0b0/vp/src/core/common/gdb-mc
+Qemu
+
+## DPI:
+
 https://verificationacademy.com/forums/t/how-to-pass-time-in-systemverilog-while-waiting-for-data-on-a-socket-in-dpi/37817/2
+
+## Socket
 
 Linux [`socket`](https://man7.org/linux/man-pages/man2/socket.2.html)
 [`send`](https://man7.org/linux/man-pages/man2/send.2.html) and
@@ -138,6 +158,8 @@ Connecting to Python:
 
 Talk about adding socket support to SystemVerilog
 https://www.accellera.org/images/eda/sv-ec/0074.html
+
+# Notes
 
 ```
 ./run-verilator.sh 
