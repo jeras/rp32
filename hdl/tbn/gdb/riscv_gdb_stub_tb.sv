@@ -24,25 +24,9 @@ module riscv_gdb_stub_tb #(
   logic clk = 1'b1;  // clock
   logic rst = 1'b1;  // reset
 
-  // byte dynamic array type for casting to/from string
-  typedef byte array_t [];
-
-  // named pipe file descriptor
-  int fd;
-
-  // GPR
-  logic [XLEN-1:0] gpr [0:32-1] = '{default: '0};
-  // PC
-  logic [XLEN-1:0] pc = '0;
-
-  // memory
-  logic [8-1:0] mem [0:2**16-1];
-
 ///////////////////////////////////////////////////////////////////////////////
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
-
-//  process io;
 
   // clock
   always #(20ns/2) clk = ~clk;
@@ -55,44 +39,55 @@ module riscv_gdb_stub_tb #(
     repeat (4) @(posedge clk);
     // synchronous reset release
     rst <= 1'b0;
-    repeat (10) @(posedge clk);
+    repeat (1000) @(posedge clk);
     $display("ERROR: reached simulation timeout!");
     repeat (4) @(posedge clk);
     $finish();
     /* verilator lint_on INITIALDLY */
   end: process_reset
+  
+///////////////////////////////////////////////////////////////////////////////
+// CPU DUT
+///////////////////////////////////////////////////////////////////////////////
 
-  initial
-  begin: process_io
-    byte buffer [];
-    int status;
-    int code;
-    int ch;
-    int fd;
+  // GPR
+  logic [XLEN-1:0] gpr [0:32-1] = '{default: '0};
+  // PC
+  logic [XLEN-1:0] pc = '0;
 
-    // test
-    $display("TEST: test(10) = %0d", test(10));
+  // memory
+  logic [8-1:0] mem [0:2**16-1];
 
-    // start server
-    fd = server_start("riscv_gdb_stub");
+  // CPU debug interface
+  logic dbg_req;  // request (behaves like VALID)
+  logic dbg_grt;  // grant   (behaves like VALID)
 
-    // send data
-    buffer = new[5]('{"A", "B", "C", "D", 0});
-    $display("DEBUG: buffer = %s", buffer);
-    status = server_send(fd, buffer, 0);
-    $display("DEBUG: send status = %0d", status);
+  always @(posedge clk, posedge rst)
+  if (rst) pc <= 0;
+  else     pc <= pc+1;
 
-    // receive data
-    status = server_recv(fd, buffer, 0);
-    $display("DEBUG: recv status = %0d", status);
-    $display("DEBUG: buffer = %p", buffer);
-    $display("DEBUG: buffer = %s", buffer);
+///////////////////////////////////////////////////////////////////////////////
+// debugger stub
+///////////////////////////////////////////////////////////////////////////////
 
-
-    // stop server
-    $display("DEBUG: stop server.");
-    status = server_stop(fd);
-
-  end: process_io
+  riscv_gdb_stub #(
+    .XLEN   (XLEN  ),
+    .SIZE_T (SIZE_T),
+    .SOCKET (SOCKET),
+    // DEBUG parameters
+    .DEBUG_LOG (DEBUG_LOG)
+  ) stub (
+    // system signals
+    .clk  (clk),
+//    .rst  (rst),
+    // registers
+    .gpr  (gpr),
+    .pc   (pc ),
+    // memories
+    .mem  (mem),
+    // CPU debug interface
+    .dbg_req (dbg_req),
+    .dbg_grt (dbg_grt)
+  );
 
 endmodule: riscv_gdb_stub_tb

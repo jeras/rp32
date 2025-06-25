@@ -14,8 +14,13 @@ module riscv_gdb_stub #(
   parameter  bit DEBUG_LOG = 1'b1
 )(
   // system signals
-  output logic clk,  // clock
+  input  logic clk,  // clock
   output logic rst,  // reset
+  // registers
+  ref    logic [XLEN-1:0] gpr [0:32-1],
+  ref    logic [XLEN-1:0] pc,
+  // memories
+  ref    logic [8-1:0] mem [0:2**16-1],
   // CPU debug interface
   output logic dbg_req,  // request (behaves like VALID)
   output logic dbg_grt   // grant   (behaves like VALID)
@@ -33,39 +38,30 @@ module riscv_gdb_stub #(
   // named pipe file descriptor
   int fd;
 
-  // GPR
-  logic [XLEN-1:0] gpr [0:32-1] = '{default: '0};
-  // PC
-  logic [XLEN-1:0] pc = '0;
-
-  // memory
-  logic [8-1:0] mem [0:2**16-1];
-
-
   // state
   typedef enum byte {
     RUNNING = 8'h00,
     // signals
-    SIGHUP  = 8'd01,
+    SIGHUP  = 8'd01,  // Hangup
     SIGINT  = 8'd02,  // Terminal interrupt signal
     SIGQUIT = 8'd03,  // Terminal quit signal
     SIGILL  = 8'd04,  // Illegal instruction
     SIGTRAP = 8'd05,  // Trace/breakpoint trap
-    SIGABRT = 8'd06,
+    SIGABRT = 8'd06,  // Process abort signal
     SIGEMT  = 8'd07,
-    SIGFPE  = 8'd08,
-    SIGKILL = 8'd09,
+    SIGFPE  = 8'd08,  // Erroneous arithmetic operation
+    SIGKILL = 8'd09,  // Kill (cannot be caught or ignored)
 	  SIGBUS  = 8'd10,
 	  SIGSEGV = 8'd11,  // Invalid memory reference (address decoder error)
 	  SIGSYS  = 8'd12,
-	  SIGPIPE = 8'd13,
-	  SIGALRM = 8'd14,
-	  SIGTERM = 8'd15,
+	  SIGPIPE = 8'd13,  // Write on a pipe with no one to read it
+	  SIGALRM = 8'd14,  // Alarm clock
+	  SIGTERM = 8'd15,  // Termination signal
     // reset
     RESET   = 8'h80
   } state_t;
 
-  state_t state = RUNNING;
+  state_t state = SIGINT;
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB character get/put
@@ -88,22 +84,31 @@ module riscv_gdb_stub #(
     int unsigned len;
     byte   buffer [] = new[512];
     byte   cmd [];
-    string str;
+    string str = "";
     byte   checksum = 0;
     string checksum_ref;
     string checksum_str;
 
     // wait for the start character, ignore the rest
     // TODO: error handling?
-    status = server_recv(fd, buffer, 0);
-    len = status;
+    do begin
+      status = server_recv(fd, buffer, 0);
+//      $display("DEBUG: gdb_get_packet: buffer = %p", buffer);
+      str = {str, string'(buffer)};
+      len = str.len();
+//      $display("DEBUG: gdb_get_packet: str = %s", str);
+    end while (str[len-3] != "#");
 
-    str = string'(buffer);
-    cmd = new[len-4](array_t'(str.substr(1,len-4)));
-    checksum = cmd.sum();
+    // extract packet data from received string
+    pkt = str.substr(1,len-4);
     if (DEBUG_LOG) begin
-      $display("DEBUG: <- %s", str.substr(1,len-4));
+  //    $display("DEBUG: <= %s", str);
+      $display("DEBUG: <- %s", pkt);
     end
+
+    // calculate packet data checksum
+    cmd = new[len-4](array_t'(pkt));
+    checksum = cmd.sum();
 
     // Get checksum now
     checksum_ref = str.substr(len-2,len-1);
@@ -152,21 +157,29 @@ module riscv_gdb_stub #(
     // Check response
     status = server_recv(fd, ch, 0);
     if (ch[0] == "+")  return(0);
-    else            return(-1);
+    else               return(-1);
   endfunction: gdb_send_packet
 
 ///////////////////////////////////////////////////////////////////////////////
-// GDB packet handlers
+// GDB state
 ///////////////////////////////////////////////////////////////////////////////
 
   // Send a exception packet "T <value>"
-  function automatic int gdb_stop_reply();
+  function automatic int gdb_state();
     string pkt;
     int status;
 
     // read packet
     status = gdb_get_packet(pkt);
 
+    // reply with current state
+    status = gdb_stop_reply();
+    return(status);
+  endfunction: gdb_state
+
+  // Send a exception packet "T <value>"
+  function automatic int gdb_stop_reply();
+    int status;
     // reply with current state
     status = gdb_send_packet($sformatf("S%02h", state));
     return(status);
@@ -232,6 +245,8 @@ module riscv_gdb_stub #(
     // read packet
     status = gdb_get_packet(pkt);
 
+//    $display("DBG: gdb_mem_read: pkt = %s", pkt);
+
     // memory address and length
 `ifdef VERILATOR
     code = $sscanf(pkt, "m%h,%h", adr, len);
@@ -242,6 +257,8 @@ module riscv_gdb_stub #(
     endcase
 `endif
 
+//    $display("DBG: gdb_mem_read: adr = %08x, len=%08x", adr, len);
+
     // read memory
     pkt = {len{"XX"}};
     for (SIZE_T i=0; i<len; i++) begin
@@ -250,6 +267,8 @@ module riscv_gdb_stub #(
       pkt[i*2+0] = tmp[0];
       pkt[i*2+1] = tmp[1];
     end
+
+//    $display("DBG: gdb_mem_read: pkt = %s", pkt);
 
     // send response
     status = gdb_send_packet(pkt);
@@ -360,7 +379,7 @@ module riscv_gdb_stub #(
   endfunction: gdb_mem_bin_write
 
 ///////////////////////////////////////////////////////////////////////////////
-// GDB register access
+// GDB multiple register access
 ///////////////////////////////////////////////////////////////////////////////
 
   // "g" packet
@@ -439,6 +458,10 @@ module riscv_gdb_stub #(
 
     return(32+1);
   endfunction: gdb_reg_writeall
+
+///////////////////////////////////////////////////////////////////////////////
+// GDB single register access
+///////////////////////////////////////////////////////////////////////////////
 
   function automatic int gdb_reg_readone ();
     int status;
@@ -526,10 +549,87 @@ module riscv_gdb_stub #(
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
+// GDB step/continue
+///////////////////////////////////////////////////////////////////////////////
+
+  task automatic gdb_step;
+    int status;
+    string pkt;
+    SIZE_T addr;
+    int    sig;
+    logic [XLEN-1:0] val;
+
+    // read packet
+    status = gdb_get_packet(pkt);
+
+    // signal/address
+    case (pkt[0])
+      "s": begin
+        status = $sscanf(pkt, "s%h", addr);
+        if (status == 1) begin
+          pc = addr;
+        end
+      end
+      "S": begin
+        status = $sscanf(pkt, "S%h;%h", sig, addr);
+        state = state_t'(sig);
+        if (status == 2) begin
+          pc = addr;
+        end
+      end
+    endcase
+
+    // perform a step
+    // TODO: step actual retired instruction
+    $display("DBG: before clock pc = 'h%08h.", pc);
+    @(posedge clk);
+    $display("DBG: after clock pc = 'h%08h.", pc);
+
+    // send response
+    status = gdb_stop_reply();
+    $display("DBG: after repply.");
+  endtask: gdb_step
+
+  function automatic int gdb_continue ();
+    int status;
+    string pkt;
+    SIZE_T addr;
+    int    sig;
+    logic [XLEN-1:0] val;
+
+    // read packet
+    status = gdb_get_packet(pkt);
+
+    // signal/address
+    case (pkt[0])
+      "c": begin
+        status = $sscanf(pkt, "c%h", addr);
+        state = RUNNING;
+        if (status == 1) begin
+          pc = addr;
+        end
+      end
+      "C": begin
+        status = $sscanf(pkt, "C%h;%h", sig, addr);
+        state = state_t'(sig);
+        if (status == 2) begin
+          pc = addr;
+        end
+      end
+    endcase
+
+    // send response
+    status = gdb_stop_reply();
+
+    return(1);
+  endfunction: gdb_continue
+
+///////////////////////////////////////////////////////////////////////////////
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
 
-  initial begin
+  initial
+  begin
     static byte ch [] = new[1];
     static byte bf [] = new[2];
     int status;
@@ -547,53 +647,67 @@ module riscv_gdb_stub #(
       $info("Connected to '%0s'.", SOCKET);
     end
 
-    // display received characters
-    /* verilator lint_off INFINITELOOP */
-    forever begin
-
-      // Questa quirk, flush STDOUT
-      $fflush(32'h00000002);
-      status = server_recv(fd, ch, MSG_PEEK);
-      if (ch[0] == "+") begin
-        status = server_recv(fd, ch, 0);
-        $display("DEBUG: unexpected \"+\".");
-      end else
-      if (ch[0] == SIGQUIT) begin  // 0x03
-        state = SIGINT;
-        $error("Interrupt SIGQUIT (0x03) (Ctrl+c).");
-        // fake empty packet
-        status = gdb_stop_reply();
-      end else
-      if (ch[0] == "$") begin
-        status = server_recv(fd, bf, MSG_PEEK);
-        // parse command
-        case (bf[1])
-          "x": status = gdb_mem_bin_read();
-          "X": status = gdb_mem_bin_write();
-          "m": status = gdb_mem_read();
-          "M": status = gdb_mem_write();
-          "g": status = gdb_reg_readall();
-          "G": status = gdb_reg_writeall();
-          "p": status = gdb_reg_readone();
-          "P": status = gdb_reg_writeone();
-          "?": status = gdb_stop_reply();
-          "Q",
-          "q": gdb_q_packet();
-          "v": gdb_v_packet();
-          default: begin
-            string pkt;
-            // read packet
-            status = gdb_get_packet(pkt);
-            // for unsupported commands respond with empty packet
-            status = gdb_send_packet("");
-          end
-        endcase
+    // main loop
+    forever
+    begin
+      // get a character from the socket
+      if (state == RUNNING) begin
+        // non-blocking
+        status = server_recv(fd, ch, MSG_PEEK | MSG_DONTWAIT);
+        if (status != 1) begin
+          // TODO: it should be an entire instruction
+          @(posedge clk);
+        end
       end else begin
-        $error("Unexpected sequence from degugger \"%s\".", ch);
+        // blocking
+        status = server_recv(fd, ch, MSG_PEEK);
+      end
+      // if there are new characters in the socket
+      if (status == 1) begin
+        if (ch[0] == "+") begin
+          $display("DEBUG: unexpected \"+\".");
+          // remove the acknowledge from the socket
+          status = server_recv(fd, ch, 0);
+        end else
+        if (ch[0] == SIGQUIT) begin  // 0x03
+          state = SIGINT;
+          $error("Interrupt SIGQUIT (0x03) (Ctrl+c).");
+          // fake empty packet
+          status = gdb_stop_reply();
+        end else
+        if (ch[0] == "$") begin
+          status = server_recv(fd, bf, MSG_PEEK);
+          // parse command
+          case (bf[1])
+            "x": status = gdb_mem_bin_read();
+            "X": status = gdb_mem_bin_write();
+            "m": status = gdb_mem_read();
+            "M": status = gdb_mem_write();
+            "g": status = gdb_reg_readall();
+            "G": status = gdb_reg_writeall();
+            "p": status = gdb_reg_readone();
+            "P": status = gdb_reg_writeone();
+            "s",
+            "S":          gdb_step();
+            "c",
+            "C": status = gdb_continue();
+            "?": status = gdb_state();
+            "Q",
+            "q": gdb_q_packet();
+            "v": gdb_v_packet();
+            default: begin
+              string pkt;
+              // read packet
+              status = gdb_get_packet(pkt);
+              // for unsupported commands respond with empty packet
+              status = gdb_send_packet("");
+            end
+          endcase
+        end else begin
+          $error("Unexpected sequence from degugger \"%s\".", ch);
+        end
       end
     end
-    /* verilator lint_on INFINITELOOP */
-
   end
 
   final
