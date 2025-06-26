@@ -10,6 +10,8 @@ module riscv_gdb_stub #(
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
   parameter  string       SOCKET = "gdb_stub_socket",
+  // memory
+  parameter  int unsigned MEM_SIZ = 2**16,
   // DEBUG parameters
   parameter  bit DEBUG_LOG = 1'b1
 )(
@@ -259,6 +261,9 @@ module riscv_gdb_stub #(
 
 //    $display("DBG: gdb_mem_read: adr = %08x, len=%08x", adr, len);
 
+    // TODO: handle individual memory instances
+    adr = adr[$clog2(MEM_SIZ):0];
+
     // read memory
     pkt = {len{"XX"}};
     for (SIZE_T i=0; i<len; i++) begin
@@ -302,6 +307,9 @@ module riscv_gdb_stub #(
     // remove the header from the packet, only data remains
     dat = pkt.substr(pkt.len() - 2*len, pkt.len() - 1);
 //    $display("DBG: gdb_mem_write: dat = %s", dat);
+
+    // TODO: handle individual memory instances
+    adr = adr[$clog2(MEM_SIZ):0];
 
     // write memory
     for (SIZE_T i=0; i<len; i++) begin

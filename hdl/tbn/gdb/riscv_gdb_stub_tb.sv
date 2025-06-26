@@ -10,6 +10,8 @@ module riscv_gdb_stub_tb #(
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
   parameter  string       SOCKET = "gdb_stub_socket",
+  // memory
+  parameter  int unsigned MEM_SIZ = 2**16,
   // DEBUG parameters
   parameter  bit DEBUG_LOG = 1'b1
 );
@@ -56,15 +58,19 @@ module riscv_gdb_stub_tb #(
   logic [XLEN-1:0] pc = '0;
 
   // memory
-  logic [8-1:0] mem [0:2**16-1];
+  logic [8-1:0] mem [0:MEM_SIZ-1];
 
   // CPU debug interface
   logic dbg_req;  // request (behaves like VALID)
   logic dbg_grt;  // grant   (behaves like VALID)
 
   always @(posedge clk, posedge rst)
-  if (rst) pc <= 0;
-  else     pc <= pc+1;
+  if (rst) begin
+    pc <= 32'h8000_0000;
+  end else begin
+    pc <= pc+4;
+    $display("DBG: mem[%08h] = %p", pc, mem[pc[$clog2(MEM_SIZ):0]+:4]);
+  end
 
 ///////////////////////////////////////////////////////////////////////////////
 // debugger stub
@@ -74,6 +80,8 @@ module riscv_gdb_stub_tb #(
     .XLEN   (XLEN  ),
     .SIZE_T (SIZE_T),
     .SOCKET (SOCKET),
+    // memories
+    .MEM_SIZ (MEM_SIZ),
     // DEBUG parameters
     .DEBUG_LOG (DEBUG_LOG)
   ) stub (
