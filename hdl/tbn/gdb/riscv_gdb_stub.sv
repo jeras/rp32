@@ -23,9 +23,13 @@ module riscv_gdb_stub #(
   ref    logic [XLEN-1:0] pc,
   // memories
   ref    logic [8-1:0] mem [0:2**16-1],
-  // CPU debug interface
-  output logic dbg_req,  // request (behaves like VALID)
-  output logic dbg_grt   // grant   (behaves like VALID)
+  // IFU interface (instruction fetch unit)
+  input  logic ifu_trn,  // transfer
+  input  logic ifu_adr,  // address
+  // LSU interface (load/store unit)
+  input  logic lsu_trn,  // transfer
+  input  logic lsu_adr,  // address
+  input  logic lsu_wen   // write enable
 );
 
   import socket_dpi_pkg::*;
@@ -600,7 +604,7 @@ module riscv_gdb_stub #(
     // perform a step
     // TODO: step actual retired instruction
     $display("DBG: before clock pc = 'h%08h.", pc);
-    @(posedge clk);
+    step;
     $display("DBG: after clock pc = 'h%08h.", pc);
 
     // send response
@@ -646,6 +650,17 @@ module riscv_gdb_stub #(
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
 
+  task step;
+    do begin
+      @(posedge clk);
+    end while (~ifu_trn);
+
+  endtask: step
+
+///////////////////////////////////////////////////////////////////////////////
+// main loop
+///////////////////////////////////////////////////////////////////////////////
+
   initial
   begin
     static byte ch [] = new[1];
@@ -673,13 +688,13 @@ module riscv_gdb_stub #(
         // non-blocking
         status = server_recv(fd, ch, MSG_PEEK | MSG_DONTWAIT);
         if (status != 1) begin
-          // TODO: it should be an entire instruction
-          @(posedge clk);
+          step;
         end
       end else begin
         // blocking
         status = server_recv(fd, ch, MSG_PEEK);
       end
+
       // if there are new characters in the socket
       if (status == 1) begin
         if (ch[0] == "+") begin

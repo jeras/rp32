@@ -27,7 +27,7 @@ source riscv_gdb_stub.cmd
 (gdb) set riscv numeric-register-names on
 (gdb) info registers
 (gdb) i r
-(gdb) file ../../../riscof/riscof_work/rv32i_m/I/src/add-01.S/dut/dut.elf
+(gdb) file idut.elf
 (gdb) load
 ```
 

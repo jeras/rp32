@@ -26,6 +26,14 @@ module riscv_gdb_stub_tb #(
   logic clk = 1'b1;  // clock
   logic rst = 1'b1;  // reset
 
+  // IFU interface (instruction fetch unit)
+  logic ifu_trn;  // transfer
+  logic ifu_adr;  // address
+  // LSU interface (load/store unit)
+  logic lsu_trn;  // transfer
+  logic lsu_adr;  // address
+  logic lsu_wen;  // write enable
+
 ///////////////////////////////////////////////////////////////////////////////
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
@@ -60,10 +68,6 @@ module riscv_gdb_stub_tb #(
   // memory
   logic [8-1:0] mem [0:MEM_SIZ-1];
 
-  // CPU debug interface
-  logic dbg_req;  // request (behaves like VALID)
-  logic dbg_grt;  // grant   (behaves like VALID)
-
   always @(posedge clk, posedge rst)
   if (rst) begin
     pc <= 32'h8000_0000;
@@ -71,6 +75,9 @@ module riscv_gdb_stub_tb #(
     pc <= pc+4;
     $display("DBG: mem[%08h] = %p", pc, mem[pc[$clog2(MEM_SIZ):0]+:4]);
   end
+
+  assign ifu_trn = ~rst;
+  assign ifu_adr = pc;
 
 ///////////////////////////////////////////////////////////////////////////////
 // debugger stub
@@ -86,16 +93,20 @@ module riscv_gdb_stub_tb #(
     .DEBUG_LOG (DEBUG_LOG)
   ) stub (
     // system signals
-    .clk  (clk),
-//    .rst  (rst),
+    .clk     (clk),
+//  .rst     (rst),
     // registers
-    .gpr  (gpr),
-    .pc   (pc ),
+    .gpr     (gpr),
+    .pc      (pc ),
     // memories
-    .mem  (mem),
-    // CPU debug interface
-    .dbg_req (dbg_req),
-    .dbg_grt (dbg_grt)
+    .mem     (mem),
+    // IFU interface (instruction fetch unit)
+    .ifu_trn (ifu_trn),
+    .ifu_adr (ifu_adr),
+    // LSU interface (load/store unit)
+    .lsu_trn (lsu_trn),
+    .lsu_adr (lsu_adr),
+    .lsu_wen (lsu_wen)
   );
 
 endmodule: riscv_gdb_stub_tb
