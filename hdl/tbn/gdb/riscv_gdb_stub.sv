@@ -28,8 +28,9 @@ module riscv_gdb_stub #(
   input  logic ifu_adr,  // address
   // LSU interface (load/store unit)
   input  logic lsu_trn,  // transfer
+  input  logic lsu_wen,  // write enable
   input  logic lsu_adr,  // address
-  input  logic lsu_wen   // write enable
+  input  logic lsu_siz   // size
 );
 
   import socket_dpi_pkg::*;
@@ -207,7 +208,7 @@ module riscv_gdb_stub #(
     end
   endfunction: gdb_qsupported
 
-  function automatic void gdb_q_packet ();
+  function automatic void gdb_query_packet ();
     string pkt;
     int status;
 
@@ -220,13 +221,13 @@ module riscv_gdb_stub #(
       // not supported, send empty response packet
       status = gdb_send_packet("");
     end
-  endfunction: gdb_q_packet
+  endfunction: gdb_query_packet
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB verbose
 ///////////////////////////////////////////////////////////////////////////////
 
-  function automatic void gdb_v_packet ();
+  function automatic void gdb_verbose_packet ();
     string pkt;
     int status;
 
@@ -235,7 +236,7 @@ module riscv_gdb_stub #(
 
     // not supported, send empty response packet
     status = gdb_send_packet("");
-  endfunction: gdb_v_packet
+  endfunction: gdb_verbose_packet
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB memory access (hexadecimal)
@@ -449,28 +450,26 @@ module riscv_gdb_stub #(
 
     // GPR
     for (int unsigned i=0; i<32; i++) begin
-      case (XLEN)
 `ifdef VERILATOR
-        32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", val);
-        64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", val);
+      status = $sscanf(pkt.substr(i*len, i*len+len-1), "%h", val);
 `else
+      case (XLEN)
         32: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%8h", val);
         64: status = $sscanf(pkt.substr(i*len, i*len+len-1), "%16h", val);
-`endif
       endcase
+`endif
       // swap byte order since they are sent LSB first
       gpr[i] = {<<8{val}};
     end
     // PC
-    case (XLEN)
 `ifdef VERILATOR
-      32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", val);
-      64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", val);
+    status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%h", val);
 `else
+    case (XLEN)
       32: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%8h", val);
       64: status = $sscanf(pkt.substr(32*len, 32*len+len-1), "%16h", val);
-`endif
     endcase
+`endif
     // swap byte order since they are sent LSB first
     pc = {<<8{val}};
 
@@ -530,15 +529,14 @@ module riscv_gdb_stub #(
     status = gdb_get_packet(pkt);
 
     // register index and value
-    case (XLEN)
 `ifdef VERILATOR
-      32: status = $sscanf(pkt, "P%h=%h", idx, val);
-      64: status = $sscanf(pkt, "P%h=%h", idx, val);
+    status = $sscanf(pkt, "P%h=%h", idx, val);
 `else
+    case (XLEN)
       32: status = $sscanf(pkt, "P%h=%8h", idx, val);
       64: status = $sscanf(pkt, "P%h=%16h", idx, val);
-`endif
     endcase
+`endif
 
     // write registers
     if (idx<32) begin
@@ -568,6 +566,95 @@ module riscv_gdb_stub #(
 ///////////////////////////////////////////////////////////////////////////////
 // GDB breakpoints/watchpoints
 ///////////////////////////////////////////////////////////////////////////////
+
+  // point type
+  typedef enum int unsigned {
+    swbreak = 0,  // software breakpoint
+    hwbreak = 1,  // hardware breakpoint
+    watch   = 2,  // write  watchpoint
+    rwatch  = 3,  // read   watchpoint
+    awatch  = 4   // access watchpoint
+  } ptype_t;
+
+  typedef int unsigned pkind_t;
+
+  typedef struct packed {
+    ptype_t ptype;
+    pkind_t pkind;
+  } point_t;
+
+  // associative array for hardware breakpoints/watchpoint
+  point_t points [logic [XLEN-1:0]];
+
+  function automatic int gdb_point_remove ();
+    int status;
+    string pkt;
+    ptype_t ptype;
+    logic [XLEN-1:0] addr;
+    pkind_t pkind;
+
+    // read packet
+    status = gdb_get_packet(pkt);
+
+    // breakpoint/watchpoint
+`ifdef VERILATOR
+    status = $sscanf(pkt, "z%h,%h,%h", ptype, addr, pkind);
+`else
+    case (XLEN)
+      32: status = $sscanf(pkt, "z%h,%8h,%h", ptype, addr, pkind);
+      64: status = $sscanf(pkt, "z%h,%16h,%h", ptype, addr, pkind);
+    endcase
+`endif
+
+    case (ptype)
+      swbreak: begin
+        // software breakpoints are not supported
+        status = gdb_send_packet("");
+      end
+      default: begin
+        // software breakpoints are not supported
+        points.delete(addr);
+        status = gdb_send_packet("OK");
+      end
+    endcase
+
+    return(1);
+  endfunction: gdb_point_remove
+
+  function automatic int gdb_point_insert ();
+    int status;
+    string pkt;
+    ptype_t ptype;
+    logic [XLEN-1:0] addr;
+    pkind_t pkind;
+
+    // read packet
+    status = gdb_get_packet(pkt);
+
+    // breakpoint/watchpoint
+`ifdef VERILATOR
+    status = $sscanf(pkt, "Z%h,%h,%h", ptype, addr, pkind);
+`else
+    case (XLEN)
+      32: status = $sscanf(pkt, "Z%h,%8h,%h", ptype, addr, pkind);
+      64: status = $sscanf(pkt, "Z%h,%16h,%h", ptype, addr, pkind);
+    endcase
+`endif
+
+    case (ptype)
+      swbreak: begin
+        // software breakpoints are not supported
+        status = gdb_send_packet("");
+      end
+      default: begin
+        // software breakpoints are not supported
+        points[addr] = '{ptype, pkind};
+        status = gdb_send_packet("OK");
+      end
+    endcase
+
+    return(1);
+  endfunction: gdb_point_insert
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB step/continue
@@ -647,12 +734,33 @@ module riscv_gdb_stub #(
   endfunction: gdb_continue
 
 ///////////////////////////////////////////////////////////////////////////////
-// main loop
+// clock period
 ///////////////////////////////////////////////////////////////////////////////
 
-  task step;
+  task automatic step;
     do begin
+      // on clock edge sample system buses
       @(posedge clk);
+
+      // check for hardware breakpoints
+      if (ifu_trn) begin
+        if (points.exists(ifu_adr)) begin
+          // software breakpoint (TODO)
+          // hardware breakpoint
+          if (points[ifu_adr].ptype == hwbreak) begin
+            state = SIGTRAP;
+          end
+        end
+      end
+
+      // check for hardware breakpoints
+      if (ifu_trn) begin
+        if (points.exists(ifu_adr)) begin
+          if (points[ifu_adr].ptype == hwbreak) begin
+            state = SIGTRAP;
+          end
+        end
+      end
     end while (~ifu_trn);
 
   endtask: step
@@ -726,8 +834,10 @@ module riscv_gdb_stub #(
             "C": status = gdb_continue();
             "?": status = gdb_state();
             "Q",
-            "q": gdb_q_packet();
-            "v": gdb_v_packet();
+            "q":          gdb_query_packet();
+            "v":          gdb_verbose_packet();
+            "z": status = gdb_point_remove();
+            "Z": status = gdb_point_insert();
             default: begin
               string pkt;
               // read packet

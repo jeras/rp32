@@ -27,7 +27,7 @@ source riscv_gdb_stub.cmd
 (gdb) set riscv numeric-register-names on
 (gdb) info registers
 (gdb) i r
-(gdb) file idut.elf
+(gdb) file ../../../riscof/riscof_work/rv32i_m/I/src/add-01.S/dut/dut.elf
 (gdb) load
 ```
 
@@ -162,7 +162,7 @@ https://www.accellera.org/images/eda/sv-ec/0074.html
 # Notes
 
 ```
-./run-verilator.sh 
+./run-verilator.sh
 %Error: riscv_gdb_stub_tb.sv:86:33: syntax error, unexpected ',', expecting IDENTIFIER-for-type
    86 |       code = $fread(buffer, fd, , 1);
       |                                 ^
