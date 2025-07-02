@@ -24,15 +24,16 @@ module riscv_gdb_stub_tb #(
 
   // system signals
   logic clk = 1'b1;  // clock
-  logic rst = 1'b1;  // reset
+  logic rst;  // reset
 
   // IFU interface (instruction fetch unit)
-  logic ifu_trn;  // transfer
-  logic ifu_adr;  // address
+  logic            ifu_trn;  // transfer
+  logic [XLEN-1:0] ifu_adr;  // address
   // LSU interface (load/store unit)
-  logic lsu_trn;  // transfer
-  logic lsu_adr;  // address
-  logic lsu_wen;  // write enable
+  logic            lsu_trn;  // transfer
+  logic            lsu_wen;  // write enable
+  logic [XLEN-1:0] lsu_adr;  // address
+  logic    [2-1:0] lsu_siz;  // address
 
 ///////////////////////////////////////////////////////////////////////////////
 // main loop
@@ -48,7 +49,7 @@ module riscv_gdb_stub_tb #(
     /* verilator lint_off INITIALDLY */
     repeat (4) @(posedge clk);
     // synchronous reset release
-    rst <= 1'b0;
+//    rst <= 1'b0;
     repeat (1000) @(posedge clk);
     $display("ERROR: reached simulation timeout!");
     repeat (4) @(posedge clk);
@@ -76,8 +77,12 @@ module riscv_gdb_stub_tb #(
 //    $display("DBG: mem[%08h] = %p", pc, mem[pc[$clog2(MEM_SIZ):0]+:4]);
   end
 
+  // IFU
   assign ifu_trn = ~rst;
   assign ifu_adr = pc;
+
+  // LSU
+  assign lsu_trn = 1'b0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // debugger stub
@@ -94,7 +99,7 @@ module riscv_gdb_stub_tb #(
   ) stub (
     // system signals
     .clk     (clk),
-//  .rst     (rst),
+    .rst     (rst),
     // registers
     .gpr     (gpr),
     .pc      (pc ),
@@ -105,8 +110,9 @@ module riscv_gdb_stub_tb #(
     .ifu_adr (ifu_adr),
     // LSU interface (load/store unit)
     .lsu_trn (lsu_trn),
+    .lsu_wen (lsu_wen),
     .lsu_adr (lsu_adr),
-    .lsu_wen (lsu_wen)
+    .lsu_siz (lsu_siz)
   );
 
 endmodule: riscv_gdb_stub_tb

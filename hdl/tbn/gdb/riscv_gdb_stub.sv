@@ -22,15 +22,15 @@ module riscv_gdb_stub #(
   ref    logic [XLEN-1:0] gpr [0:32-1],
   ref    logic [XLEN-1:0] pc,
   // memories
-  ref    logic [8-1:0] mem [0:2**16-1],
+  ref    logic    [8-1:0] mem [0:2**16-1],
   // IFU interface (instruction fetch unit)
-  input  logic ifu_trn,  // transfer
-  input  logic ifu_adr,  // address
+  input  logic            ifu_trn,  // transfer
+  input  logic [XLEN-1:0] ifu_adr,  // address
   // LSU interface (load/store unit)
-  input  logic lsu_trn,  // transfer
-  input  logic lsu_wen,  // write enable
-  input  logic lsu_adr,  // address
-  input  logic lsu_siz   // size
+  input  logic            lsu_trn,  // transfer
+  input  logic            lsu_wen,  // write enable
+  input  logic [XLEN-1:0] lsu_adr,  // address
+  input  logic    [2-1:0] lsu_siz   // size
 );
 
   import socket_dpi_pkg::*;
@@ -71,7 +71,7 @@ module riscv_gdb_stub #(
     STEP     = 8'h82
   } state_t;
 
-  state_t state = SIGINT;
+  state_t state;
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB character get/put
@@ -660,7 +660,7 @@ module riscv_gdb_stub #(
   endfunction: gdb_point_insert
 
 ///////////////////////////////////////////////////////////////////////////////
-// GDB step/continue
+// GDB step/continue/kill
 ///////////////////////////////////////////////////////////////////////////////
 
   // TODO: jump to address might not be supported
@@ -725,9 +725,28 @@ module riscv_gdb_stub #(
       end
     endcase
 
+    $display("DBG: points: %p", points);
+
     // do not send packet response here
     return(0);
   endfunction: gdb_continue
+
+  function automatic int gdb_kill ();
+    int status;
+    string pkt;
+    SIZE_T addr;
+    int    sig;
+    logic [XLEN-1:0] val;
+
+    // read packet
+    status = gdb_get_packet(pkt);
+
+    // enter RESET state
+    state = RESET;
+
+    // do not send packet response here
+    return(0);
+  endfunction: gdb_kill
 
 ///////////////////////////////////////////////////////////////////////////////
 // GDB packet
@@ -767,6 +786,7 @@ module riscv_gdb_stub #(
         "v":          gdb_verbose_packet();
         "z": status = gdb_point_remove();
         "Z": status = gdb_point_insert();
+        "k": status = gdb_kill();
         default: begin
           string pkt;
           // read packet
@@ -776,7 +796,7 @@ module riscv_gdb_stub #(
         end
       endcase
     end else begin
-      $error("Unexpected sequence from degugger \"%s\".", ch);
+      $error("Unexpected sequence from degugger %p = \"%s\".", ch, ch);
     end
     return status;
   endfunction: gdb_packet
@@ -790,6 +810,10 @@ module riscv_gdb_stub #(
     static byte ch [] = new[1];
     int status;
     int code;
+
+    // set RESET
+    rst = 1'b1;
+    state = RESET;
 
     // open character device for R/W
     fd = server_start("riscv_gdb_stub");
@@ -808,6 +832,15 @@ module riscv_gdb_stub #(
     begin: loop
       case (state)
 
+        RESET: begin
+          // go through a reset sequence
+          rst = 1'b1;
+          repeat (4) @(posedge clk);
+          rst <= 1'b0;
+          // enter trap state
+          state = SIGTRAP;
+        end
+
         CONTINUE: begin
           // non-blocking socket read
           status = server_recv(fd, ch, MSG_PEEK | MSG_DONTWAIT);
@@ -815,7 +848,7 @@ module riscv_gdb_stub #(
           if (status != 1) begin
             // on clock edge sample system buses
             @(posedge clk);
-      
+
             // check for illegal instructions
             // TODO
 
@@ -827,19 +860,19 @@ module riscv_gdb_stub #(
                 // hardware breakpoint
                 if (points[ifu_adr].ptype == hwbreak) begin
                   state = SIGTRAP;
-                  $display("DEBUG: Trigered HW breakpoint at address %h.", ifu_adr);
+                  $display("DEBUG: Triggered HW breakpoint at address %h.", ifu_adr);
                   // send response
                   status = gdb_stop_reply(state);
                 end
               end
             end
-      
+
             // check for hardware watchpoints
             if (lsu_trn) begin
               if (points.exists(lsu_adr)) begin
-                if (points[ifu_adr].ptype inside {watch, rwatch, awatch}) begin
+                if (points[lsu_adr].ptype inside {watch, rwatch, awatch}) begin
                   state = SIGTRAP;
-                  $display("DEBUG: Trigered HW watchpoint at address %h.", ifu_adr);
+                  $display("DEBUG: Triggered HW watchpoint at address %h.", lsu_adr);
                   // send response
                   status = gdb_stop_reply(state);
                 end

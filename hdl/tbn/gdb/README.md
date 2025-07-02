@@ -1,4 +1,21 @@
-# GDB stub
+# GDB server stub
+
+This is a GDB server stub written in SystemVerilog.
+
+Advantages:
+
+- can be used on RTL CPU without explicit debug functionality,
+- real time debugging (no simulation time is consumed by the debugger),
+- read/write access to registers and memories,
+- hardware breakpoints/watchpoints.
+
+Disadvantages:
+
+- non synthesizable,
+- writing to registers/memory can have unpredictable effects (seriously).
+
+## 
+
 
 ```sh
 sudo apt install socat
@@ -42,6 +59,14 @@ Manipulating memory locations:
 ```gdb
 set {int}0x0 = 0x01234567
 
+```
+
+Insert breakpoint:
+
+```gdb
+hbreak *0x80000030
+info break
+c
 ```
 
 Additional `maintenance` commands can be found here:
