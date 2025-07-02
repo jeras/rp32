@@ -52,7 +52,7 @@ module riscv_gdb_stub_tb #(
     repeat (1000) @(posedge clk);
     $display("ERROR: reached simulation timeout!");
     repeat (4) @(posedge clk);
-    $finish();
+//    $finish();
     /* verilator lint_on INITIALDLY */
   end: process_reset
 
@@ -73,7 +73,7 @@ module riscv_gdb_stub_tb #(
     pc <= 32'h8000_0000;
   end else begin
     pc <= pc+4;
-    $display("DBG: mem[%08h] = %p", pc, mem[pc[$clog2(MEM_SIZ):0]+:4]);
+//    $display("DBG: mem[%08h] = %p", pc, mem[pc[$clog2(MEM_SIZ):0]+:4]);
   end
 
   assign ifu_trn = ~rst;

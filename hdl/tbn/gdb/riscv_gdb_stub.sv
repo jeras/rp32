@@ -47,7 +47,6 @@ module riscv_gdb_stub #(
 
   // state
   typedef enum byte {
-    RUNNING = 8'h00,
     // signals
     SIGHUP  = 8'd01,  // Hangup
     SIGINT  = 8'd02,  // Terminal interrupt signal
@@ -65,7 +64,11 @@ module riscv_gdb_stub #(
 	  SIGALRM = 8'd14,  // Alarm clock
 	  SIGTERM = 8'd15,  // Termination signal
     // reset
-    RESET   = 8'h80
+    RESET    = 8'h80,
+    // running continuously
+    CONTINUE = 8'h81,
+    // running step
+    STEP     = 8'h82
   } state_t;
 
   state_t state = SIGINT;
@@ -660,7 +663,9 @@ module riscv_gdb_stub #(
 // GDB step/continue
 ///////////////////////////////////////////////////////////////////////////////
 
-  task automatic gdb_step;
+  // TODO: jump to address might not be supported
+
+  function automatic int gdb_step;
     int status;
     string pkt;
     SIZE_T addr;
@@ -674,7 +679,7 @@ module riscv_gdb_stub #(
     case (pkt[0])
       "s": begin
         status = $sscanf(pkt, "s%h", addr);
-        state = SIGTRAP;
+        state = STEP;
         if (status == 1) begin
           pc = addr;
         end
@@ -688,16 +693,9 @@ module riscv_gdb_stub #(
       end
     endcase
 
-    // perform a step
-    // TODO: step actual retired instruction
-    $display("DBG: before clock pc = 'h%08h.", pc);
-    step;
-    $display("DBG: after clock pc = 'h%08h.", pc);
-
-    // send response
-    status = gdb_stop_reply();
-    $display("DBG: after repply.");
-  endtask: gdb_step
+    // do not send packet response here
+    return(0);
+  endfunction: gdb_step
 
   function automatic int gdb_continue ();
     int status;
@@ -713,7 +711,7 @@ module riscv_gdb_stub #(
     case (pkt[0])
       "c": begin
         status = $sscanf(pkt, "c%h", addr);
-        state = RUNNING;
+        state = CONTINUE;
         if (status == 1) begin
           pc = addr;
         end
@@ -727,43 +725,61 @@ module riscv_gdb_stub #(
       end
     endcase
 
-    // send response
-    status = gdb_stop_reply(SIGTRAP);
-
-    return(1);
+    // do not send packet response here
+    return(0);
   endfunction: gdb_continue
 
 ///////////////////////////////////////////////////////////////////////////////
-// clock period
+// GDB packet
 ///////////////////////////////////////////////////////////////////////////////
 
-  task automatic step;
-    do begin
-      // on clock edge sample system buses
-      @(posedge clk);
+  function automatic int gdb_packet (
+    input byte ch [1]
+  );
+    static byte bf [] = new[2];
+    int status;
+    int code;
 
-      // check for hardware breakpoints
-      if (ifu_trn) begin
-        if (points.exists(ifu_adr)) begin
-          // software breakpoint (TODO)
-          // hardware breakpoint
-          if (points[ifu_adr].ptype == hwbreak) begin
-            state = SIGTRAP;
-          end
+    if (ch[0] == "+") begin
+      $display("DEBUG: unexpected \"+\".");
+      // remove the acknowledge from the socket
+      status = server_recv(fd, ch, 0);
+    end else
+    if (ch[0] == "$") begin
+      status = server_recv(fd, bf, MSG_PEEK);
+      // parse command
+      case (bf[1])
+//        "x": status = gdb_mem_bin_read();
+//        "X": status = gdb_mem_bin_write();
+        "m": status = gdb_mem_read();
+        "M": status = gdb_mem_write();
+        "g": status = gdb_reg_readall();
+        "G": status = gdb_reg_writeall();
+        "p": status = gdb_reg_readone();
+        "P": status = gdb_reg_writeone();
+        "s",
+        "S": status = gdb_step();
+        "c",
+        "C": status = gdb_continue();
+        "?": status = gdb_state();
+        "Q",
+        "q":          gdb_query_packet();
+        "v":          gdb_verbose_packet();
+        "z": status = gdb_point_remove();
+        "Z": status = gdb_point_insert();
+        default: begin
+          string pkt;
+          // read packet
+          status = gdb_get_packet(pkt);
+          // for unsupported commands respond with empty packet
+          status = gdb_send_packet("");
         end
-      end
-
-      // check for hardware breakpoints
-      if (ifu_trn) begin
-        if (points.exists(ifu_adr)) begin
-          if (points[ifu_adr].ptype == hwbreak) begin
-            state = SIGTRAP;
-          end
-        end
-      end
-    end while (~ifu_trn);
-
-  endtask: step
+      endcase
+    end else begin
+      $error("Unexpected sequence from degugger \"%s\".", ch);
+    end
+    return status;
+  endfunction: gdb_packet
 
 ///////////////////////////////////////////////////////////////////////////////
 // main loop
@@ -772,7 +788,6 @@ module riscv_gdb_stub #(
   initial
   begin
     static byte ch [] = new[1];
-    static byte bf [] = new[2];
     int status;
     int code;
 
@@ -788,69 +803,85 @@ module riscv_gdb_stub #(
       $info("Connected to '%0s'.", SOCKET);
     end
 
-    // main loop
+    // main loop/FSM
     forever
-    begin
-      // get a character from the socket
-      if (state == RUNNING) begin
-        // non-blocking
-        status = server_recv(fd, ch, MSG_PEEK | MSG_DONTWAIT);
-        if (status != 1) begin
-          step;
-        end
-      end else begin
-        // blocking
-        status = server_recv(fd, ch, MSG_PEEK);
-      end
+    begin: loop
+      case (state)
 
-      // if there are new characters in the socket
-      if (status == 1) begin
-        if (ch[0] == "+") begin
-          $display("DEBUG: unexpected \"+\".");
-          // remove the acknowledge from the socket
-          status = server_recv(fd, ch, 0);
-        end else
-        if (ch[0] == SIGQUIT) begin  // 0x03
-          state = SIGINT;
-          $error("Interrupt SIGQUIT (0x03) (Ctrl+c).");
-          // fake empty packet
-          status = gdb_stop_reply();
-        end else
-        if (ch[0] == "$") begin
-          status = server_recv(fd, bf, MSG_PEEK);
-          // parse command
-          case (bf[1])
-//            "x": status = gdb_mem_bin_read();
-//            "X": status = gdb_mem_bin_write();
-            "m": status = gdb_mem_read();
-            "M": status = gdb_mem_write();
-            "g": status = gdb_reg_readall();
-            "G": status = gdb_reg_writeall();
-            "p": status = gdb_reg_readone();
-            "P": status = gdb_reg_writeone();
-            "s",
-            "S":          gdb_step();
-            "c",
-            "C": status = gdb_continue();
-            "?": status = gdb_state();
-            "Q",
-            "q":          gdb_query_packet();
-            "v":          gdb_verbose_packet();
-            "z": status = gdb_point_remove();
-            "Z": status = gdb_point_insert();
-            default: begin
-              string pkt;
-              // read packet
-              status = gdb_get_packet(pkt);
-              // for unsupported commands respond with empty packet
-              status = gdb_send_packet("");
+        CONTINUE: begin
+          // non-blocking socket read
+          status = server_recv(fd, ch, MSG_PEEK | MSG_DONTWAIT);
+          // if empty, check for breakpoints/watchpoints and continue
+          if (status != 1) begin
+            // on clock edge sample system buses
+            @(posedge clk);
+      
+            // check for illegal instructions
+            // TODO
+
+            // check for hardware breakpoints
+            if (ifu_trn) begin
+              if (points.exists(ifu_adr)) begin
+                // software breakpoint (TODO)
+                // TODO: check for EBREAK/C.EBREAK instruction codes in memory at address
+                // hardware breakpoint
+                if (points[ifu_adr].ptype == hwbreak) begin
+                  state = SIGTRAP;
+                  $display("DEBUG: Trigered HW breakpoint at address %h.", ifu_adr);
+                  // send response
+                  status = gdb_stop_reply(state);
+                end
+              end
             end
-          endcase
-        end else begin
-          $error("Unexpected sequence from degugger \"%s\".", ch);
+      
+            // check for hardware watchpoints
+            if (lsu_trn) begin
+              if (points.exists(lsu_adr)) begin
+                if (points[ifu_adr].ptype inside {watch, rwatch, awatch}) begin
+                  state = SIGTRAP;
+                  $display("DEBUG: Trigered HW watchpoint at address %h.", ifu_adr);
+                  // send response
+                  status = gdb_stop_reply(state);
+                end
+              end
+            end
+
+          // in case of Ctrl+C (character 0x03)
+          end else if (ch[0] == SIGQUIT) begin
+            state = SIGINT;
+            $display("DEBUG: Interrupt SIGQUIT (0x03) (Ctrl+c).");
+            // send response
+            status = gdb_stop_reply(state);
+
+          // parse packet and loop back
+          end else begin
+            status = gdb_packet(ch);
+          end
         end
-      end
-    end
+
+        STEP: begin
+          // step to the next instruction and trap again
+          do begin
+            @(posedge clk);
+          end while (~ifu_trn);
+          state = SIGTRAP;
+
+          // check for illegal instructions
+          // TODO
+
+          // send response
+          status = gdb_stop_reply(state);
+        end
+
+        // SIGTRAP, SIGINT, ...
+        default: begin
+          // blocking socket read
+          status = server_recv(fd, ch, MSG_PEEK);
+          // parse packet and loop back
+          status = gdb_packet(ch);
+        end
+      endcase
+    end: loop
   end
 
   final

@@ -85,7 +85,7 @@ int server_recv (int fd, const svOpenArrayHandle data, int flags) {
   status = recv(fd, svGetArrayPtr(data), svSizeOfArray(data), flags);
   if (status == -1) {
     // https://en.wikipedia.org/wiki/Errno.h
-    printf("RECV failed with errno = %0d.\n", errno);
+//    printf("RECV failed with errno = %0d.\n", errno);
     return -1;
   }
   return status;
