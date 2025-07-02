@@ -1,15 +1,15 @@
 ///////////////////////////////////////////////////////////////////////////////
-// GDB stub testbench
+// GDB server stub testbench
 //
 // Copyright 2025 Iztok Jeras <iztok.jeras@gmail.com>
 //
 // Licensed under CERN-OHL-P v2 or later
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_gdb_stub_tb #(
+module gdb_server_stub_tb #(
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
-  parameter  string       SOCKET = "gdb_stub_socket",
+  parameter  string       SOCKET = "gdb_server_stub_socket",
   // memory
   parameter  int unsigned MEM_SIZ = 2**16,
   // DEBUG parameters
@@ -88,7 +88,7 @@ module riscv_gdb_stub_tb #(
 // debugger stub
 ///////////////////////////////////////////////////////////////////////////////
 
-  riscv_gdb_stub #(
+  gdb_server_stub #(
     .XLEN   (XLEN  ),
     .SIZE_T (SIZE_T),
     .SOCKET (SOCKET),
@@ -115,4 +115,4 @@ module riscv_gdb_stub_tb #(
     .lsu_siz (lsu_siz)
   );
 
-endmodule: riscv_gdb_stub_tb
+endmodule: gdb_server_stub_tb

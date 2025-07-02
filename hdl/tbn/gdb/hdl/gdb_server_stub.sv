@@ -1,15 +1,15 @@
 ///////////////////////////////////////////////////////////////////////////////
-// GDB stub
+// GDB server stub
 //
 // Copyright 2025 Iztok Jeras <iztok.jeras@gmail.com>
 //
 // Licensed under CERN-OHL-P v2 or later
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_gdb_stub #(
+module gdb_server_stub #(
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint, but it results in warnings
-  parameter  string       SOCKET = "gdb_stub_socket",
+  parameter  string       SOCKET = "gdb_server_stub_socket",
   // memory
   parameter  int unsigned MEM_SIZ = 2**16,
   // DEBUG parameters
@@ -816,7 +816,7 @@ module riscv_gdb_stub #(
     state = RESET;
 
     // open character device for R/W
-    fd = server_start("riscv_gdb_stub");
+    fd = server_start("gdb_server_stub");
     $display("DEBUG: fd = '%08h'.", fd);
 
     // check if device was found
@@ -924,4 +924,4 @@ module riscv_gdb_stub #(
     $display("DEBUG: stopped server and closed socket.");
   end
 
-endmodule: riscv_gdb_stub
+endmodule: gdb_server_stub
