@@ -35,9 +35,9 @@ module r5p_mouse_riscof_tb
 `else
   parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
 `endif
-  parameter  logic [XLEN-1:0] IFU_RST = 32'h8000_0000,
-  parameter  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
-  parameter  logic [XLEN-1:0] GPR_ADR = 32'h801f_ff80,
+  parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
+  parameter  bit [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
+  parameter  bit [XLEN-1:0] GPR_ADR = 32'h801f_ff80,
   // memory size
   parameter  int unsigned MEM_SIZ = 2**22,
   // memory configuration

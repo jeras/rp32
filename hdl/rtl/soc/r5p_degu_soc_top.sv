@@ -182,7 +182,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       AMO: TCB_AMO_ABSENT,
       PRF: TCB_PRF_ABSENT,
       NXT: TCB_NXT_ABSENT,
-      MOD: TCB_MOD_BYTE_ENA,
+      MOD: TCB_MOD_LOG_SIZE,
       ORD: TCB_ORD_DESCENDING,
       NDN: TCB_NDN_BI_NDN
     },
@@ -610,6 +610,9 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
       // UART signals
       .uart_txd (uart_txd),
       .uart_rxd (uart_rxd),
+      // interrupts
+      .irq_tx (),
+      .irq_rx (),
       // system bus interface
       .tcb      (tcb_per[1])
     );

@@ -64,60 +64,84 @@ module r5p_mouse_soc_top
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam tcb_phy_t TCB_PHY_CPU = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: 2,
-    MIN: 0,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_CPU = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 1,
+      HLD: 0
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_LOG_SIZE,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
   };
 
-  localparam tcb_phy_t TCB_PHY_MEM = '{
-    // protocol
-    DLY: 1,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: 2,
-    MIN: 0,
-    MOD: TCB_BYTE_ENA,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_MEM = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 1,
+      HLD: 0
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_BYTE_ENA,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
   };
 
-  localparam tcb_phy_t TCB_PHY_PER = '{
-    // protocol
-    DLY: 0,
-    // signal widths
-    UNT: 8,
-    ADR: XLEN,
-    DAT: XLEN,
-    // data packing parameters
-    ALN: 2,
-    MIN: 2,
-    MOD: TCB_LOG_SIZE,
-    ORD: TCB_DESCENDING,
-    // channel configuration
-    CHN: TCB_COMMON_HALF_DUPLEX
+  localparam tcb_cfg_t CFG_PER = '{
+    // handshake parameter
+    HSK: '{
+      DLY: 0,
+      HLD: 0
+    },
+    // bus parameter
+    BUS: '{
+      ADR: XLEN,
+      DAT: XLEN,
+      LEN: TCB_BUS_DEF.LEN,
+      LCK: TCB_LCK_PRESENT,
+      CHN: TCB_CHN_HALF_DUPLEX,
+      AMO: TCB_AMO_ABSENT,
+      PRF: TCB_PRF_ABSENT,
+      NXT: TCB_NXT_ABSENT,
+      MOD: TCB_MOD_LOG_SIZE,
+      ORD: TCB_ORD_DESCENDING,
+      NDN: TCB_NDN_BI_NDN
+    },
+    // physical interface parameter
+    PMA: TCB_PMA_DEF
   };
 
   // system busses
-  tcb_if #(TCB_PHY_CPU) tcb_cpu         (.clk (clk), .rst (rst));
-  tcb_if #(TCB_PHY_CPU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
-  tcb_if #(TCB_PHY_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
-  tcb_if #(TCB_PHY_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
-  tcb_if #(TCB_PHY_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
+  tcb_if #(.CFG (CFG_CPU)) tcb_cpu         (.clk (clk), .rst (rst));
+  tcb_if #(.CFG (CFG_CPU)) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
+  tcb_if #(.CFG (CFG_MEM)) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
+  tcb_if #(.CFG (CFG_PER)) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
+  tcb_if #(.CFG (CFG_PER)) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Mouse core instance
@@ -143,6 +167,7 @@ module r5p_mouse_soc_top
   );
 
   // signals not provided by the CPU
+  assign tcb_cpu.req.lck = 1'b0;
   assign tcb_cpu.req.ndn = TCB_LITTLE;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -153,8 +178,8 @@ module r5p_mouse_soc_top
 
   // decoding memory/peripherals
   tcb_lib_decoder #(
-    .PHY (TCB_PHY_CPU),
-    .SPN (2),
+    .ADR (CFG_CPU.BUS.ADR),
+    .IFN (2),
     .DAM ({{17'b0, 1'b1, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
            {17'b0, 1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
   ) tcb_lsu_dec (
@@ -164,7 +189,7 @@ module r5p_mouse_soc_top
 
   // demultiplexing memory/peripherals
   tcb_lib_demultiplexer #(
-    .MPN (2)
+    .IFN (2)
   ) tcb_lsu_demux (
     // control
     .sel  (tcb_cpu_sel),
@@ -189,8 +214,8 @@ module r5p_mouse_soc_top
 
   // decoding peripherals (GPIO/UART)
   tcb_lib_decoder #(
-    .PHY (TCB_PHY_CPU),
-    .SPN (2),
+    .ADR (CFG_CPU.BUS.ADR),
+    .IFN (2),
     .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
            {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
   ) tcb_pb0_dec (
@@ -200,7 +225,7 @@ module r5p_mouse_soc_top
 
   // demultiplexing peripherals (GPIO/UART)
   tcb_lib_demultiplexer #(
-    .MPN (2)
+    .IFN (2)
   ) tcb_pb0_demux (
     // control
     .sel  (tcb_pb0_sel),
@@ -353,7 +378,7 @@ module r5p_mouse_soc_top
   if (ENA_GPIO) begin: gen_gpio
 
     // GPIO controller
-    tcb_cmn_gpio #(
+    tcb_peri_gpio #(
       .GW          (GW),
       .CFG_RSP_MIN (1'b1),
       .CHIP        (CHIP)
@@ -392,7 +417,7 @@ module r5p_mouse_soc_top
     localparam int unsigned BCW = $clog2(BDR);  // a 9-bit counter is required
 
     // UART controller
-    tcb_cmn_uart #(
+    tcb_peri_uart #(
       // UART parameters
       .CW       (BCW),
       // configuration register parameters (write enable, reset value)
