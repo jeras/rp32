@@ -26,7 +26,10 @@ module r5p_soc_memory
   tcb_if.sub tcb
 );
 
+//localparam int unsigned ADR = tcb.CFG.BUS.ADR;
   localparam int unsigned DAT = tcb.CFG.BUS.DAT;
+  localparam int unsigned BYT = tcb.CFG_BUS_BYT;
+  localparam int unsigned MAX = tcb.CFG_BUS_MAX;
   localparam int unsigned ADR = $clog2(SIZ);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +48,7 @@ module r5p_soc_memory
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [DAT-1:0] mem [0:SIZ-1];
+  logic [DAT-1:0] mem [0:SIZ/(DAT/8)-1];
 
   initial
   begin
@@ -66,17 +69,14 @@ module r5p_soc_memory
   if (tcb.vld) begin
     if (tcb.req.wen) begin
       // write access
-      mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]] <= tcb.req.wdt;
-  //  for (int unsigned b=0; b<tcb.BW; b++) begin
-  //    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
-  //  end
+      for (int unsigned b=0; b<BYT; b++) begin
+        if (tcb.req.byt[b])  mem[tcb.req.adr[ADR-1:MAX]][8*b+:8] <= tcb.req.wdt[b];
+      end
     end else begin
       // read access
-      tcb.rsp.rdt <= mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]];
-  //  for (int unsigned b=0; b<tcb.BW; b++) begin
-  //    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
-  //    else             tcb.rdt[8*b+:8] <= 'x;
-  //  end
+      for (int unsigned b=0; b<BYT; b++) begin
+        if (tcb.req.byt[b])  tcb.rsp.rdt[b] <= mem[tcb.req.adr[ADR-1:MAX]][8*b+:8];
+      end
     end
   end
 

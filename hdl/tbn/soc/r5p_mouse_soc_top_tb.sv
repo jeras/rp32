@@ -97,7 +97,9 @@ module r5p_mouse_soc_top_tb #(
 ////////////////////////////////////////////////////////////////////////////////
 // GDB stub instance
 ////////////////////////////////////////////////////////////////////////////////
-  
+
+  localparam int unsigned MLEN = 32;
+
   typedef logic [XLEN-1:0] gpr_t [GLEN-1:0];
 
 //  // TODO: this is not a bidirectional solution
@@ -117,9 +119,9 @@ module r5p_mouse_soc_top_tb #(
 //  .XML_REGISTERS (XML_REGISTERS),
     // memory
 //  .XML_MEMORY    (XML_MEMORY),
-    .MLEN          (32),
-    .MBGN          (IFU_RST),
-    .MEND          (IFU_RST+MEM_SIZ-1)
+    .MLEN          (MLEN),
+    .MBGN          ((IFU_RST        )/(MLEN/8)  ),
+    .MEND          ((IFU_RST+MEM_SIZ)/(MLEN/8)-1)
     // DEBUG parameters
 //  .DEBUG_LOG     (DEBUG_LOG)
   ) stub (

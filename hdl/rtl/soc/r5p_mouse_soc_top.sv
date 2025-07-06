@@ -184,8 +184,8 @@ module r5p_mouse_soc_top
   tcb_lib_decoder #(
     .ADR (CFG_CPU.BUS.ADR),
     .IFN (2),
-    .DAM ({{17'b0, 1'b1, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
-           {17'b0, 1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
+    .DAM ({{16'h8000, 2'b01, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
+           {16'h8000, 2'b00, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
   ) tcb_lsu_dec (
     .tcb  (tcb_cpu    ),
     .sel  (tcb_cpu_sel)
