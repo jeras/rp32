@@ -2,7 +2,8 @@
 
 export GIT_TOPLEVEL=`git rev-parse --show-toplevel`
 # build trivial application
-make -C $GIT_TOPLEVEL/src/
-cp -v $GIT_TOPLEVEL/src/mem_if.vmem $GIT_TOPLEVEL/sim/verilator
+#make -C $GIT_TOPLEVEL/src/
+#cp -v $GIT_TOPLEVEL/src/mem_if.vmem $GIT_TOPLEVEL/sim/questa
+
 # run HDL simulation in Verilator
-make -C $GIT_TOPLEVEL/sim/verilator -f Makefile XLEN=32 TOP=r5p_soc_top
+make -C $GIT_TOPLEVEL/sim/questa -f Makefile DUT=degu TOP=r5p_degu_soc_top_tb

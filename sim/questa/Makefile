@@ -68,12 +68,12 @@ RISCOF_PLUSARGS ?=
 #all: gui
 all: run
 
-run: ${HDL}
-	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+run: ${HDL} ${SRC}
+	qrun -makelib work -sv ${HDL} -c ${SRC} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
-gui: ${HDL}
-	qrun -makelib work -sv ${HDL} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+gui: ${HDL} ${SRC}
+	qrun -makelib work -sv ${HDL} -c ${SRC} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui
 
