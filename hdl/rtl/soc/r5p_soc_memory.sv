@@ -62,27 +62,27 @@ module r5p_soc_memory
 // load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-always_ff @(posedge tcb.clk)
-if (tcb.vld) begin
-  if (tcb.req.wen) begin
-    // write access
-    mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]] <= tcb.req.wdt;
-//  for (int unsigned b=0; b<tcb.BW; b++) begin
-//    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
-//  end
-  end else begin
-    // read access
-    tcb.rsp.rdt <= mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]];
-//  for (int unsigned b=0; b<tcb.BW; b++) begin
-//    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
-//    else             tcb.rdt[8*b+:8] <= 'x;
-//  end
+  always_ff @(posedge tcb.clk)
+  if (tcb.vld) begin
+    if (tcb.req.wen) begin
+      // write access
+      mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]] <= tcb.req.wdt;
+  //  for (int unsigned b=0; b<tcb.BW; b++) begin
+  //    if (tcb.ben[b])  mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8] <= tcb.wdt[8*b+:8];
+  //  end
+    end else begin
+      // read access
+      tcb.rsp.rdt <= mem[tcb.req.adr[ADR-1:$clog2(DAT/8)]];
+  //  for (int unsigned b=0; b<tcb.BW; b++) begin
+  //    if (tcb.ben[b])  tcb.rdt[8*b+:8] <= mem[tcb.adr[AW-1:$clog2(BW)]][8*b+:8];
+  //    else             tcb.rdt[8*b+:8] <= 'x;
+  //  end
+    end
   end
-end
 
-// respond with no error
-assign tcb.rsp.sts.err = 1'b0;
-// always ready
-assign tcb.rdy = 1'b1;
+  // respond with no error
+  assign tcb.rsp.sts.err = 1'b0;
+  // always ready
+  assign tcb.rdy = 1'b1;
 
 endmodule: r5p_soc_memory
