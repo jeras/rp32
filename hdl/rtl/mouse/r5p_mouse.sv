@@ -38,7 +38,9 @@ module r5p_mouse #(
   input  logic            rst,
   // TCB system bus (shared by instruction/load/store)
   output logic            tcb_vld,  // valid
+  output logic            tcb_ren,  // write enable
   output logic            tcb_wen,  // write enable
+  output logic            tcb_xen,  // write enable
   output logic [XLEN-1:0] tcb_adr,  // address
   output logic    [2-1:0] tcb_siz,  // RISC-V func3[1:0]
   output logic [XLEN-1:0] tcb_wdt,  // write data
@@ -154,10 +156,8 @@ logic                   ctl_bvc;
 logic                   ctl_bvr;
 
 // IFU: instruction fetch unit
-// TODO: rename, also in GTKWave savefile
 logic        [XLEN-1:0] ctl_pcr;  // ctl_pcr register
 logic        [XLEN-1:0] ctl_pcn;  // ctl_pcr next
-// TODO: rename, also in GTKWave savefile
 logic        [ILEN-1:0] ifu_buf;  // instruction fetch unit buffer
 logic        [XLEN-1:0] ifu_mux;  // instruction multiplexer
 
@@ -705,16 +705,18 @@ end
 // GPR access unit
 ///////////////////////////////////////////////////////////////////////////////
 
-// connection between external TCB and internal bus
-// filtering: GPR x0 access, NOP, BRANCH EXE phase
-assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
-assign tcb_wen =           bus_wen               ;
-assign tcb_adr =           bus_adr               ;
-assign tcb_siz =           bus_siz               ;
-assign tcb_wdt =           bus_wdt               ;
-assign dec_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
-assign bus_err =           tcb_err               ;
-assign dec_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
+  // connection between external TCB and internal bus
+  // filtering: GPR x0 access, NOP, BRANCH EXE phase
+  assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
+  assign tcb_ren =          ~bus_wen               ;
+  assign tcb_wen =           bus_wen               ;
+  assign tcb_xen =           ctl_pha == IF         ;
+  assign tcb_adr =           bus_adr               ;
+  assign tcb_siz =           bus_siz               ;
+  assign tcb_wdt =           bus_wdt               ;
+  assign dec_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
+  assign bus_err =           tcb_err               ;
+  assign dec_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
 
 ///////////////////////////////////////////////////////////////////////////////
 // load/store unit
