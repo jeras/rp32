@@ -214,7 +214,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     .IFU_MSK (IFU_MSK),
     // implementation device (ASIC/FPGA vendor/device)
     .CHIP    (CHIP)
-  ) core (
+  ) cpu (
     // system signals
     .clk     (clk),
     .rst     (rst),
@@ -227,7 +227,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 // instruction fetch TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
-  // convert from RISC-V to MEMORY mode
+  // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
   tcb_lib_logsize2byteena tcb_ifu_logsize2byteena (
     .sub  (tcb_ifu),
     .man  (tcb_ifm)
@@ -237,7 +237,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
 // load/store TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [2-1:0] tcb_lsu_sel;
+  logic [$clog2(2)-1:0] tcb_lsu_sel;
 
   // decoding memory/peripherals
   tcb_lib_decoder #(
@@ -273,7 +273,7 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
     .man  (tcb_pb0)
   );
 
-  logic [2-1:0] tcb_pb0_sel;
+  logic [$clog2(2)-1:0] tcb_pb0_sel;
 
   // decoding peripherals (GPIO/UART)
   tcb_lib_decoder #(
@@ -631,4 +631,3 @@ parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
   endgenerate
 
 endmodule: r5p_degu_soc_top
-

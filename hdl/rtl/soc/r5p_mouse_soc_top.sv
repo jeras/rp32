@@ -25,6 +25,8 @@ module r5p_mouse_soc_top
   localparam int unsigned XLOG = $clog2(XLEN),
   localparam int unsigned BLEN = XLEN/8,
   localparam int unsigned BLOG = $clog2(BLEN),
+  // number of GPR registers
+  parameter  int unsigned GLEN = 32,
   // SoC peripherals
   parameter  bit          ENA_GPIO = 1'b1,
   parameter  bit          ENA_UART = 1'b0,
@@ -151,13 +153,15 @@ module r5p_mouse_soc_top
     .IFU_RST (IFU_RST),
     .IFU_MSK (IFU_MSK),
     .GPR_ADR (GPR_ADR)
-  ) core (
+  ) cpu (
     // system signals
     .clk     (clk),
     .rst     (rst),
     // TCB system bus (shared by instruction/load/store)
     .tcb_vld (tcb_cpu.vld),
+    .tcb_ren (tcb_cpu.req.ren),
     .tcb_wen (tcb_cpu.req.wen),
+    .tcb_xen (tcb_cpu.req.xen),
     .tcb_adr (tcb_cpu.req.adr),
     .tcb_siz (tcb_cpu.req.siz),
     .tcb_wdt (tcb_cpu.req.wdt),
@@ -174,7 +178,7 @@ module r5p_mouse_soc_top
 // instruction fetch/load/store TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [2-1:0] tcb_cpu_sel;
+  logic [$clog2(2)-1:0] tcb_cpu_sel;
 
   // decoding memory/peripherals
   tcb_lib_decoder #(
@@ -210,7 +214,7 @@ module r5p_mouse_soc_top
     .man  (tcb_pb0)
   );
 
-  logic [2-1:0] tcb_pb0_sel;
+  logic [$clog2(2)-1:0] tcb_pb0_sel;
 
   // decoding peripherals (GPIO/UART)
   tcb_lib_decoder #(
