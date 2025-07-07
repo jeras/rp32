@@ -106,7 +106,7 @@ module r5p_mouse_soc_top_tb #(
 //  gpr_t gpr;
 //  assign gpr = dut.gen_default.mem.mem[(GPR_ADR-IFU_RST)/4:(GPR_ADR-IFU_RST)/4+32-1];
 
-  gdb_server_stub #(
+  r5p_mouse_soc_gdb #(
     // 8/16/32/64 bit CPU selection
     .XLEN          (32),
     .SIZE_T        (int unsigned),
@@ -124,7 +124,7 @@ module r5p_mouse_soc_top_tb #(
     .MEND          ((IFU_RST+MEM_SIZ)/(MLEN/8)-1)
     // DEBUG parameters
 //  .DEBUG_LOG     (DEBUG_LOG)
-  ) stub (
+  ) gdb (
     // system signals
     .clk     (clk),
     .rst     (rst),
