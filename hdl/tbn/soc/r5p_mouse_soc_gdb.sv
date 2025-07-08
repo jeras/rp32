@@ -6,49 +6,45 @@
 // Licensed under CERN-OHL-P v2 or later
 ///////////////////////////////////////////////////////////////////////////////
 
+// SoC hierarchical paths
+`define cpu    $root.r5p_mouse_soc_top_tb.dut.cpu
+//`define pc     $root.r5p_mouse_soc_top_tb.dut.cpu.ctl_pcr
+// next PC
+`define pc     $root.r5p_mouse_soc_top_tb.dut.cpu.ctl_pcn
+`define gpr(i) $root.r5p_mouse_soc_top_tb.dut.gen_default.mem.mem[(`cpu.GPR_ADR-`cpu.IFU_RST)/4+(i)]
+`define mem(i) $root.r5p_mouse_soc_top_tb.dut.gen_default.mem.mem[((i)-`cpu.IFU_RST)/4][8*((i)%4)+:8]
+
 module r5p_mouse_soc_gdb #(
   // 8/16/32/64 bit CPU selection
   parameter  int unsigned XLEN = 32,
   parameter  type         SIZE_T = int unsigned,  // could be longint (RV64), but it results in warnings
+  // number of GPR registers
+  localparam int unsigned GNUM = 32,  // GPR number can be 16 for RISC-V E extension (embedded)
   // Unix/TCP socket
   parameter  string       SOCKET = "gdb_server_stub_socket",
-  // XML target description
-  parameter  string       XML_TARGET = "",  // TODO
-  // registers
-  parameter  int unsigned GNUM = 32,  // GPR number can be 16 for RISC-V E extension (embedded)
-  parameter  string       XML_REGISTERS = "",  // TODO
-  // memory
-  parameter  string       XML_MEMORY = "",
-  parameter  SIZE_T       MLEN = 8,       // memory unit width byte/half/word/double (8-bit byte by default)
-  parameter  SIZE_T       MSIZ = 2**16,   // memory size
-  parameter  SIZE_T       MBGN = 0,       // memory beginning
-  parameter  SIZE_T       MEND = MSIZ-1,  // memory end
+  // XML target/registers/memory description
+  parameter  string       XML_TARGET    = "",
+  parameter  string       XML_REGISTERS = "",
+  parameter  string       XML_MEMORY    = "",
   // DEBUG parameters
-  parameter  bit DEBUG_LOG = 1'b1
+  parameter  bit          DEBUG_LOG = 1'b1
 )(
   // system signals
   input  logic clk,  // clock
   output logic rst,  // reset
-  // registers
-  ref    logic [XLEN-1:0] gpr [0:GNUM-1],
-  ref    logic [XLEN-1:0] pc,
-  // memories
-  ref    logic [MLEN-1:0] mem [MBGN:MEND],
-  // IFU interface (instruction fetch unit)
-  input  logic            ifu_trn,  // transfer
-  input  logic [XLEN-1:0] ifu_adr,  // address
   // LSU interface (load/store unit)
-  input  logic            lsu_trn,  // transfer
-  input  logic            lsu_wen,  // write enable
-  input  logic [XLEN-1:0] lsu_adr,  // address
-  input  logic    [2-1:0] lsu_siz   // size
+  input  logic            bus_trn,  // transfer
+  input  logic            bus_xen,  // execute enable
+  input  logic            bus_wen,  // write enable
+  input  logic [XLEN-1:0] bus_adr,  // address
+  input  logic    [2-1:0] bus_siz   // size
 );
 
   import socket_dpi_pkg::*;
   import gdb_server_stub_pkg::*;
 
 ///////////////////////////////////////////////////////////////////////////////
-// adapter class
+// adapter class (extends the gdb_server_stub_socket class)
 ///////////////////////////////////////////////////////////////////////////////
 
   class gdb_server_stub_socket_mouse #(
@@ -68,11 +64,9 @@ module r5p_mouse_soc_gdb #(
 
     // constructor
     function new(
-//      tcb_vif_t tcb,
       string socket = ""
     );
       super.new(
-//      .tcb    (tcb),
         .socket (socket)
       );
       // debugger starts in the reset state
@@ -89,9 +83,9 @@ module r5p_mouse_soc_gdb #(
       input  int unsigned idx
     );
       if (idx<GNUM) begin
-        reg_read = gpr[idx];
+        reg_read = `gpr(idx);
       end else begin
-        reg_read = pc;
+        reg_read = `pc;
       end
     endfunction: reg_read
 
@@ -100,25 +94,42 @@ module r5p_mouse_soc_gdb #(
       input  bit [XLEN-1:0] dat
     );
       if (idx<GNUM) begin
-        gpr[idx] = dat;
+        `gpr(idx) = dat;
       end else begin
-        pc = dat;
+        `pc = dat;
       end
     endfunction: reg_write
 
     virtual function automatic byte mem_read (
       input  SIZE_T adr
     );
-      mem_read = mem[adr/(MLEN/8)][8*(adr%(MLEN/8))+:8];
+      mem_read = `mem(adr);
     endfunction: mem_read
 
     virtual function automatic void mem_write (
       input  SIZE_T adr,
       input  byte   dat
     );
-      mem[adr/(MLEN/8)][8*(adr%(MLEN/8))+:8] = dat;
-      $display("DBG: mem[%08x/(MLEN/8] = %08x", adr, mem[adr/(MLEN/8)]);
+      `mem(adr) = dat;
+      $display("DBG: mem[%08x] = %02x", adr, `mem(adr));
     endfunction: mem_write
+
+    virtual function automatic bit exe_illegal (
+      input  SIZE_T adr
+    );
+      // TODO: implement proper illegal instruction check
+      exe_illegal = $isunknown({`mem(adr+1), `mem(adr+0)}) ? 1'b1 : 1'b0;
+      $display("DBG: exe_illegal[%08x] = %04x", adr, {`mem(adr+1), `mem(adr+0)});
+    endfunction: exe_illegal
+
+    virtual function automatic bit exe_ebreak (
+      input  SIZE_T adr
+    );
+      // TODO: implement proper illegal instruction check
+//    mem_ebreak = ({                          `mem(adr+1), `mem(adr+0)} == 16'hxxxx) ||
+//                 ({`mem(adr+3), `mem(adr+2), `mem(adr+1), `mem(adr+0)} == 32'hxxxxxxxx) ? 1'b1 : 1'b0;
+      exe_ebreak = 1'b0;
+    endfunction: exe_ebreak
 
     virtual function automatic void jump (
       input  SIZE_T adr
@@ -132,10 +143,16 @@ module r5p_mouse_soc_gdb #(
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
 
+//  task step;
+//    do begin
+//      @(posedge clk);
+//    end while (~(bus_trn & bus_xen));
+//  endtask: step
+
   gdb_server_stub_socket_mouse gdb;
 
   initial
-  begin
+  begin: main_initial
     static byte ch [] = new[1];
     int status;
 
@@ -147,7 +164,7 @@ module r5p_mouse_soc_gdb #(
 
     // main loop/FSM
     forever
-    begin: loop
+    begin: main_loop
       case (gdb.state)
 
         RESET: begin
@@ -167,38 +184,19 @@ module r5p_mouse_soc_gdb #(
             // on clock edge sample system buses
             @(posedge clk);
 
-            // check for illegal instructions
-            // TODO
-
-            // check for hardware breakpoints
-            if (ifu_trn) begin
-              if (gdb.points.exists(ifu_adr)) begin
-                // software breakpoint (TODO)
-                // TODO: check for EBREAK/C.EBREAK instruction codes in memory at address
-                // hardware breakpoint
-                if (gdb.points[ifu_adr].ptype == hwbreak) begin
-                  gdb.state = SIGTRAP;
-                  $display("DEBUG: Triggered HW breakpoint at address %h.", ifu_adr);
-                  // send response
-                  status = gdb.gdb_stop_reply(gdb.state);
-                end
-              end
+            // check for illegal instructions and hardware/software breakpoints
+            if (bus_trn & bus_xen) begin
+              void'(gdb.gdb_breakpoint_match(bus_adr));
             end
 
             // check for hardware watchpoints
-            if (lsu_trn) begin
-              if (gdb.points.exists(lsu_adr)) begin
-                if (gdb.points[lsu_adr].ptype inside {watch, rwatch, awatch}) begin
-                  gdb.state = SIGTRAP;
-                  $display("DEBUG: Triggered HW watchpoint at address %h.", lsu_adr);
-                  // send response
-                  status = gdb.gdb_stop_reply(gdb.state);
-                end
-              end
+            if (bus_trn & ~bus_xen) begin
+              void'(gdb.gdb_watchpoint_match(bus_adr, bus_wen, bus_siz));
             end
 
           // in case of Ctrl+C (character 0x03)
           end else if (ch[0] == SIGQUIT) begin
+            // TODO: perhaps step to next instruction
             gdb.state = SIGINT;
             $display("DEBUG: Interrupt SIGQUIT (0x03) (Ctrl+c).");
             // send response
@@ -214,17 +212,16 @@ module r5p_mouse_soc_gdb #(
           // step to the next instruction and trap again
           do begin
             @(posedge clk);
-          end while (~ifu_trn);
+          end while (~(bus_trn & bus_xen));
           gdb.state = SIGTRAP;
 
-          // check for illegal instructions
-          // TODO
-
-          // send response
-          status = gdb.gdb_stop_reply(gdb.state);
+          if (!gdb.gdb_breakpoint_match(bus_adr)) begin
+            // send response
+            status = gdb.gdb_stop_reply(gdb.state);
+          end
         end
 
-        // SIGTRAP, SIGINT, ...
+        // SIGILL, SIGTRAP, SIGINT, ...
         default: begin
           // blocking socket read
           status = server_recv(gdb.fd, ch, MSG_PEEK);
@@ -232,13 +229,13 @@ module r5p_mouse_soc_gdb #(
           status = gdb.gdb_packet(ch);
         end
       endcase
-    end: loop
-  end
+    end: main_loop
+  end: main_initial
 
   final
   begin
     // stop server (close socket)
-    void'(server_stop(gdb.fd));
+    gdb.close_socket();
     $display("DEBUG: stopped server and closed socket.");
   end
 

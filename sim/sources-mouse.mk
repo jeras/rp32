@@ -35,7 +35,6 @@ SRC+=${PATH_GDB}/socket_dpi_pkg.c
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_GDB}/socket_dpi_pkg.sv
 TSV+=${PATH_GDB}/gdb_server_stub_pkg.sv
-TSV+=${PATH_GDB}/gdb_server_stub.sv
 
 # R5P files
 PATH_R5P=../../hdl

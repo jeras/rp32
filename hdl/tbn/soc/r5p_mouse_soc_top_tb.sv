@@ -98,49 +98,28 @@ module r5p_mouse_soc_top_tb #(
 // GDB stub instance
 ////////////////////////////////////////////////////////////////////////////////
 
-  localparam int unsigned MLEN = 32;
-
-  typedef logic [XLEN-1:0] gpr_t [GLEN-1:0];
-
-//  // TODO: this is not a bidirectional solution
-//  gpr_t gpr;
-//  assign gpr = dut.gen_default.mem.mem[(GPR_ADR-IFU_RST)/4:(GPR_ADR-IFU_RST)/4+32-1];
-
   r5p_mouse_soc_gdb #(
     // 8/16/32/64 bit CPU selection
     .XLEN          (32),
     .SIZE_T        (int unsigned),
     // Unix/TCP socket
-    .SOCKET        ("gdb_server_stub_socket"),
-    // XML target description
+    .SOCKET        ("gdb_server_stub_socket")
+    // XML target/registers/memory description
 //  .XML_TARGET    (XML_TARGET),
-    // registers
-//  .GLEN          (GLEN),
 //  .XML_REGISTERS (XML_REGISTERS),
-    // memory
 //  .XML_MEMORY    (XML_MEMORY),
-    .MLEN          (MLEN),
-    .MBGN          ((IFU_RST        )/(MLEN/8)  ),
-    .MEND          ((IFU_RST+MEM_SIZ)/(MLEN/8)-1)
     // DEBUG parameters
 //  .DEBUG_LOG     (DEBUG_LOG)
   ) gdb (
     // system signals
     .clk     (clk),
     .rst     (rst),
-    // registers
-    .gpr     (gpr_t'(dut.gen_default.mem.mem[(GPR_ADR-IFU_RST)/4:(GPR_ADR-IFU_RST)/4+32-1])),
-    .pc      (dut.cpu.ctl_pcr),
-    // memories
-    .mem     (dut.gen_default.mem.mem),
-    // IFU interface (instruction fetch unit)
-    .ifu_trn (dut.tcb_cpu.trn),
-    .ifu_adr (dut.tcb_cpu.req.adr),
     // LSU interface (load/store unit)
-    .lsu_trn (dut.tcb_cpu.trn),
-    .lsu_wen (dut.tcb_cpu.req.wen),
-    .lsu_adr (dut.tcb_cpu.req.adr),
-    .lsu_siz (dut.tcb_cpu.req.siz)
+    .bus_trn (dut.tcb_cpu.trn),
+    .bus_xen (dut.tcb_cpu.req.xen),
+    .bus_wen (dut.tcb_cpu.req.wen),
+    .bus_adr (dut.tcb_cpu.req.adr),
+    .bus_siz (dut.tcb_cpu.req.siz)
   );
 
 ////////////////////////////////////////////////////////////////////////////////
