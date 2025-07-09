@@ -119,7 +119,7 @@ module r5p_mouse_soc_gdb #(
     );
       // TODO: implement proper illegal instruction check
       exe_illegal = $isunknown({`mem(adr+1), `mem(adr+0)}) ? 1'b1 : 1'b0;
-      $display("DBG: exe_illegal[%08x] = %04x", adr, {`mem(adr+1), `mem(adr+0)});
+//      $display("DBG: exe_illegal[%08x] = %04x", adr, {`mem(adr+1), `mem(adr+0)});
     endfunction: exe_illegal
 
     virtual function automatic bit exe_ebreak (
@@ -142,6 +142,9 @@ module r5p_mouse_soc_gdb #(
 ///////////////////////////////////////////////////////////////////////////////
 // main loop
 ///////////////////////////////////////////////////////////////////////////////
+
+  event socket_blocking;
+  event socket_nonblocking;
 
 //  task step;
 //    do begin
@@ -178,6 +181,7 @@ module r5p_mouse_soc_gdb #(
 
         CONTINUE: begin
           // non-blocking socket read
+          -> socket_nonblocking;
           status = server_recv(gdb.fd, ch, MSG_PEEK | MSG_DONTWAIT);
           // if empty, check for breakpoints/watchpoints and continue
           if (status != 1) begin
@@ -224,6 +228,7 @@ module r5p_mouse_soc_gdb #(
         // SIGILL, SIGTRAP, SIGINT, ...
         default: begin
           // blocking socket read
+          -> socket_blocking;
           status = server_recv(gdb.fd, ch, MSG_PEEK);
           // parse packet and loop back
           status = gdb.gdb_packet(ch);
