@@ -190,12 +190,12 @@ module r5p_mouse_soc_gdb #(
 
             // check for illegal instructions and hardware/software breakpoints
             if (bus_trn & bus_xen) begin
-              void'(gdb.gdb_breakpoint_match(bus_adr));
+              gdb.state = gdb.gdb_breakpoint_match(bus_adr);
             end
 
             // check for hardware watchpoints
             if (bus_trn & ~bus_xen) begin
-              void'(gdb.gdb_watchpoint_match(bus_adr, bus_wen, bus_siz));
+              gdb.state = gdb.gdb_watchpoint_match(bus_adr, bus_wen, bus_siz);
             end
 
           // in case of Ctrl+C (character 0x03)
@@ -219,10 +219,8 @@ module r5p_mouse_soc_gdb #(
           end while (~(bus_trn & bus_xen));
           gdb.state = SIGTRAP;
 
-          if (!gdb.gdb_breakpoint_match(bus_adr)) begin
-            // send response
-            status = gdb.gdb_stop_reply(gdb.state);
-          end
+          // send response
+          status = gdb.gdb_stop_reply(gdb.state);
         end
 
         // SIGILL, SIGTRAP, SIGINT, ...
