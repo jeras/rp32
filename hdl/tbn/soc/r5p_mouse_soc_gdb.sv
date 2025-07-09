@@ -238,7 +238,7 @@ module r5p_mouse_soc_gdb #(
   final
   begin
     // stop server (close socket)
-    gdb.close_socket();
+    gdb.gdb_close();
     $display("DEBUG: stopped server and closed socket.");
   end
 
