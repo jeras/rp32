@@ -111,7 +111,7 @@ module r5p_mouse_soc_gdb #(
       input  byte   dat
     );
       `mem(adr) = dat;
-      $display("DBG: mem[%08x] = %02x", adr, `mem(adr));
+//      $display("DBG: mem[%08x] = %02x", adr, `mem(adr));
     endfunction: mem_write
 
     virtual function automatic bit exe_illegal (
@@ -182,7 +182,8 @@ module r5p_mouse_soc_gdb #(
         CONTINUE: begin
           // non-blocking socket read
           -> socket_nonblocking;
-          status = server_recv(gdb.fd, ch, MSG_PEEK | MSG_DONTWAIT);
+          status = gdb.gdb_recv(ch, MSG_PEEK | MSG_DONTWAIT);
+
           // if empty, check for breakpoints/watchpoints and continue
           if (status != 1) begin
             // on clock edge sample system buses
@@ -227,7 +228,8 @@ module r5p_mouse_soc_gdb #(
         default: begin
           // blocking socket read
           -> socket_blocking;
-          status = server_recv(gdb.fd, ch, MSG_PEEK);
+          status = gdb.gdb_recv(ch, MSG_PEEK);
+
           // parse packet and loop back
           status = gdb.gdb_packet(ch);
         end
