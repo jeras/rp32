@@ -182,7 +182,7 @@ module r5p_mouse_soc_gdb #(
         CONTINUE: begin
           // non-blocking socket read
           -> socket_nonblocking;
-          status = gdb.gdb_recv(ch, MSG_PEEK | MSG_DONTWAIT);
+          status = socket_recv(ch, MSG_PEEK | MSG_DONTWAIT);
 
           // if empty, check for breakpoints/watchpoints and continue
           if (status != 1) begin
@@ -228,7 +228,7 @@ module r5p_mouse_soc_gdb #(
         default: begin
           // blocking socket read
           -> socket_blocking;
-          status = gdb.gdb_recv(ch, MSG_PEEK);
+          status = socket_recv(ch, MSG_PEEK);
 
           // parse packet and loop back
           status = gdb.gdb_packet(ch);
@@ -240,7 +240,7 @@ module r5p_mouse_soc_gdb #(
   final
   begin
     // stop server (close socket)
-    gdb.gdb_close();
+    void'(socket_close);
     $display("DEBUG: stopped server and closed socket.");
   end
 
