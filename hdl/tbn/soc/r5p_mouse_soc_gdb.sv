@@ -79,17 +79,17 @@ module r5p_mouse_soc_gdb #(
 
     // TODO: for a multi memory and cache setup, there should be a decoder here
 
-    virtual function bit [XLEN-1:0] reg_read (
+    virtual function bit [XLEN-1:0] arch_reg_read (
       input  int unsigned idx
     );
       if (idx<GNUM) begin
-        reg_read = `gpr(idx);
+        arch_reg_read = `gpr(idx);
       end else begin
-        reg_read = `pc;
+        arch_reg_read = `pc;
       end
-    endfunction: reg_read
+    endfunction: arch_reg_read
 
-    virtual function void reg_write (
+    virtual function void arch_reg_write (
       input  int unsigned   idx,
       input  bit [XLEN-1:0] dat
     );
@@ -98,44 +98,46 @@ module r5p_mouse_soc_gdb #(
       end else begin
         `pc = dat;
       end
-    endfunction: reg_write
+    endfunction: arch_reg_write
 
-    virtual function automatic byte mem_read (
+    virtual function automatic byte arch_mem_read (
       input  SIZE_T adr
     );
-      mem_read = `mem(adr);
-    endfunction: mem_read
+      arch_mem_read = `mem(adr);
+    endfunction: arch_mem_read
 
-    virtual function automatic void mem_write (
+    virtual function automatic bit arch_mem_write (
       input  SIZE_T adr,
       input  byte   dat
     );
       `mem(adr) = dat;
 //      $display("DBG: mem[%08x] = %02x", adr, `mem(adr));
-    endfunction: mem_write
+      return(0);
+    endfunction: arch_mem_write
 
-    virtual function automatic bit exe_illegal (
+    virtual function automatic bit arch_illegal (
       input  SIZE_T adr
     );
       // TODO: implement proper illegal instruction check
-      exe_illegal = $isunknown({`mem(adr+1), `mem(adr+0)}) ? 1'b1 : 1'b0;
-//      $display("DBG: exe_illegal[%08x] = %04x", adr, {`mem(adr+1), `mem(adr+0)});
-    endfunction: exe_illegal
+      arch_illegal = $isunknown({`mem(adr+1), `mem(adr+0)}) ? 1'b1 : 1'b0;
+//      $display("DBG: arch_illegal[%08x] = %04x", adr, {`mem(adr+1), `mem(adr+0)});
+    endfunction: arch_illegal
 
-    virtual function automatic bit exe_ebreak (
+    virtual function automatic bit arch_break (
       input  SIZE_T adr
     );
       // TODO: implement proper illegal instruction check
 //    mem_ebreak = ({                          `mem(adr+1), `mem(adr+0)} == 16'hxxxx) ||
 //                 ({`mem(adr+3), `mem(adr+2), `mem(adr+1), `mem(adr+0)} == 32'hxxxxxxxx) ? 1'b1 : 1'b0;
-      exe_ebreak = 1'b0;
-    endfunction: exe_ebreak
+      arch_break = 1'b0;
+    endfunction: arch_break
 
-    virtual function automatic void jump (
+    virtual function automatic bit arch_jump (
       input  SIZE_T adr
     );
       $error("step/continue address jump is not supported");
-    endfunction: jump
+      return(1);
+    endfunction: arch_jump
 
   endclass: gdb_server_stub_socket_mouse
 
@@ -241,7 +243,6 @@ module r5p_mouse_soc_gdb #(
   begin
     // stop server (close socket)
     void'(socket_close);
-    $display("DEBUG: stopped server and closed socket.");
   end
 
 endmodule: r5p_mouse_soc_gdb

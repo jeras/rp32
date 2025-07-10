@@ -134,3 +134,8 @@ Alternative approach to a written execution trace log, by compiling `spike` as a
 
 https://spinalhdl.github.io/NaxRiscv-Rtd/main/NaxRiscv/simulation/index.html
 
+https://groups.google.com/a/groups.riscv.org/g/hw-dev/c/kerAQ_ZAGIk
+
+Alternative RISC-V simulator:
+
+https://www.intel.com/content/www/us/en/developer/articles/tool/simics-simulator.html

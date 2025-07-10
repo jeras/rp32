@@ -130,10 +130,4 @@ module r5p_mouse_soc_top_tb #(
   initial      clk = 1'b1;
   always #25ns clk = ~clk;
 
-  initial
-  begin
-    repeat (64) @(posedge clk);
-    $finish();
-  end
-
 endmodule: r5p_mouse_soc_top_tb

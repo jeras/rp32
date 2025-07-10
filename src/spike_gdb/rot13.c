@@ -5,8 +5,7 @@ volatile int wait = 1;
 
 int main()
 {
-    while (wait)
-        ;
+    while (wait);
 
     // Doesn't actually go on the stack, because there are lots of GPRs.
     int i = 0;
@@ -20,7 +19,6 @@ int main()
     }
 
 done:
-    while (!wait)
-        ;
+    while (!wait);
 }
 
