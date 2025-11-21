@@ -27,14 +27,14 @@ TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
 
 # GDB stub files
-PATH_GDB=../../submodules/gdb_server_stub_sv/hdl
+#PATH_GDB=../../submodules/gdb_server_stub_sv/hdl
 
 # DPI-C code
-SRC+=${PATH_GDB}/socket_dpi_pkg.c
+#SRC+=${PATH_GDB}/socket_dpi_pkg.c
 
 # SystemVerilog bench (Test SV)
-TSV+=${PATH_GDB}/socket_dpi_pkg.sv
-TSV+=${PATH_GDB}/gdb_server_stub.sv
+#TSV+=${PATH_GDB}/socket_dpi_pkg.sv
+#TSV+=${PATH_GDB}/gdb_server_stub.sv
 
 # R5P files
 PATH_R5P=../../hdl
