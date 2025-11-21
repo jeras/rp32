@@ -187,7 +187,7 @@ class r5p(pluginTemplate):
             # Simulation define macros.
             simulate_defines_dict = {}
             if self.debug:
-                simulate_defines_dict.update({'TRACE_DEBUG': None})
+                simulate_defines_dict.update({'TRACE_SPIKE': None})
 
             # Convert define macro dictionary into CLI
             # TODO: properly handle define macros without value

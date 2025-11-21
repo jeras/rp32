@@ -237,7 +237,7 @@ import riscv_asm_pkg::*;
 // Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef TRACE_DEBUG
+`ifdef TRACE_SPIKE
 
   // TODO: instead of an address width decode the ISA
   localparam int unsigned AW = 5;
@@ -259,7 +259,7 @@ import riscv_asm_pkg::*;
   end
 
   // instruction fetch and load/store bus monitor
-  r5p_degu_trace_logger r5p_log (
+  r5p_degu_trace_spike r5p_log (
     // GPR register file array
     // hierarchical path to GPR inside RTL
     .gpr_wen  (dut.gpr.e_rd),

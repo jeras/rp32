@@ -26,15 +26,11 @@ RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
 TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
 
-## GDB stub files
-#PATH_GDB=../../submodules/gdb_server_stub_sv/hdl
-#
-## DPI-C code
-#SRC+=${PATH_GDB}/socket_dpi_pkg.c
-#
-## SystemVerilog bench (Test SV)
-#TSV+=${PATH_GDB}/socket_dpi_pkg.sv
-#TSV+=${PATH_GDB}/gdb_server_stub_pkg.sv
+# HDLDB files
+PATH_GDB=../../submodules/hdldb/hdl
+
+# SystemVerilog bench (Test SV)
+TSV+=${PATH_GDB}/hdldb_trace_pkg.sv
 
 # R5P files
 PATH_R5P=../../hdl
@@ -56,9 +52,9 @@ RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_top.sv
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
 TSV+=${PATH_R5P}/tbn/htif/r5p_htif.sv
+TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_trace_spike.sv
 TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_riscof_tb.sv
-TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_trace_logger.sv
-#TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_gdb.sv
+TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_trace_hdldb.sv
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_top_tb.sv
 
 # combined HDL sources

@@ -98,29 +98,19 @@ module r5p_mouse_soc_top_tb #(
 // GDB stub instance
 ////////////////////////////////////////////////////////////////////////////////
 
-  r5p_mouse_soc_gdb #(
-    // 8/16/32/64 bit CPU selection
-    .XLEN          (32),
-    .SIZE_T        (int unsigned),
-    // Unix/TCP socket
-    .SOCKET        ("gdb_server_stub_socket")
-    // XML target/registers/memory description
-//  .XML_TARGET    (XML_TARGET),
-//  .XML_REGISTERS (XML_REGISTERS),
-//  .XML_MEMORY    (XML_MEMORY),
-    // DEBUG parameters
-//  .DEBUG_LOG     (DEBUG_LOG)
-  ) gdb (
-    // system signals
-    .clk     (clk),
-    .rst     (rst),
-    // LSU interface (load/store unit)
-    .bus_trn (dut.tcb_cpu.trn),
-    .bus_xen (dut.tcb_cpu.req.xen),
-    .bus_wen (dut.tcb_cpu.req.wen),
-    .bus_adr (dut.tcb_cpu.req.adr),
-    .bus_siz (dut.tcb_cpu.req.siz)
+`ifdef TRACE_HDLDB
+
+  // system bus monitor
+  r5p_mouse_trace #(
+    .FORMAT ("HDLDB")
+  ) trace_hdldb (
+    // instruction execution phase
+    .pha  (dut.ctl_pha),
+    // TCB system bus
+    .tcb  (dut.tcb_cpu)
   );
+
+`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // test sequence

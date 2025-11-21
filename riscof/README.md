@@ -84,7 +84,7 @@ The SystemVerilog testbench is composed from the following modules:
 |------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | testbench TOP    | [`r5p_mouse_riscof_tb`](../hdl/tbn/riscof/r5p_mouse_riscof_tb.sv)        | [`r5p_degu_riscof_tb`](../hdl/tbn/riscof/r5p_degu_riscof_tb.sv)          |
 | CPU core         | [`r5p_mouse`](../hdl/rtl/mouse/r5p_mouse.sv)                             | [`r5p_degu`](../hdl/rtl/degu/r5p_degu.sv)                                |
-| trace logger     | [`r5p_mouse_trace_logger`](../hdl/tbn/riscof/r5p_mouse_trace_logger.sv)  | [`r5p_degu_trace_logger`](../hdl/riscof/tbn/r5p_degu_trace_logger.sv)    |
+| trace logger     | [`r5p_mouse_trace_spike`](../hdl/tbn/riscof/r5p_mouse_trace_spike.sv)    | [`r5p_degu_trace_spike`](../hdl/riscof/tbn/r5p_degu_trace_spike.sv)      |
 | HTIF             | [`r5p_htif`](../hdl/tbn/htif/r5p_htif.sv)                                | [`r5p_htif`](../hdl/tbn/htif/r5p_htif.sv)                                |
 | memory model     | [`tcb_vip_memory` 1 IF](../submodules/tcb/hdl/tbn/vip/tcb_vip_memory.sv) | [`tcb_vip_memory` 2 IF](../submodules/tcb/hdl/tbn/vip/tcb_vip_memory.sv) |
 | TCB interconnect | ... | ... |

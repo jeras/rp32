@@ -226,7 +226,7 @@ import riscv_asm_pkg::*;
 // Verbose execution trace
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef TRACE_DEBUG
+`ifdef TRACE_SPIKE
 
   // GPR array
   logic [XLEN-1:0] gpr [0:32-1];
@@ -236,7 +236,7 @@ import riscv_asm_pkg::*;
   assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
   // system bus monitor
-  r5p_mouse_trace_logger r5p_log (
+  r5p_mouse_trace_spike r5p_log (
     // instruction execution phase
     .pha  (dut.ctl_pha),
     // TCB system bus

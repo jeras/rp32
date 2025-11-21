@@ -17,5 +17,5 @@
 	path = submodules/sail-riscv
 	url = https://github.com/riscv/sail-riscv.git
 [submodule "submodules/gdb_server_stub_sv"]
-	path = submodules/gdb_server_stub_sv
+	path = submodules/hdldb
 	url = git@github.com:jeras/gdb_server_stub_sv.git
