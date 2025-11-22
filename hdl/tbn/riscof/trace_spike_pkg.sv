@@ -16,14 +16,11 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module trace_spike_pkg
+package trace_spike_pkg;
     import riscv_isa_pkg::*;
     import riscv_isa_i_pkg::*;
-#(
-    parameter int unsigned XLEN = 32
-    // trace file name
-    parameter string FILE = ""
-);
+
+    parameter int unsigned XLEN = 32;
 
 ////////////////////////////////////////////////////////////////////////////////
 // tracing (matching spike simulator logs)
@@ -36,62 +33,58 @@ module trace_spike_pkg
     endfunction: format_gpr
 
     // prepare string for committed instruction
-    function void trace (
+    function string trace (
+        int unsigned     core,     // core (hart) index
         // IFU
         logic [XLEN-1:0] ifu_adr,  // PC (IFU address)
         logic [XLEN-1:0] ifu_ins,  // instruction
+        logic            ifu_ill,  // instruction is illegal
         // WBU (write back to destination register)
-        logic [   5-1:0] wbu_idx,  // index
+        logic            wbu_vld,  // valid
+        logic [   5-1:0] wbu_idx,  // index of destination register
         logic [XLEN-1:0] wbu_dat,  // data
         // LSU
+        logic            lsu_vld,  // valid
+        logic            lsu_wen,  // enable
+        logic [   5-1:0] lsu_idx,  // index of data source register
         logic [XLEN-1:0] lsu_adr,  // PC (IFU address)
-        logic [XLEN-1:0] lsu_siz,  // PC (IFU address)
-        logic [XLEN-1:0] lsu_wdt,  // instruction
-        logic [XLEN-1:0] lsu_rdt,  // instruction
+        logic [XLEN-1:0] lsu_siz,  // load/store size
+        logic [XLEN-1:0] lsu_wdt,  // write data (store)
+        logic [XLEN-1:0] lsu_rdt   // read data (load)
     );
-        string str_if;
-        string str_wb;
-        string str_ld;
-        string str_st;
+        string str_if;  // instruction fetch
+        string str_wb;  // write-back
+        string str_ld;  // load
+        string str_st;  // store
+        string str_ls;  // load/store
+
+        // prepare fetch
         str_if = $sformatf(" 0x%8h (0x%8h)", ifu_adr, ifu_ins);
-        str_wb = $sformatf(" %s 0x%8h", format_gpr(wbu_idx), wbu_dat);
-        str_ld = $sformatf(" mem 0x%8h", $past(tcb.req.adr));
+
+        // prepare write-back
+        str_wb = wbu_vld ? $sformatf(" %s 0x%8h", format_gpr(wbu_idx), wbu_dat) : "";
+
+        // prepare load
+        str_ld = $sformatf(" mem 0x%8h", lsu_adr);
+
+        // prepare store
         case (lsu_siz)
             2'd0: str_st = $sformatf(" mem 0x%8h 0x%2h", lsu_adr, lsu_wdt[ 8-1:0]);
             2'd1: str_st = $sformatf(" mem 0x%8h 0x%4h", lsu_adr, lsu_wdt[16-1:0]);
             2'd2: str_st = $sformatf(" mem 0x%8h 0x%8h", lsu_adr, lsu_wdt[32-1:0]);
 //          2'd3: str_st = $sformatf(" mem 0x%8h 0x%16h", lsu_adr, lsu_wdt[64-1:0]);
+            default: $error("Unsupported store size %0d", lsu_siz);
         endcase
 
-        $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if, str_wb, str_ld, str_st);
+        // prepare load/store
+        str_ls = lsu_vld ? (lsu_wen ? str_st : str_ld) : "";
+
+        // combine fetch/write-back/load/store
+        return($sformatf("core   %0d: 3%s%s%s%s\n", core, str_if, str_wb, str_ld, str_st));
     endfunction: trace
-  
-    // open trace file if name is given by parameter
-    initial
-    begin
-      // trace file if name is given by parameter
-      if ($value$plusargs("trace=%s", fn)) begin
-      end
-      // trace file with filename obtained through plusargs
-      else if (FILE) begin
-        fn = FILE;
-      end
-      if (fn) begin
-        fd = $fopen(fn, "w");
-        $display("TRACING: opened trace file: '%s'.", fn);
-      end else begin
-        $display("TRACING: no trace file name was provided.");
-      end
-    end
-  
-    final
-    begin
-      $fclose(fd);
-      $display("TRACING: closed trace file: '%s'.", fn);
-    end
 
 ////////////////////////////////////////////////////////////////////////////////
 // statistics
 ////////////////////////////////////////////////////////////////////////////////
 
-endmodule: trace_spike
+endpackage: trace_spike_pkg

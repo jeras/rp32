@@ -17,82 +17,132 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_mouse_trace
-  import riscv_isa_pkg::*;
-  import riscv_isa_i_pkg::*;
-  import tcb_pkg::*;
+    import tcb_pkg::*;
 #(
-  // trace file name
-  string FILE = ""
+    // trace file name
+    string FILE = ""
 )(
-  // instruction execution phase
-  input logic [3-1:0] pha,
-  // TCB system bus
-  tcb_if.mon tcb
+    // instruction execution phase
+    input logic [3-1:0] pha,
+    // TCB system bus
+    tcb_if.mon tcb
 );
 
-////////////////////////////////////////////////////////////////////////////////
-// local parameters and signals
-////////////////////////////////////////////////////////////////////////////////
-
-  import riscv_asm_pkg::*;
-  import tcb_pkg::*;
-
-  // TODO: try to share this table with RTL, while keeping Verilog2005 compatibility ?
-  // FSM phases (GPR access phases can be decoded from a single bit)
-  localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
-  localparam logic [3-1:0] RS1 = 3'b101;  // read register source 1
-  localparam logic [3-1:0] RS2 = 3'b110;  // read register source 1
-  localparam logic [3-1:0] MLD = 3'b001;  // memory load
-  localparam logic [3-1:0] MST = 3'b010;  // memory store
-  localparam logic [3-1:0] EXE = 3'b011;  // execute (only used to evaluate branching condition)
-  localparam logic [3-1:0] WB  = 3'b100;  // GPR write-back
-
-  // trace file name and descriptor
-  string fn;  // file name
-  int fd;
-
-  // print-out delay queue
-  string str_if [$];  // instruction fetch
-  string str_wb [$];  // GPR write-back
-  string str_ld [$];  // load
-  string str_st [$];  // store
+    import riscv_isa_pkg::*;
+    import riscv_isa_i_pkg::*;
+    import riscv_asm_pkg::*;
+    import trace_spike_pkg;
 
 ////////////////////////////////////////////////////////////////////////////////
-// tracing (matching spike simulator logs)
+// local parameters
 ////////////////////////////////////////////////////////////////////////////////
 
-  // format GPR string with desired whitespace
-  function string format_gpr (logic [5-1:0] idx);
-      if (idx < 10)  return($sformatf("x%0d ", idx));
-      else           return($sformatf("x%0d", idx));
-  endfunction: format_gpr
+    // TODO: try to share this table with RTL, while keeping Verilog2005 compatibility ?
+    // FSM phases (GPR access phases can be decoded from a single bit)
+    localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
+    localparam logic [3-1:0] RS1 = 3'b101;  // read register source 1
+    localparam logic [3-1:0] RS2 = 3'b110;  // read register source 1
+    localparam logic [3-1:0] MLD = 3'b001;  // memory load
+    localparam logic [3-1:0] MST = 3'b010;  // memory store
+    localparam logic [3-1:0] EXE = 3'b011;  // execute (only used to evaluate branching condition)
+    localparam logic [3-1:0] WB  = 3'b100;  // GPR write-back
 
-  // prepare string for each execution phase
-  always_ff @(posedge tcb.clk)
-  begin
-    if ($past(tcb.trn)) begin
-      // instruction fetch
-      if ($past(pha) == IF) begin
-        str_if.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb.req.adr), tcb.rsp.rdt));
-      end
-      // GPR write-back (rs1/rs2 reads are not logged)
-      if ($past(pha) == WB) begin
-        str_wb.push_front($sformatf(" %s 0x%8h", format_gpr($past(tcb.req.adr[2+:5])), $past(tcb.req.wdt)));
-      end
-      // memory load
-      if ($past(pha) == MLD) begin
-        str_ld.push_front($sformatf(" mem 0x%8h", $past(tcb.req.adr)));
-      end
-      // memory store
-      if ($past(pha) == MST) begin
-        case ($past(tcb.req.siz))
-          2'd0: str_st.push_front($sformatf(" mem 0x%8h 0x%2h", $past(tcb.req.adr), $past(tcb.req.wdt[ 8-1:0])));
-          2'd1: str_st.push_front($sformatf(" mem 0x%8h 0x%4h", $past(tcb.req.adr), $past(tcb.req.wdt[16-1:0])));
-          2'd2: str_st.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb.req.adr), $past(tcb.req.wdt[32-1:0])));
-        endcase
-      end
+////////////////////////////////////////////////////////////////////////////////
+// local signals
+////////////////////////////////////////////////////////////////////////////////
+
+    // IFU
+    logic            ifu_vld;  // valid
+    logic [XLEN-1:0] ifu_adr;  // PC (IFU address)
+    logic [XLEN-1:0] ifu_ins;  // instruction
+    logic            ifu_ill;  // instruction is illegal
+    // WBU (write back to destination register)
+    logic            wbu_vld;  // valid
+    logic [   5-1:0] wbu_idx;  // index of destination register
+    logic [XLEN-1:0] wbu_dat;  // data
+    // LSU
+    logic            lsu_vld;  // valid
+    logic            lsu_wen;  // enable
+    logic [   5-1:0] lsu_idx;  // index of data source register
+    logic [XLEN-1:0] lsu_adr;  // PC (IFU address)
+    logic [XLEN-1:0] lsu_siz;  // load/store size
+    logic [XLEN-1:0] lsu_wdt;  // write data (store)
+    logic [XLEN-1:0] lsu_rdt;  // read data (load)
+
+////////////////////////////////////////////////////////////////////////////////
+// tracing
+////////////////////////////////////////////////////////////////////////////////
+
+    initial begin
+        ifu_vld = 1'b0;
     end
-  end
+
+    // prepare string for each execution phase
+    always_ff @(posedge tcb.clk)
+    if (tcb.rst) begin
+        ifu_vld = 1'b0;
+    end else if ($past(tcb.trn)) begin
+        case ($past(pha))
+            IF: begin
+                // log instruction trace
+                if (ifu_vld) begin
+                    string str = trace_spike::trace(
+                        .core (0),
+                        // IFU
+                        .ifu_adr,
+                        .ifu_ins,
+                        .ifu_ill,
+                        // WBU (write back to destination register)
+                        .wbu_vld,
+                        .wbu_idx,
+                        .wbu_dat,
+                        // LSU
+                        .lsu_vld,
+                        .lsu_wen,
+                        .lsu_idx,
+                        .lsu_adr,
+                        .lsu_siz,
+                        .lsu_wdt,
+                        .lsu_rdt 
+                    );
+                    $fwrite(fd, str);
+                end
+                // instruction fetch
+                ifu_vld <= 1'b1;
+                ifu_adr <= $past(tcb.req.adr);
+                ifu_ins <=       tcb.rsp.rdt ;
+                ifu_ill <= 1'b0;  // TODO;
+                // clear write-back/load/store valid
+                wbu_vld <= 1'b0;
+                lsu_vld <= 1'b0;
+            end
+            WB: begin
+                // GPR write-back (rs1/rs2 reads are not logged)
+                wbu_vld <= 1'b1;
+                wbu_idx <= $past(tcb.req.adr[2+:5]);
+                wbu_dat <= $past(tcb.req.wdt);
+            end
+            MLD: begin
+                // memory load
+                lsu_vld <= 1'b1;
+                lsu_wen <= 1'b0;  // read access
+                lsu_idx <= 'x;    // destination register is defined with `wbu_idx`
+                lsu_adr <= $past(tcb.req.adr);
+                lsu_siz <= $past(tcb.req.siz);
+                lsu_rdt <=       tcb.req.rdt ;
+            end
+            MST: begin
+                // memory store
+                lsu_vld <= 1'b1;
+                lsu_wen <= 1'b0;  // read access
+                lsu_idx <= 'x;    // destination register is defined with `wbu_idx`
+                lsu_adr <= $past(tcb.req.adr);
+                lsu_siz <= $past(tcb.req.siz);
+                lsu_wdt <= $past(tcb.req.wdt);
+                lsu_rdt <=       tcb.req.rdt ;
+            end
+        endcase
+    end
 
   // prepare string for committed instruction
   always_ff @(posedge tcb.clk)
@@ -105,7 +155,6 @@ module r5p_mouse_trace
         if ($past(pha) == IF) begin
           // skip first fetch
           if (~$past(tcb.rst,3)) begin
-              $fwrite(fd, "core   0: 3%s%s%s%s\n", str_if.pop_back(), str_wb.pop_back(), str_ld.pop_back(), str_st.pop_back());
           end
         end
       end
