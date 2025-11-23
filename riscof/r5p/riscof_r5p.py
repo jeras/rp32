@@ -142,7 +142,7 @@ class r5p(pluginTemplate):
             sig_file = os.path.join(test_dir, name + ".signature")
 
             # Name of the HDL testbench log file
-            log_file = os.path.join(test_dir, "dut.log")
+            trace_file = os.path.join(test_dir, "dut.log")
 
             # For each test there are specific compile macros that need to be enabled.
             # The macros in the testList node only contain the macros/values.
@@ -202,7 +202,7 @@ class r5p(pluginTemplate):
             simulate_plusargs_dict = {
                 'firmware': os.path.join(test_dir, elf)+'.bin',
                 'signature': sig_file,
-                'log': log_file
+                'trace': trace_file
             }
 
             # provide ELF symbols as plusargs

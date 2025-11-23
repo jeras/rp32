@@ -19,8 +19,10 @@
 module r5p_mouse_trace
     import tcb_pkg::*;
 #(
+    // trace format ("HDLDB", "Spike")
+    parameter string FORMAT,
     // trace file name
-    string FILE = ""
+    parameter string FILE = ""
 )(
     // instruction execution phase
     input logic [3-1:0] pha,
@@ -31,7 +33,7 @@ module r5p_mouse_trace
     import riscv_isa_pkg::*;
     import riscv_isa_i_pkg::*;
     import riscv_asm_pkg::*;
-    import trace_spike_pkg;
+    import trace_spike_pkg::*;
 
 ////////////////////////////////////////////////////////////////////////////////
 // local parameters
@@ -51,139 +53,149 @@ module r5p_mouse_trace
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-    // IFU
-    logic            ifu_vld;  // valid
-    logic [XLEN-1:0] ifu_adr;  // PC (IFU address)
-    logic [XLEN-1:0] ifu_ins;  // instruction
-    logic            ifu_ill;  // instruction is illegal
+    // trace file name and descriptor
+    string fn;  // file name
+    int fd;
+
+    // IFU (instruction fetch unit)
+    logic            ifu_ena = 1'b0;  // enable
+    logic [XLEN-1:0] ifu_adr;         // PC (IFU address)
+    logic [XLEN-1:0] ifu_ins;         // instruction
+    logic            ifu_ill;         // instruction is illegal
     // WBU (write back to destination register)
-    logic            wbu_vld;  // valid
-    logic [   5-1:0] wbu_idx;  // index of destination register
-    logic [XLEN-1:0] wbu_dat;  // data
-    // LSU
-    logic            lsu_vld;  // valid
-    logic            lsu_wen;  // enable
-    logic [   5-1:0] lsu_idx;  // index of data source register
-    logic [XLEN-1:0] lsu_adr;  // PC (IFU address)
-    logic [XLEN-1:0] lsu_siz;  // load/store size
-    logic [XLEN-1:0] lsu_wdt;  // write data (store)
-    logic [XLEN-1:0] lsu_rdt;  // read data (load)
+    logic            wbu_ena;         // enable
+    logic [   5-1:0] wbu_idx;         // index of destination register
+    logic [XLEN-1:0] wbu_dat;         // data
+    // LSU (load/store unit)
+    logic            lsu_ena;         // enable
+    logic            lsu_wen;         // write enable
+    logic            lsu_ren;         // read enable
+    logic [   5-1:0] lsu_wid;         // index of data source GPR
+    logic [   5-1:0] lsu_rid;         // index of data destination GPR
+    logic [XLEN-1:0] lsu_adr;         // PC (IFU address)
+    logic [XLEN-1:0] lsu_siz;         // load/store size
+    logic [XLEN-1:0] lsu_wdt;         // write data (store)
+    logic [XLEN-1:0] lsu_rdt;         // read data (load)
 
 ////////////////////////////////////////////////////////////////////////////////
 // tracing
 ////////////////////////////////////////////////////////////////////////////////
 
     initial begin
-        ifu_vld = 1'b0;
+        $display("DEBUG: FORMAT = '%s'", FORMAT);
     end
 
     // prepare string for each execution phase
     always_ff @(posedge tcb.clk)
     if (tcb.rst) begin
-        ifu_vld = 1'b0;
+        ifu_ena <= 1'b0;
     end else if ($past(tcb.trn)) begin
         case ($past(pha))
             IF: begin
                 // log instruction trace
-                if (ifu_vld) begin
-                    string str = trace_spike::trace(
-                        .core (0),
-                        // IFU
-                        .ifu_adr,
-                        .ifu_ins,
-                        .ifu_ill,
-                        // WBU (write back to destination register)
-                        .wbu_vld,
-                        .wbu_idx,
-                        .wbu_dat,
-                        // LSU
-                        .lsu_vld,
-                        .lsu_wen,
-                        .lsu_idx,
-                        .lsu_adr,
-                        .lsu_siz,
-                        .lsu_wdt,
-                        .lsu_rdt 
-                    );
-                    $fwrite(fd, str);
+                if (ifu_ena) begin
+//                    $display("DEBUG: trace");
+                    case (FORMAT)
+                        "Spike": begin
+//                            $display("DEBUG: trace Spike");
+                            $fwrite(fd, trace_spike_pkg::trace(
+                                .core (0),
+                                // IFU
+                                .ifu_adr (ifu_adr),
+                                .ifu_ins (ifu_ins),
+                                // WBU (write back to destination register)
+                                .wbu_ena (wbu_ena),
+                                .wbu_idx (wbu_idx),
+                                .wbu_dat (wbu_dat),
+                                // LSU
+                                .lsu_ena (lsu_ena),
+                                .lsu_wen (lsu_wen),
+                                .lsu_ren (lsu_ren),
+                                .lsu_adr (lsu_adr),
+                                .lsu_siz (lsu_siz),
+                                .lsu_wdt (lsu_wdt)
+                            ));
+                        end
+                    endcase
                 end
                 // instruction fetch
-                ifu_vld <= 1'b1;
+                ifu_ena <= 1'b1;
                 ifu_adr <= $past(tcb.req.adr);
                 ifu_ins <=       tcb.rsp.rdt ;
                 ifu_ill <= 1'b0;  // TODO;
                 // clear write-back/load/store valid
-                wbu_vld <= 1'b0;
-                lsu_vld <= 1'b0;
+                wbu_ena <= 1'b0;
+                lsu_ena <= 1'b0;
+                lsu_wen <= 1'b0;
+                lsu_ren <= 1'b0;
             end
             WB: begin
                 // GPR write-back (rs1/rs2 reads are not logged)
-                wbu_vld <= 1'b1;
+                wbu_ena <= 1'b1;
                 wbu_idx <= $past(tcb.req.adr[2+:5]);
                 wbu_dat <= $past(tcb.req.wdt);
             end
             MLD: begin
                 // memory load
-                lsu_vld <= 1'b1;
-                lsu_wen <= 1'b0;  // read access
-                lsu_idx <= 'x;    // destination register is defined with `wbu_idx`
+                lsu_ena <= 1'b1;
+                lsu_ren <= 1'b1;
+                lsu_rid <= $past(tcb.req.adr[2+:5]);
                 lsu_adr <= $past(tcb.req.adr);
                 lsu_siz <= $past(tcb.req.siz);
-                lsu_rdt <=       tcb.req.rdt ;
+                lsu_rdt <=       tcb.rsp.rdt ;
             end
             MST: begin
                 // memory store
-                lsu_vld <= 1'b1;
-                lsu_wen <= 1'b0;  // read access
-                lsu_idx <= 'x;    // destination register is defined with `wbu_idx`
+                lsu_ena <= 1'b1;
+                lsu_wen <= 1'b1;
+                lsu_rid <= $past(tcb.req.adr[2+:5]);
                 lsu_adr <= $past(tcb.req.adr);
                 lsu_siz <= $past(tcb.req.siz);
                 lsu_wdt <= $past(tcb.req.wdt);
-                lsu_rdt <=       tcb.req.rdt ;
             end
         endcase
     end
 
-  // prepare string for committed instruction
-  always_ff @(posedge tcb.clk)
-  begin
-    // only log if a trace file was opened
-    if (fd) begin
-      // at instruction fetch combine strings from previous instructions
-      if ($past(tcb.trn)) begin
-        // instruction fetch
-        if ($past(pha) == IF) begin
-          // skip first fetch
-          if (~$past(tcb.rst,3)) begin
-          end
+    // prepare string for committed instruction
+    always_ff @(posedge tcb.clk)
+    begin
+        // only log if a trace file was opened
+        if (fd) begin
+            // at instruction fetch combine strings from previous instructions
+            if ($past(tcb.trn)) begin
+                // instruction fetch
+                if ($past(pha) == IF) begin
+                    // skip first fetch
+                    if (~$past(tcb.rst,3)) begin
+                    end
+                end
+            end
         end
-      end
     end
-  end
-
-  // open trace file if name is given by parameter
-  initial
-  begin
-    // trace file if name is given by parameter
-    if ($value$plusargs("trace=%s", fn)) begin
+  
+    // open trace file if name is given by parameter
+    initial
+    begin
+        // trace file if name is given by parameter
+        if ($value$plusargs("trace=%s", fn)) begin
+        end
+        // trace file with filename obtained through plusargs
+        else if (FILE) begin
+            fn = FILE;
+        end
+        if (fn) begin
+            fd = $fopen(fn, "w");
+            $display("TRACING: opened trace file: '%s'.", fn);
+        end else begin
+            $display("TRACING: no trace file name was provided.");
+        end
     end
-    // trace file with filename obtained through plusargs
-    else if (FILE) begin
-      fn = FILE;
+  
+    final
+    begin
+        $fclose(fd);
+        $display("TRACING: closed trace file: '%s'.", fn);
     end
-    if (fn) begin
-      fd = $fopen(fn, "w");
-      $display("TRACING: opened trace file: '%s'.", fn);
-    end else begin
-      $display("TRACING: no trace file name was provided.");
-    end
-  end
-
-  final
-  begin
-    $fclose(fd);
-    $display("TRACING: closed trace file: '%s'.", fn);
-  end
 
 ////////////////////////////////////////////////////////////////////////////////
 // statistics

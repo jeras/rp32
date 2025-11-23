@@ -142,6 +142,8 @@ import riscv_asm_pkg::*;
     // TCB system bus (shared by instruction/load/store)
     .tcb_vld (tcb_cpu.vld),
     .tcb_wen (tcb_cpu.req.wen),
+    .tcb_ren (tcb_cpu.req.ren),
+    .tcb_xen (tcb_cpu.req.xen),
     .tcb_adr (tcb_cpu.req.adr),
     .tcb_siz (tcb_cpu.req.siz),
     .tcb_wdt (tcb_cpu.req.wdt),
@@ -228,20 +230,22 @@ import riscv_asm_pkg::*;
 
 `ifdef TRACE_SPIKE
 
-  // GPR array
-  logic [XLEN-1:0] gpr [0:32-1];
+    // GPR array
+    logic [XLEN-1:0] gpr [0:32-1];
 
-  // copy GPR array from system memory
-  // TODO: apply proper streaming operator
-  assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
+    // copy GPR array from system memory
+    // TODO: apply proper streaming operator
+    assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
-  // system bus monitor
-  r5p_mouse_trace_spike r5p_log (
-    // instruction execution phase
-    .pha  (dut.ctl_pha),
-    // TCB system bus
-    .tcb  (tcb_cpu)
-  );
+    // trace with Spike format
+    r5p_mouse_trace #(
+        .FORMAT ("Spike")
+    ) trace_hdldb (
+        // instruction execution phase
+        .pha  (dut.ctl_pha),
+        // TCB system bus
+        .tcb  (tcb_cpu)
+    );
 
 `endif
 

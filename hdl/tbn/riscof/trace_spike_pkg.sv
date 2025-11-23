@@ -38,19 +38,17 @@ package trace_spike_pkg;
         // IFU
         logic [XLEN-1:0] ifu_adr,  // PC (IFU address)
         logic [XLEN-1:0] ifu_ins,  // instruction
-        logic            ifu_ill,  // instruction is illegal
         // WBU (write back to destination register)
-        logic            wbu_vld,  // valid
+        logic            wbu_ena,  // enable
         logic [   5-1:0] wbu_idx,  // index of destination register
         logic [XLEN-1:0] wbu_dat,  // data
         // LSU
-        logic            lsu_vld,  // valid
-        logic            lsu_wen,  // enable
-        logic [   5-1:0] lsu_idx,  // index of data source register
+        logic            lsu_ena,  // enable
+        logic            lsu_wen,  // write enable
+        logic            lsu_ren,  // read enable
         logic [XLEN-1:0] lsu_adr,  // PC (IFU address)
         logic [XLEN-1:0] lsu_siz,  // load/store size
-        logic [XLEN-1:0] lsu_wdt,  // write data (store)
-        logic [XLEN-1:0] lsu_rdt   // read data (load)
+        logic [XLEN-1:0] lsu_wdt   // write data (store)
     );
         string str_if;  // instruction fetch
         string str_wb;  // write-back
@@ -62,22 +60,27 @@ package trace_spike_pkg;
         str_if = $sformatf(" 0x%8h (0x%8h)", ifu_adr, ifu_ins);
 
         // prepare write-back
-        str_wb = wbu_vld ? $sformatf(" %s 0x%8h", format_gpr(wbu_idx), wbu_dat) : "";
+        str_wb = wbu_ena ? $sformatf(" %s 0x%8h", format_gpr(wbu_idx), wbu_dat) : "";
 
         // prepare load
-        str_ld = $sformatf(" mem 0x%8h", lsu_adr);
+        if (lsu_ena & lsu_ren) begin
+            str_ld = $sformatf(" mem 0x%8h", lsu_adr);
+        end else begin
+            str_ld = "";
+        end
 
         // prepare store
-        case (lsu_siz)
-            2'd0: str_st = $sformatf(" mem 0x%8h 0x%2h", lsu_adr, lsu_wdt[ 8-1:0]);
-            2'd1: str_st = $sformatf(" mem 0x%8h 0x%4h", lsu_adr, lsu_wdt[16-1:0]);
-            2'd2: str_st = $sformatf(" mem 0x%8h 0x%8h", lsu_adr, lsu_wdt[32-1:0]);
-//          2'd3: str_st = $sformatf(" mem 0x%8h 0x%16h", lsu_adr, lsu_wdt[64-1:0]);
-            default: $error("Unsupported store size %0d", lsu_siz);
-        endcase
-
-        // prepare load/store
-        str_ls = lsu_vld ? (lsu_wen ? str_st : str_ld) : "";
+        if (lsu_ena & lsu_wen) begin
+            case (lsu_siz)
+                2'd0: str_st = $sformatf(" mem 0x%8h 0x%2h", lsu_adr, lsu_wdt[ 8-1:0]);
+                2'd1: str_st = $sformatf(" mem 0x%8h 0x%4h", lsu_adr, lsu_wdt[16-1:0]);
+                2'd2: str_st = $sformatf(" mem 0x%8h 0x%8h", lsu_adr, lsu_wdt[32-1:0]);
+//                 2'd3: str_st = $sformatf(" mem 0x%8h 0x%16h", lsu_adr, lsu_wdt[64-1:0]);
+                default: $error("Unsupported store size %0d", lsu_siz);
+            endcase
+        end else begin
+            str_st = "";
+        end
 
         // combine fetch/write-back/load/store
         return($sformatf("core   %0d: 3%s%s%s%s\n", core, str_if, str_wb, str_ld, str_st));

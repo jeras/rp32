@@ -95,20 +95,20 @@ module r5p_mouse_soc_top_tb #(
   endgenerate  
 
 ////////////////////////////////////////////////////////////////////////////////
-// GDB stub instance
+// tracing
 ////////////////////////////////////////////////////////////////////////////////
 
 `ifdef TRACE_HDLDB
 
-  // system bus monitor
-  r5p_mouse_trace #(
-    .FORMAT ("HDLDB")
-  ) trace_hdldb (
-    // instruction execution phase
-    .pha  (dut.ctl_pha),
-    // TCB system bus
-    .tcb  (dut.tcb_cpu)
-  );
+    // trace with HDLDB format
+    r5p_mouse_trace #(
+        .FORMAT ("HDLDB")
+    ) trace_hdldb (
+        // instruction execution phase
+        .pha  (dut.ctl_pha),
+        // TCB system bus
+        .tcb  (dut.tcb_cpu)
+    );
 
 `endif
 
