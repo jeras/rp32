@@ -156,23 +156,6 @@ module r5p_mouse_trace
         endcase
     end
 
-    // prepare string for committed instruction
-    always_ff @(posedge tcb.clk)
-    begin
-        // only log if a trace file was opened
-        if (fd) begin
-            // at instruction fetch combine strings from previous instructions
-            if ($past(tcb.trn)) begin
-                // instruction fetch
-                if ($past(pha) == IF) begin
-                    // skip first fetch
-                    if (~$past(tcb.rst,3)) begin
-                    end
-                end
-            end
-        end
-    end
-  
     // open trace file if name is given by parameter
     initial
     begin
