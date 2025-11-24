@@ -20,7 +20,7 @@ module r5p_mouse_trace
     import tcb_pkg::*;
     import trace_spike_pkg::*;
 #(
-    parameter int unsigned XLEN = 32,
+    localparam int unsigned XLEN = 32,
     // trace format class type (HDLDB, Spike, ...)
     parameter type FORMAT = trace_spike_pkg::spike,
     // trace file name
@@ -53,10 +53,6 @@ module r5p_mouse_trace
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
-
-    // trace file name and descriptor
-    string fn;  // file name
-    int fd;
 
     // IFU (instruction fetch unit)
     logic            ifu_ena = 1'b0;  // enable
@@ -173,9 +169,5 @@ module r5p_mouse_trace
             end
         endcase
     end
-
-////////////////////////////////////////////////////////////////////////////////
-// statistics
-////////////////////////////////////////////////////////////////////////////////
 
 endmodule: r5p_mouse_trace

@@ -16,141 +16,148 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_degu_trace_spike
-  import riscv_isa_pkg::*;
-  import riscv_isa_i_pkg::*;
+module r5p_degu_trace
+    import tcb_pkg::*;
+    import trace_spike_pkg::*;
 #(
-  // constants used across the design in signal range sizing instead of literals
-  localparam int unsigned XLEN = 32,
-  localparam int unsigned XLOG = $clog2(XLEN),
-  // log file name
-  string LOG = "",
-  // TODO: check for GPR size differently
-  parameter  int unsigned GNUM = 32,
-  localparam int unsigned GLOG = $clog2(GNUM)
+    // constants used across the design in signal range sizing instead of literals
+    localparam int unsigned XLEN = 32,
+    localparam int unsigned XLOG = $clog2(XLEN),
+    // trace format class type (HDLDB, Spike, ...)
+    parameter type FORMAT = trace_spike_pkg::spike,
+    // trace file name
+    parameter string FILE = "",
+    // TODO: check for GPR size differently
+    parameter  int unsigned GNUM = 32,
+    localparam int unsigned GLOG = $clog2(GNUM)
 )(
-  // GPR array
-  input logic            gpr_wen,
-  input logic [GLOG-1:0] gpr_wid,
-  input logic [XLEN-1:0] gpr_wdt,
-  // TCB IFU/LSU system busses
-  tcb_if.mon tcb_ifu,
-  tcb_if.mon tcb_lsu
+    // GPR array
+    input logic            gpr_wen,
+    input logic [GLOG-1:0] gpr_wid,
+    input logic [XLEN-1:0] gpr_wdt,
+    // TCB IFU/LSU system busses
+    tcb_if.mon tcb_ifu,
+    tcb_if.mon tcb_lsu
 );
 
-////////////////////////////////////////////////////////////////////////////////
-// local parameters and signals
-////////////////////////////////////////////////////////////////////////////////
-
-  import riscv_asm_pkg::*;
-  import tcb_pkg::*;
-
-  // log file name and descriptor
-  string fn;  // file name
-  int fd;
-
-  // print-out delay queue
-  string str_ifu [$];  // instruction fetch
-  string str_gpr [$];  // GPR write-back
-  string str_lsu [$];  // load
+//    import riscv_isa_pkg::*;
+//    import riscv_isa_i_pkg::*;
+//    import riscv_asm_pkg::*;
 
 ////////////////////////////////////////////////////////////////////////////////
-// logging (matching spike simulator logs)
+// local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-  // initialize dummy data into the queue to enforce order
-  initial
-  begin
-    str_gpr = '{};
-    str_lsu = '{};
-    str_ifu = '{""};
-  end
+    // IFU (instruction fetch unit)
+    logic            ifu_ena = 1'b0;  // enable
+    logic [XLEN-1:0] ifu_adr;         // PC (IFU address)
+    logic [XLEN-1:0] ifu_ins;         // instruction
+    logic            ifu_ill;         // instruction is illegal
+    // WBU (write back to destination register)
+    logic            wbu_ena;         // enable
+    logic [   5-1:0] wbu_idx;         // index of destination register
+    logic [XLEN-1:0] wbu_dat;         // data
+    // LSU (load/store unit)
+    logic            lsu_ena;         // enable
+    logic            lsu_wen;         // write enable
+    logic            lsu_ren;         // read enable
+    logic [   5-1:0] lsu_wid;         // index of data source GPR
+    logic [   5-1:0] lsu_rid;         // index of data destination GPR
+    logic [XLEN-1:0] lsu_adr;         // PC (IFU address)
+    logic [XLEN-1:0] lsu_siz;         // load/store size
+    logic [XLEN-1:0] lsu_wdt;         // write data (store)
+    logic [XLEN-1:0] lsu_rdt;         // read data (load)
 
-  // format GPR string with desired whitespace
-  function string format_gpr (logic [5-1:0] idx);
-      if (idx < 10)  return($sformatf("x%0d ", idx));
-      else           return($sformatf("x%0d", idx));
-  endfunction: format_gpr
+////////////////////////////////////////////////////////////////////////////////
+// tracing
+////////////////////////////////////////////////////////////////////////////////
 
-  // instruction fetch
-  always_ff @(posedge tcb_ifu.clk)
-  begin
-    if ($past(tcb_ifu.trn)) begin
-      if (opsiz(tcb_ifu.rsp.rdt) == 4) begin
-        str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt));
-      end else begin
-        str_ifu.push_front($sformatf(" 0x%8h (0x%4h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt[16-1:0]));
-      end
-    end
-  end
+    // object tracer of class FORMAT
+    FORMAT tracer;
 
-  // GPR write-back (rs1/rs2 reads are not logged)
-  always_ff @(posedge tcb_ifu.clk)
-  begin
-    if ($past(tcb_ifu.trn)) begin
-      if (gpr_wen) begin
-        // ignore GPR x0
-        if (gpr_wid != 0) begin
-            str_gpr.push_front($sformatf(" %s 0x%8h", format_gpr(gpr_wid), gpr_wdt));
+    // open trace file if name is given by parameter
+    initial
+    begin
+        string filename;
+        // trace file if name is given by parameter
+        if ($value$plusargs("trace=%s", filename)) begin
         end
-      end else begin
-        str_gpr.push_front("");
-      end
+        // trace file with filename obtained through plusargs
+        else if (FILE) begin
+            filename = FILE;
+        end
+        if (filename) begin
+            tracer = new(filename);
+            $display("TRACING: opened trace file: '%s'.", filename);
+        end else begin
+            $display("TRACING: no trace file name was provided.");
+        end
     end
-  end
-
-  // memory load/store
-  always_ff @(posedge tcb_lsu.clk)
-  begin
-    if ($past(tcb_lsu.trn)) begin
-      if ($past(tcb_lsu.req.wen)) begin
-        // memory store
-        str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb_lsu.req.adr), $past(tcb_lsu.req.wdt)));
-      end else begin
-        // memory load
-        str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_lsu.req.adr), tcb_lsu.rsp.rdt));
-      end
+  
+    final
+    begin
+        tracer.close();
     end
-  end
 
-  // prepare string for committed instruction
-  always_ff @(posedge tcb_ifu.clk)
-  begin
-    // only log if a log file was opened
-    if (fd) begin
-      // at instruction fetch combine strings from previous instructions
+    // initialize dummy data into the queue to enforce order
+    initial
+    begin
+      str_gpr = '{};
+      str_lsu = '{};
+      str_ifu = '{""};
+    end
+
+    // instruction fetch
+    always_ff @(posedge tcb_ifu.clk)
+    begin
+        if ($past(tcb_ifu.trn)) begin
+            if (opsiz(tcb_ifu.rsp.rdt) == 4) begin
+                str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt));
+            end else begin
+                str_ifu.push_front($sformatf(" 0x%8h (0x%4h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt[16-1:0]));
+            end
+        end
+    end
+
+    // GPR write-back (rs1/rs2 reads are not logged)
+    always_ff @(posedge tcb_ifu.clk)
+    begin
       if ($past(tcb_ifu.trn)) begin
-        $fwrite(fd, "core   0: 3%s%s%s\n", str_ifu.pop_back(), str_gpr.pop_back(), str_lsu.pop_back());
+        if (gpr_wen) begin
+          // ignore GPR x0
+          if (gpr_wid != 0) begin
+              str_gpr.push_front($sformatf(" %s 0x%8h", format_gpr(gpr_wid), gpr_wdt));
+          end
+        end else begin
+          str_gpr.push_front("");
+        end
       end
     end
-  end
 
-  // open log file if name is given by parameter
-  initial
-  begin
-    // log file if name is given by parameter
-    if ($value$plusargs("log=%s", fn)) begin
+    // memory load/store
+    always_ff @(posedge tcb_lsu.clk)
+    begin
+      if ($past(tcb_lsu.trn)) begin
+        if ($past(tcb_lsu.req.wen)) begin
+          // memory store
+          str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb_lsu.req.adr), $past(tcb_lsu.req.wdt)));
+        end else begin
+          // memory load
+          str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_lsu.req.adr), tcb_lsu.rsp.rdt));
+        end
+      end
     end
-    // log file with filename obtained through plusargs
-    else if (LOG) begin
-      fn = LOG;
+
+    // prepare string for committed instruction
+    always_ff @(posedge tcb_ifu.clk)
+    begin
+      // only log if a log file was opened
+      if (fd) begin
+        // at instruction fetch combine strings from previous instructions
+        if ($past(tcb_ifu.trn)) begin
+          $fwrite(fd, "core   0: 3%s%s%s\n", str_ifu.pop_back(), str_gpr.pop_back(), str_lsu.pop_back());
+        end
+      end
     end
-    if (fn) begin
-      fd = $fopen(fn, "w");
-      $display("LOGGING: opened log file: '%s'.", fn);
-    end else begin
-      $display("LOGGING: no log file name was provided.");
-    end
-  end
 
-  final
-  begin
-    $fclose(fd);
-    $display("LOGGING: closed log file: '%s'.", fn);
-  end
-
-////////////////////////////////////////////////////////////////////////////////
-// statistics
-////////////////////////////////////////////////////////////////////////////////
-
-endmodule: r5p_degu_trace_spike
+endmodule: r5p_degu_trace
