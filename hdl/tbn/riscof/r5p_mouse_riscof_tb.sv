@@ -237,9 +237,13 @@ import riscv_asm_pkg::*;
     // TODO: apply proper streaming operator
     assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
+    // tracer format class specialization
+    typedef trace_spike_pkg::spike #(XLEN) format;
+
     // trace with Spike format
     r5p_mouse_trace #(
-        .FORMAT ("Spike")
+        .XLEN   (XLEN),
+        .FORMAT (format)
     ) trace_hdldb (
         // instruction execution phase
         .pha  (dut.ctl_pha),

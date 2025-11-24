@@ -18,9 +18,11 @@
 
 module r5p_mouse_trace
     import tcb_pkg::*;
+    import trace_spike_pkg::*;
 #(
-    // trace format ("HDLDB", "Spike")
-    parameter string FORMAT,
+    parameter int unsigned XLEN = 32,
+    // trace format class type (HDLDB, Spike, ...)
+    parameter type FORMAT = trace_spike_pkg::spike,
     // trace file name
     parameter string FILE = ""
 )(
@@ -30,10 +32,9 @@ module r5p_mouse_trace
     tcb_if.mon tcb
 );
 
-    import riscv_isa_pkg::*;
-    import riscv_isa_i_pkg::*;
-    import riscv_asm_pkg::*;
-    import trace_spike_pkg::*;
+//    import riscv_isa_pkg::*;
+//    import riscv_isa_i_pkg::*;
+//    import riscv_asm_pkg::*;
 
 ////////////////////////////////////////////////////////////////////////////////
 // local parameters
@@ -81,8 +82,31 @@ module r5p_mouse_trace
 // tracing
 ////////////////////////////////////////////////////////////////////////////////
 
-    initial begin
-        $display("DEBUG: FORMAT = '%s'", FORMAT);
+    // object tracer of class FORMAT
+    FORMAT tracer;
+
+    // open trace file if name is given by parameter
+    initial
+    begin
+        string filename;
+        // trace file if name is given by parameter
+        if ($value$plusargs("trace=%s", filename)) begin
+        end
+        // trace file with filename obtained through plusargs
+        else if (FILE) begin
+            filename = FILE;
+        end
+        if (filename) begin
+            tracer = new(filename);
+            $display("TRACING: opened trace file: '%s'.", filename);
+        end else begin
+            $display("TRACING: no trace file name was provided.");
+        end
+    end
+  
+    final
+    begin
+        tracer.close();
     end
 
     // prepare string for each execution phase
@@ -94,29 +118,23 @@ module r5p_mouse_trace
             IF: begin
                 // log instruction trace
                 if (ifu_ena) begin
-//                    $display("DEBUG: trace");
-                    case (FORMAT)
-                        "Spike": begin
-//                            $display("DEBUG: trace Spike");
-                            $fwrite(fd, trace_spike_pkg::trace(
-                                .core (0),
-                                // IFU
-                                .ifu_adr (ifu_adr),
-                                .ifu_ins (ifu_ins),
-                                // WBU (write back to destination register)
-                                .wbu_ena (wbu_ena),
-                                .wbu_idx (wbu_idx),
-                                .wbu_dat (wbu_dat),
-                                // LSU
-                                .lsu_ena (lsu_ena),
-                                .lsu_wen (lsu_wen),
-                                .lsu_ren (lsu_ren),
-                                .lsu_adr (lsu_adr),
-                                .lsu_siz (lsu_siz),
-                                .lsu_wdt (lsu_wdt)
-                            ));
-                        end
-                    endcase
+                    tracer.trace(
+                        .core (0),
+                        // IFU
+                        .ifu_adr (ifu_adr),
+                        .ifu_ins (ifu_ins),
+                        // WBU (write back to destination register)
+                        .wbu_ena (wbu_ena),
+                        .wbu_idx (wbu_idx),
+                        .wbu_dat (wbu_dat),
+                        // LSU
+                        .lsu_ena (lsu_ena),
+                        .lsu_wen (lsu_wen),
+                        .lsu_ren (lsu_ren),
+                        .lsu_adr (lsu_adr),
+                        .lsu_siz (lsu_siz),
+                        .lsu_wdt (lsu_wdt)
+                    );
                 end
                 // instruction fetch
                 ifu_ena <= 1'b1;
@@ -154,30 +172,6 @@ module r5p_mouse_trace
                 lsu_wdt <= $past(tcb.req.wdt);
             end
         endcase
-    end
-
-    // open trace file if name is given by parameter
-    initial
-    begin
-        // trace file if name is given by parameter
-        if ($value$plusargs("trace=%s", fn)) begin
-        end
-        // trace file with filename obtained through plusargs
-        else if (FILE) begin
-            fn = FILE;
-        end
-        if (fn) begin
-            fd = $fopen(fn, "w");
-            $display("TRACING: opened trace file: '%s'.", fn);
-        end else begin
-            $display("TRACING: no trace file name was provided.");
-        end
-    end
-  
-    final
-    begin
-        $fclose(fd);
-        $display("TRACING: closed trace file: '%s'.", fn);
     end
 
 ////////////////////////////////////////////////////////////////////////////////
