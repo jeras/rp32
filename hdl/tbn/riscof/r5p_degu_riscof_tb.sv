@@ -258,10 +258,10 @@ module r5p_degu_riscof_tb
         end
     end
 
-    // tracer format class specialization
+    // tracer format class specialization (for Spike)
     typedef trace_spike_pkg::spike #(XLEN) format;
 
-    // trace with Spike format
+    // trace with given format
     r5p_degu_trace #(
         .XLEN   (XLEN),
         .FORMAT (format)
