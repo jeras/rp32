@@ -112,6 +112,7 @@ module r5p_mouse_trace
                 // log instruction trace
                 if (ifu_ena) begin
                     tracer.trace(
+                        .timestamp ($time),
                         .core (0),
                         // IFU
                         .ifu_adr (ifu_adr),

@@ -118,6 +118,7 @@ module r5p_degu_trace
         if ($past(tcb_ifu.trn, 2)) begin
 //            $display("DEBUG: fetch");
             tracer.trace(
+                .timestamp ($time),
                 .core (0),
                 // IFU
                 .ifu_adr (ifp_adr),

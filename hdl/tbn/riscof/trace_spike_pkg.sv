@@ -56,7 +56,8 @@ package trace_spike_pkg;
 
         // prepare string for committed instruction
         function void trace (
-            int unsigned     core,     // core (hart) index
+            time             timestamp,       // 64-bit unsigned integer
+            int unsigned     core,            // core (hart) index
             // IFU
             logic [XLEN-1:0] ifu_adr,         // PC (IFU address)
             logic            ifu_siz,         // instruction size (0-16bit, 1-32bit)
