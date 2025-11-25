@@ -2,6 +2,16 @@
 
 RISC-V ISA unit testing using the RISCOF framework.
 
+Tests can be run by executing the script [`buld.sh`](build.sh).
+The script should setup the Python virtual environment and run the tests for processors `mouse` and `degu`.
+Since the Python code is taken from Git development branches, there might be
+[unexpected failures](https://github.com/riscv-software-src/riscof/issues/147).
+
+```
+cd riscof
+./buld.sh
+```
+
 ## Requirements
 
 Follow the [RISCOF Quickstart guide](https://riscof.readthedocs.io/en/stable/installation.html)
