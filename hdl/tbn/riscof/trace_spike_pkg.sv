@@ -58,33 +58,42 @@ package trace_spike_pkg;
         function void trace (
             int unsigned     core,     // core (hart) index
             // IFU
-            logic [XLEN-1:0] ifu_adr,  // PC (IFU address)
-            logic [XLEN-1:0] ifu_ins,  // instruction
+            logic [XLEN-1:0] ifu_adr,         // PC (IFU address)
+            logic            ifu_siz,         // instruction size (0-16bit, 1-32bit)
+            logic [XLEN-1:0] ifu_ins,         // instruction
+            logic            ifu_ill,         // instruction is illegal
             // WBU (write back to destination register)
-            logic            wbu_ena,  // enable
-            logic [   5-1:0] wbu_idx,  // index of destination register
-            logic [XLEN-1:0] wbu_dat,  // data
-            // LSU
-            logic            lsu_ena,  // enable
-            logic            lsu_wen,  // write enable
-            logic            lsu_ren,  // read enable
-            logic [XLEN-1:0] lsu_adr,  // PC (IFU address)
-            logic [XLEN-1:0] lsu_siz,  // load/store size
-            logic [XLEN-1:0] lsu_wdt   // write data (store)
+            logic            wbu_ena,         // enable
+            logic [   5-1:0] wbu_idx,         // index of destination register
+            logic [XLEN-1:0] wbu_dat,         // data
+            // LSU (load/store unit)
+            logic            lsu_ena,         // enable
+            logic            lsu_wen,         // write enable
+            logic            lsu_ren,         // read enable
+            logic [   5-1:0] lsu_wid,         // index of data source GPR
+            logic [   5-1:0] lsu_rid,         // index of data destination GPR
+            logic [XLEN-1:0] lsu_adr,         // PC (IFU address)
+            logic [   2-1:0] lsu_siz,         // load/store logarithmic size
+            logic [XLEN-1:0] lsu_wdt,         // write data (store)
+            logic [XLEN-1:0] lsu_rdt          // read data (load)
         );
             string str_if;  // instruction fetch
             string str_wb;  // write-back
             string str_ls;  // load/store
 
-            // prepare fetch
-            // TODO: add handling of compressed instructions
+            // fetch address
             case (XLEN)
-                32: str_if = $sformatf(" 0x%8h (0x%8h)" , ifu_adr, ifu_ins);
-                64: str_if = $sformatf(" 0x%16h (0x%8h)", ifu_adr, ifu_ins);
+                32: str_if = $sformatf(" 0x%8h" , ifu_adr);
+                64: str_if = $sformatf(" 0x%16h", ifu_adr);
+            endcase
+            // fetch instruction
+            case (ifu_siz)
+                0: str_if = {str_if, $sformatf(" (0x%4h)", ifu_ins[16-1:0])};  // 16bit
+                1: str_if = {str_if, $sformatf(" (0x%8h)", ifu_ins[32-1:0])};  // 32bit
             endcase
 
-            // prepare write-back
-            if (wbu_ena) begin
+            // write-back (x0 access is not logged)
+            if (wbu_ena && (wbu_idx != 0)) begin
                 case (XLEN)
                     32: str_wb = $sformatf(" %s 0x%8h" , format_gpr(wbu_idx), wbu_dat);
                     64: str_wb = $sformatf(" %s 0x%16h", format_gpr(wbu_idx), wbu_dat);
@@ -93,12 +102,16 @@ package trace_spike_pkg;
                 str_wb = "";
             end
 
-            // prepare load/store
+            // load/store
             if (lsu_ena) begin
-                case (XLEN)
-                    32: str_ls = $sformatf(" mem 0x%8h" , lsu_adr);
-                    64: str_ls = $sformatf(" mem 0x%16h", lsu_adr);
-                endcase
+                // load/store address
+                if (lsu_wen | lsu_wen) begin
+                    case (XLEN)
+                        32: str_ls = $sformatf(" mem 0x%8h" , lsu_adr);
+                        64: str_ls = $sformatf(" mem 0x%16h", lsu_adr);
+                    endcase
+                end
+                // store data
                 if (lsu_wen) begin
                     case (lsu_siz)
                         2'd0: str_ls = {str_ls, $sformatf(" 0x%2h" , lsu_wdt[ 8-1:0])};

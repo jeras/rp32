@@ -19,9 +19,12 @@
 module r5p_degu_trace
     import tcb_pkg::*;
     import trace_spike_pkg::*;
+    import riscv_isa_pkg::*;
+    import riscv_isa_i_pkg::*;
+//    import riscv_asm_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
-    localparam int unsigned XLEN = 32,
+    parameter  int unsigned XLEN = 32,
     localparam int unsigned XLOG = $clog2(XLEN),
     // trace format class type (HDLDB, Spike, ...)
     parameter type FORMAT = trace_spike_pkg::spike,
@@ -32,17 +35,14 @@ module r5p_degu_trace
     localparam int unsigned GLOG = $clog2(GNUM)
 )(
     // GPR array
-    input logic            gpr_wen,
-    input logic [GLOG-1:0] gpr_wid,
-    input logic [XLEN-1:0] gpr_wdt,
+    input logic            gpr_den,  // destination enable
+    input logic [GLOG-1:0] gpr_did,  // destination index
+    input logic [XLEN-1:0] gpr_ddt,  // destination data
+    input logic [GLOG-1:0] gpr_sid,  // source index
     // TCB IFU/LSU system busses
     tcb_if.mon tcb_ifu,
     tcb_if.mon tcb_lsu
 );
-
-//    import riscv_isa_pkg::*;
-//    import riscv_isa_i_pkg::*;
-//    import riscv_asm_pkg::*;
 
 ////////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -51,6 +51,7 @@ module r5p_degu_trace
     // IFU (instruction fetch unit)
     logic            ifu_ena = 1'b0;  // enable
     logic [XLEN-1:0] ifu_adr;         // PC (IFU address)
+    logic            ifu_siz;         // instruction size (0-16bit, 1-32bit)
     logic [XLEN-1:0] ifu_ins;         // instruction
     logic            ifu_ill;         // instruction is illegal
     // WBU (write back to destination register)
@@ -64,9 +65,15 @@ module r5p_degu_trace
     logic [   5-1:0] lsu_wid;         // index of data source GPR
     logic [   5-1:0] lsu_rid;         // index of data destination GPR
     logic [XLEN-1:0] lsu_adr;         // PC (IFU address)
-    logic [XLEN-1:0] lsu_siz;         // load/store size
+    logic [   2-1:0] lsu_siz;         // load/store logarithmic size
     logic [XLEN-1:0] lsu_wdt;         // write data (store)
     logic [XLEN-1:0] lsu_rdt;         // read data (load)
+
+    // instruction pipeline
+    logic [XLEN-1:0] ifp_adr;         // PC (IFU address)
+    logic            ifp_siz;         // instruction size (0-16bit, 1-32bit)
+    logic [XLEN-1:0] ifp_ins;         // instruction
+    logic            ifp_ill;         // instruction is illegal
 
 ////////////////////////////////////////////////////////////////////////////////
 // tracing
@@ -86,12 +93,8 @@ module r5p_degu_trace
         else if (FILE) begin
             filename = FILE;
         end
-        if (filename) begin
-            tracer = new(filename);
-            $display("TRACING: opened trace file: '%s'.", filename);
-        end else begin
-            $display("TRACING: no trace file name was provided.");
-        end
+        // initialize tracing object
+        tracer = new(filename);
     end
   
     final
@@ -99,65 +102,45 @@ module r5p_degu_trace
         tracer.close();
     end
 
-    // initialize dummy data into the queue to enforce order
-    initial
-    begin
-      str_gpr = '{};
-      str_lsu = '{};
-      str_ifu = '{""};
+    // instruction pipeline
+    always_ff @(posedge tcb_ifu.clk)
+    if ($past(tcb_ifu.trn, 1)) begin
+        ifu_ena <= 1'b0;  // enable
+        ifp_adr <= $past(tcb_ifu.req.adr);
+        ifp_siz <= opsiz(tcb_ifu.rsp.rdt) == 4;
+        ifp_ins <=       tcb_ifu.rsp.rdt ;
+        ifp_ill <= 1'b0;  // TODO
     end
 
     // instruction fetch
     always_ff @(posedge tcb_ifu.clk)
     begin
-        if ($past(tcb_ifu.trn)) begin
-            if (opsiz(tcb_ifu.rsp.rdt) == 4) begin
-                str_ifu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt));
-            end else begin
-                str_ifu.push_front($sformatf(" 0x%8h (0x%4h)", $past(tcb_ifu.req.adr), tcb_ifu.rsp.rdt[16-1:0]));
-            end
-        end
-    end
+        if ($past(tcb_ifu.trn, 2)) begin
+//            $display("DEBUG: fetch");
+            tracer.trace(
+                .core (0),
+                // IFU
+                .ifu_adr (ifp_adr),
+                .ifu_siz (ifp_siz),
+                .ifu_ins (ifp_ins),
+                .ifu_ill (ifp_ill),
+                // WBU (write back to destination register)
+                .wbu_ena (gpr_den),
+                .wbu_idx (gpr_did),
+                .wbu_dat (gpr_ddt),
+                // LSU
+                .lsu_ena ($past(tcb_lsu.trn    )),
+                .lsu_wen ($past(tcb_lsu.req.wen)),
+                .lsu_ren ($past(tcb_lsu.req.ren)),
+                .lsu_wid ($past(gpr_sid)),
+                .lsu_rid (      gpr_did),
+                .lsu_adr ($past(tcb_lsu.req.adr)),
+                .lsu_siz ($past(tcb_lsu.req.siz)),
+                .lsu_wdt ($past(tcb_lsu.req.wdt)),
+                .lsu_rdt (      tcb_lsu.rsp.rdt )
+            );
 
-    // GPR write-back (rs1/rs2 reads are not logged)
-    always_ff @(posedge tcb_ifu.clk)
-    begin
-      if ($past(tcb_ifu.trn)) begin
-        if (gpr_wen) begin
-          // ignore GPR x0
-          if (gpr_wid != 0) begin
-              str_gpr.push_front($sformatf(" %s 0x%8h", format_gpr(gpr_wid), gpr_wdt));
-          end
-        end else begin
-          str_gpr.push_front("");
         end
-      end
-    end
-
-    // memory load/store
-    always_ff @(posedge tcb_lsu.clk)
-    begin
-      if ($past(tcb_lsu.trn)) begin
-        if ($past(tcb_lsu.req.wen)) begin
-          // memory store
-          str_lsu.push_front($sformatf(" mem 0x%8h 0x%8h", $past(tcb_lsu.req.adr), $past(tcb_lsu.req.wdt)));
-        end else begin
-          // memory load
-          str_lsu.push_front($sformatf(" 0x%8h (0x%8h)", $past(tcb_lsu.req.adr), tcb_lsu.rsp.rdt));
-        end
-      end
-    end
-
-    // prepare string for committed instruction
-    always_ff @(posedge tcb_ifu.clk)
-    begin
-      // only log if a log file was opened
-      if (fd) begin
-        // at instruction fetch combine strings from previous instructions
-        if ($past(tcb_ifu.trn)) begin
-          $fwrite(fd, "core   0: 3%s%s%s\n", str_ifu.pop_back(), str_gpr.pop_back(), str_lsu.pop_back());
-        end
-      end
     end
 
 endmodule: r5p_degu_trace

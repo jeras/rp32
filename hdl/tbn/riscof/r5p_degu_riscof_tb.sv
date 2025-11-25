@@ -268,9 +268,10 @@ module r5p_degu_riscof_tb
     ) trace_hdldb (
         // GPR register file array
         // hierarchical path to GPR inside RTL
-        .gpr_wen  (dut.gpr.e_rd),
-        .gpr_wid  (dut.gpr.a_rd),
-        .gpr_wdt  (dut.gpr.d_rd),
+        .gpr_den  (dut.gpr.e_rd),
+        .gpr_did  (dut.gpr.a_rd),
+        .gpr_ddt  (dut.gpr.d_rd),
+        .gpr_sid  (dut.gpr.a_rs1),
         // TCB IFU/LSU system busses
         .tcb_ifu  (tcb_ifu),
         .tcb_lsu  (tcb_lsu)

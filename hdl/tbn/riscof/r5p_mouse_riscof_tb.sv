@@ -242,7 +242,6 @@ import riscv_asm_pkg::*;
 
     // trace with Spike format
     r5p_mouse_trace #(
-        .XLEN   (XLEN),
         .FORMAT (format)
     ) trace_hdldb (
         // instruction execution phase

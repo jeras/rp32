@@ -57,6 +57,7 @@ module r5p_mouse_trace
     // IFU (instruction fetch unit)
     logic            ifu_ena = 1'b0;  // enable
     logic [XLEN-1:0] ifu_adr;         // PC (IFU address)
+    logic            ifu_siz;         // instruction size (0-16bit, 1-32bit)
     logic [XLEN-1:0] ifu_ins;         // instruction
     logic            ifu_ill;         // instruction is illegal
     // WBU (write back to destination register)
@@ -70,7 +71,7 @@ module r5p_mouse_trace
     logic [   5-1:0] lsu_wid;         // index of data source GPR
     logic [   5-1:0] lsu_rid;         // index of data destination GPR
     logic [XLEN-1:0] lsu_adr;         // PC (IFU address)
-    logic [XLEN-1:0] lsu_siz;         // load/store size
+    logic [   2-1:0] lsu_siz;         // load/store logarithmic size
     logic [XLEN-1:0] lsu_wdt;         // write data (store)
     logic [XLEN-1:0] lsu_rdt;         // read data (load)
 
@@ -92,12 +93,8 @@ module r5p_mouse_trace
         else if (FILE) begin
             filename = FILE;
         end
-        if (filename) begin
-            tracer = new(filename);
-            $display("TRACING: opened trace file: '%s'.", filename);
-        end else begin
-            $display("TRACING: no trace file name was provided.");
-        end
+        // initialize tracing object
+        tracer = new(filename);
     end
   
     final
@@ -118,7 +115,9 @@ module r5p_mouse_trace
                         .core (0),
                         // IFU
                         .ifu_adr (ifu_adr),
+                        .ifu_siz (      1),
                         .ifu_ins (ifu_ins),
+                        .ifu_ill (ifu_ill),
                         // WBU (write back to destination register)
                         .wbu_ena (wbu_ena),
                         .wbu_idx (wbu_idx),
@@ -127,9 +126,12 @@ module r5p_mouse_trace
                         .lsu_ena (lsu_ena),
                         .lsu_wen (lsu_wen),
                         .lsu_ren (lsu_ren),
+                        .lsu_wid ('x),
+                        .lsu_rid ('x),
                         .lsu_adr (lsu_adr),
                         .lsu_siz (lsu_siz),
-                        .lsu_wdt (lsu_wdt)
+                        .lsu_wdt (lsu_wdt),
+                        .lsu_rdt (lsu_rdt)
                     );
                 end
                 // instruction fetch
