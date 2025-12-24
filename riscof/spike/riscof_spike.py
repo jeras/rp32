@@ -47,22 +47,12 @@ class spike(pluginTemplate):
         """
         self.suite = suite
         self.work_dir = work_dir
+        self.archtest_env = archtest_env
 
         # NOTE: The following assumes you are using the riscv-gcc toolchain.
         #       If not please change appropriately.
         # prepare toolchain executables ({} to be replaced with XLEN)
-        self.objdump_exe = 'riscv{}-unknown-elf-objdump'
-        self.compile_exe = 'riscv{}-unknown-elf-gcc'
-
-        # prepare toolchain command template
-        self.objdump_cmd = self.objdump_exe + ' -M no-aliases -M numeric -D {} > {}'
-        self.compile_cmd = self.compile_exe + (
-            ' -march={}'
-            ' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
-            ' -T ' + self.pluginpath + '/env/link.ld'
-            ' -I ' + self.pluginpath + '/env/'
-            ' -I ' + archtest_env
-        )
+        self.toolchain = 'riscv32-unknown-elf-'
 
         # prepare model executable
         self.ref_exe = os.path.join(self.config['PATH'] if 'PATH' in self.config else "","spike")
@@ -72,30 +62,24 @@ class spike(pluginTemplate):
         Build is run only once before running for each test list.
         """
         # load ISA YAML file
-        ispec = utils.load_yaml(isa_yaml)['hart0']
+        self.ispec = utils.load_yaml(isa_yaml)['hart0']
 
-        self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
+        self.xlen = ('64' if 64 in self.ispec['supported_xlen'] else '32')
         # construct ISA string
         self.isa = 'rv' + self.xlen
         for ext in ['I', 'M', 'C', 'F', 'D']:
-            if ext in ispec["ISA"]:
+            if ext in self.ispec["ISA"]:
                 self.isa += ext.lower()
 
-        # NOTE: The following assumes you are using the riscv-gcc toolchain.
-        #       If not please change appropriately.
-        # extend compiler command with ABI (integer and floating-point calling convention)
-        self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
-
         # check if toolchain executables are available
-        for tool in [self.compile_exe, self.objdump_exe]:
-            tool_xlen = tool.format(self.xlen)
-            if shutil.which(tool_xlen) is None:
-                logger.error(tool_xlen + ": executable not found. Please check environment setup.")
+        for tool in [self.toolchain+'gcc', self.toolchain+'objdump']:
+            if shutil.which(tool) is None:
+                logger.error(tool + ": executable not found. Please check environment setup.")
                 raise SystemExit(1)
             
         # check if the reference executable is available
-        if shutil.which(self.ref_exe.format(self.xlen)) is None:
-            logger.error(self.ref_exe.format(self.xlen) + ": executable not found. Please check environment setup.")
+        if shutil.which(self.ref_exe) is None:
+            logger.error(self.ref_exe + ": executable not found. Please check environment setup.")
             raise SystemExit(1)
         
         # check if 'make' is available
@@ -116,33 +100,38 @@ class spike(pluginTemplate):
             test_dir = testentry['work_dir']
             test_name = test.rsplit('/',1)[1][:-2]
 
-            elf = 'ref.elf'
+            elf = os.path.join(test_dir, 'ref.elf')
+            dis = os.path.join(test_dir, 'ref.disass')
+            sig = os.path.join(test_dir, name + ".signature")
+            log = os.path.join(test_dir, 'ref.log')
 
-            execute = ''
-
-            # prepare list of commands to execute
-            cmd = "@cd " + testentry['work_dir']
-            execute += f'{cmd};\\\n'
+            execute = []
 
             # NOTE: The following assumes you are using the riscv-gcc toolchain.
             #       If not please change appropriately.
             # compile testcase assembly into an elf file
-            cmd = self.compile_cmd.format(self.xlen, testentry['isa'].lower()) + (
+            cmd = self.toolchain+'gcc' + (
+                f' -mabi={'lp64' if 64 in self.ispec['supported_xlen'] else 'ilp32'} '
+                f' -march={testentry['isa'].lower()}'
+                 ' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
+                f' -T {self.pluginpath}/env/link.ld'
+                f' -I {self.pluginpath}/env/'
+                f' -I {self.archtest_env}'
                 f' {test}'
                 f' -o {elf}'
                 f' -D{" -D".join(testentry['macros'])}'
             )
-            execute += f'{cmd};\\\n'
+            execute.append(cmd)
 
             # dump disassembled elf file
-            cmd = self.objdump_cmd.format(self.xlen, elf, 'ref.disass')
-            execute += f'{cmd};\\\n'
+            cmd = self.toolchain+'objdump' + f' -M no-aliases -M numeric -D {elf} > {dis}'
+            execute.append(cmd)
 
             # run reference model
             # signature-granularity specifies how many bytes in HEX are in a line of the signature file
-            cmd = self.ref_exe + f' --isa={self.isa} --log-commits +signature={name}.signature +signature-granularity=4 {elf} > ref.log 2>&1'
-            execute += f'{cmd};\\\n'
+            cmd = self.ref_exe + f' --isa={self.isa} --log-commits +signature={sig} +signature-granularity=4 {elf} > ref.log 2>&1'
+            execute.append(cmd)
 
+            make.add_target('\n'.join(execute))
 
-            make.add_target(execute)
         make.execute_all(self.work_dir)
