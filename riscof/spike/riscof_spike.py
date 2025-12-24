@@ -98,7 +98,6 @@ class spike(pluginTemplate):
             testentry = testList[file]
             test = testentry['test_path']
             test_dir = testentry['work_dir']
-            test_name = test.rsplit('/',1)[1][:-2]
 
             elf = os.path.join(test_dir, 'ref.elf')
             dis = os.path.join(test_dir, 'ref.disass')

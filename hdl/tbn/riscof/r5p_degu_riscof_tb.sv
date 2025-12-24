@@ -40,7 +40,9 @@ module r5p_degu_riscof_tb
     // memory size
     parameter  int unsigned MEM_SIZ = 2**22,
     // memory configuration
-    parameter  string       MFN = "",     // instruction memory file name
+    // trace file name
+    parameter  string       FILE_ARG = "TEST_DIR",
+    parameter  string       FILE_PAR = "dut.bin",
     // testbench parameters
     parameter  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
@@ -197,7 +199,7 @@ module r5p_degu_riscof_tb
     );
 
     tcb_vip_memory #(
-        .MFN  (MFN),
+        .MFN  (""),
         .SIZ  (MEM_SIZ),
         .IFN  (2),
         .WRM  (2'b10)
@@ -208,12 +210,14 @@ module r5p_degu_riscof_tb
     // memory initialization file is provided at runtime
     initial
     begin
-        string fn;
-        if ($value$plusargs("firmware=%s", fn)) begin
-            $display("Loading file into memory: %s", fn);
-            void'(mem.read_bin(fn));
-            void'(r5p_htif.read_bin(fn));
-        end else if (MFN == "") begin
+        string filename;
+        // trace file if name is combined from plusargs (directory) and parameter (file)
+        if ($value$plusargs({FILE_ARG, "=%s"}, filename)) begin
+            filename = {filename, FILE_PAR};
+            $display("Loading file into memory: %s", filename);
+            void'(mem.read_bin(filename));
+            void'(r5p_htif.read_bin(filename));
+        end else begin
             $display("ERROR: memory load file argument not found.");
             $finish;
         end

@@ -134,15 +134,18 @@ class r5p(pluginTemplate):
             test_dir = testentry['work_dir']
 
             # Name of the elf file after compilation of the test.
-            elf = 'dut.elf'
+            elf = os.path.join(test_dir, 'dut.elf')
+            dis = os.path.join(test_dir, 'dut.disass')
+            bin = os.path.join(test_dir, 'dut.bin')
+            sym = os.path.join(test_dir, '{sym}')
 
             # Name of the signature file as per requirement of RISCOF.
             # RISCOF expects the signature to be named as DUT-<dut-name>.signature.
             # The below variable creates an absolute path of signature file.
-            sig_file = os.path.join(test_dir, name + ".signature")
+            sig = os.path.join(test_dir, name + ".signature")
 
             # Name of the HDL testbench log file
-            trace_file = os.path.join(test_dir, "dut.log")
+            log = os.path.join(test_dir, "dut.log")
 
             # For each test there are specific compile macros that need to be enabled.
             # The macros in the testList node only contain the macros/values.
@@ -163,13 +166,13 @@ class r5p(pluginTemplate):
 
             # Command for converting elf file into a binary/hex file for loading into HDL testbench memory.
             # Uncomment either the binary or hex version, depending on your.
-            objcopy_cmd = self.objcopy_exe + f' -O binary {elf} {elf}.bin'
+            objcopy_cmd = self.objcopy_exe + f' -O binary {elf} {bin}'
             #objcopy_cmd = self.objcopy_exe + f' -O binary {elf} {elf}.hex'
 
             # Disassemble the ELF file for debugging purposes
             objdump_cmd = self.objdump_exe + (
                 f' -M no-aliases -M numeric'
-                f' -D {elf} > {elf}.disass'
+                f' -D {elf} > {dis}'
             )
 
             # extract listed symbols
@@ -177,12 +180,8 @@ class r5p(pluginTemplate):
             # construct dictionary of listed symbols
             symbols_cmd = []
             # get symbol list from elf file
-            cmd = self.symbols_exe + f' {elf} > dut.symbols'
+            cmd = self.symbols_exe + f' {elf} > {sym}'
             symbols_cmd.append(cmd)
-            for symbol in symbols_list:
-                # get symbols from symbol list file
-                cmd = f'{symbol}=$$(grep -w {symbol} dut.symbols | cut -c 1-8)'
-                symbols_cmd.append(cmd)
 
             # Simulation define macros.
             simulate_defines_dict = {}
@@ -196,18 +195,16 @@ class r5p(pluginTemplate):
             elif self.simulator == 'verilator':
                 simulate_defines = ' '.join([f'-D{key}={val}'          for key, val in simulate_defines_dict.items()])
             elif self.simulator == 'vivado':
-                simulate_defines = ' '.join([f'-d {key}={val}'          for key, val in simulate_defines_dict.items()])
+                simulate_defines = ' '.join([f'-d {key}={val}'         for key, val in simulate_defines_dict.items()])
 
             # Construct Verilog plusargs dictionary containing file paths.
             simulate_plusargs_dict = {
-                'firmware': os.path.join(test_dir, elf)+'.bin',
-                'signature': sig_file,
-                'trace': trace_file
+                'TEST_DIR': test_dir+'/'
             }
 
             # provide ELF symbols as plusargs
             for symbol in symbols_list:
-                simulate_plusargs_dict.update({symbol: f'$${symbol}'})
+                simulate_plusargs_dict.update({symbol: f'`grep -w {symbol} {sym} | cut -c 1-8`'})
 
             # Other DUT testbench specific Verilog plusargs can be added here.
             simulate_plusargs_dict.update({})
@@ -231,7 +228,6 @@ class r5p(pluginTemplate):
 
             # Concatenate all commands that need to be executed within a make-target.
             execute = []
-            execute.append(f'cd {test_dir}')
             execute.append(compile_cmd)
             execute.append(objcopy_cmd)
             execute.append(objdump_cmd)
@@ -241,7 +237,7 @@ class r5p(pluginTemplate):
             # Create a target.
             # The makeutil will create a target with the name "TARGET<num>" where
             # num starts from 0 and increments automatically for each new target that is added.
-            make.add_target('@' + ';\\\n'.join(execute))
+            make.add_target('\n'.join(execute))
 
         # If you would like to exit the framework once the makefile generation is complete uncomment the following line.
         # Note this will prevent any signature checking or report generation.

@@ -24,7 +24,8 @@ module r5p_mouse_trace
     // trace format class type (HDLDB, Spike, ...)
     parameter type FORMAT = trace_spike_pkg::spike,
     // trace file name
-    parameter string FILE = ""
+    parameter string FILE_ARG = "TEST_DIR",
+    parameter string FILE_PAR = "dut.log"
 )(
     // instruction execution phase
     input logic [3-1:0] pha,
@@ -86,17 +87,14 @@ module r5p_mouse_trace
     initial
     begin
         string filename;
-        // trace file if name is given by parameter
-        if ($value$plusargs("trace=%s", filename)) begin
-        end
-        // trace file with filename obtained through plusargs
-        else if (FILE) begin
-            filename = FILE;
+        // trace file if name is combined from plusargs (directory) and parameter (file)
+        if ($value$plusargs({FILE_ARG, "=%s"}, filename)) begin
+            filename = {filename, FILE_PAR};
         end
         // initialize tracing object
         tracer = new(filename);
     end
-  
+
     final
     begin
         tracer.close();

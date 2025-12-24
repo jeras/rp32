@@ -26,13 +26,14 @@ module r5p_degu_trace
     // constants used across the design in signal range sizing instead of literals
     parameter  int unsigned XLEN = 32,
     localparam int unsigned XLOG = $clog2(XLEN),
+    // TODO: check for GPR size differently
+    parameter  int unsigned GNUM = 32,
+    localparam int unsigned GLOG = $clog2(GNUM),
     // trace format class type (HDLDB, Spike, ...)
     parameter type FORMAT = trace_spike_pkg::spike,
     // trace file name
-    parameter string FILE = "",
-    // TODO: check for GPR size differently
-    parameter  int unsigned GNUM = 32,
-    localparam int unsigned GLOG = $clog2(GNUM)
+    parameter string FILE_ARG = "TEST_DIR",
+    parameter string FILE_PAR = "dut.log"
 )(
     // GPR array
     input logic            gpr_den,  // destination enable
@@ -86,17 +87,14 @@ module r5p_degu_trace
     initial
     begin
         string filename;
-        // trace file if name is given by parameter
-        if ($value$plusargs("trace=%s", filename)) begin
-        end
-        // trace file with filename obtained through plusargs
-        else if (FILE) begin
-            filename = FILE;
+        // trace file if name is combined from plusargs (directory) and parameter (file)
+        if ($value$plusargs({FILE_ARG, "=%s"}, filename)) begin
+            filename = {filename, FILE_PAR};
         end
         // initialize tracing object
         tracer = new(filename);
     end
-  
+
     final
     begin
         tracer.close();
