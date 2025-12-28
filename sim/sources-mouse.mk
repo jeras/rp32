@@ -51,10 +51,10 @@ RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_top.sv
 
 # SystemVerilog bench (Test SV)
 TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
+TSV+=${PATH_R5P}/tbn/riscof/trace_spike_pkg.sv
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_trace.sv
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_top_tb.sv
 TSV+=${PATH_R5P}/tbn/htif/r5p_htif.sv
-TSV+=${PATH_R5P}/tbn/riscof/trace_spike_pkg.sv
 TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_riscof_tb.sv
 
 # combined HDL sources
