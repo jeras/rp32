@@ -139,32 +139,32 @@ typedef union packed {
 ///////////////////////////////////////////////////////////////////////////////
 
   // immediate signed/unsigned types
-  typedef logic signed [32-1:0] imm_t;
-  typedef logic signed [32-1:0] immu_t;
+  typedef logic   signed [32-1:0] imm_t;
+  typedef logic unsigned [32-1:0] immu_t;
 
   // I-immediate (ALU, load offset)
   function automatic imm_t imm_i_f (op32_i_t op);
-    imm_i_f = $signed({op.imm_11_0});
+    imm_i_f = imm_t'($signed({op.imm_11_0}));
   endfunction: imm_i_f
 
   // S-immediate (store offset)
   function automatic imm_t imm_s_f (op32_s_t op);
-    imm_s_f = $signed({op.imm_11_5, op.imm_4_0});
+    imm_s_f = imm_t'($signed({op.imm_11_5, op.imm_4_0}));
   endfunction: imm_s_f
 
   // B-immediate (branch offset)
   function automatic imm_t imm_b_f (op32_b_t op);
-    imm_b_f = $signed({op.imm_12, op.imm_11, op.imm_10_5, op.imm_4_1, 1'b0});
+    imm_b_f = imm_t'($signed({op.imm_12, op.imm_11, op.imm_10_5, op.imm_4_1, 1'b0}));
   endfunction: imm_b_f
 
   // U-immediate (ALU upper)
   function automatic imm_t imm_u_f (op32_u_t op);
-    imm_u_f = $signed({op.imm_31_12, 12'h000});
+    imm_u_f = imm_t'($signed({op.imm_31_12, 12'h000}));
   endfunction: imm_u_f
 
   // J-immediate (ALU jump)
   function automatic imm_t imm_j_f (op32_j_t op);
-    imm_j_f = $signed({op.imm_20, op.imm_19_12, op.imm_11, op.imm_10_1, 1'b0});
+    imm_j_f = imm_t'($signed({op.imm_20, op.imm_19_12, op.imm_11, op.imm_10_1, 1'b0}));
   endfunction: imm_j_f
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -438,7 +438,7 @@ function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
   t_op_imm.opcode    = '{opc: ctl.opc, c11: 2'b11};
   case (ctl.fn3)
     SR, SL :  t_op_imm.imm_11_0 = {ctl.fn7, ctl.i_i[5-1:0]};  // TODO: this at least partially depends on XLEN (shift ammount can be 5 or 6 bits)
-    default:  t_op_imm.imm_11_0 =           ctl.i_i;
+    default:  t_op_imm.imm_11_0 =           ctl.i_i[11:0];
   endcase
   t_op_imm.funct3    = ctl.fn3;
   t_op_imm.rs1       = ctl.rs1;
@@ -446,7 +446,7 @@ function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
 
   // LOAD
   t_load  .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_load  .imm_11_0  = ctl.i_i;
+  t_load  .imm_11_0  = ctl.i_i[11:0];
   t_load  .funct3    = ctl.fn3;
   t_load  .rs1       = ctl.rs1;
   t_load  .rd        = ctl.rd ;
@@ -479,7 +479,7 @@ function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
 
   // JALR
   t_jalr  .opcode    = '{opc: ctl.opc, c11: 2'b11};
-  t_jalr  .imm_11_0  = ctl.i_i;
+  t_jalr  .imm_11_0  = ctl.i_i[11:0];
   t_jalr  .funct3    = {3{IDL}};  // TODO: 'x is an option?
   t_jalr  .rs1       = ctl.rs1;
   t_jalr  .rd        = ctl.rd ;

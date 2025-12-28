@@ -635,11 +635,11 @@ begin
           bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
           bus_siz = SW[1:0];
           case (dec_fn3)
-            LB : bus_wdt =   $signed(dec_rdt[ 8-1:0]);
-            LH : bus_wdt =   $signed(dec_rdt[16-1:0]);
-            LW : bus_wdt =   $signed(dec_rdt[32-1:0]);
-            LBU: bus_wdt = $unsigned(dec_rdt[ 8-1:0]);
-            LHU: bus_wdt = $unsigned(dec_rdt[16-1:0]);
+            LB : bus_wdt = XLEN'(  $signed(dec_rdt[ 8-1:0]));
+            LH : bus_wdt = XLEN'(  $signed(dec_rdt[16-1:0]));
+            LW : bus_wdt = XLEN'(  $signed(dec_rdt[32-1:0]));
+            LBU: bus_wdt = XLEN'($unsigned(dec_rdt[ 8-1:0]));
+            LHU: bus_wdt = XLEN'($unsigned(dec_rdt[16-1:0]));
             default: bus_wdt = 32'hxxxxxxxx;
           endcase
         end

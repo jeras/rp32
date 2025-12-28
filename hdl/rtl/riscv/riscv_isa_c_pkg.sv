@@ -68,7 +68,7 @@ typedef enum {
 
 // '{sign extended (signed), 6-bit} signed immediate (CI-type)
 function automatic imm_t imm_ci_f (op16_ci_t op);
-  imm_ci_f = $signed({op.imm_12_12, op.imm_06_02});  // signed immediate
+  imm_ci_f = imm_t'($signed({op.imm_12_12, op.imm_06_02}));  // signed immediate
 endfunction: imm_ci_f
 
 // '{sign extended (signed), 6-bit, scaled by 16} stack pointer adjust immediate (CI-type)
