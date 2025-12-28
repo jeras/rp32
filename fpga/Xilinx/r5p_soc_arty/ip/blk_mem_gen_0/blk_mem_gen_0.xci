@@ -3,7 +3,7 @@
   "ip_inst": {
     "xci_name": "blk_mem_gen_0",
     "component_reference": "xilinx.com:ip:blk_mem_gen:8.4",
-    "ip_revision": "12",
+    "ip_revision": "11",
     "gen_directory": "../../../../r5p_degu_soc_arty.gen/sources_1/ip/blk_mem_gen_0",
     "parameters": {
       "component_parameters": {
@@ -158,26 +158,26 @@
         "C_EST_POWER_SUMMARY": [ { "value": "Estimated Power for IP     :     10.9287 mW", "resolve_type": "generated", "usage": "all" } ]
       },
       "project_parameters": {
-        "ARCHITECTURE": [ { "value": "artix7", "resolve_type": "generated", "usage": "all" } ],
-        "BASE_BOARD_PART": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
-        "BOARD_CONNECTIONS": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
-        "DEVICE": [ { "value": "xc7a100t", "resolve_type": "generated", "usage": "all" } ],
-        "PACKAGE": [ { "value": "csg324", "resolve_type": "generated", "usage": "all" } ],
-        "PREFHDL": [ { "value": "VERILOG", "resolve_type": "generated", "usage": "all" } ],
-        "SILICON_REVISION": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
-        "SIMULATOR_LANGUAGE": [ { "value": "VERILOG", "resolve_type": "generated", "usage": "all" } ],
-        "SPEEDGRADE": [ { "value": "-1", "resolve_type": "generated", "usage": "all" } ],
-        "STATIC_POWER": [ { "value": "", "resolve_type": "generated", "usage": "all" } ],
-        "TEMPERATURE_GRADE": [ { "value": "", "resolve_type": "generated", "usage": "all" } ]
+        "ARCHITECTURE": [ { "value": "artix7" } ],
+        "BASE_BOARD_PART": [ { "value": "" } ],
+        "BOARD_CONNECTIONS": [ { "value": "" } ],
+        "DEVICE": [ { "value": "xc7a100t" } ],
+        "PACKAGE": [ { "value": "csg324" } ],
+        "PREFHDL": [ { "value": "VERILOG" } ],
+        "SILICON_REVISION": [ { "value": "" } ],
+        "SIMULATOR_LANGUAGE": [ { "value": "VERILOG" } ],
+        "SPEEDGRADE": [ { "value": "-1" } ],
+        "STATIC_POWER": [ { "value": "" } ],
+        "TEMPERATURE_GRADE": [ { "value": "" } ]
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "12" } ],
+        "IPREVISION": [ { "value": "11" } ],
         "MANAGED": [ { "value": "TRUE" } ],
         "OUTPUTDIR": [ { "value": "../../../../r5p_degu_soc_arty.gen/sources_1/ip/blk_mem_gen_0" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
-        "SWVERSION": [ { "value": "2025.2" } ],
+        "SWVERSION": [ { "value": "2025.1" } ],
         "SYNTHESISFLOW": [ { "value": "OUT_OF_CONTEXT" } ]
       }
     },
@@ -255,6 +255,5 @@
         }
       }
     }
-  },
-  "checksum": "7dfc891b"
+  }
 }
