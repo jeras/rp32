@@ -6,7 +6,6 @@ import shlex
 import logging
 import random
 import string
-from string import Template
 
 import riscof.utils as utils
 import riscof.constants as constants
@@ -16,7 +15,7 @@ logger = logging.getLogger()
 
 class spike(pluginTemplate):
     __model__ = "spike"
-    __version__ = "0.1.0"
+    __version__ = "git"
 
     def __init__(self, *args, **kwargs):
         """
@@ -63,11 +62,10 @@ class spike(pluginTemplate):
         """
         # load ISA YAML file
         self.ispec = utils.load_yaml(isa_yaml)['hart0']
-
         self.xlen = ('64' if 64 in self.ispec['supported_xlen'] else '32')
         # construct ISA string
         self.isa = 'rv' + self.xlen
-        for ext in ['I', 'M', 'C', 'F', 'D']:
+        for ext in ['I', 'M', 'A', 'F', 'D', 'C']:
             if ext in self.ispec["ISA"]:
                 self.isa += ext.lower()
 
@@ -94,6 +92,7 @@ class spike(pluginTemplate):
             os.remove(self.work_dir+ "/Makefile." + name)
         make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + name))
         make.makeCommand = self.make + ' -j' + self.num_jobs
+
         for file in testList:
             testentry = testList[file]
             test = testentry['test_path']
@@ -128,7 +127,7 @@ class spike(pluginTemplate):
 
             # run reference model
             # signature-granularity specifies how many bytes in HEX are in a line of the signature file
-            cmd = self.ref_exe + f' --isa={self.isa} --log-commits +signature={sig} +signature-granularity=4 {elf} > ref.log 2>&1'
+            cmd = self.ref_exe + f' --isa={self.isa} --log-commits +signature-granularity=4 +signature={sig} {elf} > {log} 2>&1'
             execute.append(cmd)
 
             make.add_target('\n'.join(execute))
