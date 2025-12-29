@@ -48,8 +48,6 @@ module r5p_mouse_riscof_tb
     parameter  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
 
-    import riscv_asm_pkg::*;
-
     // system signals
     logic clk = 1'b1;  // clock
     logic rst = 1'b1;  // reset
