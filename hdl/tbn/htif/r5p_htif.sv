@@ -176,7 +176,7 @@ module r5p_htif
         if (tcb.req.wen) begin
             // HTIF tohost
             if (tcb.req.adr == tohost) begin
-                htif_halt <= tcb.req.wdt[0];
+                htif_halt <= tcb.req.wdt[0][0];
             end
         end
     end
