@@ -29,7 +29,7 @@ package trace_spike_pkg;
 
         function new (input string filename);
             fd = $fopen(filename, "w");
-            if (fd) begin
+            if (fd!=0) begin
                 fn = filename;
                 $display("TRACING: opened trace file for writing: '%s'.", filename);
             end else begin
@@ -38,7 +38,7 @@ package trace_spike_pkg;
         endfunction: new
 
         function void close ();
-            if (fd) begin
+            if (fd!=0) begin
                 $fclose(fd);
                 $display("TRACING: closed trace file: '%s'.", fn);
             end
@@ -118,7 +118,7 @@ package trace_spike_pkg;
                         2'd0: str_ls = {str_ls, $sformatf(" 0x%2h" , lsu_wdt[ 8-1:0])};
                         2'd1: str_ls = {str_ls, $sformatf(" 0x%4h" , lsu_wdt[16-1:0])};
                         2'd2: str_ls = {str_ls, $sformatf(" 0x%8h" , lsu_wdt[32-1:0])};
-                        2'd3: str_ls = {str_ls, $sformatf(" 0x%16h", lsu_wdt[64-1:0])};
+//                      2'd3: str_ls = {str_ls, $sformatf(" 0x%16h", lsu_wdt[64-1:0])};
                         default: $error("Unsupported store size %0d", lsu_siz);
                     endcase
                 end
