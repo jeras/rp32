@@ -168,6 +168,7 @@ module r5p_mouse_trace
                 lsu_siz <= $past(tcb.req.siz);
                 lsu_wdt <= $past(tcb.req.wdt);
             end
+            default: begin end
         endcase
     end
 
