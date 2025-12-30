@@ -233,11 +233,14 @@ module r5p_mouse_riscof_tb
 `ifdef TRACE_SPIKE
 
     // GPR array
+    logic [8-1:0] mem_gpr [0:4*8-1];
     logic [XLEN-1:0] gpr [0:32-1];
 
     // copy GPR array from system memory
     // TODO: apply proper streaming operator
-    assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
+//    assign mem_gpr = mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8];
+//    assign gpr = {>> XLEN {mem_gpr}};
+//    assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
     // tracer format class specialization (for Spike)
     typedef trace_spike_pkg::spike #(XLEN) format;

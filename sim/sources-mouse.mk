@@ -46,14 +46,16 @@ RTL+=${PATH_R5P}/rtl/mouse/r5p_mouse.sv
 
 # SoC files
 #RTL+=${PATH_R5P}/rtl/soc/tcb_dec_3sp.sv
-RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory.sv
-RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_top.sv
+#RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory.sv
+#RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_top.sv
 
 # SystemVerilog bench (Test SV)
-TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
+#TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
+#TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_top_tb.sv
+
+# SystemVerilog RISCOF bench (Test SV)
 TSV+=${PATH_R5P}/tbn/riscof/trace_spike_pkg.sv
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_trace.sv
-TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_top_tb.sv
 TSV+=${PATH_R5P}/tbn/htif/r5p_htif.sv
 TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_riscof_tb.sv
 
