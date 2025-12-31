@@ -105,7 +105,7 @@ module r5p_degu_trace
     if ($past(tcb_ifu.trn, 1)) begin
         ifu_ena <= 1'b0;  // enable
         ifp_adr <= $past(tcb_ifu.req.adr);
-        ifp_siz <= opsiz(tcb_ifu.rsp.rdt) == 4;
+        ifp_siz <= opsiz(tcb_ifu.rsp.rdt[1:0]) == 4;
         ifp_ins <=       tcb_ifu.rsp.rdt ;
         ifp_ill <= 1'b0;  // TODO
     end
