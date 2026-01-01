@@ -1,0 +1,92 @@
+name: R5P RISCOF Verification
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  # This workflow contains a single job called "build"
+  r5p-verification:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: "RISC-V Compatibility Check"
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: '📂 Repository checkout'
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: '📦 Install ccache'
+      run: |
+        sudo apt-get update
+        sudo apt-get install ccache
+
+    - name: '📦 Install Verilator'
+      uses: veryl-lang/setup-verilator@v1.0.2
+      with:
+        version: latest
+  
+    # somehow veryl-lang/setup-verilator uses mold
+    - name: '📦 Install mold linker'
+      uses: rui314/setup-mold@v1
+
+    - name: '📦 Install RISC-V toolchain'
+      run: |
+        curl -L -O https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2025.01.20/riscv32-elf-ubuntu-24.04-gcc-nightly-2025.01.20-nightly.tar.xz
+        mkdir $GITHUB_WORKSPACE/riscv-toolchain
+        tar -xf riscv32-elf-ubuntu-24.04-gcc-nightly-2025.01.20-nightly.tar.xz -C $GITHUB_WORKSPACE/riscv-toolchain
+        echo $GITHUB_WORKSPACE/riscv-toolchain/riscv/bin >> $GITHUB_PATH
+
+    - name: '📦 Install Sail RISC-V reference model'
+      run: |
+        curl -L -O https://github.com/riscv/sail-riscv/releases/download/0.9/sail-riscv-Linux-x86_64.tar.gz
+        mkdir $GITHUB_WORKSPACE/riscv-sail
+        tar -xzf $GITHUB_WORKSPACE/sail-riscv-Linux-x86_64.tar.gz -C $GITHUB_WORKSPACE/riscv-sail
+        echo $GITHUB_WORKSPACE/riscv-sail/sail-riscv-Linux-x86_64/bin >> $GITHUB_PATH
+
+    - name: '📦 Install RISCOF'
+      run: |
+        echo "RISCOF upstream main is broken! https://github.com/riscv-software-src/riscof/issues/122"
+        pip3 install git+https://github.com/riscv/riscof.git@d38859f85fe407bcacddd2efcd355ada4683aee4
+
+    - name: '🔍 Check tools'
+      run: |
+        verilator --version
+        riscv32-unknown-elf-gcc --version
+        sail_riscv_sim --version
+        riscof --version
+
+    - name: '⚙️ Run RISCOF for mouse'
+      working-directory: riscof
+      continue-on-error: true
+      run: riscof run --config=config-mouse.ini --work-dir=riscof_work_mouse --suite=../submodules/riscv-arch-test/riscv-test-suite/ --env=../submodules/riscv-arch-test/riscv-test-suite/env --no-browser
+
+    - name: '⚙️ Run RISCOF for degu'
+      working-directory: riscof
+      continue-on-error: true
+      run: riscof run --config=config-degu.ini --work-dir=riscof_work_degu --suite=../submodules/riscv-arch-test/riscv-test-suite/ --env=../submodules/riscv-arch-test/riscv-test-suite/env --no-browser
+
+    - name: '📤 Archive test report'
+      uses: actions/upload-artifact@v5
+      with:
+        name: test_report
+        path: |
+          FemtoRV/RISCOF/riscof_work_mouse/report.html
+          FemtoRV/RISCOF/riscof_work_mouse/style.css
+          FemtoRV/RISCOF/riscof_work_degu/report.html
+          FemtoRV/RISCOF/riscof_work_degu/style.css
+
