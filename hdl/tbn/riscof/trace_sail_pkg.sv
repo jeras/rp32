@@ -70,8 +70,8 @@ package trace_sail_pkg;
             logic [XLEN-1:0] lsu_rdt          // read data (load)
         );
             string str_if = "";  // instruction fetch
-            string str_wb = "";  // write-back
             string str_ls = "";  // load/store
+            string str_wb = "";  // write-back
 
             // fetch address/instruction
             case (ifu_siz)
@@ -79,11 +79,6 @@ package trace_sail_pkg;
                 1: str_if = {$sformatf("mem[X,0x0%s] -> 0x%s\n", hex(ifu_adr+0), hex(ifu_ins, 2, 0)),
                              $sformatf("mem[X,0x0%s] -> 0x%s\n", hex(ifu_adr+2), hex(ifu_ins, 2, 2))};  // 32bit
             endcase
-
-            // write-back (x0 access is not logged)
-            if (wbu_ena && (wbu_idx != 0)) begin
-                str_wb = $sformatf("x%0d <- 0x%s\n", wbu_idx, hex(wbu_dat));
-            end
 
             // load/store
             if (lsu_ena) begin
@@ -97,8 +92,13 @@ package trace_sail_pkg;
                 end
             end
 
+            // write-back (x0 access is not logged)
+            if (wbu_ena && (wbu_idx != 0)) begin
+                str_wb = $sformatf("x%0d <- 0x%s\n", wbu_idx, hex(wbu_dat));
+            end
+
             // combine fetch/write-back/load/store and write it to trace file
-            $fwrite(fd, $sformatf("%s%s%s", str_if, str_wb, str_ls));
+            $fwrite(fd, $sformatf("%s%s%s", str_if, str_ls, str_wb));
         endfunction: trace
 
     endclass: trace_sail
