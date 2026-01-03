@@ -137,7 +137,7 @@ class r5p(pluginTemplate):
             elf = os.path.join(test_dir, 'dut.elf')
             dis = os.path.join(test_dir, 'dut.disass')
             bin = os.path.join(test_dir, 'dut.bin')
-            sym = os.path.join(test_dir, '{sym}')
+            sym = os.path.join(test_dir, 'dut.symbols')
 
             # Name of the signature file as per requirement of RISCOF.
             # RISCOF expects the signature to be named as DUT-<dut-name>.signature.
