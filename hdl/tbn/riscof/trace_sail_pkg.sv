@@ -16,12 +16,12 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-package trace_spike_pkg;
+package trace_sail_pkg;
     import riscv_isa_pkg::*;
     import riscv_isa_i_pkg::*;
     import trace_generic_pkg::*;
 
-    class trace_spike #(
+    class trace_sail #(
         parameter int unsigned XLEN = 32
     ) extends trace_generic #(XLEN);
 
@@ -33,11 +33,17 @@ package trace_spike_pkg;
 // tracing (matching spike simulator logs)
 ////////////////////////////////////////////////////////////////////////////////
 
-        // format GPR string with desired whitespace
-        function string format_gpr (logic [5-1:0] idx);
-            if (idx < 10)  return($sformatf("x%0d ", idx));
-            else           return($sformatf("x%0d", idx));
-        endfunction: format_gpr
+        function string hex (
+            logic [XLEN-1:0] dat,
+            int siz = XLEN/8,  // logarithmic size
+            int off = 0        // beginning offset
+        );
+            string hex = "";
+            for (int unsigned i=off; i<off+siz; i++) begin
+                hex = {$sformatf("%2h", dat[8*i+:8]), hex};
+            end
+            return hex.toupper();
+        endfunction: hex
 
         // prepare string for committed instruction
         function void trace (
@@ -63,58 +69,38 @@ package trace_spike_pkg;
             logic [XLEN-1:0] lsu_wdt,         // write data (store)
             logic [XLEN-1:0] lsu_rdt          // read data (load)
         );
-            string str_if;  // instruction fetch
-            string str_wb;  // write-back
-            string str_ls;  // load/store
+            string str_if = "";  // instruction fetch
+            string str_wb = "";  // write-back
+            string str_ls = "";  // load/store
 
-            // fetch address
-            case (XLEN)
-                32: str_if = $sformatf(" 0x%8h" , ifu_adr);
-                64: str_if = $sformatf(" 0x%16h", ifu_adr);
-            endcase
-            // fetch instruction
+            // fetch address/instruction
             case (ifu_siz)
-                0: str_if = {str_if, $sformatf(" (0x%4h)", ifu_ins[16-1:0])};  // 16bit
-                1: str_if = {str_if, $sformatf(" (0x%8h)", ifu_ins[32-1:0])};  // 32bit
+                0: str_if =  $sformatf("mem[X,0x0%s] -> 0x%s\n", hex(ifu_adr  ), hex(ifu_ins, 2, 0));   // 16bit
+                1: str_if = {$sformatf("mem[X,0x0%s] -> 0x%s\n", hex(ifu_adr+0), hex(ifu_ins, 2, 0)),
+                             $sformatf("mem[X,0x0%s] -> 0x%s\n", hex(ifu_adr+2), hex(ifu_ins, 2, 2))};  // 32bit
             endcase
 
             // write-back (x0 access is not logged)
             if (wbu_ena && (wbu_idx != 0)) begin
-                case (XLEN)
-                    32: str_wb = $sformatf(" %s 0x%8h" , format_gpr(wbu_idx), wbu_dat);
-                    64: str_wb = $sformatf(" %s 0x%16h", format_gpr(wbu_idx), wbu_dat);
-                endcase
-            end else begin
-                str_wb = "";
+                str_wb = $sformatf("x%0d <- 0x%s\n", wbu_idx, hex(wbu_dat));
             end
 
             // load/store
             if (lsu_ena) begin
-                // load/store address
                 if (lsu_wen) begin
-                    case (XLEN)
-                        32: str_ls = $sformatf(" mem 0x%8h" , lsu_adr);
-                        64: str_ls = $sformatf(" mem 0x%16h", lsu_adr);
-                    endcase
+                    // load address/data
+                    str_ls = $sformatf("mem[W,0x0%s] <- 0x%s\n", hex(lsu_adr), hex(lsu_wdt, 2**lsu_siz));
                 end
-                // store data
-                if (lsu_wen) begin
-                    case (lsu_siz)
-                        2'd0: str_ls = {str_ls, $sformatf(" 0x%2h" , lsu_wdt[ 8-1:0])};
-                        2'd1: str_ls = {str_ls, $sformatf(" 0x%4h" , lsu_wdt[16-1:0])};
-                        2'd2: str_ls = {str_ls, $sformatf(" 0x%8h" , lsu_wdt[32-1:0])};
-//                      2'd3: str_ls = {str_ls, $sformatf(" 0x%16h", lsu_wdt[64-1:0])};
-                        default: $error("Unsupported store size %0d", lsu_siz);
-                    endcase
+                if (lsu_ren) begin
+                    // store address/data
+                    str_ls = $sformatf("mem[R,0x0%s] -> 0x%s\n", hex(lsu_adr), hex(lsu_rdt, 2**lsu_siz));
                 end
-            end else begin
-                str_ls = "";
             end
 
             // combine fetch/write-back/load/store and write it to trace file
-            $fwrite(fd, $sformatf("core   %0d: 3%s%s%s\n", core, str_if, str_wb, str_ls));
+            $fwrite(fd, $sformatf("%s%s%s", str_if, str_wb, str_ls));
         endfunction: trace
 
-    endclass: trace_spike
+    endclass: trace_sail
 
-endpackage: trace_spike_pkg
+endpackage: trace_sail_pkg

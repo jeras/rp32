@@ -263,13 +263,34 @@ module r5p_degu_riscof_tb
     end
 
     // tracer format class specialization (for Spike)
-    typedef trace_spike_pkg::spike #(XLEN) format;
+    typedef trace_spike_pkg::trace_spike #(XLEN) format_spike;
 
     // trace with given format
     r5p_degu_trace #(
         .XLEN   (XLEN),
-        .FORMAT (format)
-    ) trace_hdldb (
+        .FORMAT (format_spike),
+        .FILE_PAR ("dut.trace.spike")
+    ) trace_spike (
+        // GPR register file array
+        // hierarchical path to GPR inside RTL
+        .gpr_den  (dut.gpr.e_rd),
+        .gpr_did  (dut.gpr.a_rd),
+        .gpr_ddt  (dut.gpr.d_rd),
+        .gpr_sid  (dut.gpr.a_rs1),
+        // TCB IFU/LSU system busses
+        .tcb_ifu  (tcb_ifu),
+        .tcb_lsu  (tcb_lsu)
+    );
+
+    // tracer format class specialization (for Sail RISC-V)
+    typedef trace_sail_pkg::trace_sail #(XLEN) format_sail;
+
+    // trace with given format
+    r5p_degu_trace #(
+        .XLEN   (XLEN),
+        .FORMAT (format_sail),
+        .FILE_PAR ("dut.trace.sail")
+    ) trace_sail (
         // GPR register file array
         // hierarchical path to GPR inside RTL
         .gpr_den  (dut.gpr.e_rd),

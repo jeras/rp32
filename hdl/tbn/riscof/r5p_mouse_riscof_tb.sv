@@ -243,12 +243,27 @@ module r5p_mouse_riscof_tb
 //    assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
 
     // tracer format class specialization (for Spike)
-    typedef trace_spike_pkg::spike #(XLEN) format;
+    typedef trace_spike_pkg::trace_spike #(XLEN) format_spike;
 
     // trace with given format
     r5p_mouse_trace #(
-        .FORMAT (format)
-    ) trace_hdldb (
+        .FORMAT   (format_spike),
+        .FILE_PAR ("dut.trace.spike")
+    ) trace_spike (
+        // instruction execution phase
+        .pha  (dut.ctl_pha),
+        // TCB system bus
+        .tcb  (tcb_cpu)
+    );
+
+    // tracer format class specialization (for Sail RISC-V)
+    typedef trace_sail_pkg::trace_sail #(XLEN) format_sail;
+
+    // trace with given format
+    r5p_mouse_trace #(
+        .FORMAT   (format_sail),
+        .FILE_PAR ("dut.trace.sail")
+    ) trace_sail (
         // instruction execution phase
         .pha  (dut.ctl_pha),
         // TCB system bus

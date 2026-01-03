@@ -17,8 +17,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_degu_trace
+    import trace_generic_pkg::*;
     import tcb_pkg::*;
-    import trace_spike_pkg::*;
     import riscv_isa_pkg::*;
     import riscv_isa_i_pkg::*;
 //    import riscv_asm_pkg::*;
@@ -30,7 +30,7 @@ module r5p_degu_trace
     parameter  int unsigned GNUM = 32,
     localparam int unsigned GLOG = $clog2(GNUM),
     // trace format class type (HDLDB, Spike, ...)
-    parameter type FORMAT = trace_spike_pkg::spike,
+    parameter type FORMAT = trace_generic_pkg::trace_generic,
     // trace file name
     parameter string FILE_ARG = "TEST_DIR",
     parameter string FILE_PAR = "dut.log"

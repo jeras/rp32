@@ -62,13 +62,17 @@ RTL+=${PATH_R5P}/rtl/degu/r5p_degu.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_degu_soc_top.sv
 
-# SystemVerilog bench (Test SV)
+# SystemVerilog RISCOF bench (Test SV)
 TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
-TSV+=${PATH_R5P}/tbn/soc/r5p_degu_trace.sv
-TSV+=${PATH_R5P}/tbn/soc/r5p_degu_soc_top_tb.sv
-TSV+=${PATH_R5P}/tbn/htif/r5p_htif.sv
+TSV+=${PATH_R5P}/tbn/riscv/trace_generic_pkg.sv
 TSV+=${PATH_R5P}/tbn/riscof/trace_spike_pkg.sv
+TSV+=${PATH_R5P}/tbn/riscof/trace_sail_pkg.sv
+TSV+=${PATH_R5P}/tbn/soc/r5p_degu_trace.sv
+TSV+=${PATH_R5P}/tbn/htif/r5p_htif.sv
 TSV+=${PATH_R5P}/tbn/riscof/r5p_degu_riscof_tb.sv
+
+# SystemVerilog SoC bench (Test SV)
+TSV+=${PATH_R5P}/tbn/soc/r5p_degu_soc_top_tb.sv
 
 # combined HDL sources
 HDL =${RTL}
