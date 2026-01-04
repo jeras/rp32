@@ -102,8 +102,8 @@ class sail_cSim(pluginTemplate):
 
             elf = os.path.join(test_dir, 'ref.elf')
             dis = os.path.join(test_dir, 'ref.disass')
-            sig = os.path.join(test_dir, name + ".signature")
             log = os.path.join(test_dir, 'ref.log')
+            sig = os.path.join(test_dir, name + ".signature")
 
             execute = []
 
@@ -111,14 +111,13 @@ class sail_cSim(pluginTemplate):
             #       If not please change appropriately.
             # compile testcase assembly into an elf file
             cmd = self.toolchain+'gcc' + (
-                f' -mabi={'lp64' if 64 in self.ispec['supported_xlen'] else 'ilp32'} '
+                f' -mabi={'lp64' if 64 in self.ispec['supported_xlen'] else 'ilp32'}'
                 f' -march={testentry['isa'].lower()}'
-                 ' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
+                f' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
                 f' -T {self.pluginpath}/env/link.ld'
                 f' -I {self.pluginpath}/env/'
                 f' -I {self.archtest_env}'
-                f' {test}'
-                f' -o {elf}'
+                f' {test} -o {elf}'
                 f' -D{" -D".join(testentry['macros'])}'
             )
             execute.append(cmd)
@@ -128,7 +127,7 @@ class sail_cSim(pluginTemplate):
             execute.append(cmd)
 
             # run reference model
-            cmd = self.ref_exe + f' --config ../config_sail_cSim.json --trace-reg --trace-mem --signature-granularity=4 --test-signature={sig} {elf} > {log} 2>&1'
+            cmd = self.ref_exe + f' --config ../config_sail_cSim.json --trace-all --signature-granularity=4 --test-signature={sig} {elf} > {log} 2>&1'
             execute.append(cmd)
 
             make.add_target('\n'.join(execute))

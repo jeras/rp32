@@ -138,30 +138,20 @@ class r5p(pluginTemplate):
             dis = os.path.join(test_dir, 'dut.disass')
             bin = os.path.join(test_dir, 'dut.bin')
             sym = os.path.join(test_dir, 'dut.symbols')
-
-            # Name of the signature file as per requirement of RISCOF.
-            # RISCOF expects the signature to be named as DUT-<dut-name>.signature.
-            # The below variable creates an absolute path of signature file.
+            log = os.path.join(test_dir, 'dut.log')
             sig = os.path.join(test_dir, name + ".signature")
-
-            # Name of the HDL testbench log file
-            log = os.path.join(test_dir, "dut.log")
-
-            # For each test there are specific compile macros that need to be enabled.
-            # The macros in the testList node only contain the macros/values.
-            # For the gcc toolchain we need to prefix with "-D". The following does precisely that.
-            compile_macros = ' '.join([f'-D{macro}' for macro in testentry['macros']])
 
             # Construct the command line for compiling testcase source assembly into an elf file.
             compile_cmd = self.compile_exe + (
                 f' -mabi={'lp64' if (self.xlen == 64) else 'ilp32'}'
                 f' -march={testentry['isa'].lower()}'
-                f' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -g'
+                f' -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
+		f' -g'
                 f' -T {self.pluginpath}/env/link.ld'
                 f' -I {self.pluginpath}/env/'
                 f' -I {self.archtest_env}'
-                f' {compile_macros}'
                 f' {test} -o {elf}'
+                f' -D{" -D".join(testentry['macros'])}'
             )
 
             # Command for converting elf file into a binary/hex file for loading into HDL testbench memory.
