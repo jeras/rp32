@@ -36,9 +36,9 @@ jobs:
         sudo apt-get install ccache
 
     - name: '📦 Install Verilator'
-      uses: veryl-lang/setup-verilator@v1.0.2
+      uses: veryl-lang/setup-verilator@v1.0.3
       with:
-        version: latest
+        version: v5.044
   
     # somehow veryl-lang/setup-verilator uses mold
     - name: '📦 Install mold linker'
@@ -81,7 +81,7 @@ jobs:
       run: riscof run --config=config-degu.ini --work-dir=riscof_work_degu --suite=../submodules/riscv-arch-test/riscv-test-suite/ --env=../submodules/riscv-arch-test/riscv-test-suite/env --no-browser
 
     - name: '📤 Archive test report'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: test_report
         path: |
