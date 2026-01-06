@@ -38,7 +38,7 @@ jobs:
     - name: '📦 Install Verilator'
       uses: veryl-lang/setup-verilator@v1.0.3
       with:
-        version: v5.044
+        version: latest
   
     # somehow veryl-lang/setup-verilator uses mold
     - name: '📦 Install mold linker'
