@@ -1,6 +1,6 @@
 [submodule "submodules/riscv-arch-test"]
 	path = submodules/riscv-arch-test
-	url = git@github.com:riscv/riscv-arch-test.git
+	url = git@github.com:jeras/riscv-arch-test.git
 [submodule "submodules/verilator"]
 	path = submodules/verilator
 	url = git@github.com:verilator/verilator.git
