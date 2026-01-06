@@ -123,7 +123,7 @@ class sail_cSim(pluginTemplate):
             execute.append(cmd)
 
             # dump disassembled elf file
-            cmd = self.toolchain+'objdump' + f' -M no-aliases -M numeric -D {elf} > {dis}'
+            cmd = self.toolchain+'objdump' + f' -M no-aliases -M numeric -S -D {elf} > {dis}'
             execute.append(cmd)
 
             # run reference model

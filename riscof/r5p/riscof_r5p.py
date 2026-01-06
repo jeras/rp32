@@ -162,6 +162,7 @@ class r5p(pluginTemplate):
             # Disassemble the ELF file for debugging purposes
             objdump_cmd = self.objdump_exe + (
                 f' -M no-aliases -M numeric'
+                f' -S'
                 f' -D {elf} > {dis}'
             )
 
