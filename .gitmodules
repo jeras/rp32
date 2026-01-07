@@ -1,15 +1,9 @@
 [submodule "submodules/riscv-arch-test"]
 	path = submodules/riscv-arch-test
 	url = git@github.com:jeras/riscv-arch-test.git
-[submodule "submodules/verilator"]
-	path = submodules/verilator
-	url = git@github.com:verilator/verilator.git
 [submodule "submodules/learn-fpga"]
 	path = submodules/learn-fpga
 	url = git@github.com:jeras/learn-fpga.git
-[submodule "submodules/yosys"]
-	path = submodules/yosys
-	url = https://github.com/YosysHQ/yosys.git
 [submodule "submodules/tcb"]
 	path = submodules/tcb
 	url = git@github.com:jeras/TCB.git
