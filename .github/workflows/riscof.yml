@@ -75,6 +75,11 @@ jobs:
       continue-on-error: true
       run: riscof run --config=config-mouse.ini --work-dir=riscof_work_mouse --suite=../submodules/riscv-arch-test/riscv-test-suite/ --env=../submodules/riscv-arch-test/riscv-test-suite/env --no-browser
 
+    - name: '⚙️ test'
+      working-directory: riscof
+      continue-on-error: true
+      run: riscv32-unknown-elf-gcc -mabi=ilp32 -march=rv32i -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -T /home/runner/work/rp32/rp32/riscof/sail_cSim/env/link.ld -I /home/runner/work/rp32/rp32/riscof/sail_cSim/env/ -I /home/runner/work/rp32/rp32/submodules/riscv-arch-test/riscv-test-suite/env /home/runner/work/rp32/rp32/submodules/riscv-arch-test/riscv-test-suite/rv32i_m/I/src/add-01.S -o /home/runner/work/rp32/rp32/riscof/riscof_work_mouse/rv32i_m/I/src/add-01.S/ref/ref.elf -DTEST_CASE_1=True -DXLEN=32
+
     - name: '⚙️ Run RISCOF for degu'
       working-directory: riscof
       continue-on-error: true
