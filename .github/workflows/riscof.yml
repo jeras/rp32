@@ -75,14 +75,6 @@ jobs:
       continue-on-error: true
       run: riscof run --config=config-mouse.ini --work-dir=riscof_work_mouse --suite=../submodules/riscv-arch-test/riscv-test-suite/ --env=../submodules/riscv-arch-test/riscv-test-suite/env --no-browser
 
-    - name: '⚙️ test'
-      working-directory: riscof
-      continue-on-error: true
-      run: |
-        sail_riscv_sim --config /home/runner/work/rp32/rp32/riscof/sail_cSim/config_sail_cSim.json --trace-all --signature-granularity=4 --test-signature=/home/runner/work/rp32/rp32/riscof/riscof_work_mouse/rv32i_m/I/src/add-01.S/ref/Reference-sail_c_simulator.signature /home/runner/work/rp32/rp32/riscof/riscof_work_mouse/rv32i_m/I/src/add-01.S/ref/ref.elf
-        sail_riscv_sim --config /home/runner/work/rp32/rp32/riscof/sail_cSim/config_sail_cSim.json --trace-all --signature-granularity=4 --test-signature=/home/runner/work/rp32/rp32/riscof/riscof_work_mouse/rv32i_m/I/src/add-01.S/ref/Reference-sail_c_simulator.signature /home/runner/work/rp32/rp32/riscof/riscof_work_mouse/rv32i_m/I/src/add-01.S/ref/ref.elf > /home/runner/work/rp32/rp32/riscof/riscof_work_mouse/rv32i_m/I/src/add-01.S/ref/ref.log
-        make --debug -f riscof_work_mouse/Makefile.Reference-sail_c_simulator TARGET0
-
     - name: '⚙️ Run RISCOF for degu'
       working-directory: riscof
       continue-on-error: true
