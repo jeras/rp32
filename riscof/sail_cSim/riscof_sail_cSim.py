@@ -104,6 +104,7 @@ class sail_cSim(pluginTemplate):
             dis = os.path.join(test_dir, 'ref.disass')
             log = os.path.join(test_dir, 'ref.log')
             sig = os.path.join(test_dir, name + ".signature")
+            cfg = os.path.join(self.pluginpath, "config_sail_cSim.json")
 
             execute = []
 
@@ -127,7 +128,7 @@ class sail_cSim(pluginTemplate):
             execute.append(cmd)
 
             # run reference model
-            cmd = self.ref_exe + f' --config ../config_sail_cSim.json --trace-all --signature-granularity=4 --test-signature={sig} {elf} > {log} 2>&1'
+            cmd = self.ref_exe + f' --config {cfg} --trace-all --signature-granularity=4 --test-signature={sig} {elf} > {log} 2>&1'
             execute.append(cmd)
 
             make.add_target('\n'.join(execute))
