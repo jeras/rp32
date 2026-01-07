@@ -79,7 +79,6 @@ jobs:
       working-directory: riscof
       continue-on-error: true
       run: |
-        make -C riscof_work_mouse/ -f Makefile.Reference-sail_c_simulator TARGET0
         make --debug -f riscof_work_mouse/Makefile.Reference-sail_c_simulator TARGET0
 
     - name: '⚙️ Run RISCOF for degu'
