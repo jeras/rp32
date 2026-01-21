@@ -6,25 +6,28 @@
 PATH_TCB=../../submodules/tcb/hdl
 
 # SystemVerilog RTL
-RTL+=${PATH_TCB}/rtl/tcb_pkg.sv
-RTL+=${PATH_TCB}/rtl/tcb_if.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_passthrough.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_logsize2byteena.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_arbiter.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_multiplexer.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_decoder.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_demultiplexer.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_register_request.sv
-RTL+=${PATH_TCB}/rtl/lib/tcb_lib_error.sv
+RTL+=${PATH_TCB}/rtl/tcb_lite_pkg.sv
+RTL+=${PATH_TCB}/rtl/tcb_lite_if.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_passthrough.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_logsize2byteena.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_arbiter.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_multiplexer.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_decoder.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_demultiplexer.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_register_request.sv
+RTL+=${PATH_TCB}/rtl/lite_lib/tcb_lite_lib_error.sv
+RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_peri_gpio_cdc_generic.sv
 RTL+=${PATH_TCB}/rtl/peri/gpio/tcb_peri_gpio.sv
+RTL+=${PATH_TCB}/rtl/lite_peri/gpio/tcb_lite_peri_gpio.sv
 RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart_ser.sv
 RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart_des.sv
 RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart_fifo.sv
 RTL+=${PATH_TCB}/rtl/peri/uart/tcb_peri_uart.sv
+RTL+=${PATH_TCB}/rtl/lite_peri/uart/tcb_lite_peri_uart.sv
 
 # SystemVerilog bench (Test SV)
-TSV+=${PATH_TCB}/tbn/vip/tcb_vip_memory.sv
-TSV+=${PATH_TCB}/tbn/vip/tcb_vip_protocol_checker.sv
+TSV+=${PATH_TCB}/tbn/lite_vip/tcb_lite_vip_memory.sv
+TSV+=${PATH_TCB}/tbn/lite_vip/tcb_lite_vip_protocol_checker.sv
 
 # HDLDB files
 PATH_GDB=../../submodules/hdldb/hdl

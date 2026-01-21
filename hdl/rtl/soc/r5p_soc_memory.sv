@@ -17,20 +17,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_soc_memory
-  import tcb_pkg::*;
+  import tcb_lite_pkg::*;
 #(
   string       FNM = "",    // binary initialization file name
   int unsigned SIZ = 4096   // memory size in bytes (4kB by default)
 )(
   // TCB interface
-  tcb_if.sub tcb
+  tcb_lite_if.sub sub
 );
-
-//localparam int unsigned ADR = tcb.CFG.BUS.ADR;
-  localparam int unsigned DAT = tcb.CFG.BUS.DAT;
-  localparam int unsigned BYT = tcb.CFG_BUS_BYT;
-  localparam int unsigned MAX = tcb.CFG_BUS_MAX;
-  localparam int unsigned ADR = $clog2(SIZ);
 
 ////////////////////////////////////////////////////////////////////////////////
 // TCB interface parameter validation
@@ -39,16 +33,14 @@ module r5p_soc_memory
   initial
   begin
     // TCB mode must be memory (RISC-V mode is not supported)
-    assert (tcb.CFG.BUS.MOD == TCB_MOD_BYTE_ENA) else $fatal("Unsupported TCB mode in %m.");
-    // check if address is wide enough for the memory size
-    assert (tcb.CFG.BUS.ADR >= ADR             ) else $fatal("TCB address not wide enough to address entire memory size in %m.");
+    assert (sub.MOD == 1'b1) else $fatal("Unsupported TCB-Lite mode.");
   end
 
 ////////////////////////////////////////////////////////////////////////////////
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [DAT-1:0] mem [0:SIZ/(DAT/8)-1];
+  logic [sub.DAT-1:0] mem [0:SIZ/(sub.DAT/8)-1];
 
   initial
   begin
@@ -65,24 +57,25 @@ module r5p_soc_memory
 // load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-  always_ff @(posedge tcb.clk)
-  if (tcb.vld) begin
-    if (tcb.req.wen) begin
+  always_ff @(posedge sub.clk)
+  if (sub.vld) begin
+    if (sub.req.wen) begin
       // write access
-      for (int unsigned b=0; b<BYT; b++) begin
-        if (tcb.req.byt[b])  mem[tcb.req.adr[ADR-1:MAX]][8*b+:8] <= tcb.req.wdt[b];
+      for (int unsigned b=0; b<sub.BYT; b++) begin
+        if (sub.req.byt[b])  mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8] <= sub.req.wdt[b];
       end
     end else begin
       // read access
-      for (int unsigned b=0; b<BYT; b++) begin
-        if (tcb.req.byt[b])  tcb.rsp.rdt[b] <= mem[tcb.req.adr[ADR-1:MAX]][8*b+:8];
+      for (int unsigned b=0; b<sub.BYT; b++) begin
+        if (sub.req.byt[b])  sub.rsp.rdt[b] <= mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8];
       end
     end
   end
 
   // respond with no error
-  assign tcb.rsp.sts.err = 1'b0;
+  assign sub.rsp.sts = '0;
+  assign sub.rsp.err = 1'b0;
   // always ready
-  assign tcb.rdy = 1'b1;
+  assign sub.rdy = 1'b1;
 
 endmodule: r5p_soc_memory

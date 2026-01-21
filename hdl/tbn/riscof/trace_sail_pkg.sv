@@ -38,7 +38,7 @@ package trace_sail_pkg;
             int siz = XLEN/8,  // logarithmic size
             int off = 0        // beginning offset
         );
-            string hex = "";
+            hex = "";
             for (int unsigned i=off; i<off+siz; i++) begin
                 hex = {$sformatf("%2h", dat[8*i+:8]), hex};
             end

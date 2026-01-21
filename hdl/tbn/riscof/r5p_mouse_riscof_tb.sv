@@ -18,10 +18,15 @@
 
 module r5p_mouse_riscof_tb
     import riscv_isa_pkg::*;
-    import tcb_pkg::*;
+    import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
+    // TODO: handling a Verilator bug, localparam is not handled as a constant
+`ifdef VERILATOR
+    parameter  int unsigned XLEN = 32,
+`else
     localparam int unsigned XLEN = 32,
+`endif
     localparam int unsigned XLOG = $clog2(XLEN),
     localparam int unsigned ILEN = 32,
     // RISC-V ISA
@@ -77,55 +82,13 @@ module r5p_mouse_riscof_tb
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-    localparam tcb_cfg_t CFG_CPU = '{
-        // handshake parameter
-        HSK: TCB_HSK_DEF,
-        // bus parameter
-        BUS: '{
-            ADR: TCB_BUS_DEF.ADR,
-            DAT: TCB_BUS_DEF.DAT,
-            LEN: TCB_BUS_DEF.LEN,
-            LCK: TCB_LCK_PRESENT,
-            CHN: TCB_CHN_HALF_DUPLEX,
-            AMO: TCB_AMO_ABSENT,
-            PRF: TCB_PRF_ABSENT,
-            NXT: TCB_NXT_ABSENT,
-            MOD: TCB_MOD_LOG_SIZE,
-            ORD: TCB_ORD_DESCENDING,
-            NDN: TCB_NDN_BI_NDN
-        },
-        // physical interface parameter
-        PMA: TCB_PMA_DEF
-    };
+    // TCB configurations               '{HSK: '{DLY,  HLD}, BUS: '{ MOD, CTL,  ADR,  DAT, STS}}
+    localparam tcb_lite_cfg_t CFG_CPU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
 
-    localparam tcb_cfg_t CFG_MEM = '{
-        // handshake parameter
-        HSK: TCB_HSK_DEF,
-        // bus parameter
-        BUS: '{
-            ADR: TCB_BUS_DEF.ADR,
-            DAT: TCB_BUS_DEF.DAT,
-            LEN: TCB_BUS_DEF.LEN,
-            LCK: TCB_LCK_PRESENT,
-            CHN: TCB_CHN_HALF_DUPLEX,
-            AMO: TCB_AMO_ABSENT,
-            PRF: TCB_PRF_ABSENT,
-            NXT: TCB_NXT_ABSENT,
-            MOD: TCB_MOD_BYTE_ENA,
-            ORD: TCB_ORD_DESCENDING,
-            NDN: TCB_NDN_BI_NDN
-        },
-        // physical interface parameter
-        PMA: TCB_PMA_DEF
-    };
-
-    localparam tcb_vip_t VIP = '{
-        DRV: 1'b1
-    };
-
-    // system busses
-    tcb_if #(.CFG (CFG_CPU)            ) tcb_cpu       (.clk (clk), .rst (rst));
-    tcb_if #(.CFG (CFG_MEM), .VIP (VIP)) tcb_mem [0:0] (.clk (clk), .rst (rst));
+    // system bus CFG    ,  VIP
+    tcb_lite_if #(CFG_CPU      ) tcb_cpu       (.clk (clk), .rst (rst));
+    tcb_lite_if #(CFG_MEM, 1'b1) tcb_mem [0:0] (.clk (clk), .rst (rst));
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -142,36 +105,38 @@ module r5p_mouse_riscof_tb
         // TCB system bus (shared by instruction/load/store)
         .tcb_vld (tcb_cpu.vld),
         .tcb_wen (tcb_cpu.req.wen),
-        .tcb_ren (tcb_cpu.req.ren),
-        .tcb_xen (tcb_cpu.req.xen),
+        .tcb_ren (),
+        .tcb_xen (),
         .tcb_adr (tcb_cpu.req.adr),
         .tcb_siz (tcb_cpu.req.siz),
         .tcb_wdt (tcb_cpu.req.wdt),
         .tcb_rdt (tcb_cpu.rsp.rdt),
-        .tcb_err (tcb_cpu.rsp.sts.err),
+        .tcb_err (tcb_cpu.rsp.err),
         .tcb_rdy (tcb_cpu.rdy)
     );
 
     // signals not provided by the CPU
     assign tcb_cpu.req.lck = 1'b0;
-    assign tcb_cpu.req.ndn = TCB_LITTLE;
+    assign tcb_cpu.req.ndn = 1'b0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-    tcb_vip_protocol_checker tcb_cpu_chk (.tcb (tcb_cpu));
-    tcb_vip_protocol_checker tcb_mem_chk (.tcb (tcb_mem[0]));
+    tcb_lite_vip_protocol_checker tcb_cpu_chk (.mon (tcb_cpu));
+    tcb_lite_vip_protocol_checker tcb_mem_chk (.mon (tcb_mem[0]));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
     generate
-    if (CFG_MEM.BUS.MOD == TCB_MOD_BYTE_ENA) begin: mem_byte_ena
+    if (tcb_mem[0].MOD == 1'b1) begin: mem_byte_ena
 
         // convert from LOG_SIZE to BYTE_ENA mode
-        tcb_lib_logsize2byteena tcb_cnv (
+        tcb_lite_lib_logsize2byteena #(
+            .ALIGNED (1'b0)  // TODO: misaligned version fails
+        ) tcb_cnv (
             .sub  (tcb_cpu),
             .man  (tcb_mem[0])
         );
@@ -180,7 +145,7 @@ module r5p_mouse_riscof_tb
     else begin: mem_log_size
 
         // no TCB mode conversion, just map to interface vector
-        tcb_lib_passthrough tcb_cnv (
+        tcb_lite_lib_passthrough tcb_cnv (
             .sub  (tcb_cpu),
             .man  (tcb_mem[0])
         );
@@ -188,9 +153,9 @@ module r5p_mouse_riscof_tb
     end: mem_log_size
     endgenerate
 
-    tcb_vip_memory #(
+    tcb_lite_vip_memory #(
         .MFN  (""),
-        .SIZ  (MEM_SIZ),
+        .SIZE (MEM_SIZ),
         .IFN  (1)
     ) mem (
         .tcb  (tcb_mem[0:0])

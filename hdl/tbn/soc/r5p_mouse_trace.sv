@@ -18,7 +18,7 @@
 
 module r5p_mouse_trace
     import trace_generic_pkg::*;
-    import tcb_pkg::*;
+    import tcb_lite_pkg::*;
 #(
     localparam int unsigned XLEN = 32,
     // trace format class type (HDLDB, Spike, ...)
@@ -30,7 +30,7 @@ module r5p_mouse_trace
     // instruction execution phase
     input logic [3-1:0] pha,
     // TCB system bus
-    tcb_if.mon tcb
+    tcb_lite_if.mon tcb
 );
 
 ////////////////////////////////////////////////////////////////////////////////

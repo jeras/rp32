@@ -18,7 +18,7 @@
 
 module r5p_htif
     import riscv_isa_pkg::*;
-    import tcb_pkg::*;
+    import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
     localparam int unsigned XLEN = 32,
@@ -30,7 +30,7 @@ module r5p_htif
     parameter  int unsigned TIMEOUT
 )(
     // TCB system bus
-    tcb_if.mon tcb
+    tcb_lite_if.mon tcb
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +63,7 @@ module r5p_htif
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-    tcb_vip_protocol_checker tcb_chk (.tcb (tcb));
+    tcb_lite_vip_protocol_checker tcb_chk (.mon (tcb));
 
 ////////////////////////////////////////////////////////////////////////////////
 // ELF file symbols
@@ -91,15 +91,12 @@ module r5p_htif
 // signature memory
 ////////////////////////////////////////////////////////////////////////////////
 
-    // local copies of TCB PHY parameters
-    localparam BYT = tcb.CFG_BUS_BYT;
-
     // request address and size (TCB_LOG_SIZE mode)
     int unsigned adr;
     int unsigned siz;
 
     // read/write data packed arrays
-    logic [BYT-1:0][8-1:0] wdt;
+    logic [tcb.BYT-1:0][8-1:0] wdt;
 
     // request address and size (TCB_LOG_SIZE mode)
     assign adr =    int'(tcb.req.adr);
@@ -112,15 +109,15 @@ module r5p_htif
     always @(posedge tcb.clk)
     if (tcb.trn) begin
         if (tcb.req.wen) begin: write
-            for (int unsigned b=0; b<BYT; b++) begin: bytes
-                case (tcb.CFG.BUS.MOD)
-                    TCB_MOD_LOG_SIZE: begin: log_size
+            for (int unsigned b=0; b<tcb.BYT; b++) begin: bytes
+                case (tcb.MOD)
+                    1'b0: begin: log_size
                         // write only transfer size bytes
                         if (b < siz)  mem[adr+b] <= wdt[b];
                     end: log_size
-                    TCB_MOD_BYTE_ENA: begin: byte_ena
+                    1'b1: begin: byte_ena
                         // write only enabled bytes
-                        if (tcb.req.byt[(adr+b)%BYT])  mem[adr+b] <= wdt[(adr+b)%BYT];
+                        if (tcb.req.byt[(adr+b)%tcb.BYT])  mem[adr+b] <= wdt[(adr+b)%tcb.BYT*8+:8];
                     end: byte_ena
                 endcase
             end: bytes
@@ -176,7 +173,7 @@ module r5p_htif
         if (tcb.req.wen) begin
             // HTIF tohost
             if (tcb.req.adr == tohost) begin
-                htif_halt <= tcb.req.wdt[0][0];
+                htif_halt <= tcb.req.wdt[0];
             end
         end
     end
@@ -187,6 +184,8 @@ module r5p_htif
         string filename;  // file name
         if (htif_halt)  $display("HTIF: HALT");
         if (timeout  )  $display("HTIF: TIMEOUT");
+        // a few more clock cycles
+        repeat (16) @(posedge tcb.clk);
         if ($value$plusargs("TEST_DIR=%s", filename)) begin
             filename = {filename, "DUT-r5p.signature"};
             $display("HTIF: Saving signature file with data from 0x%8h to 0x%8h: %s", begin_signature, end_signature, filename);
@@ -195,8 +194,6 @@ module r5p_htif
             $display("HTIF: ERROR: signature save file plusarg not found.");
             $finish;
         end
-        // a few more clock cycles
-        repeat (16) @(posedge tcb.clk);
         $finish;
     end
 
