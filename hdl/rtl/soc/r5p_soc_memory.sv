@@ -17,65 +17,65 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_soc_memory
-  import tcb_lite_pkg::*;
+    import tcb_lite_pkg::*;
 #(
-  string       FNM = "",    // binary initialization file name
-  int unsigned SIZ = 4096   // memory size in bytes (4kB by default)
+    string       FNM = "",    // binary initialization file name
+    int unsigned SIZ = 4096   // memory size in bytes (4kB by default)
 )(
-  // TCB interface
-  tcb_lite_if.sub sub
+    // TCB interface
+    tcb_lite_if.sub sub
 );
 
 ////////////////////////////////////////////////////////////////////////////////
 // TCB interface parameter validation
 ////////////////////////////////////////////////////////////////////////////////
 
-  initial
-  begin
-    // TCB mode must be memory (RISC-V mode is not supported)
-    assert (sub.MOD == 1'b1) else $fatal("Unsupported TCB-Lite mode.");
-  end
+    initial
+    begin
+        // TCB mode must be memory (RISC-V mode is not supported)
+        assert (sub.MOD == 1'b1) else $fatal("Unsupported TCB-Lite mode.");
+    end
 
 ////////////////////////////////////////////////////////////////////////////////
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [sub.DAT-1:0] mem [0:SIZ/(sub.DAT/8)-1];
+    logic [sub.DAT-1:0] mem [0:SIZ/(sub.DAT/8)-1];
 
-  initial
-  begin
-    if (FNM != "") begin
-      $display("INFO: Reading initialization file %s into memory %m.", FNM);
-      // TODO: binary mode
-      $readmemh(FNM, mem);
-    end else begin
-      $display("INFO: No initialization file name provided for memory %m.");
+    initial
+    begin
+        if (FNM != "") begin
+            $display("INFO: Reading initialization file %s into memory %m.", FNM);
+            // TODO: binary mode
+            $readmemh(FNM, mem);
+        end else begin
+            $display("INFO: No initialization file name provided for memory %m.");
+        end
     end
-  end
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-  always_ff @(posedge sub.clk)
-  if (sub.vld) begin
-    if (sub.req.wen) begin
-      // write access
-      for (int unsigned b=0; b<sub.BYT; b++) begin
-        if (sub.req.byt[b])  mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8] <= sub.req.wdt[b];
-      end
-    end else begin
-      // read access
-      for (int unsigned b=0; b<sub.BYT; b++) begin
-        if (sub.req.byt[b])  sub.rsp.rdt[b] <= mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8];
-      end
+    always_ff @(posedge sub.clk)
+    if (sub.vld) begin
+        if (sub.req.wen) begin
+            // write access
+            for (int unsigned b=0; b<sub.BYT; b++) begin
+                if (sub.req.byt[b])  mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8] <= sub.req.wdt[b];
+            end
+        end else begin
+            // read access
+            for (int unsigned b=0; b<sub.BYT; b++) begin
+                if (sub.req.byt[b])  sub.rsp.rdt[b] <= mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8];
+            end
+        end
     end
-  end
 
-  // respond with no error
-  assign sub.rsp.sts = '0;
-  assign sub.rsp.err = 1'b0;
-  // always ready
-  assign sub.rdy = 1'b1;
+    // respond with no error
+    assign sub.rsp.sts = '0;
+    assign sub.rsp.err = 1'b0;
+    // always ready
+    assign sub.rdy = 1'b1;
 
 endmodule: r5p_soc_memory

@@ -43,69 +43,50 @@ module r5p_soc_memory
     // xpm_memory_spram: Single Port RAM
     // Xilinx Parameterized Macro, version 2021.2
     xpm_memory_spram #(
-      .ADDR_WIDTH_A        ($clog2(SIZ/sub.BYT)),   // DECIMAL
-      .AUTO_SLEEP_TIME     (0),                     // DECIMAL
-      .BYTE_WRITE_WIDTH_A  (8),                     // DECIMAL
-      .CASCADE_HEIGHT      (0),                     // DECIMAL
-      .ECC_MODE            ("no_ecc"),              // String
-      .MEMORY_INIT_FILE    (FNM),                   // String
-      .MEMORY_INIT_PARAM   (""),                    // String
-      .MEMORY_OPTIMIZATION ("true"),                // String
-      .MEMORY_PRIMITIVE    ("auto"),                // String
-      .MEMORY_SIZE         (8 * SIZ),               // DECIMAL
-      .MESSAGE_CONTROL     (0),                     // DECIMAL
-      .READ_DATA_WIDTH_A   (sub.DAT),               // DECIMAL
-      .READ_LATENCY_A      (1),                     // DECIMAL
-      .READ_RESET_VALUE_A  ("0"),                   // String
-      .RST_MODE_A          ("SYNC"),                // String
-      .SIM_ASSERT_CHK      (0),                     // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-      .USE_MEM_INIT        (1),                     // DECIMAL
-      .USE_MEM_INIT_MMI    (0),                     // DECIMAL
-      .WAKEUP_TIME         ("disable_sleep"),       // String
-      .WRITE_DATA_WIDTH_A  (sub.DAT),               // DECIMAL
-      .WRITE_MODE_A        ("read_first"),          // String
-      .WRITE_PROTECT       (1)                      // DECIMAL
+        .ADDR_WIDTH_A        ($clog2(SIZ/sub.BYT)),   // DECIMAL
+        .AUTO_SLEEP_TIME     (0),                     // DECIMAL
+        .BYTE_WRITE_WIDTH_A  (8),                     // DECIMAL
+        .CASCADE_HEIGHT      (0),                     // DECIMAL
+        .ECC_MODE            ("no_ecc"),              // String
+        .MEMORY_INIT_FILE    (FNM),                   // String
+        .MEMORY_INIT_PARAM   (""),                    // String
+        .MEMORY_OPTIMIZATION ("true"),                // String
+        .MEMORY_PRIMITIVE    ("auto"),                // String
+        .MEMORY_SIZE         (8 * SIZ),               // DECIMAL
+        .MESSAGE_CONTROL     (0),                     // DECIMAL
+        .READ_DATA_WIDTH_A   (sub.DAT),               // DECIMAL
+        .READ_LATENCY_A      (1),                     // DECIMAL
+        .READ_RESET_VALUE_A  ("0"),                   // String
+        .RST_MODE_A          ("SYNC"),                // String
+        .SIM_ASSERT_CHK      (0),                     // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+        .USE_MEM_INIT        (1),                     // DECIMAL
+        .USE_MEM_INIT_MMI    (0),                     // DECIMAL
+        .WAKEUP_TIME         ("disable_sleep"),       // String
+        .WRITE_DATA_WIDTH_A  (sub.DAT),               // DECIMAL
+        .WRITE_MODE_A        ("read_first"),          // String
+        .WRITE_PROTECT       (1)                      // DECIMAL
     ) mem (
-      // unused control/status signals
-      .injectdbiterra (1'b0),
-      .injectsbiterra (1'b0),
-      .dbiterra       (),
-      .sbiterra       (),
-      .sleep          (1'b0),
-      .regcea         (1'b1),
-      // system bus
-      .clka   (sub.clk),
-      .rsta   (sub.rst),
-      .ena    (sub.vld),
-      .wea    (sub.req.byt & {sub.BYT{sub.req.wen}}),
-      .addra  (sub.req.adr[$clog2(SIZ)-1:sub.MAX]),
-      .dina   (sub.req.wdt),
-      .douta  (sub.rsp.rdt)
+        // unused control/status signals
+        .injectdbiterra (1'b0),
+        .injectsbiterra (1'b0),
+        .dbiterra       (),
+        .sbiterra       (),
+        .sleep          (1'b0),
+        .regcea         (1'b1),
+        // system bus
+        .clka   (sub.clk),
+        .rsta   (sub.rst),
+        .ena    (sub.vld),
+        .wea    (sub.req.byt & {sub.BYT{sub.req.wen}}),
+        .addra  (sub.req.adr[$clog2(SIZ)-1:sub.MAX]),
+        .dina   (sub.req.wdt),
+        .douta  (sub.rsp.rdt)
     );
 
-////////////////////////////////////////////////////////////////////////////////
-// load/store
-////////////////////////////////////////////////////////////////////////////////
-
-  always_ff @(posedge sub.clk)
-  if (sub.vld) begin
-    if (sub.req.wen) begin
-      // write access
-      for (int unsigned b=0; b<sub.BYT; b++) begin
-        if (sub.req.byt[b])  mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8] <= sub.req.wdt[b];
-      end
-    end else begin
-      // read access
-      for (int unsigned b=0; b<sub.BYT; b++) begin
-        if (sub.req.byt[b])  sub.rsp.rdt[b] <= mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8];
-      end
-    end
-  end
-
-  // respond with no error
-  assign sub.rsp.sts = '0;
-  assign sub.rsp.err = 1'b0;
-  // always ready
-  assign sub.rdy = 1'b1;
+    // respond with no error
+    assign sub.rsp.sts = '0;
+    assign sub.rsp.err = 1'b0;
+    // always ready
+    assign sub.rdy = 1'b1;
 
 endmodule: r5p_soc_memory

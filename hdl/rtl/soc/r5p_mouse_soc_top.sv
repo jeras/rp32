@@ -22,16 +22,11 @@ module r5p_mouse_soc_top
 #(
     // constants used across the design in signal range sizing instead of literals
     localparam int unsigned XLEN = 32,
-    localparam int unsigned XLOG = $clog2(XLEN),
-    localparam int unsigned BLEN = XLEN/8,
-    localparam int unsigned BLOG = $clog2(BLEN),
-    // number of GPR registers
-    parameter  int unsigned GLEN = 32,
     // SoC peripherals
     parameter  bit          ENA_GPIO = 1'b1,
     parameter  bit          ENA_UART = 1'b0,
     // GPIO
-    parameter  int unsigned GW = 32,
+    parameter  int unsigned GDW = 32,
     // TCB bus
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
@@ -39,20 +34,18 @@ module r5p_mouse_soc_top
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_ADR = 14,
     parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**MEM_ADR),
-    parameter  string         MEM_FNM = "mem_if.vmem",
-    // implementation device (ASIC/FPGA vendor/device)
-    parameter  string         CHIP = ""
+    parameter  string         MEM_FNM = "mem_if.vmem"
 )(
     // system signals
-    input  logic          clk,  // clock
-    input  logic          rst,  // reset (active high)
+    input  logic           clk,  // clock
+    input  logic           rst,  // reset (active high)
     // GPIO
-    output logic [GW-1:0] gpio_o,  // output
-    output logic [GW-1:0] gpio_e,  // enable
-    input  logic [GW-1:0] gpio_i,  // input
+    output logic [GDW-1:0] gpio_o,  // output
+    output logic [GDW-1:0] gpio_e,  // enable
+    input  logic [GDW-1:0] gpio_i,  // input
     // UART
-    output logic          uart_txd,
-    input  logic          uart_rxd
+    output logic           uart_txd,
+    input  logic           uart_rxd
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,24 +76,24 @@ module r5p_mouse_soc_top
 ////////////////////////////////////////////////////////////////////////////////
 
     r5p_mouse #(
-      .IFU_RST (IFU_RST),
-      .IFU_MSK (IFU_MSK),
-      .GPR_ADR (GPR_ADR)
+        .IFU_RST (IFU_RST),
+        .IFU_MSK (IFU_MSK),
+        .GPR_ADR (GPR_ADR)
     ) cpu (
-      // system signals
-      .clk     (clk),
-      .rst     (rst),
-      // TCB system bus (shared by instruction/load/store)
-      .tcb_vld (tcb_cpu.vld),
-      .tcb_ren (               ),
-      .tcb_wen (tcb_cpu.req.wen),
-      .tcb_xen (               ),
-      .tcb_adr (tcb_cpu.req.adr),
-      .tcb_siz (tcb_cpu.req.siz),
-      .tcb_wdt (tcb_cpu.req.wdt),
-      .tcb_rdt (tcb_cpu.rsp.rdt),
-      .tcb_err (tcb_cpu.rsp.err),
-      .tcb_rdy (tcb_cpu.rdy)
+        // system signals
+        .clk     (clk),
+        .rst     (rst),
+        // TCB system bus (shared by instruction/load/store)
+        .tcb_vld (tcb_cpu.vld),
+        .tcb_ren (               ),
+        .tcb_wen (tcb_cpu.req.wen),
+        .tcb_xen (               ),
+        .tcb_adr (tcb_cpu.req.adr),
+        .tcb_siz (tcb_cpu.req.siz),
+        .tcb_wdt (tcb_cpu.req.wdt),
+        .tcb_rdt (tcb_cpu.rsp.rdt),
+        .tcb_err (tcb_cpu.rsp.err),
+        .tcb_rdy (tcb_cpu.rdy)
     );
 
     // signals not provided by the CPU
@@ -113,63 +106,63 @@ module r5p_mouse_soc_top
 
   logic [$clog2(2)-1:0] tcb_cpu_sel;
 
-  // decoding memory/peripherals
-  tcb_lite_lib_decoder #(
-    .ADR (CFG_CPU.BUS.ADR),
-    .IFN (2),
-    .DAM ({{16'h8000, 2'b01, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
-           {16'h8000, 2'b00, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
-  ) tcb_lsu_dec (
-    .mon  (tcb_cpu    ),
-    .sel  (tcb_cpu_sel)
-  );
+    // decoding memory/peripherals
+    tcb_lite_lib_decoder #(
+        .ADR (CFG_CPU.BUS.ADR),
+        .IFN (2),
+        .DAM ({{16'h8000, 2'b01, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
+               {16'h8000, 2'b00, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
+    ) tcb_lsu_dec (
+        .mon  (tcb_cpu    ),
+        .sel  (tcb_cpu_sel)
+    );
 
-  // demultiplexing memory/peripherals
-  tcb_lite_lib_demultiplexer #(
-    .IFN (2)
-  ) tcb_lsu_demux (
-    // control
-    .sel  (tcb_cpu_sel),
-    // TCB interfaces
-    .sub  (tcb_cpu),
-    .man  (tcb_dmx)
-  );
+    // demultiplexing memory/peripherals
+    tcb_lite_lib_demultiplexer #(
+        .IFN (2)
+    ) tcb_lsu_demux (
+        // control
+        .sel  (tcb_cpu_sel),
+        // TCB interfaces
+        .sub  (tcb_cpu),
+        .man  (tcb_dmx)
+    );
 
-  // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
-  tcb_lite_lib_logsize2byteena tcb_mem_converter (
-    .sub  (tcb_dmx[0]),
-    .man  (tcb_mem)
-  );
+    // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
+    tcb_lite_lib_logsize2byteena tcb_mem_converter (
+        .sub  (tcb_dmx[0]),
+        .man  (tcb_mem)
+    );
 
-  // register request path to convert from DLY=1 CPU to DLY=0 peripherals
-  tcb_lite_lib_register_request tcb_lsu_register (
-    .sub  (tcb_dmx[1]),
-    .man  (tcb_pb0)
-  );
+    // register request path to convert from DLY=1 CPU to DLY=0 peripherals
+    tcb_lite_lib_register_request tcb_lsu_register (
+        .sub  (tcb_dmx[1]),
+        .man  (tcb_pb0)
+    );
 
-  logic [$clog2(2)-1:0] tcb_pb0_sel;
+    logic [$clog2(2)-1:0] tcb_pb0_sel;
 
-  // decoding peripherals (GPIO/UART)
-  tcb_lite_lib_decoder #(
-    .ADR (CFG_CPU.BUS.ADR),
-    .IFN (2),
-    .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
-           {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
-  ) tcb_pb0_dec (
-    .mon  (tcb_pb0),
-    .sel  (tcb_pb0_sel)
-  );
+    // decoding peripherals (GPIO/UART)
+    tcb_lite_lib_decoder #(
+        .ADR (CFG_CPU.BUS.ADR),
+        .IFN (2),
+        .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
+               {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
+    ) tcb_pb0_dec (
+        .mon  (tcb_pb0),
+        .sel  (tcb_pb0_sel)
+    );
 
-  // demultiplexing peripherals (GPIO/UART)
-  tcb_lite_lib_demultiplexer #(
-    .IFN (2)
-  ) tcb_pb0_demux (
-    // control
-    .sel  (tcb_pb0_sel),
-    // TCB interfaces
-    .sub  (tcb_pb0),
-    .man  (tcb_per)
-  );
+    // demultiplexing peripherals (GPIO/UART)
+    tcb_lite_lib_demultiplexer #(
+        .IFN (2)
+    ) tcb_pb0_demux (
+        // control
+        .sel  (tcb_pb0_sel),
+        // TCB interfaces
+        .sub  (tcb_pb0),
+        .man  (tcb_per)
+    );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory instances
@@ -177,98 +170,98 @@ module r5p_mouse_soc_top
 
     // shared memory
     r5p_soc_memory #(
-      .FNM  (MEM_FNM),
-      .SIZ  (MEM_SIZ)
+        .FNM  (MEM_FNM),
+        .SIZ  (MEM_SIZ)
     ) mem (
-      .tcb  (tcb_mem)
+        .sub  (tcb_mem)
     );
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-  generate
-  if (ENA_GPIO) begin: gen_gpio
+    generate
+    if (ENA_GPIO) begin: gen_gpio
 
-    // GPIO controller
-    tcb_lite_peri_gpio #(
-      .GDW     (GW),
-      .SYS_MIN (1'b1)
-    ) gpio (
-      // GPIO signals
-      .gpio_o  (gpio_o),
-      .gpio_e  (gpio_e),
-      .gpio_i  (gpio_i),
-      // bus interface
-      .sub     (tcb_per[0]),
-      .irq     ()
-    );
+        // GPIO controller
+        tcb_lite_peri_gpio #(
+            .GDW     (GDW),
+            .SYS_MIN (1'b1)
+        ) gpio (
+            // GPIO signals
+            .gpio_o  (gpio_o),
+            .gpio_e  (gpio_e),
+            .gpio_i  (gpio_i),
+            // bus interface
+            .sub     (tcb_per[0]),
+            .irq     ()
+        );
 
-  end: gen_gpio
-  else begin: gen_gpio_err
+    end: gen_gpio
+    else begin: gen_gpio_err
 
-    // error response
-    tcb_lite_lib_error gpio_err (
-        .sub  (tcb_per[0]),
-        .sts  ('x)
-    );
+        // error response
+        tcb_lite_lib_error gpio_err (
+            .sub  (tcb_per[0]),
+            .sts  ('0)
+        );
 
-    // GPIO signals
-    assign gpio_o = '0;
-    assign gpio_e = '0;
-    //     gpio_i
+        // GPIO signals
+        assign gpio_o = '0;
+        assign gpio_e = '0;
+        //     gpio_i
 
-  end: gen_gpio_err
-  endgenerate
+    end: gen_gpio_err
+    endgenerate
 
 ////////////////////////////////////////////////////////////////////////////////
 // UART
 ////////////////////////////////////////////////////////////////////////////////
 
-  generate
-  if (ENA_UART) begin: gen_uart
+    generate
+    if (ENA_UART) begin: gen_uart
 
-    // baudrate parameters (divider and counter width)
-    localparam int unsigned BDR = 50_000_000 / 115_200;  // 50MHz / 115200 = 434.0
-    localparam int unsigned BCW = $clog2(BDR);  // a 9-bit counter is required
+        // baudrate parameters (divider and counter width)
+        localparam int unsigned BDR = 50_000_000 / 115_200;  // 50MHz / 115200 = 434.0
+        localparam int unsigned BCW = $clog2(BDR);  // a 9-bit counter is required
 
-    // UART controller
-    tcb_lite_peri_uart #(
-      // UART parameters
-      .UART_RW        (BCW),
-      // configuration register parameters (write enable, reset value)
-      .CFG_TX_BDR_WEN (1'b0),  .CFG_TX_BDR_RST (BCW'(BDR)),
-      .CFG_TX_IRQ_WEN (1'b0),  .CFG_TX_IRQ_RST ('x),
-      .CFG_RX_BDR_WEN (1'b0),  .CFG_RX_BDR_RST (BCW'(BDR)),
-      .CFG_RX_SMP_WEN (1'b0),  .CFG_RX_SMP_RST (BCW'(BDR/2)),
-      .CFG_RX_IRQ_WEN (1'b0),  .CFG_RX_IRQ_RST ('x),
-      // TCB parameters
-      .SYS_MIN (1'b1)
-    ) uart (
-      // UART signals
-      .uart_txd (uart_txd),
-      .uart_rxd (uart_rxd),
-      // TCB-Lite interface
-      .sub      (tcb_per[1]),
-      // interrupts
-      .irq_tx   (),
-      .irq_rx   ()
-    );
+        // UART controller
+        tcb_lite_peri_uart #(
+            // UART parameters
+            .UART_RW        (BCW),
+            // configuration register parameters (write enable, reset value)
+            .CFG_TX_BDR_WEN (1'b0),  .CFG_TX_BDR_RST (BCW'(BDR)),
+            .CFG_TX_IRQ_WEN (1'b0),  .CFG_TX_IRQ_RST ('x),
+            .CFG_RX_BDR_WEN (1'b0),  .CFG_RX_BDR_RST (BCW'(BDR)),
+            .CFG_RX_SMP_WEN (1'b0),  .CFG_RX_SMP_RST (BCW'(BDR/2)),
+            .CFG_RX_IRQ_WEN (1'b0),  .CFG_RX_IRQ_RST ('x),
+            // TCB parameters
+            .SYS_MIN (1'b1)
+        ) uart (
+            // UART signals
+            .uart_txd (uart_txd),
+            .uart_rxd (uart_rxd),
+            // TCB-Lite interface
+            .sub      (tcb_per[1]),
+            // interrupts
+            .irq_tx   (),
+            .irq_rx   ()
+        );
 
-  end: gen_uart
-  else begin: gen_uart_err
+    end: gen_uart
+    else begin: gen_uart_err
 
-    // error response
-    tcb_lite_lib_error uart_err (
-        .sub (tcb_per[1]),
-        .sts  ('x)
-    );
+        // error response
+        tcb_lite_lib_error uart_err (
+            .sub (tcb_per[1]),
+            .sts  ('x)
+        );
 
-    // GPIO signals
-    assign uart_txd = 1'b1;
-    //     uart_rxd
+        // GPIO signals
+        assign uart_txd = 1'b1;
+        //     uart_rxd
 
-  end: gen_uart_err
-  endgenerate
+    end: gen_uart_err
+    endgenerate
 
 endmodule: r5p_mouse_soc_top
