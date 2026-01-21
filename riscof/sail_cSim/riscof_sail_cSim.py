@@ -128,7 +128,7 @@ class sail_cSim(pluginTemplate):
             execute.append(cmd)
 
             # run reference model
-            cmd = self.ref_exe + f' --config {cfg} --trace-all --signature-granularity=4 --test-signature={sig} {elf} > {log} 2>&1'
+            cmd = self.ref_exe + f' --config {cfg} --trace-reg --trace-mem --signature-granularity=4 --test-signature={sig} {elf} > {log} 2>&1'
             execute.append(cmd)
 
             make.add_target('\n'.join(execute))
