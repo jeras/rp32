@@ -56,7 +56,7 @@ source ../settings-questa.sh
 source ../settings-vivado.sh
 export PATH=/opt/riscv-isa-sim/bin/:$PATH
 export PATH=/opt/riscv-gcc/bin/:$PATH
-export PATH=`git rev-parse --show-toplevel`/submodules/sail-riscv/build/c_emulator/:$PATH
+export PATH=/opt/sail-riscv-Linux-x86_64/bin/:$PATH
 ```
 
 To exit the virtual environment:
