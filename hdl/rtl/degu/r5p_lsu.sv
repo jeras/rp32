@@ -18,7 +18,7 @@
 
 module r5p_lsu
   import riscv_isa_i_pkg::*;
-  import tcb_pkg::*;
+  import tcb_lite_pkg::*;
 #(
   int unsigned XLEN = 32,  // XLEN
   // optimizations
@@ -42,7 +42,7 @@ module r5p_lsu
   output logic              mal,  // misaligned
   output logic              rdy,  // ready
   // TCB system bus (load/store)
-  tcb_if.man                tcb
+  tcb_lite_if.man           tcb
 );
 
   // valid and write anable
@@ -110,6 +110,6 @@ module r5p_lsu
   assign rdy = tcb.rdy;
 
   // TODO
-  assign tcb.req.ndn = TCB_LITTLE;
+  assign tcb.req.ndn = 1'b0;
 
 endmodule: r5p_lsu

@@ -23,7 +23,7 @@ module r5p_degu
   //import riscv_csr_pkg::*;
   //import r5p_pkg::*;
   import r5p_degu_pkg::*;
-  import tcb_pkg::*;
+  import tcb_lite_pkg::*;
 #(
   // constants used across the design in signal range sizing instead of literals
   localparam int unsigned XLEN = 32,
@@ -55,8 +55,8 @@ module r5p_degu
   input  logic clk,
   input  logic rst,
   // TCB system bus
-  tcb_if.man   tcb_ifu,  // instruction fetch
-  tcb_if.man   tcb_lsu   // load/store
+  tcb_lite_if.man tcb_ifu,  // instruction fetch
+  tcb_lite_if.man tcb_lsu   // load/store
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
@@ -134,15 +134,13 @@ assign tcb_ifu.vld = ifu_run;
 
 // TODO
 assign tcb_ifu.req.lck = 1'b0;
-assign tcb_ifu.req.ren = 1'b1;
 assign tcb_ifu.req.wen = 1'b0;
-assign tcb_ifu.req.xen = 1'b1;
 assign tcb_ifu.req.siz = 2'b10;  // 32-bit transfer size
-assign tcb_ifu.req.ben = 'x;     // TODO: not really used for TCB RISC-V mode
+assign tcb_ifu.req.byt = 'x;     // TODO: not really used for TCB RISC-V mode
 assign tcb_ifu.req.wdt = 'x;
 
 // instruction fetch is always little endian
-assign tcb_ifu.req.ndn = TCB_LITTLE;
+assign tcb_ifu.req.ndn = 1'b0;
 
 // PC next is used as IF address
 assign tcb_ifu.req.adr = ifu_pcn;
@@ -267,9 +265,9 @@ end
 
     // 16/32-bit instruction decoder
     always_comb
-    unique case (opsiz(tcb_ifu.rsp.rdt[2-1:0]))
-      2      : idu_tmp = dec16(ISA, tcb_ifu.rsp.rdt[2-1:0]);  // 16-bit C standard extension
-      4      : idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[4-1:0]);  // 32-bit
+    unique case (opsiz(tcb_ifu.rsp.rdt[16-1:0]))
+      2      : idu_tmp = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
+      4      : idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
       default: idu_tmp = 'x;                                  // OP sizes above 4 bytes are not supported
     endcase
 

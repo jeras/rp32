@@ -21,12 +21,7 @@ module r5p_mouse_riscof_tb
     import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
-    // TODO: handling a Verilator bug, localparam is not handled as a constant
-`ifdef VERILATOR
-    parameter  int unsigned XLEN = 32,
-`else
     localparam int unsigned XLEN = 32,
-`endif
     localparam int unsigned XLOG = $clog2(XLEN),
     localparam int unsigned ILEN = 32,
     // RISC-V ISA
@@ -89,6 +84,12 @@ module r5p_mouse_riscof_tb
     // system bus CFG    ,  VIP
     tcb_lite_if #(CFG_CPU      ) tcb_cpu       (.clk (clk), .rst (rst));
     tcb_lite_if #(CFG_MEM, 1'b1) tcb_mem [0:0] (.clk (clk), .rst (rst));
+    // TODO: handling a Verilator bug, localparam is not handled as a constant
+    // %Error: ../../hdl/tbn/riscof/r5p_mouse_riscof_tb.sv:85:19: Can't convert defparam value to constant: Param '__paramNumber1' of 'tcb_cpu'
+    //                                                          : ... note: In instance 'r5p_mouse_riscof_tb'
+    //    85 |     tcb_lite_if #(CFG_CPU      ) tcb_cpu       (.clk (clk), .rst (rst));
+    //       |                   ^~~~~~~
+    //         ... See the manual at https://verilator.org/verilator_doc.html?v=5.045 for more assistance.
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -130,28 +131,13 @@ module r5p_mouse_riscof_tb
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
-    generate
-    if (tcb_mem[0].MOD == 1'b1) begin: mem_byte_ena
-
-        // convert from LOG_SIZE to BYTE_ENA mode
-        tcb_lite_lib_logsize2byteena #(
-            .ALIGNED (1'b0)  // TODO: misaligned version fails
-        ) tcb_cnv (
-            .sub  (tcb_cpu),
-            .man  (tcb_mem[0])
-        );
-
-    end: mem_byte_ena
-    else begin: mem_log_size
-
-        // no TCB mode conversion, just map to interface vector
-        tcb_lite_lib_passthrough tcb_cnv (
-            .sub  (tcb_cpu),
-            .man  (tcb_mem[0])
-        );
-
-    end: mem_log_size
-    endgenerate
+    // convert from LOG_SIZE to BYTE_ENA mode
+    tcb_lite_lib_logsize2byteena #(
+        .ALIGNED (1'b0)
+    ) tcb_cnv (
+        .sub  (tcb_cpu),
+        .man  (tcb_mem[0])
+    );
 
     tcb_lite_vip_memory #(
         .MFN  (""),
@@ -226,7 +212,7 @@ module r5p_mouse_riscof_tb
 
     // trace with given format
     r5p_mouse_trace #(
-        .FORMAT   (format_sail),
+        .FORMAT  (format_sail),
         .FILE_PAR ("dut.trace.sail")
     ) trace_sail (
         // instruction execution phase

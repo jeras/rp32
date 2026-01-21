@@ -18,7 +18,7 @@
 
 module r5p_degu_trace
     import trace_generic_pkg::*;
-    import tcb_pkg::*;
+    import tcb_lite_pkg::*;
     import riscv_isa_pkg::*;
     import riscv_isa_i_pkg::*;
 //    import riscv_asm_pkg::*;
@@ -41,8 +41,8 @@ module r5p_degu_trace
     input logic [XLEN-1:0] gpr_ddt,  // destination data
     input logic [GLOG-1:0] gpr_sid,  // source index
     // TCB IFU/LSU system busses
-    tcb_if.mon tcb_ifu,
-    tcb_if.mon tcb_lsu
+    tcb_lite_if.mon tcb_ifu,
+    tcb_lite_if.mon tcb_lsu
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ module r5p_degu_trace
                 // LSU
                 .lsu_ena ($past(tcb_lsu.trn    )),
                 .lsu_wen ($past(tcb_lsu.req.wen)),
-                .lsu_ren ($past(tcb_lsu.req.ren)),
+                .lsu_ren ($past(tcb_lsu.req.wen^1'b1)),
                 .lsu_wid ($past(gpr_sid)),
                 .lsu_rid (      gpr_did),
                 .lsu_adr ($past(tcb_lsu.req.adr)),

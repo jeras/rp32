@@ -18,7 +18,7 @@
 
 module r5p_degu_riscof_tb
     import riscv_isa_pkg::*;
-    import tcb_pkg::*;
+    import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
     localparam int unsigned XLEN = 32,
@@ -78,83 +78,15 @@ module r5p_degu_riscof_tb
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-    localparam tcb_cfg_t CFG_IFU = '{
-        // handshake parameter
-        HSK: TCB_HSK_DEF,
-        // bus parameter
-        BUS: '{
-            ADR: XLEN,
-            DAT: XLEN,
-            LEN: TCB_BUS_DEF.LEN,
-            LCK: TCB_LCK_PRESENT,
-            CHN: TCB_CHN_HALF_DUPLEX,
-            AMO: TCB_AMO_ABSENT,
-            PRF: TCB_PRF_ABSENT,
-            NXT: TCB_NXT_ABSENT,
-            MOD: TCB_MOD_LOG_SIZE,
-            ORD: TCB_ORD_DESCENDING,
-            NDN: TCB_NDN_BI_NDN
-        },
-        // physical interface parameter
-        PMA: TCB_PMA_DEF
-//        // data packing parameters
-//        ALN: 1,
-//        MIN: 2,
-    };
+    // TCB configurations               '{HSK: '{DLY,  HLD}, BUS: '{ MOD, CTL,  ADR,  DAT, STS}}
+    localparam tcb_lite_cfg_t CFG_IFU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_LSU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
 
-    localparam tcb_cfg_t CFG_LSU = '{
-        // handshake parameter
-        HSK: TCB_HSK_DEF,
-        // bus parameter
-        BUS: '{
-            ADR: XLEN,
-            DAT: XLEN,
-            LEN: TCB_BUS_DEF.LEN,
-            LCK: TCB_LCK_PRESENT,
-            CHN: TCB_CHN_HALF_DUPLEX,
-            AMO: TCB_AMO_ABSENT,
-            PRF: TCB_PRF_ABSENT,
-            NXT: TCB_NXT_ABSENT,
-            MOD: TCB_MOD_LOG_SIZE,
-            ORD: TCB_ORD_DESCENDING,
-            NDN: TCB_NDN_BI_NDN
-        },
-        // physical interface parameter
-        PMA: TCB_PMA_DEF
-//        // data packing parameters
-//        ALN: 2,
-//        MIN: 0,
-    };
-
-    localparam tcb_cfg_t CFG_MEM = '{
-        // handshake parameter
-        HSK: TCB_HSK_DEF,
-        // bus parameter
-        BUS: '{
-            ADR: XLEN,
-            DAT: XLEN,
-            LEN: TCB_BUS_DEF.LEN,
-            LCK: TCB_LCK_PRESENT,
-            CHN: TCB_CHN_HALF_DUPLEX,
-            AMO: TCB_AMO_ABSENT,
-            PRF: TCB_PRF_ABSENT,
-            NXT: TCB_NXT_ABSENT,
-            MOD: TCB_MOD_BYTE_ENA,
-            ORD: TCB_ORD_DESCENDING,
-            NDN: TCB_NDN_BI_NDN
-        },
-        // physical interface parameter
-        PMA: TCB_PMA_DEF
-    };
-
-    localparam tcb_vip_t VIP = '{
-        DRV: 1'b1
-    };
-
-    // system busses
-    tcb_if #(.CFG (CFG_IFU)            ) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
-    tcb_if #(.CFG (CFG_LSU)            ) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-    tcb_if #(.CFG (CFG_MEM), .VIP (VIP)) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
+    // system bus CFG    ,  VIP
+    tcb_lite_if #(CFG_IFU      ) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+    tcb_lite_if #(CFG_LSU      ) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+    tcb_lite_if #(CFG_MEM, 1'b1) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -179,28 +111,32 @@ module r5p_degu_riscof_tb
 // protocol checker
 ////////////////////////////////////////////////////////////////////////////////
 
-    tcb_vip_protocol_checker tcb_ifu_chk (.tcb (tcb_ifu));
-    tcb_vip_protocol_checker tcb_lsu_chk (.tcb (tcb_lsu));
+    tcb_lite_vip_protocol_checker tcb_ifu_chk (.mon (tcb_ifu));
+    tcb_lite_vip_protocol_checker tcb_lsu_chk (.mon (tcb_lsu));
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory
 ////////////////////////////////////////////////////////////////////////////////
 
     // convert from LOG_SIZE to BYTE_ENA mode
-    tcb_lib_logsize2byteena tcb_ifu_cnv (
+    tcb_lite_lib_logsize2byteena #(
+        .ALIGNED (1'b0)
+    ) tcb_ifu_cnv (
         .sub  (tcb_ifu),
         .man  (tcb_mem[0])
     );
 
     // convert from LOG_SIZE to BYTE_ENA mode
-    tcb_lib_logsize2byteena tcb_lsu_cnv (
+    tcb_lite_lib_logsize2byteena #(
+        .ALIGNED (1'b0)
+    ) tcb_lsu_cnv (
         .sub  (tcb_lsu),
         .man  (tcb_mem[1])
     );
 
-    tcb_vip_memory #(
+    tcb_lite_vip_memory #(
         .MFN  (""),
-        .SIZ  (MEM_SIZ),
+        .SIZE (MEM_SIZ),
         .IFN  (2),
         .WRM  (2'b10)
     ) mem (
@@ -287,8 +223,8 @@ module r5p_degu_riscof_tb
 
     // trace with given format
     r5p_degu_trace #(
-        .XLEN   (XLEN),
-        .FORMAT (format_sail),
+        .XLEN    (XLEN),
+        .FORMAT  (format_sail),
         .FILE_PAR ("dut.trace.sail")
     ) trace_sail (
         // GPR register file array
