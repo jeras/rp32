@@ -34,7 +34,7 @@ module r5p_mouse_soc_top
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_ADR = 14,
     parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**MEM_ADR),
-    parameter  string         MEM_FNM = "mem_if.vmem"
+    parameter  string         MEM_FNM = "mem_if.mem"
 )(
     // system signals
     input  logic           clk,  // clock
@@ -62,7 +62,7 @@ module r5p_mouse_soc_top
     // TCB configurations               '{HSK: '{DLY,  HLD}, BUS: '{ MOD, CTL,  ADR,  DAT, STS}}
     localparam tcb_lite_cfg_t CFG_CPU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
     localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
-    localparam tcb_lite_cfg_t CFG_PER = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_PER = '{HSK: '{  0, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
 
     // system busses
     tcb_lite_if #(CFG_CPU) tcb_cpu         (.clk (clk), .rst (rst));

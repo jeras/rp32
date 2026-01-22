@@ -49,7 +49,7 @@ module r5p_degu_soc_top
     // IFU memory (size in bytes, file name)
     parameter  int unsigned   IFM_ADR = 14,
     parameter  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ADR),
-    parameter  string         IFM_FNM = "mem_if.vmem",
+    parameter  string         IFM_FNM = "mem_if.mem",
     // LSU bus
     parameter  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
     // LSU memory (size)
@@ -87,7 +87,7 @@ module r5p_degu_soc_top
     localparam tcb_lite_cfg_t CFG_IFU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
     localparam tcb_lite_cfg_t CFG_LSU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
     localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
-    localparam tcb_lite_cfg_t CFG_PER = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_PER = '{HSK: '{  0, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
 
     // system busses
     tcb_lite_if #(CFG_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit (RISC-V mode)
@@ -107,9 +107,7 @@ module r5p_degu_soc_top
         .ISA     (ISA),
         // system bus implementation details
         .IFU_RST (IFU_RST),
-        .IFU_MSK (IFU_MSK),
-        // implementation device (ASIC/FPGA vendor/device)
-        .CHIP    (CHIP)
+        .IFU_MSK (IFU_MSK)
     ) cpu (
         // system signals
         .clk     (clk),

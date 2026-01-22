@@ -47,9 +47,7 @@ module r5p_degu
   parameter  logic [XLEN-1:0] IFU_RST = 32'h0000_0000,  // reset vector
   parameter  logic [XLEN-1:0] IFU_MSK = 32'h803f_ffff,  // PC mask // TODO: check if this actually helps, or will synthesis minimize the mux-es anyway
   // optimizations: timing versus area compromises
-  parameter  r5p_degu_cfg_t CFG = r5p_degu_cfg_def,
-  // implementation device (ASIC/FPGA vendor/device)
-  parameter  string       CHIP = ""
+  parameter  r5p_degu_cfg_t CFG = r5p_degu_cfg_def
 )(
   // system signals
   input  logic clk,
@@ -315,8 +313,7 @@ end
 r5p_gpr_2r1w #(
 //  .AW      (ISA.spec.base.E ? 4 : 5),
   .XLEN    (XLEN),
-  .WBYP    (1'b1),
-  .CHIP    (CHIP)
+  .WBYP    (1'b1)
 ) gpr (
   // system signals
   .clk     (clk),
