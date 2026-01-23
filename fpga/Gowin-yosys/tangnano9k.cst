@@ -9,8 +9,8 @@
 IO_LOC "XTAL_IN" 52;  IO_PORT "XTAL_IN" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
 // buttons
-IO_LOC "S1" 3;        IO_PORT "S1"      IO_TYPE=LVCMOS18 PULL_MODE=UP;
-IO_LOC "S2" 4;        IO_PORT "S2"      IO_TYPE=LVCMOS18 PULL_MODE=UP;
+IO_LOC "S[1]" 3;      IO_PORT "S[1]"    IO_TYPE=LVCMOS18 PULL_MODE=UP;
+IO_LOC "S[2]" 4;      IO_PORT "S[2]"    IO_TYPE=LVCMOS18 PULL_MODE=UP;
 
 // LEDs (orange)
 // DRIVE=8 is used to minimize interference

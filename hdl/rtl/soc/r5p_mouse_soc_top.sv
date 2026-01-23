@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module r5p_mouse_soc_top
-    import riscv_isa_pkg::*;
+//    import riscv_isa_pkg::*;
     import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
