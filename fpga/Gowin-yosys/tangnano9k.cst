@@ -1,0 +1,142 @@
+// Part Number: GW1NR-LV9QN88PC6/I5
+// Board: Tang Nano 9k
+
+////////////////////////////////////////////////////////////////////////////////
+// single purpose IO (can be defined for all projects)
+////////////////////////////////////////////////////////////////////////////////
+
+// 27MHz clock
+IO_LOC "XTAL_IN" 52;  IO_PORT "XTAL_IN" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// buttons
+IO_LOC "S1" 3;        IO_PORT "S1"      IO_TYPE=LVCMOS18 PULL_MODE=UP;
+IO_LOC "S2" 4;        IO_PORT "S2"      IO_TYPE=LVCMOS18 PULL_MODE=UP;
+
+// LEDs (orange)
+// DRIVE=8 is used to minimize interference
+IO_LOC "LED[1]" 10;   IO_PORT "LED[0]"  IO_TYPE=LVCMOS18 PULL_MODE=NONE DRIVE=8;
+IO_LOC "LED[2]" 11;   IO_PORT "LED[1]"  IO_TYPE=LVCMOS18 PULL_MODE=NONE DRIVE=8;
+IO_LOC "LED[3]" 13;   IO_PORT "LED[2]"  IO_TYPE=LVCMOS18 PULL_MODE=NONE DRIVE=8;
+IO_LOC "LED[4]" 14;   IO_PORT "LED[3]"  IO_TYPE=LVCMOS18 PULL_MODE=NONE DRIVE=8;
+IO_LOC "LED[5]" 15;   IO_PORT "LED[4]"  IO_TYPE=LVCMOS18 PULL_MODE=NONE DRIVE=8;
+IO_LOC "LED[6]" 16;   IO_PORT "LED[5]"  IO_TYPE=LVCMOS18 PULL_MODE=NONE DRIVE=8;
+
+// UART (buildin USB-serial)
+IO_LOC "FPGA_TX" 17;  IO_PORT "FPGA_TX" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_LOC "FPGA_RX" 18;  IO_PORT "FPGA_RX" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// SPI FLASH (PUYA P25Q32U)                                // U3
+IO_LOC "MCS"  60;     IO_PORT "MCS"     IO_TYPE=LVCMOS33;  // CS_n
+IO_LOC "MCLK" 59;     IO_PORT "MCLK"    IO_TYPE=LVCMOS33;  // SCLK
+IO_LOC "MOSI" 61;     IO_PORT "MOSI"    IO_TYPE=LVCMOS33;  // SI/SIO0
+IO_LOC "MISO" 62;     IO_PORT "MISO"    IO_TYPE=LVCMOS33;  // SO/SIO1
+
+////////////////////////////////////////////////////////////////////////////////
+// shared IO (uncomment only one definition depending on usecase)
+////////////////////////////////////////////////////////////////////////////////
+
+// shared between TF CARD (J3 connector) and through hole pins (J5 connector)
+// TODO: specify preferred PULL_MODE and DRIVE
+// TF_CARD                                                   // J3        // J5
+IO_LOC  "TF_CS"    38; IO_PORT "TF_CS"    IO_TYPE=LVCMOS33;  // DAT3/CS   // 1
+IO_LOC  "TF_SCLK"  36; IO_PORT "TF_SCLK"  IO_TYPE=LVCMOS33;  // CLK       // 3
+IO_LOC  "TF_MISO"  39; IO_PORT "TF_MISO"  IO_TYPE=LVCMOS33;  // DAT0/MISO // 4
+IO_LOC  "TF_MOSI"  37; IO_PORT "TF_MOSI"  IO_TYPE=LVCMOS33;  // CMD/MOSI  // 2
+
+// shared partially between SPI LCD (P2 connector) and through hole pins (J6 connector)
+// SPI LCD (1.14 inch)                                              // P2     // J6
+IO_LOC  "SPILCD_EN"   47;  IO_PORT "SPILCD_EN"   IO_TYPE=LVCMOS33;  // RESET
+IO_LOC  "SPILCD_CS"   48;  IO_PORT "SPILCD_CS"   IO_TYPE=LVCMOS33;  // CS     // 19
+IO_LOC  "SPILCD_RS"   49;  IO_PORT "SPILCD_RS"   IO_TYPE=LVCMOS33;  // RS     // 20
+IO_LOC  "SPILCD_MCLK" 76;  IO_PORT "SPILCD_MCLK" IO_TYPE=LVCMOS33;  // SCL    // 11
+IO_LOC  "SPILCD_MO"   77;  IO_PORT "SPILCD_MO"   IO_TYPE=LVCMOS33;  // SDA    // 10
+
+// shared partially between RGB LCD (J4 connector) , HDMI (J7 connector) and through hole pins (J5, J6 connectors)
+// // RGB LCD (connector)                                                             // J4    // J7          // J5 // J6
+// IO_LOC  "RGB_CK"   35; IO_PORT "LCD_CK"   IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // CLK   //             // 14 //
+// IO_LOC  "RGB_DE"   33; IO_PORT "LCD_DE"   IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // DEN   //             // 11 //
+// IO_LOC  "RGB_HS"   40; IO_PORT "LCD_HS"   IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // HSYNC //             // 13 //
+// IO_LOC  "RGB_VS"   34; IO_PORT "LCD_VS"   IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // VSYNC //             // 13 //
+// IO_LOC  "RGB_B[3]" 54; IO_PORT "RGB_B[3]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // B3    //             // 19 //
+// IO_LOC  "RGB_B[4]" 53; IO_PORT "RGB_B[4]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // B4    //             // 18 //
+// IO_LOC  "RGB_B[5]" 51; IO_PORT "RGB_B[5]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // B5    //             // 17 //
+// IO_LOC  "RGB_B[6]" 42; IO_PORT "RGB_B[6]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // B6    //             // 16 //
+// IO_LOC  "RGB_B[7]" 41; IO_PORT "RGB_B[7]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // B7    //             // 15 //
+// IO_LOC  "RGB_G[2]" 70; IO_PORT "RGB_G[2]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // G2    // HDMI_D_N[0] //    //
+// IO_LOC  "RGB_G[3]" 69; IO_PORT "RGB_G[3]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // G3    // HDMI_CK_P   // 23 //
+// IO_LOC  "RGB_G[4]" 68; IO_PORT "RGB_G[4]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // G4    // HDMI_CK_N   // 24 //
+// IO_LOC  "RGB_G[5]" 57; IO_PORT "RGB_G[5]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // G5    //             // 22 //
+// IO_LOC  "RGB_G[6]" 56; IO_PORT "RGB_G[6]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // G6    //             // 21 //
+// IO_LOC  "RGB_G[7]" 55; IO_PORT "RGB_G[7]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // G7    //             // 20 //
+// IO_LOC  "RGB_R[3]" 75; IO_PORT "RGB_R[3]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // R3    // HDMI_D_P[2] //    //
+// IO_LOC  "RGB_R[4]" 74; IO_PORT "RGB_R[4]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // R4    // HDMI_D_N[2] //    //
+// IO_LOC  "RGB_R[5]" 73; IO_PORT "RGB_R[5]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // R5    // HDMI_D_P[1] //    //
+// IO_LOC  "RGB_R[6]" 72; IO_PORT "RGB_R[6]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // R6    // HDMI_D_N[1] //    //
+// IO_LOC  "RGB_R[7]" 71; IO_PORT "RGB_R[7]" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=24;  // R7    // HDMI_D_P[0] //    //
+// IO_LOC  "BL_PWM"   86; IO_PORT "BL_PWM"   IO_TYPE=LVCMOS18;                        // VLED+ //             //    //  2
+// IO_LOC  "RGB_XR"   32; IO_PORT "LCD_XR"   IO_TYPE=LVCMOS33;                        //       //             //    // 22
+// IO_LOC  "RGB_XL"   63; IO_PORT "LCD_XL"   IO_TYPE=LVCMOS33;                        //       //             //    //  1
+// IO_LOC  "RGB_YD"   31; IO_PORT "LCD_YD"   IO_TYPE=LVCMOS33;                        //       //             //    // 21
+// IO_LOC  "RGB_YU"   50; IO_PORT "LCD_YU"   IO_TYPE=LVCMOS33;                        //       //             //    //
+
+// shared between HDMI (J7 connector) and through hole pins (J5, J6 connectors)
+// LVDS negative polarity IO names are defined implicitly
+// https://github.com/sipeed/TangNano-9K-example/blob/main/hdmi/src/hdmi.cst
+// https://github.com/sipeed/TangNano-9K-example/blob/main/hdmi/src/top.v
+// // HDMI (LVDS)                                                              // J7      // J5    // J6
+// IO_LOC "HDMI_D_P[0]" 71,70;  IO_PORT "HDMI_D_P[0]" PULL_MODE=NONE DRIVE=8;  // D0+ D0- //       // 16 17
+// IO_LOC "HDMI_D_P[1]" 73,72;  IO_PORT "HDMI_D_P[1]" PULL_MODE=NONE DRIVE=8;  // D1+ D1- //       // 14 15
+// IO_LOC "HDMI_D_P[2]" 75,74;  IO_PORT "HDMI_D_P[2]" PULL_MODE=NONE DRIVE=8;  // D2+ D2- //       // 12 13
+// IO_LOC "HDMI_CK_P"   69,68;  IO_PORT "HDMI_CK_P"   PULL_MODE=NONE DRIVE=8;  // CK+ CK- // 24 23 //
+
+////////////////////////////////////////////////////////////////////////////////
+// custom IO
+////////////////////////////////////////////////////////////////////////////////
+
+//// oser
+//IO_LOC  "oser_out" 10; IO_PORT "oser_out" IO_TYPE=LVCMOS18 PULL_MODE=NONE;
+//IO_LOC  "io16"     29; IO_PORT "io16"     IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "pclk_o"   15; IO_PORT "pclk_o"   IO_TYPE=LVCMOS18 PULL_MODE=NONE;
+//IO_LOC  "fclk_o"   16; IO_PORT "fclk_o"   IO_TYPE=LVCMOS18 PULL_MODE=NONE;
+//
+//// ides
+//IO_LOC  "fclk_i" 54; IO_PORT "fclk_i" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "data_i" 29; IO_PORT "data_i" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[0]" 68; IO_PORT "q_o[0]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[1]" 69; IO_PORT "q_o[1]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[2]" 70; IO_PORT "q_o[2]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[3]" 75; IO_PORT "q_o[3]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[4]" 74; IO_PORT "q_o[4]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[5]" 73; IO_PORT "q_o[5]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[6]" 72; IO_PORT "q_o[6]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+//IO_LOC  "q_o[7]" 71; IO_PORT "q_o[7]" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+//IO_LOC  "tlvds_p" 25; IO_PORT "tlvds_p" PULL_MODE=NONE IO_TYPE=LVDS25;
+//IO_LOC  "tlvds_n" 26; IO_PORT "tlvds_n" PULL_MODE=NONE IO_TYPE=LVDS25;
+//
+//IO_LOC  "mipi_out[0]" 25; IO_PORT "LCD_XL" IO_TYPE=LVCMOS33;
+//IO_LOC  "mipi_out[1]" 26; IO_PORT "LCD_XL" IO_TYPE=LVCMOS33;
+//
+//IO_LOC  "mipi_in[0]" 80; IO_PORT "mipi_in[0]" IO_TYPE=LVCMOS18;
+//IO_LOC  "mipi_in[1]" 79; IO_PORT "mipi_in[1]" IO_TYPE=LVCMOS18;
+//
+//IO_LOC  "i3c" 25; IO_PORT "i3c" IO_TYPE=LVCMOS33;
+//
+//IO_LOC  "elvds_p" 75; IO_PORT "elvds_p" PULL_MODE=NONE IO_TYPE=LVDS25;
+//IO_LOC  "elvds_n" 74; IO_PORT "elvds_n" PULL_MODE=NONE IO_TYPE=LVDS25;
+
+//DVI
+//IO_LOC  "tmds_d_p[0]" 71; IO_PORT "tmds_d_p[0]" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_d_n[0]" 70; IO_PORT "tmds_d_n[0]" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_d_p[1]" 73; IO_PORT "tmds_d_p[1]" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_d_n[1]" 72; IO_PORT "tmds_d_n[1]" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_d_p[2]" 75; IO_PORT "tmds_d_p[2]" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_d_n[2]" 74; IO_PORT "tmds_d_n[2]" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_clk_p" 69; IO_PORT "tmds_clk_p" PULL_MODE=NONE DRIVE=8;
+//IO_LOC  "tmds_clk_n" 68; IO_PORT "tmds_clk_n" PULL_MODE=NONE DRIVE=8;
+
+////////////////////////////////////////////////////////////////////////////////
+// TODO: figure this out
+////////////////////////////////////////////////////////////////////////////////
+
+//INS_LOC  "clk_div" TOPSIDE[0];
