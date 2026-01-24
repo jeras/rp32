@@ -18,3 +18,6 @@ https://cdn.gowinsemi.com.cn/UG285E.pdf
 Based on Sipeed datasheet, this devices were produced before version C existed.
 LQ144P GW1NR-9 PSRAM 64M 16 bits
 
+```
+LD_LIBRARY_PATH=/opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/ /opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/bin/gw_ide
+```
