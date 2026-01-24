@@ -26,10 +26,12 @@ module r5p_degu_soc_top
     localparam int unsigned BLEN = XLEN/8,
     localparam int unsigned BLOG = $clog2(BLEN),
     // SoC peripherals
-    parameter  bit          ENA_GPIO = 1'b1,
-    parameter  bit          ENA_UART = 1'b0,
+    parameter  bit            ENA_GPIO = 1'b1,
+    parameter  bit            ENA_UART = 1'b0,
     // GPIO
-    parameter  int unsigned GDW = 32,
+    parameter  int unsigned   GPIO_DAT = 32,
+    // UART
+    parameter  int unsigned   FIFO_SIZ = 32,
     // RISC-V ISA
 `ifndef SYNOPSYS_VERILOG_COMPILER
     // extensions  (see `riscv_isa_pkg` for enumeration definition)
@@ -57,15 +59,15 @@ module r5p_degu_soc_top
     parameter  int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ADR)
 )(
     // system signals
-    input  logic           clk,  // clock
-    input  logic           rst,  // reset (active high)
+    input  logic                clk,  // clock
+    input  logic                rst,  // reset (active high)
     // GPIO
-    output logic [GDW-1:0] gpio_o,  // output
-    output logic [GDW-1:0] gpio_e,  // enable
-    input  logic [GDW-1:0] gpio_i,  // input
+    output logic [GPIO_DAT-1:0] gpio_o,  // output
+    output logic [GPIO_DAT-1:0] gpio_e,  // enable
+    input  logic [GPIO_DAT-1:0] gpio_i,  // input
     // UART
-    output logic           uart_txd,
-    input  logic           uart_rxd
+    output logic                uart_txd,
+    input  logic                uart_rxd
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
@@ -222,8 +224,8 @@ module r5p_degu_soc_top
 
         // GPIO controller
         tcb_lite_peri_gpio #(
-            .GDW     (GDW),
-            .SYS_MIN (1'b1)
+            .GPIO_DAT (GPIO_DAT),
+            .SYS_MIN  (1'b1)
         ) gpio (
             // GPIO signals
             .gpio_o  (gpio_o),
@@ -260,17 +262,18 @@ module r5p_degu_soc_top
 
         // baudrate parameters (divider and counter width)
         localparam int unsigned BDR = 50_000_000 / 115_200;  // 50MHz / 115200 = 434.0
-        localparam int unsigned BCW = $clog2(BDR);  // a 9-bit counter is required
+        localparam int unsigned UART_BDR = $clog2(BDR);  // a 9-bit counter is required
 
         // UART controller
         tcb_lite_peri_uart #(
             // UART parameters
-            .UART_RW        (BCW),
+            .UART_BDR       (UART_BDR),
+            .FIFO_SIZ       (FIFO_SIZ),
             // configuration register parameters (write enable, reset value)
-            .CFG_TX_BDR_WEN (1'b0),  .CFG_TX_BDR_RST (BCW'(BDR)),
+            .CFG_TX_BDR_WEN (1'b0),  .CFG_TX_BDR_RST (UART_BDR'(BDR)),
             .CFG_TX_IRQ_WEN (1'b0),  .CFG_TX_IRQ_RST ('x),
-            .CFG_RX_BDR_WEN (1'b0),  .CFG_RX_BDR_RST (BCW'(BDR)),
-            .CFG_RX_SMP_WEN (1'b0),  .CFG_RX_SMP_RST (BCW'(BDR/2)),
+            .CFG_RX_BDR_WEN (1'b0),  .CFG_RX_BDR_RST (UART_BDR'(BDR)),
+            .CFG_RX_SMP_WEN (1'b0),  .CFG_RX_SMP_RST (UART_BDR'(BDR/2)),
             .CFG_RX_IRQ_WEN (1'b0),  .CFG_RX_IRQ_RST ('x),
             // TCB parameters
             .SYS_MIN (1'b1)

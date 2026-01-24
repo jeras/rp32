@@ -34,7 +34,7 @@ module r5p_degu_soc_tangnano9k (
 // local parameters
 ////////////////////////////////////////////////////////////////////////////////
 
-    localparam int unsigned GDW = $bits(LED);
+    localparam int unsigned GPIO_DAT = $bits(LED);
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -47,9 +47,9 @@ module r5p_degu_soc_tangnano9k (
     logic rst;
 
     // GPIO
-    logic [GDW-1:0] gpio_o;
-    logic [GDW-1:0] gpio_e;
-    logic [GDW-1:0] gpio_i;
+    logic [GPIO_DAT-1:0] gpio_o;
+    logic [GPIO_DAT-1:0] gpio_e;
+    logic [GPIO_DAT-1:0] gpio_i;
 
 ///////////////////////////////////////////////////////////////////////////////
 // PLL
@@ -88,9 +88,10 @@ module r5p_degu_soc_tangnano9k (
 ////////////////////////////////////////////////////////////////////////////////
 
     r5p_degu_soc_top #(
-        .GDW       (GDW),
-        .IFM_SIZ   (1024*4),  // instruction fetch memory 4kB
-        .LSM_SIZ   (1024*4)   // load/store memory 4kB
+        .GPIO_DAT  (GPIO_DAT),
+        .FIFO_SIZ  (16),        // UART FIFO is based on Gowin RAM16SDP4
+        .IFM_SIZ   (1024*4),    // instruction fetch memory 4kB
+        .LSM_SIZ   (1024*4)     // load/store memory 4kB
     ) soc (
         // system signals
         .clk       (clk),
@@ -110,11 +111,11 @@ module r5p_degu_soc_tangnano9k (
 
 /*
     // GPIO inputs
-    assign gpio_i = LED[GDW-1:0];
+    assign gpio_i = LED[GPIO_DAT-1:0];
 
     // GPIO outputs
     generate
-    for (genvar i=0; i<GDW; i++) begin
+    for (genvar i=0; i<GPIO_DAT; i++) begin
         assign LED[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
     end
     endgenerate
