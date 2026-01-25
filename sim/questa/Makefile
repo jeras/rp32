@@ -8,7 +8,7 @@ DUT ?=
 # top level file (an alternative TOP can be provided as environment variable)
 TOP ?= r5p_${DUT}_riscof_tb
 
-# include source file list in ${HDL} variable
+# include source file list in ${HDL} and ${SRC} variables
 include ../sources-${DUT}.mk
 
 ################################################################################
@@ -61,6 +61,12 @@ RISCOF_PARAMETERS ?=
 RISCOF_PLUSARGS ?=
 
 ################################################################################
+# firmware include path
+################################################################################
+
+INC ?= +incdir+../../src
+
+################################################################################
 # targets
 ################################################################################
 
@@ -69,11 +75,11 @@ RISCOF_PLUSARGS ?=
 all: run
 
 run: ${HDL} ${SRC}
-	qrun -makelib work -sv ${HDL} -c ${SRC} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+	qrun -makelib work -sv ${HDL} ${SRC} -end ${DEF} ${PAR} ${FLAGS} ${INC} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS}
 
 gui: ${HDL} ${SRC}
-	qrun -makelib work -sv ${HDL} -c ${SRC} -end ${DEF} ${PAR} ${FLAGS} ${ARG} -top ${TOP} \
+	qrun -makelib work -sv ${HDL} ${SRC} -end ${DEF} ${PAR} ${FLAGS} ${INC} ${ARG} -top ${TOP} \
 	${RISCOF_DEFINES} ${RISCOF_PARAMETERS} ${RISCOF_PLUSARGS} \
 	-gui
 

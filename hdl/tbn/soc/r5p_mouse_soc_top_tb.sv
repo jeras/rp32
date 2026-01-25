@@ -24,7 +24,7 @@ module r5p_mouse_soc_top_tb #(
     parameter  bit          ENA_GPIO = 1'b1,
     parameter  bit          ENA_UART = 1'b0,
     // GPIO
-    parameter  int unsigned GW = 32,
+    parameter  int unsigned GPIO_DAT = 32,
 
     // TCB bus
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
@@ -33,23 +33,20 @@ module r5p_mouse_soc_top_tb #(
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_ADR = 14,
     parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**MEM_ADR),
-    parameter  string         MEM_FNM = "mem_if.vmem",
-    // implementation device (ASIC/FPGA vendor/device)
-    string CHIP = ""
+    parameter  string         MEM_FNM = "mem_if.mem"
 );
 
     // system signals
-    logic clk;  // clock
-    logic rst;  // reset
+    logic                     clk = 1'b1;  // clock
+    logic                     rst = 1'b1;  // reset
     
     // GPIO
-    wire logic [GW-1:0] gpio_o;  // output
-    wire logic [GW-1:0] gpio_e;  // enable
-    wire logic [GW-1:0] gpio_i;  // input
-    
+    wire logic [GPIO_DAT-1:0] gpio_o;  // output
+    wire logic [GPIO_DAT-1:0] gpio_e;  // enable
+    wire logic [GPIO_DAT-1:0] gpio_i;  // input
     // UART
-    wire logic          uart_txd;
-    wire logic          uart_rxd;
+    wire logic                uart_txd;
+    wire logic                uart_rxd;
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance
@@ -60,7 +57,9 @@ module r5p_mouse_soc_top_tb #(
         .ENA_GPIO (ENA_GPIO),
         .ENA_UART (ENA_UART),
         // GPIO
-        .GW       (GW),
+        .GPIO_DAT (GPIO_DAT),
+        // UART
+        .FIFO_SIZ (16),
         // TCB bus
         .IFU_RST  (IFU_RST),
         .IFU_MSK  (IFU_MSK),
@@ -68,9 +67,7 @@ module r5p_mouse_soc_top_tb #(
         // TCB memory (size in bytes, file name)
         .MEM_ADR  (MEM_ADR),
         .MEM_SIZ  (MEM_SIZ),
-        .MEM_FNM  (MEM_FNM),
-        // implementation device (ASIC/FPGA vendor/device)
-        .CHIP     (CHIP)
+        .MEM_FNM  (MEM_FNM)
     ) dut (
         // system signals
         .clk      (clk),
@@ -89,8 +86,9 @@ module r5p_mouse_soc_top_tb #(
 
     // GPIO loopback
     generate
-    for (genvar i=0; i<GW; i++) begin: gpio_loopback
+    for (genvar i=0; i<GPIO_DAT; i++) begin: gpio_loopback
         assign gpio_i[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
+        pullup gpio_p     (gpio_i[i]);
     end: gpio_loopback
     endgenerate  
 
@@ -123,7 +121,16 @@ module r5p_mouse_soc_top_tb #(
 ////////////////////////////////////////////////////////////////////////////////
 
     // 2*25ns=50ns period is 20MHz frequency
-    initial      clk = 1'b1;
     always #25ns clk = ~clk;
+
+    // reset sequence
+    initial begin
+        repeat(4) @(posedge clk);
+        rst <= 1'b0;
+        repeat(50) @(posedge clk);
+        $finish();
+    end
+
+    tcb_lite_vip_protocol_checker chk (.mon (dut.tcb_cpu));
 
 endmodule: r5p_mouse_soc_top_tb

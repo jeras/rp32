@@ -1,0 +1,4 @@
+# ignore compile products
+*.bin
+*.asm
+*.mem

@@ -29,3 +29,10 @@ It works well with:
 ```SystemVerilog
 $value$plusargs("begin_signature=%h", begin_signature)
 ```
+
+# SoC testbench
+
+```
+cd sim/questa/
+DUT=mouse TOP=r5p_mouse_soc_top_tb make run
+```

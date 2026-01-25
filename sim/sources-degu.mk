@@ -61,7 +61,6 @@ RTL+=${PATH_R5P}/rtl/degu/r5p_degu_pkg.sv
 RTL+=${PATH_R5P}/rtl/degu/r5p_degu.sv
 
 # SoC files
-#RTL+=${PATH_R5P}/rtl/soc/tcb_dec_3sp.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_degu_soc_top.sv
 

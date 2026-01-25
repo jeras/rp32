@@ -36,6 +36,8 @@ $PATH_CPU_RTL/fpga/gowin/r5p_mouse_soc_tangnano9k.sv
 
 #hierarchy -top r5p_mouse_soc_tangnano9k
 
+write_verilog r5p_mouse_soc_tangnano9k.slang.v
+
 puts "================================================================================"
 puts "= synthesis with Yosys/Apicula"
 puts "================================================================================"

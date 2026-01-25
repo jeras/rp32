@@ -6,14 +6,14 @@ main: main.o
 	llvm-objcopy -j .text -O binary main.o mem_if.bin
 	llvm-objcopy -j .data -O binary main.o mem_ls.bin
 	llvm-objdump --arch=riscv32 --disassemble main.o > mem_if.asm
-	cat mem_if.bin | hexdump -v -e '"%08X\n"' > mem_if.vmem
-	cat mem_ls.bin | hexdump -v -e '"%08X\n"' > mem_ls.vmem
+	cat mem_if.bin | hexdump -v -e '"%08X\n"' > mem_if.mem
+	cat mem_ls.bin | hexdump -v -e '"%08X\n"' > mem_ls.mem
 #	cp *.bin *.vmem ../sim/
 
 clean:
 	$(RM) main *.o
 	$(RM) main *.bin
 	$(RM) main *.asm
-	$(RM) main *.vmem
+	$(RM) main *.mem
 
 .PHONY: clean

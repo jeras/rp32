@@ -26,6 +26,8 @@ module r5p_soc_memory
     tcb_lite_if.sub sub
 );
 
+    localparam int unsigned ADR = $clog2(SIZ);
+
 ////////////////////////////////////////////////////////////////////////////////
 // TCB interface parameter validation
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,9 +59,9 @@ module r5p_soc_memory
 // load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic [sub.ADR-sub.MAX-1:0] adr;
+    logic [ADR-sub.MAX-1:0] adr;
 
-    assign adr = sub.req.adr[sub.ADR-1:sub.MAX];
+    assign adr = sub.req.adr[ADR-1:sub.MAX];
 
     always @(posedge sub.clk)
     if (sub.trn) begin
