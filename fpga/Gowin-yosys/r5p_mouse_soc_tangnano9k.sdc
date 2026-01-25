@@ -1,7 +1,10 @@
 ## This file is a general .sdc for the Tang Nano 9k
 
 ## Clock signal
-create_clock -period  37.037 -name clk -waveform {0.000 10.000} [get_ports XTAL_IN];  #  27.0 MHz on board XTAL
+#create_clock -period 37.037 -name clk -waveform {0.000 18.5185} [get_ports XTAL_IN];  #  27.0 MHz on board XTAL
+#create_clock -period 37.037 -name clk [get_ports XTAL_IN];  #  27.0 MHz on board XTAL
+create_clock -period 100 -name XTAL_IN [get_ports XTAL_IN];  #  27.0 MHz on board XTAL
+
 
 #create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];
 #create_clock -period 100.000 -name clk -waveform {0.000 50.000} [get_ports CLK100MHZ];  #  10.0 MHz

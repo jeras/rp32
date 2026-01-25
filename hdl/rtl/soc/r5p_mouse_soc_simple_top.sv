@@ -106,11 +106,11 @@ module r5p_mouse_soc_simple_top #(
 ////////////////////////////////////////////////////////////////////////////////
 
     // system bus memory signals
-    logic               mem_ena;  // enable
+    logic               mem_trn;  // transfer
     logic    [XLEN-1:0] mem_rdt;  // read data
 
     // system bus peripheral signals (no byte enable)
-    logic               per_ena;  // enable
+    logic               per_trn;  // transfer
     logic    [XLEN-1:0] per_rdt;  // read data
 
     // delayed address for TCB response data multiplexer
@@ -120,8 +120,8 @@ module r5p_mouse_soc_simple_top #(
     dly_adr <= tcb_adr;
 
     // system bus address decoder
-    assign mem_ena = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b0);
-    assign per_ena = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b1);
+    assign mem_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b0);
+    assign per_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b1);
 
     // system bus response multiplexer
     assign tcb_rdt = dly_adr[16] ? per_rdt : mem_rdt;
@@ -142,7 +142,7 @@ module r5p_mouse_soc_simple_top #(
     assign mem_wdt = tcb_wdt;
 
     always_ff @(posedge clk)
-    if (mem_ena) begin
+    if (mem_trn) begin
         if (~tcb_wen) begin
             // read
             mem_rdt <= mem[mem_adr];
@@ -161,23 +161,43 @@ module r5p_mouse_soc_simple_top #(
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
+    logic               per_ena;  // enable
+    logic               per_wen;  // write enable
+    logic [MEM_ADR-1:2] per_adr;  // address
+    logic    [XLEN-1:0] per_wdt;  // write data
+
+    // delayed peripheral transfer
+    always_ff @(posedge clk, posedge rst)
+    if (rst)  per_ena <= 1'b0;
+    else      per_ena <= per_trn;
+
+    // delayed peripheral request
+    always_ff @(posedge clk)
+    if (per_trn) begin
+        per_wen <= tcb_wen;
+        per_adr <= tcb_adr;
+        per_wdt <= tcb_wdt;
+    end
+
+
     // GPIO write access
     always_ff @(posedge clk, posedge rst)
     if (rst) begin
         gpio_o <= '0;
         gpio_e <= '0;
     end else begin
-        if (per_ena & tcb_wen) begin
-            if (tcb_adr[2] == 1'b0) gpio_o <= tcb_wdt[GPIO_DAT-1:0];
-            if (tcb_adr[2] == 1'b1) gpio_e <= tcb_wdt[GPIO_DAT-1:0];
+        if (per_ena & per_wen) begin
+            if (per_adr[2] == 1'b0) gpio_o <= per_wdt[GPIO_DAT-1:0];
+            if (per_adr[2] == 1'b1) gpio_e <= per_wdt[GPIO_DAT-1:0];
         end
     end
 
     always_comb
-    casex (tcb_adr[3:2])
+    case (per_adr[3:2])
         2'b00:    per_rdt = gpio_o;
         2'b01:    per_rdt = gpio_e;
-        default:  per_rdt = gpio_i;
+        2'b10:    per_rdt = gpio_i;
+        default:  per_rdt = 'x;
     endcase
 
 endmodule: r5p_mouse_soc_simple_top

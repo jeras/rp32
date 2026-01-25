@@ -96,9 +96,9 @@ module r5p_mouse_soc_simple_tangnano9k (
         .clk       (clk),
         .rst       (rst),
         // GPIO
-        .gpio_o    (LED),
-        .gpio_e    (),
-        .gpio_i    (LED),
+        .gpio_o    (gpio_o),
+        .gpio_e    (gpio_e),
+        .gpio_i    (gpio_i),
         // UART
         .uart_txd  (FPGA_TX),
         .uart_rxd  (FPGA_RX)

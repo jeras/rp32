@@ -79,7 +79,7 @@ end
         .INIT_1 (16'h0000),
         .INIT_2 (16'h0000),
         .INIT_3 (16'h0000)
-    ) gpr_1_lo [DAT/4-1:0] (
+    ) cram [DAT/4-1:0] (
         .CLK (clk    ),
         .WRE (sti_trn),
         .DI  (sti_dat),
