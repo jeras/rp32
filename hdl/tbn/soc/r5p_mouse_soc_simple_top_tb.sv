@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// R5P mouse: testbench for SoC
+// R5P mouse: testbench for SoC simple
 ////////////////////////////////////////////////////////////////////////////////
 // Copyright 2022 Iztok Jeras
 //
@@ -16,7 +16,7 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_mouse_soc_top_tb #(
+module r5p_mouse_soc_simple_top_tb #(
     // constants used across the design in signal range sizing instead of literals
     localparam int unsigned XLEN = 32,
     parameter  int unsigned GLEN = 32,
@@ -52,7 +52,7 @@ module r5p_mouse_soc_top_tb #(
 // RTL DUT instance
 ////////////////////////////////////////////////////////////////////////////////
 
-    r5p_mouse_soc_top #(
+    r5p_mouse_soc_simple_top #(
         // SoC peripherals
         .ENA_GPIO (ENA_GPIO),
         .ENA_UART (ENA_UART),
@@ -133,6 +133,4 @@ module r5p_mouse_soc_top_tb #(
         $finish();
     end
 
-    tcb_lite_vip_protocol_checker chk (.mon (dut.tcb_cpu));
-
-endmodule: r5p_mouse_soc_top_tb
+endmodule: r5p_mouse_soc_simple_top_tb

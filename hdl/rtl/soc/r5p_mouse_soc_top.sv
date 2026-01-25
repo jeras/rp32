@@ -24,7 +24,7 @@ module r5p_mouse_soc_top
     localparam int unsigned   XLEN = 32,
     // SoC peripherals
     parameter  bit            ENA_GPIO = 1'b1,
-    parameter  bit            ENA_UART = 1'b0,
+    parameter  bit            ENA_UART = 1'b1,
     // GPIO
     parameter  int unsigned   GPIO_DAT = 32,
     // UART
@@ -112,8 +112,8 @@ module r5p_mouse_soc_top
     tcb_lite_lib_decoder #(
         .ADR (CFG_CPU.BUS.ADR),
         .IFN (2),
-        .DAM ({{16'h8000, 4'b01xx, 12'bxxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
-               {16'h8000, 4'b00xx, 12'bxxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
+        .DAM ({{12'h800, 4'b0001, 16'bxxxx_xxxx_xxxx_xxxx},   // 0x8001_0000 ~ 0x8001_ffff - peripherals
+               {12'h800, 4'b0000, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x8000_ffff - data memory
     ) tcb_lsu_dec (
         .mon  (tcb_cpu    ),
         .sel  (tcb_cpu_sel)
@@ -148,8 +148,8 @@ module r5p_mouse_soc_top
     tcb_lite_lib_decoder #(
         .ADR (CFG_CPU.BUS.ADR),
         .IFN (2),
-        .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - 0x40 ~ 0x7f - UART controller
-               {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
+        .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x40 ~ 0x7f - UART controller
+               {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x00 ~ 0x3f - GPIO controller
     ) tcb_pb0_dec (
         .mon  (tcb_pb0),
         .sel  (tcb_pb0_sel)
@@ -260,7 +260,7 @@ module r5p_mouse_soc_top
             .sts  ('x)
         );
 
-        // GPIO signals
+        // UART signals
         assign uart_txd = 1'b1;
         //     uart_rxd
 

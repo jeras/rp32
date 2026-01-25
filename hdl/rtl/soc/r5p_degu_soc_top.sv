@@ -297,7 +297,7 @@ module r5p_degu_soc_top
             .sts  ('x)
         );
 
-        // GPIO signals
+        // UART signals
         assign uart_txd = 1'b1;
         //     uart_rxd
 
