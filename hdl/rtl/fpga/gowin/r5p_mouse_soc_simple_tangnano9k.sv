@@ -108,16 +108,14 @@ module r5p_mouse_soc_simple_tangnano9k (
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
     // GPIO inputs
-    assign gpio_i = LED[GPIO_DAT-1:0];
+    assign gpio_i[GPIO_DAT-1:0] = LED;
 
     // GPIO outputs
     generate
     for (genvar i=0; i<GPIO_DAT; i++) begin
-        assign LED[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
+        assign LED[i+1] = gpio_e[i] ? gpio_o[i] : 1'bz;
     end
     endgenerate
-*/
 
 endmodule: r5p_mouse_soc_simple_tangnano9k
