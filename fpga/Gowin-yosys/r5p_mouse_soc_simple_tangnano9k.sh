@@ -18,7 +18,7 @@ nextpnr-himbaechel --json   ${PRJ}.json \
                    --device 'GW1NR-LV9QN88PC6/I5' \
                    --vopt   family='GW1N-9C' \
                    --vopt   cst=tangnano9k.cst \
-                   --sdc    r5p_mouse_soc_tangnano9k.sdc \
+                   --sdc    ${PRJ}.sdc \
                    --write  ${PRJ}.pnr.json \
                    --log    ${PRJ}.pnr.log
 
@@ -35,4 +35,3 @@ echo "= load"
 echo "================================================================================"
 
 #openFPGALoader -b tangnano9k ${PRJ}.fs
-

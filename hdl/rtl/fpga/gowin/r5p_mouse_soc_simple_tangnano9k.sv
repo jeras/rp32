@@ -62,7 +62,7 @@ module r5p_mouse_soc_simple_tangnano9k (
 // reset synchronizer
 ////////////////////////////////////////////////////////////////////////////////
 
-    // TODO: use proper button debauncing and synchronous release reset
+    // TODO: use proper button debouncing and synchronous release reset
     assign rst = S[1];
 
     //logic rst_r;

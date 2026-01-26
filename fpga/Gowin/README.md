@@ -15,6 +15,12 @@ https://www.gowinsemi.com/upload/database_doc/1795/document/69457ab88bc5b.pdf
 Gowin BSRAM & SSRAM
 https://cdn.gowinsemi.com.cn/UG285E.pdf
 
+## Gowin IDE
+
+```
+sudo mv //opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/libfreetype.so.6 //opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/libfreetype.so.6.bkp
+```
+
 ```
 LD_LIBRARY_PATH=/opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/ /opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/bin/gw_ide
 ```
