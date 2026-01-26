@@ -27,7 +27,7 @@ module r5p_mouse_soc_simple_tangnano9k (
     output logic [6:1] LED,
     // UART
     output logic       FPGA_TX,
-    output logic       FPGA_RX
+    input  logic       FPGA_RX
 );
 
 ///////////////////////////////////////////////////////////////////////////////
