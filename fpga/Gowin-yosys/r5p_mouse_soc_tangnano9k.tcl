@@ -6,7 +6,7 @@ puts "= parsing SystemVerilog using Yosys-Slang"
 puts "================================================================================"
 
 set PATH_TCB_RTL "../../submodules/tcb/hdl/rtl"
-set PATH_CPU_RTL "../../hdl/rtl"
+set PATH_R5P_RTL "../../hdl/rtl"
 
 read_slang --top r5p_mouse_soc_tangnano9k \
 $PATH_TCB_RTL/tcb_lite_pkg.sv \
@@ -29,10 +29,10 @@ $PATH_TCB_RTL/peri/uart/tcb_peri_uart_des.sv \
 $PATH_TCB_RTL/peri/uart/tcb_peri_uart_fifo.sv \
 $PATH_TCB_RTL/peri/uart/tcb_peri_uart.sv \
 $PATH_TCB_RTL/lite_peri/uart/tcb_lite_peri_uart.sv \
-$PATH_CPU_RTL/mouse/r5p_mouse.sv \
-$PATH_CPU_RTL/soc/r5p_soc_memory_gowin_inference.sv \
-$PATH_CPU_RTL/soc/r5p_mouse_soc_top.sv \
-$PATH_CPU_RTL/fpga/gowin/r5p_mouse_soc_tangnano9k.sv
+$PATH_R5P_RTL/mouse/r5p_mouse.sv \
+$PATH_R5P_RTL/soc/r5p_soc_memory_gowin_inference.sv \
+$PATH_R5P_RTL/soc/r5p_mouse_soc_top.sv \
+$PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_tangnano9k.sv
 
 #hierarchy -top r5p_mouse_soc_tangnano9k
 

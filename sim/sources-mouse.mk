@@ -52,6 +52,8 @@ RTL+=${PATH_R5P}/rtl/mouse/r5p_mouse.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory_gowin_inference.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_top.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_simple_top.sv
+RTL+=${PATH_R5P}/rtl/fpga/gowin/r5p_mouse_soc_tangnano9k.sv
+RTL+=${PATH_R5P}/rtl/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
 
 # SystemVerilog RISCOF bench (Test SV)
 #TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
@@ -65,6 +67,8 @@ TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_riscof_tb.sv
 # SystemVerilog SoC bench (Test SV)
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_top_tb.sv
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_simple_top_tb.sv
+#TSV+=${PATH_R5P}/tbn/fpga/gowin/r5p_mouse_soc_tangnano9k_tb.sv
+TSV+=${PATH_R5P}/tbn/fpga/gowin/r5p_mouse_soc_simple_tangnano9k_tb.sv
 
 # combined HDL sources
 HDL =${RTL}
