@@ -32,8 +32,12 @@ module r5p_mouse_soc_simple_top #(
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_ADR = 14,
-    parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**MEM_ADR),
+    parameter  int unsigned   MEM_SIZ = (2**MEM_ADR),
+`ifndef YOSYS_STRINGPARAM
     parameter  string         MEM_FNM = "mem_if.mem"
+`else
+    parameter                 MEM_FNM = "mem_if.mem"
+`endif
 )(
     // system signals
     input  logic                clk,  // clock
@@ -175,10 +179,9 @@ module r5p_mouse_soc_simple_top #(
     always_ff @(posedge clk)
     if (per_trn) begin
         per_wen <= tcb_wen;
-        per_adr <= tcb_adr;
+        per_adr <= tcb_adr[MEM_ADR-1:2];
         per_wdt <= tcb_wdt;
     end
-
 
     // GPIO write access
     always_ff @(posedge clk, posedge rst)
@@ -199,5 +202,14 @@ module r5p_mouse_soc_simple_top #(
         2'b10:    per_rdt = gpio_i;
         default:  per_rdt = 'x;
     endcase
+
+////////////////////////////////////////////////////////////////////////////////
+// UART
+////////////////////////////////////////////////////////////////////////////////
+
+    // UART is just a loopback
+    // register used to avoid combinational loop in testbench
+    always_ff @(posedge clk)
+    uart_txd <= uart_rxd;
 
 endmodule: r5p_mouse_soc_simple_top
