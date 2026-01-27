@@ -1,10 +1,14 @@
     .global _start
 
+# clock periods at 27MHz / 2Hz (0.5s) / 4 (average CPI for mouse CPU)
+.equ PERIOD, 27000000 / 2 / 4  
+#.equ PERIOD, 0x8  # value for HDL simulation and observing waveforms
+
 _start:
 
 gpio:
     li x28, 0x80010000  # GPIO base address
-    li x29, 0x01234567  # GPIO output
+    li x29, 0x00000000  # GPIO output
     li x30, 0xFFFFFFFF  # GPIO input/output enable (all enabled)
 
     sw x30, 0x0(x28)    # write GPIO output enable
@@ -14,6 +18,18 @@ gpio:
     nop
     nop
     nop
+
+loop_inc:
+    li x1, PERIOD           # load period counter
+loop_div:
+    addi x1, x1, -1         # decrement period counter
+    bne x0, x1, loop_div    # repeat divider loop if period counter is not zero
+
+    add x29, x29, 1         # increment GPIO data
+    sw x29, 0x4(x28)        # write GPIO output data
+    j loop_inc              # repeat blinking loop with new value
+
+
     lw x31, 0xC(x28)    # read GPIO input data
 
 # 37.037ns period is 27MHz (Tang Nano 9k)
