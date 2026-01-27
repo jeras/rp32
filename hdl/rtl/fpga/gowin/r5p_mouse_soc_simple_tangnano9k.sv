@@ -24,7 +24,7 @@ module r5p_mouse_soc_simple_tangnano9k (
     // buttons
     input  logic [2:1] S,
     // LEDs (orange)
-    output logic [6:1] LED,
+    inout  logic [6:1] LED,
     // UART
     output logic       FPGA_TX,
     input  logic       FPGA_RX
@@ -62,8 +62,17 @@ module r5p_mouse_soc_simple_tangnano9k (
 // reset synchronizer
 ////////////////////////////////////////////////////////////////////////////////
 
+    logic [2:1] S_r0;
+    logic [2:1] S_r1;
+
+    always_ff @(posedge XTAL_IN)
+    begin
+        S_r0 <= S;
+        S_r1 <= S_r0;
+    end
+
     // TODO: use proper button debouncing and synchronous release reset
-    assign rst = S[1];
+    assign rst = ~S_r1[1];  // buttons are active low
 
     //logic rst_r;
 
@@ -89,8 +98,7 @@ module r5p_mouse_soc_simple_tangnano9k (
 
     r5p_mouse_soc_simple_top #(
         .GPIO_DAT  (GPIO_DAT),
-        .FIFO_SIZ  (16),        // UART FIFO is based on Gowin RAM16SDP4
-        .MEM_SIZ   (1024*4)     // 4kB
+        .FIFO_SIZ  (16)         // UART FIFO is based on Gowin RAM16SDP4
     ) soc (
         // system signals
         .clk       (clk),
@@ -108,13 +116,22 @@ module r5p_mouse_soc_simple_tangnano9k (
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
+    logic [GPIO_DAT-1:0] gpio_r [1:0];
+
+    // input resynchronization
+    always @(posedge clk)
+    begin
+        gpio_r[0] <= LED;
+        gpio_r[1] <= gpio_r[0];
+    end
+
     // GPIO inputs
-    assign gpio_i[GPIO_DAT-1:0] = LED;
+    assign gpio_i[GPIO_DAT-1:0] = gpio_r[1];
 
     // GPIO outputs
     generate
     for (genvar i=0; i<GPIO_DAT; i++) begin
-        assign LED[i+1] = gpio_e[i] ? gpio_o[i] : 1'bz;
+        assign LED[i+1] = gpio_e[i] ? ~gpio_o[i] : 1'bz;
     end
     endgenerate
 
