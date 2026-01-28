@@ -134,7 +134,12 @@ module r5p_mouse_soc_simple_top #(
 // memory instances
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifdef YOSYS_SLANG
+    `include "mem_if.vh"
+`else
     logic [XLEN-1:0] mem [0:MEM_SIZ/4-1];
+    initial  $readmemh(MEM_FNM, mem);
+`endif
 
     logic [MEM_ADR-1:2] mem_adr;  // address
     logic       [4-1:0] mem_byt;  // byte_enable
@@ -158,8 +163,6 @@ module r5p_mouse_soc_simple_top #(
             if (mem_byt[3]) mem[mem_adr][31:24] <= mem_wdt[31:24];
         end
     end
-
-    initial  $readmemh(MEM_FNM, mem);
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO
