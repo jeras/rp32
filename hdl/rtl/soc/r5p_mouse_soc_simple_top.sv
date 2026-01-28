@@ -31,8 +31,7 @@ module r5p_mouse_soc_simple_top #(
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
     // TCB memory (size in bytes, file name)
-    parameter  int unsigned   MEM_ADR = 14,
-    parameter  int unsigned   MEM_SIZ = (2**MEM_ADR),
+    parameter  int unsigned   MEM_SIZ = 2**14,  // 16kB
 `ifndef YOSYS_STRINGPARAM
     parameter  string         MEM_FNM = "mem_if.mem"
 `else
@@ -54,6 +53,8 @@ module r5p_mouse_soc_simple_top #(
 ////////////////////////////////////////////////////////////////////////////////
 // local parameters and parameter validation
 ////////////////////////////////////////////////////////////////////////////////
+
+    localparam MEM_ADR = $clog2(MEM_SIZ);
 
 // TODO: check if instruction address bus width and instruction memory size fit
 // TODO: check if data address bus width and data memory size fit
@@ -135,6 +136,8 @@ module r5p_mouse_soc_simple_top #(
 ////////////////////////////////////////////////////////////////////////////////
 
 `ifdef YOSYS_SLANG
+    localparam int unsigned MEM_DATA = XLEN;
+    localparam int unsigned MEM_SIZE = MEM_SIZ/4;
     `include "mem_if.vh"
 `else
     logic [XLEN-1:0] mem [0:MEM_SIZ/4-1];

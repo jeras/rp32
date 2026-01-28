@@ -42,8 +42,12 @@ module r5p_soc_memory
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic [sub.DAT-1:0] mem [0:SIZ/(sub.BYT)-1];
-
+`ifdef YOSYS_SLANG
+    localparam int unsigned MEM_DATA = sub.DAT;
+    localparam int unsigned MEM_SIZE = SIZ/(sub.DAT/8);
+    `include "mem_if.vh"
+`else
+    logic [sub.DAT-1:0] mem [0:SIZ/(sub.DAT/8)-1];
     initial
     begin
         if (FNM != "") begin
@@ -54,6 +58,7 @@ module r5p_soc_memory
             $display("INFO: No initialization file name provided for memory %m.");
         end
     end
+`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store

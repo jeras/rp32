@@ -2,11 +2,8 @@
 
 PRJ=r5p_mouse_soc_tangnano9k
 
-# using Yosys
-#yosys ${PRJ}.tcl
-
 # using Yosys-Slang
-yosys --plugin slang --logfile ${PRJ}.syn.log ${PRJ}.tcl
+yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
 
 #netlistsvg ${PRJ}.json -o ${PRJ}.svg
 

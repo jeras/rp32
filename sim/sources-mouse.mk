@@ -67,7 +67,7 @@ TSV+=${PATH_R5P}/tbn/riscof/r5p_mouse_riscof_tb.sv
 # SystemVerilog SoC bench (Test SV)
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_top_tb.sv
 TSV+=${PATH_R5P}/tbn/soc/r5p_mouse_soc_simple_top_tb.sv
-#TSV+=${PATH_R5P}/tbn/fpga/gowin/r5p_mouse_soc_tangnano9k_tb.sv
+TSV+=${PATH_R5P}/tbn/fpga/gowin/r5p_mouse_soc_tangnano9k_tb.sv
 TSV+=${PATH_R5P}/tbn/fpga/gowin/r5p_mouse_soc_simple_tangnano9k_tb.sv
 
 # combined HDL sources

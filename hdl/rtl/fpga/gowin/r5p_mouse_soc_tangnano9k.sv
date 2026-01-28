@@ -24,10 +24,10 @@ module r5p_mouse_soc_tangnano9k (
     // buttons
     input  logic [2:1] S,
     // LEDs (orange)
-    output logic [6:1] LED,
+    inout  logic [6:1] LED,
     // UART
     output logic       FPGA_TX,
-    output logic       FPGA_RX
+    input  logic       FPGA_RX
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,8 +62,17 @@ module r5p_mouse_soc_tangnano9k (
 // reset synchronizer
 ////////////////////////////////////////////////////////////////////////////////
 
-    // TODO: use proper button debauncing and synchronous release reset
-    assign rst = S[1];
+    logic [2:1] S_r0;
+    logic [2:1] S_r1;
+
+    always_ff @(posedge XTAL_IN)
+    begin
+        S_r0 <= S;
+        S_r1 <= S_r0;
+    end
+
+    // TODO: use proper button debouncing and synchronous release reset
+    assign rst = ~S_r1[1];  // buttons are active low
 
     //logic rst_r;
 
@@ -90,15 +99,15 @@ module r5p_mouse_soc_tangnano9k (
     r5p_mouse_soc_top #(
         .GPIO_DAT  (GPIO_DAT),
         .FIFO_SIZ  (16),        // UART FIFO is based on Gowin RAM16SDP4
-        .MEM_SIZ   (1024*4)     // 4kB
+        .MEM_SIZ   (2**14)      // 16kB
     ) soc (
         // system signals
         .clk       (clk),
         .rst       (rst),
         // GPIO
-        .gpio_o    (LED),
-        .gpio_e    (),
-        .gpio_i    (LED),
+        .gpio_o    (gpio_o),
+        .gpio_e    (gpio_e),
+        .gpio_i    (gpio_i),
         // UART
         .uart_txd  (FPGA_TX),
         .uart_rxd  (FPGA_RX)
@@ -108,16 +117,14 @@ module r5p_mouse_soc_tangnano9k (
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
     // GPIO inputs
-    assign gpio_i = LED[GPIO_DAT-1:0];
+    assign gpio_i[GPIO_DAT-1:0] = LED;
 
     // GPIO outputs
     generate
     for (genvar i=0; i<GPIO_DAT; i++) begin
-        assign LED[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
+        assign LED[i+1] = gpio_e[i] ? ~gpio_o[i] : 1'bz;
     end
     endgenerate
-*/
 
 endmodule: r5p_mouse_soc_tangnano9k
