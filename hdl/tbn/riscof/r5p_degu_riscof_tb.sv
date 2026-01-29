@@ -140,7 +140,7 @@ module r5p_degu_riscof_tb
         .IFN  (2),
         .WRM  (2'b10)
     ) mem (
-        .tcb  (tcb_mem[1:0])
+        .sub  (tcb_mem[1:0])
     );
 
     // memory initialization file is provided at runtime

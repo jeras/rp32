@@ -31,8 +31,7 @@ module r5p_mouse_soc_top_tb #(
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
     // TCB memory (size in bytes, file name)
-    parameter  int unsigned   MEM_ADR = 14,
-    parameter  int unsigned   MEM_SIZ = (XLEN/8)*(2**MEM_ADR),
+    parameter  int unsigned   MEM_SIZ = 2**14,
     parameter  string         MEM_FNM = "mem_if.mem"
 );
 
@@ -65,7 +64,6 @@ module r5p_mouse_soc_top_tb #(
         .IFU_MSK  (IFU_MSK),
         .GPR_ADR  (GPR_ADR),
         // TCB memory (size in bytes, file name)
-        .MEM_ADR  (MEM_ADR),
         .MEM_SIZ  (MEM_SIZ),
         .MEM_FNM  (MEM_FNM)
     ) dut (

@@ -149,6 +149,7 @@ module r5p_mouse_trace
             MLD: begin
                 // memory load
                 lsu_ena <= 1'b1;
+                lsu_wen <= 1'b0;
                 lsu_ren <= 1'b1;
                 lsu_rid <= $past(tcb.req.adr[2+:5]);
                 lsu_adr <= $past(tcb.req.adr);
@@ -159,6 +160,7 @@ module r5p_mouse_trace
                 // memory store
                 lsu_ena <= 1'b1;
                 lsu_wen <= 1'b1;
+                lsu_ren <= 1'b0;
                 lsu_rid <= $past(tcb.req.adr[2+:5]);
                 lsu_adr <= $past(tcb.req.adr);
                 lsu_siz <= $past(tcb.req.siz);

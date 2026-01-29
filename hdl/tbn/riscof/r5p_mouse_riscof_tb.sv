@@ -144,7 +144,7 @@ module r5p_mouse_riscof_tb
         .SIZE (MEM_SIZ),
         .IFN  (1)
     ) mem (
-        .tcb  (tcb_mem[0:0])
+        .sub  (tcb_mem[0:0])
     );
 
     // memory initialization file is provided at runtime

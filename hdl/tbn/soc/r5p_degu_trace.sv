@@ -130,7 +130,7 @@ module r5p_degu_trace
                 // LSU
                 .lsu_ena ($past(tcb_lsu.trn    )),
                 .lsu_wen ($past(tcb_lsu.req.wen)),
-                .lsu_ren ($past(tcb_lsu.req.wen^1'b1)),
+                .lsu_ren ($past(tcb_lsu.req.ren)),
                 .lsu_wid ($past(gpr_sid)),
                 .lsu_rid (      gpr_did),
                 .lsu_adr ($past(tcb_lsu.req.adr)),

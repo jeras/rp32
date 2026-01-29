@@ -23,7 +23,7 @@ module r5p_degu_soc_top_tb #(
   parameter  bit          ENA_GPIO = 1'b1,
   parameter  bit          ENA_UART = 1'b0,
   // GPIO
-  parameter  int unsigned GW = 32,
+  parameter  int unsigned GPIO_DAT = 32,
 
   // IFU bus
   parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
@@ -63,9 +63,7 @@ module r5p_degu_soc_top_tb #(
     .ENA_GPIO (ENA_GPIO),
     .ENA_UART (ENA_UART),
     // GPIO
-    .GW       (GW),
-    // implementation device (ASIC/FPGA vendor/device)
-    .CHIP     (CHIP)
+    .GPIO_DAT (GPIO_DAT)
   ) dut (
     // system signals
     .clk      (clk),
