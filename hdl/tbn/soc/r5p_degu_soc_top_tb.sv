@@ -46,9 +46,9 @@ module r5p_degu_soc_top_tb #(
   logic rst;  // reset
 
   // GPIO
-  wire logic [GW-1:0] gpio_o;  // output
-  wire logic [GW-1:0] gpio_e;  // enable
-  wire logic [GW-1:0] gpio_i;  // input
+  wire logic [GPIO_DAT-1:0] gpio_o;  // output
+  wire logic [GPIO_DAT-1:0] gpio_e;  // enable
+  wire logic [GPIO_DAT-1:0] gpio_i;  // input
 
   // UART
   wire logic          uart_txd;
@@ -82,7 +82,7 @@ module r5p_degu_soc_top_tb #(
 
   // GPIO loopback
   generate
-  for (genvar i=0; i<GW; i++) begin: gpio_loopback
+  for (genvar i=0; i<GPIO_DAT; i++) begin: gpio_loopback
     assign gpio_i[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
   end: gpio_loopback
   endgenerate  

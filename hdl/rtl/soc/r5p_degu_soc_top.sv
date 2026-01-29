@@ -49,14 +49,13 @@ module r5p_degu_soc_top
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
     // IFU memory (size in bytes, file name)
-    parameter  int unsigned   IFM_ADR = 14,
-    parameter  int unsigned   IFM_SIZ = (XLEN/8)*(2**IFM_ADR),
+    parameter  int unsigned   IFM_SIZ = 2**14,
     parameter  string         IFM_FNM = "mem_if.mem",
     // LSU bus
     parameter  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
     // LSU memory (size)
-    parameter  int unsigned   LSM_ADR = 14,
-    parameter  int unsigned   LSM_SIZ = (XLEN/8)*(2**LSM_ADR)
+    parameter  int unsigned   LSM_SIZ = 2**14,
+    parameter  string         LSM_FNM = "mem_ls.mem"
 )(
     // system signals
     input  logic                clk,  // clock
@@ -209,7 +208,7 @@ module r5p_degu_soc_top
 
     // data memory
     r5p_soc_memory #(
-    //.FNM  (),
+        .FNM  (LSM_FNM),
         .SIZ  (LSM_SIZ)
     ) dmem (
         .sub  (tcb_lsm)
