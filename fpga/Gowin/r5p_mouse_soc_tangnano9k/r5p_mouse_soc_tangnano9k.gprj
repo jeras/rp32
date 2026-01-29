@@ -30,7 +30,7 @@
         <File path="../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_ser.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/tcb_lite_if.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/tcb_lite_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="src/r5p_mouse_soc_simple_tangnano9k.cst" type="file.cst" enable="1"/>
-        <File path="src/r5p_mouse_soc_simple_tangnano9k.sdc" type="file.sdc" enable="1"/>
+        <File path="src/r5p_mouse_soc_tangnano9k.cst" type="file.cst" enable="1"/>
+        <File path="src/r5p_mouse_soc_tangnano9k.sdc" type="file.sdc" enable="1"/>
     </FileList>
 </Project>
