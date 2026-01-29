@@ -33,7 +33,7 @@ TSV+=${PATH_TCB}/tbn/lite_vip/tcb_lite_vip_protocol_checker.sv
 PATH_GDB=../../submodules/hdldb/hdl
 
 # SystemVerilog bench (Test SV)
-TSV+=${PATH_GDB}/hdldb_trace_pkg.sv
+#TSV+=${PATH_GDB}/hdldb_trace_pkg.sv
 
 # R5P files
 PATH_R5P=../../hdl
