@@ -86,7 +86,7 @@ module r5p_mouse_soc_top
         .rst     (rst),
         // TCB system bus (shared by instruction/load/store)
         .tcb_vld (tcb_cpu.vld),
-        .tcb_ren (               ),
+        .tcb_ren (tcb_cpu.req.ren),
         .tcb_wen (tcb_cpu.req.wen),
         .tcb_xen (               ),
         .tcb_adr (tcb_cpu.req.adr),

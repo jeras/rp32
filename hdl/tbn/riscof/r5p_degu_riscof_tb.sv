@@ -83,10 +83,10 @@ module r5p_degu_riscof_tb
     localparam tcb_lite_cfg_t CFG_LSU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
     localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
 
-    // system bus CFG    ,  VIP
-    tcb_lite_if #(CFG_IFU      ) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
-    tcb_lite_if #(CFG_LSU      ) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
-    tcb_lite_if #(CFG_MEM, 1'b1) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
+    // system bus
+    tcb_lite_if #(CFG_IFU) tcb_ifu         (.clk (clk), .rst (rst));  // instruction fetch unit
+    tcb_lite_if #(CFG_LSU) tcb_lsu         (.clk (clk), .rst (rst));  // load/store unit
+    tcb_lite_if #(CFG_MEM) tcb_mem [2-1:0] (.clk (clk), .rst (rst));  // 2 port memory model
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTL DUT instance

@@ -25,6 +25,8 @@ module r5p_lsu
   logic        CFG_VLD_ILL = 1'bx,  // valid        for illegal instruction
   logic        CFG_WEN_ILL = 1'bx,  // write enable for illegal instruction
   logic        CFG_WEN_IDL = 1'bx,  // write enable for idle !(LOAD | STORE)
+  logic        CFG_REN_ILL = 1'bx,  // read  enable for illegal instruction
+  logic        CFG_REN_IDL = 1'bx,  // read  enable for idle !(LOAD | STORE)
   logic        CFG_BEN_IDL = 1'bx,  // byte  enable for idle !(LOAD | STORE)
   logic        CFG_BEN_ILL = 1'bx   // byte  enable for illegal instruction
 )(
@@ -51,16 +53,18 @@ module r5p_lsu
     if (ill) begin
       tcb.vld     = CFG_VLD_ILL;
       tcb.req.wen = CFG_WEN_ILL;
+      tcb.req.ren = CFG_REN_ILL;
     end else begin
       unique case (dec.opc)
-        LOAD   : begin tcb.vld = 1'b1; tcb.req.wen = 1'b0       ; end
-        STORE  : begin tcb.vld = 1'b1; tcb.req.wen = 1'b1       ; end
-        default: begin tcb.vld = 1'b0; tcb.req.wen = CFG_WEN_IDL; end
+        LOAD   : begin tcb.vld = 1'b1; tcb.req.wen = 1'b0       ; tcb.req.ren = 1'b1       ; end
+        STORE  : begin tcb.vld = 1'b1; tcb.req.wen = 1'b1       ; tcb.req.ren = 1'b0       ; end
+        default: begin tcb.vld = 1'b0; tcb.req.wen = CFG_WEN_IDL; tcb.req.ren = CFG_REN_IDL; end
       endcase
     end
   end else begin
     tcb.vld     = 1'b0;
     tcb.req.wen = CFG_WEN_ILL;
+    tcb.req.ren = CFG_REN_ILL;
   end
 
   // lock
@@ -82,7 +86,7 @@ module r5p_lsu
   always_ff @ (posedge clk, posedge rst)
   if (rst) begin
     dly_fn3 <= XLEN == 32 ? LW : LD;
-  end else if (tcb.trn & ~tcb.req.wen) begin
+  end else if (tcb.trn & tcb.req.ren) begin
     dly_fn3 <= fn3_ldu_et'(dec.fn3);
   end
 

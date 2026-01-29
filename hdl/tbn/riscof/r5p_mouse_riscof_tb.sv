@@ -81,9 +81,9 @@ module r5p_mouse_riscof_tb
     localparam tcb_lite_cfg_t CFG_CPU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
     localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
 
-    // system bus CFG    ,  VIP
-    tcb_lite_if #(CFG_CPU      ) tcb_cpu       (.clk (clk), .rst (rst));
-    tcb_lite_if #(CFG_MEM, 1'b1) tcb_mem [0:0] (.clk (clk), .rst (rst));
+    // system bus
+    tcb_lite_if #(CFG_CPU) tcb_cpu       (.clk (clk), .rst (rst));
+    tcb_lite_if #(CFG_MEM) tcb_mem [0:0] (.clk (clk), .rst (rst));
     // TODO: handling a Verilator bug, localparam is not handled as a constant
     // %Error: ../../hdl/tbn/riscof/r5p_mouse_riscof_tb.sv:85:19: Can't convert defparam value to constant: Param '__paramNumber1' of 'tcb_cpu'
     //                                                          : ... note: In instance 'r5p_mouse_riscof_tb'
@@ -106,7 +106,7 @@ module r5p_mouse_riscof_tb
         // TCB system bus (shared by instruction/load/store)
         .tcb_vld (tcb_cpu.vld),
         .tcb_wen (tcb_cpu.req.wen),
-        .tcb_ren (),
+        .tcb_ren (tcb_cpu.req.ren),
         .tcb_xen (),
         .tcb_adr (tcb_cpu.req.adr),
         .tcb_siz (tcb_cpu.req.siz),
