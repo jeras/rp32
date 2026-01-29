@@ -5,33 +5,33 @@
     <Version>5</Version>
     <Device name="GW1NR-9C" pn="GW1NR-LV9QN88PC6/I5">gw1nr9c-004</Device>
     <FileList>
-        <File path="../../../hdl/rtl/fpga/gowin/r5p_degu_soc_tangnano9k.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/soc/r5p_degu_soc_top.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/soc/r5p_soc_memory_gowin_inference.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv/riscv_isa_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv/riscv_priv_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv/riscv_isa_i_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv/rv32_csr_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv/rv64_csr_pkg.sv" type="file.verilog" enable="1"/>
         <File path="../../../hdl/rtl/core/r5p_gpr_2r1w.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/degu/r5p_pkg.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/degu/r5p_bru.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/degu/r5p_alu.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/degu/r5p_mdu.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/degu/r5p_fpu.sv" type="file.verilog" enable="0"/>
-        <File path="../../../hdl/rtl/degu/r5p_lsu.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/degu/r5p_wbu.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/riscv_csr_adr_map_pkg.sv" type="file.verilog" enable="0"/>
         <File path="../../../hdl/rtl/degu/r5p32_csr_pkg.sv" type="file.verilog" enable="0"/>
         <File path="../../../hdl/rtl/degu/r5p64_csr_pkg.sv" type="file.verilog" enable="0"/>
+        <File path="../../../hdl/rtl/degu/r5p_alu.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/degu/r5p_bru.sv" type="file.verilog" enable="1"/>
         <File path="../../../hdl/rtl/degu/r5p_csr.sv" type="file.verilog" enable="0"/>
-        <File path="../../../hdl/rtl/degu/r5p_degu_pkg.sv" type="file.verilog" enable="1"/>
         <File path="../../../hdl/rtl/degu/r5p_degu.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/degu/r5p_degu_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/degu/r5p_fpu.sv" type="file.verilog" enable="0"/>
+        <File path="../../../hdl/rtl/degu/r5p_lsu.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/degu/r5p_mdu.sv" type="file.verilog" enable="0"/>
+        <File path="../../../hdl/rtl/degu/r5p_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/degu/r5p_wbu.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/fpga/gowin/r5p_degu_soc_tangnano9k.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv/riscv_isa_c_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv/riscv_isa_i_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv/riscv_isa_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv/riscv_priv_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv/rv32_csr_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv/rv64_csr_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/riscv_csr_adr_map_pkg.sv" type="file.verilog" enable="0"/>
+        <File path="../../../hdl/rtl/soc/r5p_degu_soc_top.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/soc/r5p_soc_memory_gowin_inference.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_arbiter.sv" type="file.verilog" enable="0"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_decoder.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_demultiplexer.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_error.sv" type="file.verilog" enable="0"/>
+        <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_error.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_logsize2byteena.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_misaligned_memory_controller.sv" type="file.verilog" enable="0"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_multiplexer.sv" type="file.verilog" enable="0"/>

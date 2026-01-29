@@ -78,7 +78,7 @@
  "Show_All_Warnings" : true,
  "Synthesize_tool" : "GowinSyn",
  "TclPre" : "",
- "TopModule" : "",
+ "TopModule" : "r5p_degu_soc_tangnano9k",
  "USERCODE" : "default",
  "Unused_Pin" : "As_input_tri_stated_with_pull_up",
  "VCC" : "1.2",
