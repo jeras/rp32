@@ -70,6 +70,9 @@ module r5p_lsu
   // lock
   assign tcb.req.lck = 1'b0;
 
+  // control (not used)
+  assign tcb.req.ctl = '0;
+
   // address
   assign tcb.req.adr = adr;
 

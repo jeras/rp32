@@ -27,7 +27,7 @@ module r5p_degu_soc_top
     localparam int unsigned BLOG = $clog2(BLEN),
     // SoC peripherals
     parameter  bit            ENA_GPIO = 1'b1,
-    parameter  bit            ENA_UART = 1'b0,
+    parameter  bit            ENA_UART = 1'b1,
     // GPIO
     parameter  int unsigned   GPIO_DAT = 32,
     // UART
