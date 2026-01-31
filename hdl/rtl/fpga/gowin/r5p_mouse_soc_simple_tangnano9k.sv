@@ -98,7 +98,8 @@ module r5p_mouse_soc_simple_tangnano9k (
 
     r5p_mouse_soc_simple_top #(
         .GPIO_DAT  (GPIO_DAT),
-        .FIFO_SIZ  (16)         // UART FIFO is based on Gowin RAM16SDP4
+        .FIFO_SIZ  (16),        // UART FIFO is based on Gowin RAM16SDP4
+        .MEM_SIZ   (2**14)      // 16kB
     ) soc (
         // system signals
         .clk       (clk),
@@ -116,17 +117,8 @@ module r5p_mouse_soc_simple_tangnano9k (
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic [GPIO_DAT-1:0] gpio_r [1:0];
-
-    // input resynchronization
-    always @(posedge clk)
-    begin
-        gpio_r[0] <= LED;
-        gpio_r[1] <= gpio_r[0];
-    end
-
     // GPIO inputs
-    assign gpio_i[GPIO_DAT-1:0] = gpio_r[1];
+    assign gpio_i[GPIO_DAT-1:0] = LED;
 
     // GPIO outputs
     generate

@@ -171,6 +171,15 @@ module r5p_mouse_soc_simple_top #(
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
+    logic [GPIO_DAT-1:0] gpio_r [1:0];
+
+    // input resynchronization
+    always @(posedge clk)
+    begin
+        gpio_r[0] <= gpio_i;
+        gpio_r[1] <= gpio_r[0];
+    end
+
     logic               per_ena;  // enable
     logic               per_wen;  // write enable
     logic [MEM_ADR-1:2] per_adr;  // address
@@ -205,7 +214,7 @@ module r5p_mouse_soc_simple_top #(
     case (per_adr[3:2])
         2'b00:    per_rdt = gpio_o;
         2'b01:    per_rdt = gpio_e;
-        2'b10:    per_rdt = gpio_i;
+        2'b10:    per_rdt = gpio_r[1];
         default:  per_rdt = 'x;
     endcase
 
