@@ -32,7 +32,7 @@ FLAGS += -voptargs=+acc
 # DEF += -defineall macro=value
 
 # define TOOL_* macro (used to handle tool quirks)
-DEF = -defineall TOOL_QUESTA
+DEF = -defineall TOOL_QUESTA -defineall YOSYS_SLANG
 
 ################################################################################
 # Verilog toplevel parameter override
