@@ -24,7 +24,7 @@ module r5p_mouse_soc_simple_top
     localparam int unsigned   XLEN = 32,
     // SoC peripherals
     parameter  bit            ENA_GPIO = 1'b1,
-    parameter  bit            ENA_UART = 1'b1,
+    parameter  bit            ENA_UART = 1'b0,
     // GPIO
     parameter  int unsigned   GPIO_DAT = 32,
     // UART
@@ -103,6 +103,8 @@ module r5p_mouse_soc_simple_top
         .tcb_rdy (tcb_cpu.rdy)
     );
 
+    assign tcb_cpu.req.byt = '1;
+
     // signals not provided by the CPU
     assign tcb_cpu.req.lck = 1'b0;
     assign tcb_cpu.req.ndn = 1'b0;
@@ -139,46 +141,33 @@ module r5p_mouse_soc_simple_top
 // memory instances
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef YOSYS_SLANG
-    localparam int unsigned MEM_DATA = XLEN;
-    localparam int unsigned MEM_SIZE = MEM_SIZ/4;
-    `include "mem_if.vh"
-`else
-    logic [XLEN-1:0] mem [0:MEM_SIZ/4-1];
-    initial  $readmemh(MEM_FNM, mem);
-`endif
+    // handshake
+    assign tcb_mem.vld = tcb_dmx[0].vld;
+    assign tcb_dmx[0].rdy = tcb_mem.rdy;
 
-    logic [MEM_ADR-1:2] mem_adr;  // address
-    logic       [4-1:0] mem_byt;  // byte_enable
-    logic    [XLEN-1:0] mem_wdt;  // write data
+    // request
+    assign tcb_mem.req.lck = tcb_dmx[0].req.lck;
+    assign tcb_mem.req.ndn = tcb_dmx[0].req.ndn;
+    assign tcb_mem.req.wen = tcb_dmx[0].req.wen;
+    assign tcb_mem.req.ren = tcb_dmx[0].req.ren;
+    assign tcb_mem.req.ctl = tcb_dmx[0].req.ctl;
+    assign tcb_mem.req.adr = tcb_dmx[0].req.adr;
+    assign tcb_mem.req.siz = tcb_dmx[0].req.siz;
+    assign tcb_mem.req.byt = '1; //tcb_dmx[0].req.byt;
+    assign tcb_mem.req.wdt = tcb_dmx[0].req.wdt;
 
-    // TODO: handle proper byte mapping
-    assign mem_adr = tcb_dmx[0].req.adr[MEM_ADR-1:2];
-    assign mem_byt = '1;
-    assign mem_wdt = tcb_dmx[0].req.wdt;
+    // response
+    assign tcb_dmx[0].rsp.rdt = tcb_mem.rsp.rdt;
+    assign tcb_dmx[0].rsp.sts = tcb_mem.rsp.sts;
+    assign tcb_dmx[0].rsp.err = tcb_mem.rsp.err;
 
-    always_ff @(posedge clk)
-    if (tcb_dmx[0].trn) begin
-        // TODO: it has negative effect on synthesis
-        if (tcb_dmx[0].req.ren) begin
-            // read
-            tcb_dmx[0].rsp.rdt <= mem[mem_adr];
-        end
-        if (tcb_dmx[0].req.wen) begin
-            // write
-            if (mem_byt[0]) mem[mem_adr][ 7: 0] <= mem_wdt[ 7: 0];
-            if (mem_byt[1]) mem[mem_adr][15: 8] <= mem_wdt[15: 8];
-            if (mem_byt[2]) mem[mem_adr][23:16] <= mem_wdt[23:16];
-            if (mem_byt[3]) mem[mem_adr][31:24] <= mem_wdt[31:24];
-        end
-    end
-
-    // there are no error conditions
-    assign tcb_dmx[0].rsp.sts =   '0;
-    assign tcb_dmx[0].rsp.err = 1'b0;
-
-    // there is no backpressure
-    assign tcb_dmx[0].rdy = 1'b1;
+    // shared code/data memory
+    r5p_soc_memory #(
+        .FNM  (MEM_FNM),
+        .SIZ  (MEM_SIZ)
+    ) mem (
+        .sub  (tcb_mem)
+    );
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO

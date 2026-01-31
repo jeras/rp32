@@ -83,6 +83,6 @@ module r5p_mouse_soc_simple_tangnano9k_tb ();
     logic [32-1:0] gpr [0:32-1];
 
     // copy GPR array from system memory
-    assign gpr = dut.soc.mem[dut.soc.MEM_SIZ/4-1 -: 32];
+    assign gpr = dut.soc.mem.mem[dut.soc.MEM_SIZ/4-1 -: 32];
 
 endmodule: r5p_mouse_soc_simple_tangnano9k_tb
