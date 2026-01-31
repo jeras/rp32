@@ -159,10 +159,12 @@ module r5p_mouse_soc_simple_top
 
     always_ff @(posedge clk)
     if (tcb_dmx[0].trn) begin
-        if (~tcb_dmx[0].req.wen) begin
+        // TODO: it has negative effect on synthesis
+        if (tcb_dmx[0].req.ren) begin
             // read
             tcb_dmx[0].rsp.rdt <= mem[mem_adr];
-        end else begin
+        end
+        if (tcb_dmx[0].req.wen) begin
             // write
             if (mem_byt[0]) mem[mem_adr][ 7: 0] <= mem_wdt[ 7: 0];
             if (mem_byt[1]) mem[mem_adr][15: 8] <= mem_wdt[15: 8];

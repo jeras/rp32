@@ -68,6 +68,7 @@ module r5p_soc_memory
 
     assign adr = sub.req.adr[ADR-1:sub.MAX];
 
+    // TODO: split R/W controll seems to have a negative effect on synthesis
     always @(posedge sub.clk)
     if (sub.trn) begin
         // read
