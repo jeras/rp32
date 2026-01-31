@@ -137,29 +137,15 @@ module r5p_mouse_soc_simple_top
         .man  (tcb_dmx)
     );
 
+    // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
+    tcb_lite_lib_logsize2byteena tcb_mem_converter (
+        .sub  (tcb_dmx[0]),
+        .man  (tcb_mem)
+    );
+
 ////////////////////////////////////////////////////////////////////////////////
 // memory instances
 ////////////////////////////////////////////////////////////////////////////////
-
-    // handshake
-    assign tcb_mem.vld = tcb_dmx[0].vld;
-    assign tcb_dmx[0].rdy = tcb_mem.rdy;
-
-    // request
-    assign tcb_mem.req.lck = tcb_dmx[0].req.lck;
-    assign tcb_mem.req.ndn = tcb_dmx[0].req.ndn;
-    assign tcb_mem.req.wen = tcb_dmx[0].req.wen;
-    assign tcb_mem.req.ren = tcb_dmx[0].req.ren;
-    assign tcb_mem.req.ctl = tcb_dmx[0].req.ctl;
-    assign tcb_mem.req.adr = tcb_dmx[0].req.adr;
-    assign tcb_mem.req.siz = tcb_dmx[0].req.siz;
-    assign tcb_mem.req.byt = '1; //tcb_dmx[0].req.byt;
-    assign tcb_mem.req.wdt = tcb_dmx[0].req.wdt;
-
-    // response
-    assign tcb_dmx[0].rsp.rdt = tcb_mem.rsp.rdt;
-    assign tcb_dmx[0].rsp.sts = tcb_mem.rsp.sts;
-    assign tcb_dmx[0].rsp.err = tcb_mem.rsp.err;
 
     // shared code/data memory
     r5p_soc_memory #(
