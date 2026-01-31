@@ -107,37 +107,33 @@ module r5p_mouse_soc_simple_top
     assign tcb_cpu.req.lck = 1'b0;
     assign tcb_cpu.req.ndn = 1'b0;
 
-    // there are no error conditions
-    assign tcb_cpu.rsp.sts =   '0;
-    assign tcb_cpu.rsp.err = 1'b0;
-
-    // there is no backpressure
-    assign tcb_cpu.rdy = 1'b1;
-
 ////////////////////////////////////////////////////////////////////////////////
 // instruction fetch/load/store TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
-    // system bus memory signals
-    logic               mem_trn;  // transfer
-    logic    [XLEN-1:0] mem_rdt;  // read data
+    logic [$clog2(2)-1:0] tcb_cpu_sel;
 
-    // system bus peripheral signals (no byte enable)
-    logic               per_trn;  // transfer
-    logic    [XLEN-1:0] per_rdt;  // read data
+    // decoding memory/peripherals
+    tcb_lite_lib_decoder #(
+        .ADR (CFG_CPU.BUS.ADR),
+        .IFN (2),
+        .DAM ({{12'h800, 4'b0001, 16'bxxxx_xxxx_xxxx_xxxx},   // 0x8001_0000 ~ 0x8001_ffff - peripherals
+               {12'h800, 4'b0000, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x8000_ffff - data memory
+    ) tcb_lsu_dec (
+        .mon  (tcb_cpu    ),
+        .sel  (tcb_cpu_sel)
+    );
 
-    // delayed address for TCB response data multiplexer
-    logic    [XLEN-1:0] dly_adr;  // address
-
-    always_ff @(posedge clk)
-    dly_adr <= tcb_cpu.req.adr;
-
-    // system bus address decoder
-    assign mem_trn = tcb_cpu.trn & (tcb_cpu.req.adr[16] == 1'b0);
-    assign per_trn = tcb_cpu.trn & (tcb_cpu.req.adr[16] == 1'b1);
-
-    // system bus response multiplexer
-    assign tcb_cpu.rsp.rdt = dly_adr[16] ? per_rdt : mem_rdt;
+    // demultiplexing memory/peripherals
+    tcb_lite_lib_demultiplexer #(
+        .IFN (2)
+    ) tcb_lsu_demux (
+        // control
+        .sel  (tcb_cpu_sel),
+        // TCB interfaces
+        .sub  (tcb_cpu),
+        .man  (tcb_dmx)
+    );
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory instances
@@ -157,15 +153,15 @@ module r5p_mouse_soc_simple_top
     logic    [XLEN-1:0] mem_wdt;  // write data
 
     // TODO: handle proper byte mapping
-    assign mem_adr = tcb_cpu.req.adr[MEM_ADR-1:2];
+    assign mem_adr = tcb_dmx[0].req.adr[MEM_ADR-1:2];
     assign mem_byt = '1;
-    assign mem_wdt = tcb_cpu.req.wdt;
+    assign mem_wdt = tcb_dmx[0].req.wdt;
 
     always_ff @(posedge clk)
-    if (mem_trn) begin
-        if (~tcb_cpu.req.wen) begin
+    if (tcb_dmx[0].trn) begin
+        if (~tcb_dmx[0].req.wen) begin
             // read
-            mem_rdt <= mem[mem_adr];
+            tcb_dmx[0].rsp.rdt <= mem[mem_adr];
         end else begin
             // write
             if (mem_byt[0]) mem[mem_adr][ 7: 0] <= mem_wdt[ 7: 0];
@@ -174,6 +170,13 @@ module r5p_mouse_soc_simple_top
             if (mem_byt[3]) mem[mem_adr][31:24] <= mem_wdt[31:24];
         end
     end
+
+    // there are no error conditions
+    assign tcb_dmx[0].rsp.sts =   '0;
+    assign tcb_dmx[0].rsp.err = 1'b0;
+
+    // there is no backpressure
+    assign tcb_dmx[0].rdy = 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO
@@ -196,11 +199,11 @@ module r5p_mouse_soc_simple_top
     // delayed peripheral transfer
     always_ff @(posedge clk, posedge rst)
     if (rst)  per_ena <= 1'b0;
-    else      per_ena <= per_trn;
+    else      per_ena <= tcb_dmx[1].trn;
 
     // delayed peripheral request
     always_ff @(posedge clk)
-    if (per_trn) begin
+    if (tcb_dmx[1].trn) begin
         per_wen <= tcb_cpu.req.wen;
         per_adr <= tcb_cpu.req.adr[MEM_ADR-1:2];
         per_wdt <= tcb_cpu.req.wdt;
@@ -220,11 +223,18 @@ module r5p_mouse_soc_simple_top
 
     always_comb
     case (per_adr[3:2])
-        2'b00:    per_rdt = gpio_o;
-        2'b01:    per_rdt = gpio_e;
-        2'b10:    per_rdt = gpio_r[1];
-        default:  per_rdt = 'x;
+        2'b00:    tcb_dmx[1].rsp.rdt = gpio_o;
+        2'b01:    tcb_dmx[1].rsp.rdt = gpio_e;
+        2'b10:    tcb_dmx[1].rsp.rdt = gpio_r[1];
+        default:  tcb_dmx[1].rsp.rdt = 'x;
     endcase
+
+    // there are no error conditions
+    assign tcb_dmx[1].rsp.sts =   '0;
+    assign tcb_dmx[1].rsp.err = 1'b0;
+
+    // there is no backpressure
+    assign tcb_dmx[1].rdy = 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // UART
