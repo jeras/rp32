@@ -169,7 +169,7 @@ module r5p_mouse_soc_top
 // memory instances
 ////////////////////////////////////////////////////////////////////////////////
 
-    // shared memory
+    // shared code/data memory
     r5p_soc_memory #(
         .FNM  (MEM_FNM),
         .SIZ  (MEM_SIZ)
