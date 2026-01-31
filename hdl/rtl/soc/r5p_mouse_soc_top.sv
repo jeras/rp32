@@ -105,7 +105,7 @@ module r5p_mouse_soc_top
 // instruction fetch/load/store TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
-  logic [$clog2(2)-1:0] tcb_cpu_sel;
+    logic [$clog2(2)-1:0] tcb_cpu_sel;
 
     // decoding memory/peripherals
     tcb_lite_lib_decoder #(
