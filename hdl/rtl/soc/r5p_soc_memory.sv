@@ -40,11 +40,6 @@ module r5p_soc_memory
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef YOSYS_SLANG
-    localparam int unsigned MEM_DATA = sub.DAT;
-    localparam int unsigned MEM_SIZE = SIZ/(sub.DAT/8);
-    `include "mem_if.vh1"
-`else
     logic [sub.DAT-1:0] mem [0:SIZ/(sub.DAT/8)-1];
     initial
     begin
@@ -56,7 +51,6 @@ module r5p_soc_memory
             $display("INFO: No initialization file name provided for memory %m.");
         end
     end
-`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store
@@ -64,13 +58,14 @@ module r5p_soc_memory
 
     always_ff @(posedge sub.clk)
     if (sub.vld) begin
+        // write access
         if (sub.req.wen) begin
-            // write access
             for (int unsigned b=0; b<sub.BYT; b++) begin
                 if (sub.req.byt[b])  mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8] <= sub.req.wdt[b];
             end
-        end else begin
-            // read access
+        end
+        // read access
+        if (sub.req.ren) begin
             for (int unsigned b=0; b<sub.BYT; b++) begin
                 if (sub.req.byt[b])  sub.rsp.rdt[b] <= mem[sub.req.adr[sub.ADR-1:sub.MAX]][8*b+:8];
             end

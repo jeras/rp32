@@ -70,11 +70,12 @@ module r5p_soc_memory
 
     always @(posedge sub.clk)
     if (sub.trn) begin
-        if (~sub.req.wen) begin
-            // read
+        // read
+        if (sub.req.ren) begin
             sub.rsp.rdt <= mem[adr];
-        end else begin
-            // write
+        end
+        // write
+        if (sub.req.wen) begin
             if (sub.req.byt[0]) mem[adr][ 7: 0] <= sub.req.wdt[ 7: 0];
             if (sub.req.byt[1]) mem[adr][15: 8] <= sub.req.wdt[15: 8];
             if (sub.req.byt[2]) mem[adr][23:16] <= sub.req.wdt[23:16];
