@@ -16,7 +16,10 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_mouse_soc_simple_top #(
+module r5p_mouse_soc_simple_top
+//    import riscv_isa_pkg::*;
+    import tcb_lite_pkg::*;
+#(
     // constants used across the design in signal range sizing instead of literals
     localparam int unsigned   XLEN = 32,
     // SoC peripherals
@@ -63,17 +66,17 @@ module r5p_mouse_soc_simple_top #(
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-    // TCB system bus (shared by instruction/load/store)
-    logic            tcb_vld;  // valid
-    logic            tcb_ren;  // write enable
-    logic            tcb_wen;  // write enable
-    logic            tcb_xen;  // write enable
-    logic [XLEN-1:0] tcb_adr;  // address
-    logic    [2-1:0] tcb_siz;  // RISC-V func3[1:0]
-    logic [XLEN-1:0] tcb_wdt;  // write data
-    logic [XLEN-1:0] tcb_rdt;  // read data
-    logic            tcb_err;  // error
-    logic            tcb_rdy;  // ready
+    // TCB configurations               '{HSK: '{DLY,  HLD}, BUS: '{ MOD, CTL,  ADR,  DAT, STS}}
+    localparam tcb_lite_cfg_t CFG_CPU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
+    localparam tcb_lite_cfg_t CFG_PER = '{HSK: '{  0, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
+
+    // system busses
+    tcb_lite_if #(CFG_CPU) tcb_cpu         (.clk (clk), .rst (rst));
+    tcb_lite_if #(CFG_CPU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
+    tcb_lite_if #(CFG_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
+    tcb_lite_if #(CFG_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
+    tcb_lite_if #(CFG_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Mouse core instance
@@ -88,23 +91,28 @@ module r5p_mouse_soc_simple_top #(
         .clk     (clk),
         .rst     (rst),
         // TCB system bus (shared by instruction/load/store)
-        .tcb_vld (tcb_vld),
-        .tcb_ren (tcb_ren),
-        .tcb_wen (tcb_wen),
-        .tcb_xen (tcb_xen),
-        .tcb_adr (tcb_adr),
-        .tcb_siz (tcb_siz),
-        .tcb_wdt (tcb_wdt),
-        .tcb_rdt (tcb_rdt),
-        .tcb_err (tcb_err),
-        .tcb_rdy (tcb_rdy)
+        .tcb_vld (tcb_cpu.vld),
+        .tcb_ren (tcb_cpu.req.ren),
+        .tcb_wen (tcb_cpu.req.wen),
+        .tcb_xen (               ),
+        .tcb_adr (tcb_cpu.req.adr),
+        .tcb_siz (tcb_cpu.req.siz),
+        .tcb_wdt (tcb_cpu.req.wdt),
+        .tcb_rdt (tcb_cpu.rsp.rdt),
+        .tcb_err (tcb_cpu.rsp.err),
+        .tcb_rdy (tcb_cpu.rdy)
     );
 
+    // signals not provided by the CPU
+    assign tcb_cpu.req.lck = 1'b0;
+    assign tcb_cpu.req.ndn = 1'b0;
+
     // there are no error conditions
-    assign tcb_err = 1'b0;
+    assign tcb_cpu.rsp.sts =   '0;
+    assign tcb_cpu.rsp.err = 1'b0;
 
     // there is no backpressure
-    assign tcb_rdy = 1'b1;
+    assign tcb_cpu.rdy = 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // instruction fetch/load/store TCB interconnect
@@ -122,14 +130,14 @@ module r5p_mouse_soc_simple_top #(
     logic    [XLEN-1:0] dly_adr;  // address
 
     always_ff @(posedge clk)
-    dly_adr <= tcb_adr;
+    dly_adr <= tcb_cpu.req.adr;
 
     // system bus address decoder
-    assign mem_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b0);
-    assign per_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b1);
+    assign mem_trn = tcb_cpu.trn & (tcb_cpu.req.adr[16] == 1'b0);
+    assign per_trn = tcb_cpu.trn & (tcb_cpu.req.adr[16] == 1'b1);
 
     // system bus response multiplexer
-    assign tcb_rdt = dly_adr[16] ? per_rdt : mem_rdt;
+    assign tcb_cpu.rsp.rdt = dly_adr[16] ? per_rdt : mem_rdt;
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory instances
@@ -149,13 +157,13 @@ module r5p_mouse_soc_simple_top #(
     logic    [XLEN-1:0] mem_wdt;  // write data
 
     // TODO: handle proper byte mapping
-    assign mem_adr = tcb_adr[MEM_ADR-1:2];
+    assign mem_adr = tcb_cpu.req.adr[MEM_ADR-1:2];
     assign mem_byt = '1;
-    assign mem_wdt = tcb_wdt;
+    assign mem_wdt = tcb_cpu.req.wdt;
 
     always_ff @(posedge clk)
     if (mem_trn) begin
-        if (~tcb_wen) begin
+        if (~tcb_cpu.req.wen) begin
             // read
             mem_rdt <= mem[mem_adr];
         end else begin
@@ -193,9 +201,9 @@ module r5p_mouse_soc_simple_top #(
     // delayed peripheral request
     always_ff @(posedge clk)
     if (per_trn) begin
-        per_wen <= tcb_wen;
-        per_adr <= tcb_adr[MEM_ADR-1:2];
-        per_wdt <= tcb_wdt;
+        per_wen <= tcb_cpu.req.wen;
+        per_adr <= tcb_cpu.req.adr[MEM_ADR-1:2];
+        per_wdt <= tcb_cpu.req.wdt;
     end
 
     // GPIO write access
