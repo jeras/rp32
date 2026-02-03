@@ -159,10 +159,11 @@ module r5p_mouse #(
     logic                   bus_err;  // error
 
     // FSM (finite state machine) and phases
-    logic                   ctl_run;  // FSM running (out of reset)
-    logic           [2-1:0] ctl_fsm;  // FSM state register
-    logic           [2-1:0] ctl_nxt;  // FSM state next
-    logic           [3-1:0] ctl_pha;  // FSM phase
+    logic                   ctl_run;  // running (out of reset)
+    logic                   ctl_ena;  // enable
+    logic           [2-1:0] ctl_fsm;  // state register
+    logic           [2-1:0] ctl_nxt;  // state next
+    logic           [3-1:0] ctl_pha;  // phase
 
     // IFU: instruction fetch unit
     logic        [XLEN-1:0] ifu_pcr;  // program counter register
@@ -318,7 +319,7 @@ module r5p_mouse #(
         // control (starts running after reset)
         ctl_run <= 1'b1;
         // internal state
-        if (bus_trn) begin
+        if (ctl_ena) begin
             // control (go to the next state)
             ctl_fsm <= ctl_nxt;
             ctl_bvr <= bus_vld;
@@ -714,21 +715,24 @@ module r5p_mouse #(
 // system bus mapping IFU/LSU/GPR access
 ///////////////////////////////////////////////////////////////////////////////
 
+    // FSM enable
+    assign ctl_ena = bus_trn | ~bus_vld;
+
     // transfer
     assign bus_trn = ctl_run & bus_rdy;
 //    assign bus_trn = ctl_run & ctl_run & bus_rdy;
 
     // connection between external TCB and internal bus
     // filtering: GPR x0 access, NOP, BRANCH EXE phase
-    assign tcb_vld = ctl_run ? bus_vld : 1'b0        ;
-    assign tcb_xen =           bus_xrw.x             ;
-    assign tcb_ren =           bus_xrw.r             ;
-    assign tcb_wen =           bus_xrw.w & (bus_gpr ? |bus_adr[2+:5] : 1'b1);
-    assign tcb_adr =           bus_adr               ;
-    assign tcb_siz =           bus_siz               ;
-    assign tcb_wdt =           bus_wdt               ;
-    assign bus_rdt =           tcb_rdt               ;
-    assign bus_err =           tcb_err               ;
-    assign bus_rdy = bus_vld ? tcb_rdy : 1'b1        ;
+    assign tcb_vld = bus_vld & ctl_run;
+    assign tcb_xen = bus_xrw.x;
+    assign tcb_ren = bus_xrw.r;
+    assign tcb_wen = bus_xrw.w & (bus_gpr ? |bus_adr[2+:5] : 1'b1);
+    assign tcb_adr = bus_adr;
+    assign tcb_siz = bus_siz;
+    assign tcb_wdt = bus_wdt;
+    assign bus_rdt = tcb_rdt;
+    assign bus_err = tcb_err;
+    assign bus_rdy = tcb_rdy;
 
 endmodule
