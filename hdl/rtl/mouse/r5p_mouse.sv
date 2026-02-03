@@ -145,7 +145,8 @@ module r5p_mouse #(
     } bus_xrw_t;
 
     // TCL system bus (handshake)
-    logic                   bus_vld;  // valid
+    logic                   bus_vld;
+    logic                   ctl_bvr;
     logic                   bus_rdy;  // ready
     logic                   bus_trn;  // transfer
     // TCL system bus
@@ -153,7 +154,7 @@ module r5p_mouse #(
     logic        [XLEN-1:0] bus_adr;  // address
     logic           [2-1:0] bus_siz;  // RISC-V func3
     logic        [XLEN-1:0] bus_wdt;  // write data
-    logic        [XLEN-1:0] dec_rdt;  // read  data
+    logic        [XLEN-1:0] bus_rdt;  // read  data
     logic                   bus_err;  // error
 
     // FSM (finite state machine) and phases
@@ -161,10 +162,6 @@ module r5p_mouse #(
     logic           [2-1:0] ctl_fsm;  // FSM state register
     logic           [2-1:0] ctl_nxt;  // FSM state next
     logic           [3-1:0] ctl_pha;  // FSM phase
-
-    // bus valid combinational/registered
-    logic                   ctl_bvc;
-    logic                   ctl_bvr;
 
     // IFU: instruction fetch unit
     logic        [XLEN-1:0] ifu_pcr;  // program counter register
@@ -222,7 +219,7 @@ module r5p_mouse #(
 ///////////////////////////////////////////////////////////////////////////////
 
     // instruction multiplexer
-    assign ifu_mux = (ctl_fsm == ST1) ? dec_rdt : ifu_buf;
+    assign ifu_mux = (ctl_fsm == ST1) ? bus_rdt : ifu_buf;
 
     // GPR address
     assign dec_rd  = ifu_mux[11: 7];  // decoder GPR `rd`  address
@@ -302,9 +299,8 @@ module r5p_mouse #(
     // sequential block
     always_ff @(posedge clk, posedge rst)
     if (rst) begin
-        // bus valid
-        bus_vld <= 1'b0;
         // control
+        ctl_run <= 1'b0;
         ctl_fsm <= ST0;
         ctl_bvr <= 1'b0;
         // PC
@@ -318,35 +314,38 @@ module r5p_mouse #(
         // branch taken
         buf_tkn <= 1'b0;
     end else begin
-        // bus valid (always valid after reset)
-        bus_vld <= 1'b1;
+        // control (starts running after reset)
+        ctl_run <= 1'b1;
         // internal state
         if (bus_trn) begin
             // control (go to the next state)
             ctl_fsm <= ctl_nxt;
-            ctl_bvr <= ctl_bvc;
+            ctl_bvr <= bus_vld;
             // FSM dependant buffers
-            if (ctl_fsm == ST0) begin
-                // update program counter
-                ifu_pcr <= ifu_pcn & IFU_MSK;
-            end
-            if (ctl_fsm == ST1) begin
-                // load the buffer when the instruction is available on the bus
-                ifu_buf <= dec_rdt;
-            end
-            // load the buffer when the data is available on the bus
-            if (ctl_fsm == ST2) begin
+            unique case (ctl_fsm)
+                ST0: begin
+                    // update program counter
+                    ifu_pcr <= ifu_pcn & IFU_MSK;
+                end
+                ST1: begin
+                    // load the buffer when the instruction is available on the bus
+                    ifu_buf <= bus_rdt;
+                end
                 // load the buffer when the data is available on the bus
-                buf_dat <= dec_rdt;
-                // load address buffer
-                buf_adr <= add_sum[1:0];
-            end
-            if (ctl_fsm == ST3) begin
-                // load the buffer when the data is available on the bus
-                buf_dat <= dec_rdt;
-                // branch taken bit for branch address calculation
-                buf_tkn <= bru_tkn;
-            end
+                ST2: begin
+                    // load the buffer when the data is available on the bus
+                    buf_dat <= bus_rdt;
+                    // load address buffer
+                    buf_adr <= add_sum[1:0];
+                end
+                ST3: begin
+                    // load the buffer when the data is available on the bus
+                    buf_dat <= bus_rdt;
+                    // branch taken bit for branch address calculation
+                    buf_tkn <= bru_tkn;
+                end
+                default: begin end
+            endcase
         end
     end
 
@@ -363,7 +362,7 @@ module r5p_mouse #(
         add_op1 = 33'dx;
         add_op2 = 33'dx;
         // system bus
-        ctl_bvc =  1'b1;
+        bus_vld =  1'b1;
         bus_xrw =  3'bxxx;
         bus_adr = 32'hxxxxxxxx;
         bus_siz =  2'bxx;
@@ -384,7 +383,7 @@ module r5p_mouse #(
                 ctl_nxt = ST1;
                 ctl_pha = IF;
                 // calculate instruction address
-                case (dec_opc)
+                unique case (dec_opc)
                   JAL: begin
                     // adder: current instruction address + J immediate
                     add_inc = 1'b0;
@@ -419,7 +418,7 @@ module r5p_mouse #(
                   end
                 endcase
                 // system bus: instruction fetch
-                ctl_bvc = 1'b1;
+                bus_vld = 1'b1;
                 bus_xrw = 3'b110;
                 bus_siz = LW[1:0];
                 bus_wdt = 32'hxxxxxxxx;
@@ -428,17 +427,17 @@ module r5p_mouse #(
             end
             ST1: begin
                 // adder, system bus
-                case (dec_opc)
+                unique case (dec_opc)
                     LUI, AUIPC, JAL: begin
                         // control (FSM, phase)
                         ctl_nxt = ST0;
                         ctl_pha = WB;
                         // GPR rd write
-                        ctl_bvc = |dec_rd;
+                        bus_vld = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
-                        case (dec_opc)
+                        unique case (dec_opc)
                             LUI: begin
                                 // GPR rd write (upper immediate)
                                 bus_wdt = dec_imu;
@@ -464,7 +463,7 @@ module r5p_mouse #(
                     end
                     JALR, BRANCH, LOAD, STORE, OP_IMM_32, OP_32: begin
                         // control (FSM)
-                        case (dec_opc)
+                        unique case (dec_opc)
                             BRANCH   ,
                             LOAD     ,
                             STORE    ,
@@ -476,7 +475,7 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = RS1;
                         // rs1 read
-                        ctl_bvc = |dec_rs1;
+                        bus_vld = |dec_rs1;
                         bus_xrw = 3'b010;
                         bus_adr = gpr_adr(dec_rs1);
                         bus_siz = LW[1:0];
@@ -490,7 +489,7 @@ module r5p_mouse #(
                             // control (phase)
                             ctl_pha = EXE;
                             // idle system bus
-                            ctl_bvc = 1'b0;
+                            bus_vld = 1'b0;
                         end
                     end
                     default: begin end
@@ -500,16 +499,16 @@ module r5p_mouse #(
                 // control (FSM)
                 ctl_nxt = ST3;
                 // decode
-                case (dec_opc)
+                unique case (dec_opc)
                     LOAD: begin
                         // control (phase)
                         ctl_pha = MLD;
                         // arithmetic operations
                         add_inc = 1'b0;
-                        add_op1 = ext_sgn(dec_rdt);
+                        add_op1 = ext_sgn(bus_rdt);
                         add_op2 = ext_sgn(dec_imi);
                         // load
-                        ctl_bvc = 1'b1;
+                        bus_vld = 1'b1;
                         bus_xrw = 3'b010;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
@@ -518,7 +517,7 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = RS2;
                         // GPR rs2 read
-                        ctl_bvc = |dec_rs2;
+                        bus_vld = |dec_rs2;
                         bus_xrw = 3'b010;
                         bus_adr = gpr_adr(dec_rs2);
                         bus_siz = LW[1:0];
@@ -531,7 +530,7 @@ module r5p_mouse #(
                 // control (FSM)
                 ctl_nxt = ST0;
                 // decode
-                case (dec_opc)
+                unique case (dec_opc)
                     JALR: begin
                         // control (phase)
                         ctl_pha = WB;
@@ -540,7 +539,7 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(ifu_pcr);
                         add_op2 = ext_sgn(32'd4);
                         // GPR rd write
-                        ctl_bvc = |dec_rd;
+                        bus_vld = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -550,68 +549,68 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = WB;
                         // GPR rd write
-                        ctl_bvc = |dec_rd;
+                        bus_vld = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
-                        case (dec_opc)
+                        unique case (dec_opc)
                             OP_32: begin
                                 // arithmetic operations
-                                case (dec_fn3)
+                                unique case (dec_fn3)
                                     ADD    : begin
                                         add_inc = dec_fn7[5];
                                         add_op1 = ext_sgn(buf_dat);
-                                        add_op2 = ext_sgn(dec_rdt ^ {XLEN{dec_fn7[5]}});
+                                        add_op2 = ext_sgn(bus_rdt ^ {XLEN{dec_fn7[5]}});
                                     end
                                     SLT    : begin
                                         add_inc = 1'b1;
                                         add_op1 = ext_sgn( buf_dat);
-                                        add_op2 = ext_sgn(~dec_rdt);
+                                        add_op2 = ext_sgn(~bus_rdt);
                                     end
                                     SLTU   : begin
                                         add_inc = 1'b1;
                                         add_op1 = {1'b0,  buf_dat};
-                                        add_op2 = {1'b1, ~dec_rdt};
+                                        add_op2 = {1'b1, ~bus_rdt};
                                     end
                                     default: begin end
                                 endcase
                                 // logic operations
                                 log_op1 = buf_dat;
-                                log_op2 = dec_rdt;
+                                log_op2 = bus_rdt;
                                 // shift operations
                                 shf_op1 = buf_dat;
-                                shf_op2 = dec_rdt[XLOG-1:0];
+                                shf_op2 = bus_rdt[XLOG-1:0];
                             end
                             OP_IMM_32: begin
                                 // arithmetic operations
-                                case (dec_fn3)
+                                unique case (dec_fn3)
                                     ADD    : begin
                                         add_inc = 1'b0;
-                                        add_op1 = ext_sgn(dec_rdt);
+                                        add_op1 = ext_sgn(bus_rdt);
                                         add_op2 = ext_sgn(dec_imi);
                                     end
                                     SLT    : begin
                                         add_inc = 1'b1;
-                                        add_op1 = ext_sgn( dec_rdt);
+                                        add_op1 = ext_sgn( bus_rdt);
                                         add_op2 = ext_sgn(~dec_imi);
                                     end
                                     SLTU   : begin
                                         add_inc = 1'b1;
-                                        add_op1 = {1'b0,  dec_rdt};
+                                        add_op1 = {1'b0,  bus_rdt};
                                         add_op2 = {1'b1, ~dec_imi};
                                     end
                                     default: begin end
                                 endcase
                                 // logic operations
-                                log_op1 = dec_rdt;
+                                log_op1 = bus_rdt;
                                 log_op2 = dec_imi;
                                 // shift operations
-                                shf_op1 = dec_rdt;
+                                shf_op1 = bus_rdt;
                                 shf_op2 = dec_imi[XLOG-1:0];
                             end
                             default: begin end
                         endcase
-                        case (dec_fn3)
+                        unique case (dec_fn3)
                             // adder based ifu_buf functions
                             ADD : bus_wdt = add_sum[XLEN-1:0];
                             SLT ,
@@ -623,24 +622,23 @@ module r5p_mouse #(
                             // barrel shifter
                             SR  : bus_wdt =        shf_val ;
                             SL  : bus_wdt = bitrev(shf_val);
-                            default: begin
-                            end
+                            default: begin end
                         endcase
                     end
                     LOAD: begin
                         // control (phase)
                         ctl_pha = WB;
                         // GPR rd write
-                        ctl_bvc = |dec_rd;
+                        bus_vld = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
-                        case (dec_fn3)
-                            LB : bus_wdt = XLEN'(  $signed(dec_rdt[ 8-1:0]));
-                            LH : bus_wdt = XLEN'(  $signed(dec_rdt[16-1:0]));
-                            LW : bus_wdt = XLEN'(  $signed(dec_rdt[32-1:0]));
-                            LBU: bus_wdt = XLEN'($unsigned(dec_rdt[ 8-1:0]));
-                            LHU: bus_wdt = XLEN'($unsigned(dec_rdt[16-1:0]));
+                        unique case (dec_fn3)
+                            LB : bus_wdt = XLEN'(  $signed(bus_rdt[ 8-1:0]));
+                            LH : bus_wdt = XLEN'(  $signed(bus_rdt[16-1:0]));
+                            LW : bus_wdt = XLEN'(  $signed(bus_rdt[32-1:0]));
+                            LBU: bus_wdt = XLEN'($unsigned(bus_rdt[ 8-1:0]));
+                            LHU: bus_wdt = XLEN'($unsigned(bus_rdt[16-1:0]));
                             default: bus_wdt = 32'hxxxxxxxx;
                         endcase
                     end
@@ -652,17 +650,17 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(buf_dat);
                         add_op2 = ext_sgn(dec_ims);
                         // store
-                        ctl_bvc = 1'b1;
+                        bus_vld = 1'b1;
                         bus_xrw = 3'b001;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
-                        bus_wdt = dec_rdt;
+                        bus_wdt = bus_rdt;
                     end
                     BRANCH: begin
                         // control (phase)
                         ctl_pha = EXE;
                         // idle system bus
-                        ctl_bvc = 1'b0;
+                        bus_vld = 1'b0;
                         // subtraction
                         add_inc = 1'b1;
                         unique case (dec_fn3)
@@ -671,12 +669,12 @@ module r5p_mouse #(
                             BLT    ,
                             BGE    : begin
                                 add_op1 = ext_sgn( buf_dat);
-                                add_op2 = ext_sgn(~dec_rdt);
+                                add_op2 = ext_sgn(~bus_rdt);
                             end
                             BLTU   ,
                             BGEU   : begin
                                 add_op1 = {1'b0,  buf_dat};
-                                add_op2 = {1'b1, ~dec_rdt};
+                                add_op2 = {1'b1, ~bus_rdt};
                             end
                             default: begin
                                 add_op1 = 33'dx;
@@ -706,20 +704,20 @@ module r5p_mouse #(
 ///////////////////////////////////////////////////////////////////////////////
 
     // transfer
-    assign bus_trn = bus_vld & bus_rdy;
-//    assign bus_trn = ctl_run & bus_vld & bus_rdy;
+    assign bus_trn = ctl_run & bus_rdy;
+//    assign bus_trn = ctl_run & ctl_run & bus_rdy;
 
     // connection between external TCB and internal bus
     // filtering: GPR x0 access, NOP, BRANCH EXE phase
-    assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
+    assign tcb_vld = ctl_run ? bus_vld : 1'b0        ;
     assign tcb_xen =           bus_xrw.x             ;
     assign tcb_ren =           bus_xrw.r             ;
     assign tcb_wen =           bus_xrw.w             ;
     assign tcb_adr =           bus_adr               ;
     assign tcb_siz =           bus_siz               ;
     assign tcb_wdt =           bus_wdt               ;
-    assign dec_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
+    assign bus_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
     assign bus_err =           tcb_err               ;
-    assign bus_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
+    assign bus_rdy = bus_vld ? tcb_rdy : 1'b1        ;
 
 endmodule
