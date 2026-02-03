@@ -65,7 +65,7 @@ module r5p_mouse #(
     localparam logic [6:2] JALR      = 5'b11_001;
     localparam logic [6:2] JAL       = 5'b11_011;
     localparam logic [6:2] SYSTEM    = 5'b11_100;
-    
+
     // funct3 arithmetic/logic unit (R/I-type)
     localparam logic [3-1:0] ADD  = 3'b000;  // funct7[5] ? SUB : ADD
     localparam logic [3-1:0] SL   = 3'b001;  //
@@ -75,7 +75,7 @@ module r5p_mouse #(
     localparam logic [3-1:0] SR   = 3'b101;  // funct7[5] ? SRA : SRL
     localparam logic [3-1:0] OR   = 3'b110;  //
     localparam logic [3-1:0] AND  = 3'b111;  //
-    
+
     // funct3 load unit (I-type)
     localparam logic [3-1:0] LB   = 3'b000;  // RV32I RV64I RV128I
     localparam logic [3-1:0] LH   = 3'b001;  // RV32I RV64I RV128I
@@ -85,14 +85,14 @@ module r5p_mouse #(
     localparam logic [3-1:0] LHU  = 3'b101;  // RV32I RV64I RV128I
     localparam logic [3-1:0] LWU  = 3'b110;  //       RV64I RV128I
     localparam logic [3-1:0] LDU  = 3'b111;  //             RV128I
-    
+
     // funct3 store (S-type)
     localparam logic [3-1:0] SB   = 3'b000;  // RV32I RV64I RV128I
     localparam logic [3-1:0] SH   = 3'b001;  // RV32I RV64I RV128I
     localparam logic [3-1:0] SW   = 3'b010;  // RV32I RV64I RV128I
     localparam logic [3-1:0] SD   = 3'b011;  //       RV64I RV128I
     localparam logic [3-1:0] SQ   = 3'b100;  //             RV128I
-    
+
     // funct3 branch (B-type)
     localparam logic [3-1:0] BEQ  = 3'b000;  //     equal
     localparam logic [3-1:0] BNE  = 3'b001;  // not equal
@@ -110,7 +110,7 @@ module r5p_mouse #(
     localparam logic [2-1:0] ST1 = 2'd1;
     localparam logic [2-1:0] ST2 = 2'd2;
     localparam logic [2-1:0] ST3 = 2'd3;
-    
+
     // FSM phases (GPR access phases can be decoded from a single bit)
     localparam logic [3-1:0] IF  = 3'b000;  // instruction fetch
     localparam logic [3-1:0] RS1 = 3'b101;  // read register source 1
@@ -129,38 +129,49 @@ module r5p_mouse #(
         ext_sgn = {val[XLEN-1], val[XLEN-1:0]};
     endfunction
 
+    // construct system bus address for GPR access
+    function logic [XLEN-1:0] gpr_adr (logic [5-1:0] gpr_idx);
+        gpr_adr = {GPR_ADR[XLEN-1:5+2], gpr_idx, 2'b00};
+    endfunction
+
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
 ///////////////////////////////////////////////////////////////////////////////
 
     // TCL system bus
     logic                   bus_trn;  // transfer
-    
+
+    typedef struct packed {
+        logic x;  // execute
+        logic r;  // read
+        logic w;  // write
+    } bus_xrw_t;
+
     // TCL system bus (shared by instruction/load/store)
     logic                   bus_vld;  // valid
-    logic                   bus_wen;  // write enable
+    bus_xrw_t               bus_xrw;  // execute/read/write enable
     logic        [XLEN-1:0] bus_adr;  // address
     logic           [2-1:0] bus_siz;  // RISC-V func3
     logic        [XLEN-1:0] bus_wdt;  // write data
-    logic        [XLEN-1:0] dec_rdt;  // read data
+    logic        [XLEN-1:0] dec_rdt;  // read  data
     logic                   bus_err;  // error
     logic                   dec_rdy;  // ready
-    
+
     // FSM (finite state machine) and phases
     logic           [2-1:0] ctl_fsm;  // FSM state register
     logic           [2-1:0] ctl_nxt;  // FSM state next
     logic           [3-1:0] ctl_pha;  // FSM phase
-    
+
     // bus valid combinational/registerd
     logic                   ctl_bvc;
     logic                   ctl_bvr;
-    
+
     // IFU: instruction fetch unit
     logic        [XLEN-1:0] ctl_pcr;  // ctl_pcr register
     logic        [XLEN-1:0] ctl_pcn;  // ctl_pcr next
     logic        [ILEN-1:0] ifu_buf;  // instruction fetch unit buffer
     logic        [XLEN-1:0] ifu_mux;  // instruction multiplexer
-    
+
     // decoder (from buffer)
     logic           [5-1:0] dec_opc;  // OP code
     logic           [5-1:0] dec_rd ;  // GPR `rd`  address
@@ -168,14 +179,14 @@ module r5p_mouse #(
     logic           [5-1:0] dec_rs2;  // GPR `rs2` address
     logic           [3-1:0] dec_fn3;  // funct3
     logic           [7-1:0] dec_fn7;  // funct7
-    
+
     // immediates (from buffer)
     logic signed [XLEN-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
     logic signed [XLEN-1:0] dec_imb;  // decoder immediate B (branch)
     logic signed [XLEN-1:0] dec_ims;  // decoder immediate S (store)
     logic signed [XLEN-1:0] dec_imu;  // decoder immediate U (upper)
     logic signed [XLEN-1:0] dec_imj;  // decoder immediate J (jump)
-    
+
     // ALU adder (used for arithmetic and address calculations)
     logic                   add_inc;  // ALU adder increment (input carry)
     logic signed [XLEN-0:0] add_op1;  // ALU adder operand 1
@@ -183,25 +194,25 @@ module r5p_mouse #(
     logic signed [XLEN-0:0] add_sum;  // ALU adder output
     logic                   add_sgn;  // ALU adder output sign (MSB bit of sum)
     logic                   add_zro;  // ALU adder output zero
-    
+
     // ALU logical
     logic        [XLEN-1:0] log_op1;  // ALU logical operand 1
     logic        [XLEN-1:0] log_op2;  // ALU logical operand 2
     logic        [XLEN-1:0] log_val;  // ALU logical output
-    
+
     // ALU barrel shifter
     logic        [XLEN-1:0] shf_op1;  // shift operand 1
     logic        [XLOG-1:0] shf_op2;  // shift operand 2 (shift amount)
     logic        [XLEN-1:0] shf_tmp;  // bit reversed operand/result
     logic signed [XLEN-0:0] shf_ext;
     logic        [XLEN-1:0] shf_val /* synthesis keep */;  // result
-    
+
     // register read buffer
     logic        [XLEN-1:0] buf_dat;
-    
+
     // load address buffer
     logic           [2-1:0] buf_adr;
-    
+
     // branch taken
     logic                   bru_tkn;
     logic                   buf_tkn;
@@ -218,17 +229,17 @@ module r5p_mouse #(
 
     // instruction multiplexer
     assign ifu_mux = (ctl_fsm == ST1) ? dec_rdt : ifu_buf;
-    
+
     // GPR address
     assign dec_rd  = ifu_mux[11: 7];  // decoder GPR `rd`  address
     assign dec_rs1 = ifu_mux[19:15];  // decoder GPR `rs1` address
     assign dec_rs2 = ifu_mux[24:20];  // decoder GPR `rs2` address
-    
+
     // OP and functions
     assign dec_opc = ifu_mux[ 6: 2];  // OP code (instruction word [6:2], [1:0] are ignored)
     assign dec_fn3 = ifu_mux[14:12];  // funct3
     assign dec_fn7 = ifu_mux[31:25];  // funct7
-    
+
     // immediates
     assign dec_imi = {{21{ifu_mux[31]}}, ifu_mux[30:20]};  // I (integer, load, jump)
     assign dec_imb = {{20{ifu_mux[31]}}, ifu_mux[7], ifu_mux[30:25], ifu_mux[11:8], 1'b0};  // B (branch)
@@ -315,7 +326,7 @@ module r5p_mouse #(
     end else begin
         // bus valid (always valid after reset)
         bus_vld <= 1'b1;
-        // internal state 
+        // internal state
         if (bus_trn) begin
             // control (go to the next state)
             ctl_fsm <= ctl_nxt;
@@ -359,7 +370,7 @@ module r5p_mouse #(
         add_op1 = 33'dx;
         add_op2 = 33'dx;
         // system bus
-        bus_wen =  1'bx;
+        bus_xrw =  3'bxxx;
         bus_adr = 32'hxxxxxxxx;
         bus_siz =  2'bxx;
         bus_wdt = 32'hxxxxxxxx;
@@ -371,7 +382,7 @@ module r5p_mouse #(
         shf_op2 =  5'dx;
         // branch taken
         bru_tkn =  1'bx;
-      
+
         // states
         unique case (ctl_fsm)
             ST0: begin
@@ -414,7 +425,7 @@ module r5p_mouse #(
                   end
                 endcase
                 // system bus: instruction fetch
-                bus_wen = 1'b0;
+                bus_xrw = 3'b110;
                 bus_siz = LW[1:0];
                 bus_wdt = 32'hxxxxxxxx;
                 // PC next
@@ -429,8 +440,8 @@ module r5p_mouse #(
                         ctl_pha = WB;
                         ctl_bvc = |dec_rd;
                         // GPR rd write
-                        bus_wen = 1'b1;
-                        bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+                        bus_xrw = 3'b001;
+                        bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
                         case (dec_opc)
                             LUI: begin
@@ -471,8 +482,8 @@ module r5p_mouse #(
                         ctl_pha = RS1;
                         ctl_bvc = |dec_rs1;
                         // rs1 read
-                        bus_wen = 1'b0;
-                        bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rs1, 2'b00};
+                        bus_xrw = 3'b010;
+                        bus_adr = gpr_adr(dec_rs1);
                         bus_siz = LW[1:0];
                         bus_wdt = 32'hxxxxxxxx;
                     end
@@ -503,7 +514,7 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(dec_rdt);
                         add_op2 = ext_sgn(dec_imi);
                         // load
-                        bus_wen = 1'b0;
+                        bus_xrw = 3'b010;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
                     end
@@ -512,8 +523,8 @@ module r5p_mouse #(
                         ctl_pha = RS2;
                         ctl_bvc = |dec_rs2;
                         // GPR rs2 read
-                        bus_wen = 1'b0;
-                        bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rs2, 2'b00};
+                        bus_xrw = 3'b010;
+                        bus_adr = gpr_adr(dec_rs2);
                         bus_siz = LW[1:0];
                         bus_wdt = 32'hxxxxxxxx;
                     end
@@ -534,8 +545,8 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(ctl_pcr);
                         add_op2 = ext_sgn(32'd4);
                         // GPR rd write
-                        bus_wen = 1'b1;
-                        bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+                        bus_xrw = 3'b001;
+                        bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
                         bus_wdt = add_sum[XLEN-1:0];
                     end
@@ -544,8 +555,8 @@ module r5p_mouse #(
                         ctl_pha = WB;
                         ctl_bvc = |dec_rd;
                         // GPR rd write
-                        bus_wen =1'b1;
-                        bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+                        bus_xrw = 3'b001;
+                        bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
                         case (dec_opc)
                             OP_32: begin
@@ -625,8 +636,8 @@ module r5p_mouse #(
                         ctl_pha = WB;
                         ctl_bvc = |dec_rd;
                         // GPR rd write
-                        bus_wen = 1'b1;
-                        bus_adr = {GPR_ADR[XLEN-1:5+2], dec_rd , 2'b00};
+                        bus_xrw = 3'b001;
+                        bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
                         case (dec_fn3)
                             LB : bus_wdt = XLEN'(  $signed(dec_rdt[ 8-1:0]));
@@ -645,7 +656,7 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(buf_dat);
                         add_op2 = ext_sgn(dec_ims);
                         // store
-                        bus_wen = 1'b1;
+                        bus_xrw = 3'b001;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
                         bus_wdt = dec_rdt;
@@ -700,9 +711,9 @@ module r5p_mouse #(
     // connection between external TCB and internal bus
     // filtering: GPR x0 access, NOP, BRANCH EXE phase
     assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
-    assign tcb_ren =          ~bus_wen               ;
-    assign tcb_wen =           bus_wen               ;
-    assign tcb_xen =           ctl_pha == IF         ;
+    assign tcb_xen =           bus_xrw.x             ;
+    assign tcb_ren =           bus_xrw.r             ;
+    assign tcb_wen =           bus_xrw.w             ;
     assign tcb_adr =           bus_adr               ;
     assign tcb_siz =           bus_siz               ;
     assign tcb_wdt =           bus_wdt               ;
