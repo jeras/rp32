@@ -138,24 +138,23 @@ module r5p_mouse #(
 // local signals
 ///////////////////////////////////////////////////////////////////////////////
 
-    // TCL system bus
-    logic                   bus_trn;  // transfer
-
     typedef struct packed {
         logic x;  // execute
         logic r;  // read
         logic w;  // write
     } bus_xrw_t;
 
-    // TCL system bus (shared by instruction/load/store)
+    // TCL system bus (handshake)
     logic                   bus_vld;  // valid
+    logic                   bus_rdy;  // ready
+    logic                   bus_trn;  // transfer
+    // TCL system bus
     bus_xrw_t               bus_xrw;  // execute/read/write enable
     logic        [XLEN-1:0] bus_adr;  // address
     logic           [2-1:0] bus_siz;  // RISC-V func3
     logic        [XLEN-1:0] bus_wdt;  // write data
     logic        [XLEN-1:0] dec_rdt;  // read  data
     logic                   bus_err;  // error
-    logic                   dec_rdy;  // ready
 
     // FSM (finite state machine) and phases
     logic                   ctl_run;  // FSM running (out of reset)
@@ -163,13 +162,13 @@ module r5p_mouse #(
     logic           [2-1:0] ctl_nxt;  // FSM state next
     logic           [3-1:0] ctl_pha;  // FSM phase
 
-    // bus valid combinational/registerd
+    // bus valid combinational/registered
     logic                   ctl_bvc;
     logic                   ctl_bvr;
 
     // IFU: instruction fetch unit
-    logic        [XLEN-1:0] ctl_pcr;  // ctl_pcr register
-    logic        [XLEN-1:0] ctl_pcn;  // ctl_pcr next
+    logic        [XLEN-1:0] ifu_pcr;  // program counter register
+    logic        [XLEN-1:0] ifu_pcn;  // program counter next
     logic        [ILEN-1:0] ifu_buf;  // instruction fetch unit buffer
     logic        [XLEN-1:0] ifu_mux;  // instruction multiplexer
 
@@ -181,7 +180,7 @@ module r5p_mouse #(
     logic           [3-1:0] dec_fn3;  // funct3
     logic           [7-1:0] dec_fn7;  // funct7
 
-    // immediates (from buffer)
+    // immediate (from buffer)
     logic signed [XLEN-1:0] dec_imi;  // decoder immediate I (integer, load, jump)
     logic signed [XLEN-1:0] dec_imb;  // decoder immediate B (branch)
     logic signed [XLEN-1:0] dec_ims;  // decoder immediate S (store)
@@ -217,12 +216,6 @@ module r5p_mouse #(
     // branch taken
     logic                   bru_tkn;
     logic                   buf_tkn;
-
-///////////////////////////////////////////////////////////////////////////////
-// TCL system bus
-///////////////////////////////////////////////////////////////////////////////
-
-    assign bus_trn = bus_vld & dec_rdy;
 
 ///////////////////////////////////////////////////////////////////////////////
 // decoder
@@ -315,7 +308,7 @@ module r5p_mouse #(
         ctl_fsm <= ST0;
         ctl_bvr <= 1'b0;
         // PC
-        ctl_pcr <= IFU_RST;
+        ifu_pcr <= IFU_RST;
         // instruction buffer
         ifu_buf <= {20'd0, 5'd0, JAL, 2'b00};  // JAL x0, 0
         // data buffer
@@ -335,7 +328,7 @@ module r5p_mouse #(
             // FSM dependant buffers
             if (ctl_fsm == ST0) begin
                 // update program counter
-                ctl_pcr <= ctl_pcn & IFU_MSK;
+                ifu_pcr <= ifu_pcn & IFU_MSK;
             end
             if (ctl_fsm == ST1) begin
                 // load the buffer when the instruction is available on the bus
@@ -364,7 +357,7 @@ module r5p_mouse #(
         ctl_nxt =  2'dx;
         ctl_pha =  3'bxxx;
         // PC
-        ctl_pcn = 32'hxxxxxxxx;
+        ifu_pcn = 32'hxxxxxxxx;
         // adder
         add_inc =  1'bx;
         add_op1 = 33'dx;
@@ -395,7 +388,7 @@ module r5p_mouse #(
                   JAL: begin
                     // adder: current instruction address + J immediate
                     add_inc = 1'b0;
-                    add_op1 = ext_sgn(ctl_pcr);
+                    add_op1 = ext_sgn(ifu_pcr);
                     add_op2 = ext_sgn(dec_imj);
                     // system bus
                     bus_adr = add_sum[32-1:0];
@@ -411,7 +404,7 @@ module r5p_mouse #(
                   BRANCH: begin
                     // adder: current instruction address + B immediate
                     add_inc = 1'b0;
-                    add_op1 = ext_sgn(ctl_pcr);
+                    add_op1 = ext_sgn(ifu_pcr);
                     add_op2 = ext_sgn(buf_tkn ? dec_imb : 32'd4);
                     // system bus
                     bus_adr = add_sum[XLEN-1:0];
@@ -419,18 +412,19 @@ module r5p_mouse #(
                   default: begin
                     // adder: current instruction address
                     add_inc = 1'b0;
-                    add_op1 = ext_sgn(ctl_pcr);
+                    add_op1 = ext_sgn(ifu_pcr);
                     add_op2 = ext_sgn(32'd4);
                     // system bus: instruction address
                     bus_adr = add_sum[XLEN-1:0];
                   end
                 endcase
                 // system bus: instruction fetch
+                ctl_bvc = 1'b1;
                 bus_xrw = 3'b110;
                 bus_siz = LW[1:0];
                 bus_wdt = 32'hxxxxxxxx;
                 // PC next
-                ctl_pcn = bus_adr;
+                ifu_pcn = bus_adr;
             end
             ST1: begin
                 // adder, system bus
@@ -452,7 +446,7 @@ module r5p_mouse #(
                             AUIPC: begin
                                 // adder (PC + upper immediate)
                                 add_inc = 1'b0;
-                                add_op1 = ext_sgn(ctl_pcr);
+                                add_op1 = ext_sgn(ifu_pcr);
                                 add_op2 = ext_sgn(dec_imu);
                                 // GPR rd write (PC + upper immediate)
                                 bus_wdt = add_sum[32-1:0];
@@ -460,7 +454,7 @@ module r5p_mouse #(
                             JAL: begin
                                 // adder (PC increment)
                                 add_inc = 1'b0;
-                                add_op1 = ext_sgn(ctl_pcr);
+                                add_op1 = ext_sgn(ifu_pcr);
                                 add_op2 = ext_sgn(32'd4);
                                 // GPR rd write (PC increment)
                                 bus_wdt = add_sum[32-1:0];
@@ -543,7 +537,7 @@ module r5p_mouse #(
                         ctl_pha = WB;
                         // adder
                         add_inc = 1'b0;
-                        add_op1 = ext_sgn(ctl_pcr);
+                        add_op1 = ext_sgn(ifu_pcr);
                         add_op2 = ext_sgn(32'd4);
                         // GPR rd write
                         ctl_bvc = |dec_rd;
@@ -711,6 +705,10 @@ module r5p_mouse #(
 // system bus mapping IFU/LSU/GPR access
 ///////////////////////////////////////////////////////////////////////////////
 
+    // transfer
+    assign bus_trn = bus_vld & bus_rdy;
+//    assign bus_trn = ctl_run & bus_vld & bus_rdy;
+
     // connection between external TCB and internal bus
     // filtering: GPR x0 access, NOP, BRANCH EXE phase
     assign tcb_vld = ctl_bvc ? bus_vld : 1'b0        ;
@@ -722,6 +720,6 @@ module r5p_mouse #(
     assign tcb_wdt =           bus_wdt               ;
     assign dec_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
     assign bus_err =           tcb_err               ;
-    assign dec_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
+    assign bus_rdy = ctl_bvc ? tcb_rdy : 1'b1        ;
 
 endmodule
