@@ -26,7 +26,7 @@ $PATH_TCB_RTL/peri/gpio/tcb_peri_gpio.sv \
 $PATH_TCB_RTL/lite_peri/gpio/tcb_lite_peri_gpio.sv \
 $PATH_TCB_RTL/peri/uart/tcb_peri_uart_ser.sv \
 $PATH_TCB_RTL/peri/uart/tcb_peri_uart_des.sv \
-$PATH_CPU_RTL/fpga/gowin/tcb_peri_uart_fifo_gowin_primitive.sv \
+$PATH_TCB_RTL/peri/uart/tcb_peri_uart_fifo.sv \
 $PATH_TCB_RTL/peri/uart/tcb_peri_uart.sv \
 $PATH_TCB_RTL/lite_peri/uart/tcb_lite_peri_uart.sv \
 $PATH_CPU_RTL/riscv/riscv_isa_pkg.sv \
