@@ -141,6 +141,7 @@ module r5p_mouse_riscof_tb
 
     tcb_lite_vip_memory #(
         .MFN  (""),
+        .PWR  (1'b0),
         .SIZE (MEM_SIZ),
         .IFN  (1)
     ) mem (

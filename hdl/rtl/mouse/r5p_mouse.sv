@@ -150,6 +150,7 @@ module r5p_mouse #(
     logic                   bus_rdy;  // ready
     logic                   bus_trn;  // transfer
     // TCL system bus
+    logic                   bus_gpr;  // GPR access
     bus_xrw_t               bus_xrw;  // execute/read/write enable
     logic        [XLEN-1:0] bus_adr;  // address
     logic           [2-1:0] bus_siz;  // RISC-V func3
@@ -362,7 +363,8 @@ module r5p_mouse #(
         add_op1 = 33'dx;
         add_op2 = 33'dx;
         // system bus
-        bus_vld =  1'b1;
+        bus_vld =  1'bx;  // TODO: value 1'b1 resulted in lower area with Yosys
+        bus_gpr =  1'bx;
         bus_xrw =  3'bxxx;
         bus_adr = 32'hxxxxxxxx;
         bus_siz =  2'bxx;
@@ -419,6 +421,7 @@ module r5p_mouse #(
                 endcase
                 // system bus: instruction fetch
                 bus_vld = 1'b1;
+                bus_gpr = 1'b0;
                 bus_xrw = 3'b110;
                 bus_siz = LW[1:0];
                 bus_wdt = 32'hxxxxxxxx;
@@ -433,8 +436,9 @@ module r5p_mouse #(
                         ctl_nxt = ST0;
                         ctl_pha = WB;
                         // GPR rd write
-                        bus_vld = |dec_rd;
-                        bus_xrw = 3'b001;
+                        bus_vld = 1'b1;
+                        bus_gpr = 1'b1;
+                        bus_xrw = {1'b0, 1'b0, |dec_rd};
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
                         unique case (dec_opc)
@@ -475,7 +479,8 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = RS1;
                         // rs1 read
-                        bus_vld = |dec_rs1;
+                        bus_vld = 1'b1;
+                        bus_gpr = 1'b1;
                         bus_xrw = 3'b010;
                         bus_adr = gpr_adr(dec_rs1);
                         bus_siz = LW[1:0];
@@ -509,6 +514,7 @@ module r5p_mouse #(
                         add_op2 = ext_sgn(dec_imi);
                         // load
                         bus_vld = 1'b1;
+                        bus_gpr = 1'b0;
                         bus_xrw = 3'b010;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
@@ -517,7 +523,8 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = RS2;
                         // GPR rs2 read
-                        bus_vld = |dec_rs2;
+                        bus_vld = 1'b1;
+                        bus_gpr = 1'b1;
                         bus_xrw = 3'b010;
                         bus_adr = gpr_adr(dec_rs2);
                         bus_siz = LW[1:0];
@@ -539,7 +546,8 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(ifu_pcr);
                         add_op2 = ext_sgn(32'd4);
                         // GPR rd write
-                        bus_vld = |dec_rd;
+                        bus_vld = 1'b1;
+                        bus_gpr = 1'b1;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -549,7 +557,8 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = WB;
                         // GPR rd write
-                        bus_vld = |dec_rd;
+                        bus_vld = 1'b1;
+                        bus_gpr = 1'b1;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -629,7 +638,8 @@ module r5p_mouse #(
                         // control (phase)
                         ctl_pha = WB;
                         // GPR rd write
-                        bus_vld = |dec_rd;
+                        bus_vld = 1'b1;
+                        bus_gpr = 1'b1;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -651,6 +661,7 @@ module r5p_mouse #(
                         add_op2 = ext_sgn(dec_ims);
                         // store
                         bus_vld = 1'b1;
+                        bus_gpr = 1'b0;
                         bus_xrw = 3'b001;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
@@ -712,11 +723,11 @@ module r5p_mouse #(
     assign tcb_vld = ctl_run ? bus_vld : 1'b0        ;
     assign tcb_xen =           bus_xrw.x             ;
     assign tcb_ren =           bus_xrw.r             ;
-    assign tcb_wen =           bus_xrw.w             ;
+    assign tcb_wen =           bus_xrw.w & (bus_gpr ? |bus_adr[2+:5] : 1'b1);
     assign tcb_adr =           bus_adr               ;
     assign tcb_siz =           bus_siz               ;
     assign tcb_wdt =           bus_wdt               ;
-    assign bus_rdt = ctl_bvr ? tcb_rdt : 32'h00000000;
+    assign bus_rdt =           tcb_rdt               ;
     assign bus_err =           tcb_err               ;
     assign bus_rdy = bus_vld ? tcb_rdy : 1'b1        ;
 
