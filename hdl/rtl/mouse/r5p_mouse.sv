@@ -158,6 +158,7 @@ module r5p_mouse #(
     logic                   dec_rdy;  // ready
 
     // FSM (finite state machine) and phases
+    logic                   ctl_run;  // FSM running (out of reset)
     logic           [2-1:0] ctl_fsm;  // FSM state register
     logic           [2-1:0] ctl_nxt;  // FSM state next
     logic           [3-1:0] ctl_pha;  // FSM phase
@@ -362,7 +363,6 @@ module r5p_mouse #(
         // control (FSM, phase)
         ctl_nxt =  2'dx;
         ctl_pha =  3'bxxx;
-        ctl_bvc =  1'b1;
         // PC
         ctl_pcn = 32'hxxxxxxxx;
         // adder
@@ -370,6 +370,7 @@ module r5p_mouse #(
         add_op1 = 33'dx;
         add_op2 = 33'dx;
         // system bus
+        ctl_bvc =  1'b1;
         bus_xrw =  3'bxxx;
         bus_adr = 32'hxxxxxxxx;
         bus_siz =  2'bxx;
@@ -438,8 +439,8 @@ module r5p_mouse #(
                         // control (FSM, phase)
                         ctl_nxt = ST0;
                         ctl_pha = WB;
-                        ctl_bvc = |dec_rd;
                         // GPR rd write
+                        ctl_bvc = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -480,8 +481,8 @@ module r5p_mouse #(
                         endcase
                         // control (phase)
                         ctl_pha = RS1;
-                        ctl_bvc = |dec_rs1;
                         // rs1 read
+                        ctl_bvc = |dec_rs1;
                         bus_xrw = 3'b010;
                         bus_adr = gpr_adr(dec_rs1);
                         bus_siz = LW[1:0];
@@ -514,6 +515,7 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(dec_rdt);
                         add_op2 = ext_sgn(dec_imi);
                         // load
+                        ctl_bvc = 1'b1;
                         bus_xrw = 3'b010;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
@@ -521,8 +523,8 @@ module r5p_mouse #(
                     BRANCH, STORE, OP_32: begin
                         // control (phase)
                         ctl_pha = RS2;
-                        ctl_bvc = |dec_rs2;
                         // GPR rs2 read
+                        ctl_bvc = |dec_rs2;
                         bus_xrw = 3'b010;
                         bus_adr = gpr_adr(dec_rs2);
                         bus_siz = LW[1:0];
@@ -539,12 +541,12 @@ module r5p_mouse #(
                     JALR: begin
                         // control (phase)
                         ctl_pha = WB;
-                        ctl_bvc = |dec_rd;
                         // adder
                         add_inc = 1'b0;
                         add_op1 = ext_sgn(ctl_pcr);
                         add_op2 = ext_sgn(32'd4);
                         // GPR rd write
+                        ctl_bvc = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -553,8 +555,8 @@ module r5p_mouse #(
                     OP_32, OP_IMM_32: begin
                         // control (phase)
                         ctl_pha = WB;
-                        ctl_bvc = |dec_rd;
                         // GPR rd write
+                        ctl_bvc = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -634,8 +636,8 @@ module r5p_mouse #(
                     LOAD: begin
                         // control (phase)
                         ctl_pha = WB;
-                        ctl_bvc = |dec_rd;
                         // GPR rd write
+                        ctl_bvc = |dec_rd;
                         bus_xrw = 3'b001;
                         bus_adr = gpr_adr(dec_rd);
                         bus_siz = SW[1:0];
@@ -656,6 +658,7 @@ module r5p_mouse #(
                         add_op1 = ext_sgn(buf_dat);
                         add_op2 = ext_sgn(dec_ims);
                         // store
+                        ctl_bvc = 1'b1;
                         bus_xrw = 3'b001;
                         bus_adr = add_sum[XLEN-1:0];
                         bus_siz = dec_fn3[1:0];
