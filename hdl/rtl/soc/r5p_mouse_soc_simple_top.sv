@@ -16,15 +16,12 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 
-module r5p_mouse_soc_simple_top
-//    import riscv_isa_pkg::*;
-    import tcb_lite_pkg::*;
-#(
+module r5p_mouse_soc_simple_top #(
     // constants used across the design in signal range sizing instead of literals
     localparam int unsigned   XLEN = 32,
     // SoC peripherals
     parameter  bit            ENA_GPIO = 1'b1,
-    parameter  bit            ENA_UART = 1'b0,
+    parameter  bit            ENA_UART = 1'b1,
     // GPIO
     parameter  int unsigned   GPIO_DAT = 32,
     // UART
@@ -57,6 +54,8 @@ module r5p_mouse_soc_simple_top
 // local parameters and parameter validation
 ////////////////////////////////////////////////////////////////////////////////
 
+    localparam MEM_ADR = $clog2(MEM_SIZ);
+
 // TODO: check if instruction address bus width and instruction memory size fit
 // TODO: check if data address bus width and data memory size fit
 
@@ -64,17 +63,17 @@ module r5p_mouse_soc_simple_top
 // local signals
 ////////////////////////////////////////////////////////////////////////////////
 
-    // TCB configurations               '{HSK: '{DLY,  HLD}, BUS: '{ MOD, CTL,  ADR,  DAT, STS}}
-    localparam tcb_lite_cfg_t CFG_CPU = '{HSK: '{  1, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
-    localparam tcb_lite_cfg_t CFG_MEM = '{HSK: '{  1, 1'b0}, BUS: '{1'b1,   0, XLEN, XLEN,   0}};
-    localparam tcb_lite_cfg_t CFG_PER = '{HSK: '{  0, 1'b0}, BUS: '{1'b0,   0, XLEN, XLEN,   0}};
-
-    // system busses
-    tcb_lite_if #(CFG_CPU) tcb_cpu         (.clk (clk), .rst (rst));
-    tcb_lite_if #(CFG_CPU) tcb_dmx [2-1:0] (.clk (clk), .rst (rst));  // demultiplexer
-    tcb_lite_if #(CFG_MEM) tcb_mem         (.clk (clk), .rst (rst));  // memory bus DLY=1
-    tcb_lite_if #(CFG_PER) tcb_pb0         (.clk (clk), .rst (rst));  // peripherals bus DLY=0
-    tcb_lite_if #(CFG_PER) tcb_per [2-1:0] (.clk (clk), .rst (rst));  // peripherals
+    // TCB system bus (shared by instruction/load/store)
+    logic            tcb_vld;  // valid
+    logic            tcb_ren;  // write enable
+    logic            tcb_wen;  // write enable
+    logic            tcb_xen;  // write enable
+    logic [XLEN-1:0] tcb_adr;  // address
+    logic    [2-1:0] tcb_siz;  // RISC-V func3[1:0]
+    logic [XLEN-1:0] tcb_wdt;  // write data
+    logic [XLEN-1:0] tcb_rdt;  // read data
+    logic            tcb_err;  // error
+    logic            tcb_rdy;  // ready
 
 ////////////////////////////////////////////////////////////////////////////////
 // R5P Mouse core instance
@@ -89,185 +88,143 @@ module r5p_mouse_soc_simple_top
         .clk     (clk),
         .rst     (rst),
         // TCB system bus (shared by instruction/load/store)
-        .tcb_vld (tcb_cpu.vld),
-        .tcb_ren (tcb_cpu.req.ren),
-        .tcb_wen (tcb_cpu.req.wen),
-        .tcb_xen (               ),
-        .tcb_adr (tcb_cpu.req.adr),
-        .tcb_siz (tcb_cpu.req.siz),
-        .tcb_wdt (tcb_cpu.req.wdt),
-        .tcb_rdt (tcb_cpu.rsp.rdt),
-        .tcb_err (tcb_cpu.rsp.err),
-        .tcb_rdy (tcb_cpu.rdy)
+        .tcb_vld (tcb_vld),
+        .tcb_ren (tcb_ren),
+        .tcb_wen (tcb_wen),
+        .tcb_xen (tcb_xen),
+        .tcb_adr (tcb_adr),
+        .tcb_siz (tcb_siz),
+        .tcb_wdt (tcb_wdt),
+        .tcb_rdt (tcb_rdt),
+        .tcb_err (tcb_err),
+        .tcb_rdy (tcb_rdy)
     );
 
-    // signals not provided by the CPU
-    assign tcb_cpu.req.lck = 1'b0;
-    assign tcb_cpu.req.ndn = 1'b0;
+    // there are no error conditions
+    assign tcb_err = 1'b0;
+
+    // there is no backpressure
+    assign tcb_rdy = 1'b1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // instruction fetch/load/store TCB interconnect
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic [$clog2(2)-1:0] tcb_cpu_sel;
+    // system bus memory signals
+    logic               mem_trn;  // transfer
+    logic    [XLEN-1:0] mem_rdt;  // read data
 
-    // decoding memory/peripherals
-    tcb_lite_lib_decoder #(
-        .ADR (CFG_CPU.BUS.ADR),
-        .IFN (2),
-        .DAM ({{12'h800, 4'b0001, 16'bxxxx_xxxx_xxxx_xxxx},   // 0x8001_0000 ~ 0x8001_ffff - peripherals
-               {12'h800, 4'b0000, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x8000_ffff - data memory
-    ) tcb_lsu_dec (
-        .mon  (tcb_cpu    ),
-        .sel  (tcb_cpu_sel)
-    );
+    // system bus peripheral signals (no byte enable)
+    logic               per_trn;  // transfer
+    logic    [XLEN-1:0] per_rdt;  // read data
 
-    // demultiplexing memory/peripherals
-    tcb_lite_lib_demultiplexer #(
-        .IFN (2)
-    ) tcb_lsu_demux (
-        // control
-        .sel  (tcb_cpu_sel),
-        // TCB interfaces
-        .sub  (tcb_cpu),
-        .man  (tcb_dmx)
-    );
+    // delayed address for TCB response data multiplexer
+    logic    [XLEN-1:0] dly_adr;  // address
 
-    // convert from TCB_LOG_SIZE to TCB_BYTE_ENA mode
-    tcb_lite_lib_logsize2byteena tcb_mem_converter (
-        .sub  (tcb_dmx[0]),
-        .man  (tcb_mem)
-    );
+    always_ff @(posedge clk)
+    dly_adr <= tcb_adr;
 
-    // register request path to convert from DLY=1 CPU to DLY=0 peripherals
-    tcb_lite_lib_register_request tcb_lsu_register (
-        .sub  (tcb_dmx[1]),
-        .man  (tcb_pb0)
-    );
+    // system bus address decoder
+    assign mem_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b0);
+    assign per_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b1);
 
-    logic [$clog2(2)-1:0] tcb_pb0_sel;
-
-    // decoding peripherals (GPIO/UART)
-    tcb_lite_lib_decoder #(
-        .ADR (CFG_CPU.BUS.ADR),
-        .IFN (2),
-        .DAM ({{17'bx, 15'bxx_xxxx_x1xx_xxxx},   // 0x40 ~ 0x7f - UART controller
-               {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x00 ~ 0x3f - GPIO controller
-    ) tcb_pb0_dec (
-        .mon  (tcb_pb0),
-        .sel  (tcb_pb0_sel)
-    );
-
-    // demultiplexing peripherals (GPIO/UART)
-    tcb_lite_lib_demultiplexer #(
-        .IFN (2)
-    ) tcb_pb0_demux (
-        // control
-        .sel  (tcb_pb0_sel),
-        // TCB interfaces
-        .sub  (tcb_pb0),
-        .man  (tcb_per)
-    );
+    // system bus response multiplexer
+    assign tcb_rdt = dly_adr[16] ? per_rdt : mem_rdt;
 
 ////////////////////////////////////////////////////////////////////////////////
 // memory instances
 ////////////////////////////////////////////////////////////////////////////////
 
-    // shared code/data memory
-    r5p_soc_memory #(
-        .FNM  (MEM_FNM),
-        .SIZ  (MEM_SIZ)
-    ) mem (
-        .sub  (tcb_mem)
-    );
+`ifdef YOSYS_SLANG
+    localparam int unsigned MEM_DATA = XLEN;
+    localparam int unsigned MEM_SIZE = MEM_SIZ/4;
+    `include "mem_if.vh"
+`else
+    logic [XLEN-1:0] mem [0:MEM_SIZ/4-1];
+    initial  $readmemh(MEM_FNM, mem);
+`endif
+
+    logic [MEM_ADR-1:2] mem_adr;  // address
+    logic       [4-1:0] mem_byt;  // byte_enable
+    logic    [XLEN-1:0] mem_wdt;  // write data
+
+    // TODO: handle proper byte mapping
+    assign mem_adr = tcb_adr[MEM_ADR-1:2];
+    assign mem_byt = '1;
+    assign mem_wdt = tcb_wdt;
+
+    always_ff @(posedge clk)
+    if (mem_trn) begin
+        if (~tcb_wen) begin
+            // read
+            mem_rdt <= mem[mem_adr];
+        end else begin
+            // write
+            if (mem_byt[0]) mem[mem_adr][ 7: 0] <= mem_wdt[ 7: 0];
+            if (mem_byt[1]) mem[mem_adr][15: 8] <= mem_wdt[15: 8];
+            if (mem_byt[2]) mem[mem_adr][23:16] <= mem_wdt[23:16];
+            if (mem_byt[3]) mem[mem_adr][31:24] <= mem_wdt[31:24];
+        end
+    end
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPIO
 ////////////////////////////////////////////////////////////////////////////////
 
-    generate
-    if (ENA_GPIO) begin: gen_gpio
+    logic [GPIO_DAT-1:0] gpio_r [1:0];
 
-        // GPIO controller
-        tcb_lite_peri_gpio #(
-            .GPIO_DAT (GPIO_DAT),
-            .SYS_MIN  (1'b1)
-        ) gpio (
-            // GPIO signals
-            .gpio_o  (gpio_o),
-            .gpio_e  (gpio_e),
-            .gpio_i  (gpio_i),
-            // bus interface
-            .sub     (tcb_per[0]),
-            .irq     ()
-        );
+    // input resynchronization
+    always @(posedge clk)
+    begin
+        gpio_r[0] <= gpio_i;
+        gpio_r[1] <= gpio_r[0];
+    end
 
-    end: gen_gpio
-    else begin: gen_gpio_err
+    logic               per_ena;  // enable
+    logic               per_wen;  // write enable
+    logic [MEM_ADR-1:2] per_adr;  // address
+    logic    [XLEN-1:0] per_wdt;  // write data
 
-        // error response
-        tcb_lite_lib_error gpio_err (
-            .sub  (tcb_per[0]),
-            .sts  ('0)
-        );
+    // delayed peripheral transfer
+    always_ff @(posedge clk, posedge rst)
+    if (rst)  per_ena <= 1'b0;
+    else      per_ena <= per_trn;
 
-        // GPIO signals
-        assign gpio_o = '0;
-        assign gpio_e = '0;
-        //     gpio_i
+    // delayed peripheral request
+    always_ff @(posedge clk)
+    if (per_trn) begin
+        per_wen <= tcb_wen;
+        per_adr <= tcb_adr[MEM_ADR-1:2];
+        per_wdt <= tcb_wdt;
+    end
 
-    end: gen_gpio_err
-    endgenerate
+    // GPIO write access
+    always_ff @(posedge clk, posedge rst)
+    if (rst) begin
+        gpio_o <= '0;
+        gpio_e <= '0;
+    end else begin
+        if (per_ena & per_wen) begin
+            if (per_adr[2] == 1'b0) gpio_o <= per_wdt[GPIO_DAT-1:0];
+            if (per_adr[2] == 1'b1) gpio_e <= per_wdt[GPIO_DAT-1:0];
+        end
+    end
+
+    always_comb
+    case (per_adr[3:2])
+        2'b00:    per_rdt = gpio_o;
+        2'b01:    per_rdt = gpio_e;
+        2'b10:    per_rdt = gpio_r[1];
+        default:  per_rdt = 'x;
+    endcase
 
 ////////////////////////////////////////////////////////////////////////////////
 // UART
 ////////////////////////////////////////////////////////////////////////////////
 
-    generate
-    if (ENA_UART) begin: gen_uart
-
-        // baudrate parameters (divider and counter width)
-        localparam int unsigned BDR = 50_000_000 / 115_200;  // 50MHz / 115200 = 434.0
-        localparam int unsigned UART_BDR = $clog2(BDR);  // a 9-bit counter is required
-
-        // UART controller
-        tcb_lite_peri_uart #(
-            // UART parameters
-            .UART_BDR       (UART_BDR),
-            .FIFO_SIZ       (FIFO_SIZ),
-            // configuration register parameters (write enable, reset value)
-            .CFG_TX_BDR_WEN (1'b0),  .CFG_TX_BDR_RST (UART_BDR'(BDR)),
-            .CFG_TX_IRQ_WEN (1'b0),  .CFG_TX_IRQ_RST ('x),
-            .CFG_RX_BDR_WEN (1'b0),  .CFG_RX_BDR_RST (UART_BDR'(BDR)),
-            .CFG_RX_SMP_WEN (1'b0),  .CFG_RX_SMP_RST (UART_BDR'(BDR/2)),
-            .CFG_RX_IRQ_WEN (1'b0),  .CFG_RX_IRQ_RST ('x),
-            // TCB parameters
-            .SYS_MIN (1'b1)
-        ) uart (
-            // UART signals
-            .uart_txd (uart_txd),
-            .uart_rxd (uart_rxd),
-            // TCB-Lite interface
-            .sub      (tcb_per[1]),
-            // interrupts
-            .irq_tx   (),
-            .irq_rx   ()
-        );
-
-    end: gen_uart
-    else begin: gen_uart_err
-
-        // error response
-        tcb_lite_lib_error uart_err (
-            .sub (tcb_per[1]),
-            .sts  ('x)
-        );
-
-        // UART signals
-        assign uart_txd = 1'b1;
-        //     uart_rxd
-
-    end: gen_uart_err
-    endgenerate
+    // UART is just a loopback
+    // register used to avoid combinational loop in testbench
+    always_ff @(posedge clk)
+    uart_txd <= uart_rxd;
 
 endmodule: r5p_mouse_soc_simple_top
