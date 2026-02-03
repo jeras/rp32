@@ -35,7 +35,11 @@ module r5p_mouse_soc_top
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_SIZ = 2**14,  // 16kB
+`ifndef YOSYS_STRINGPARAM
     parameter  string         MEM_FNM = "mem_if.mem"
+`else
+    parameter                 MEM_FNM = "mem_if.mem"
+`endif
 )(
     // system signals
     input  logic                clk,  // clock
