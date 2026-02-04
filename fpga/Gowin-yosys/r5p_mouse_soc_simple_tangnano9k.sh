@@ -2,15 +2,15 @@
 
 PRJ=r5p_mouse_soc_simple_tangnano9k
 
-# # using Yosys
-# PATH_R5P_RTL=../../hdl/rtl
-# yosys --logfile ${PRJ}.syn.log -D YOSYS_STRINGPARAM --commands "synth_gowin -top ${PRJ} -json ${PRJ}.json" \
-# $PATH_R5P_RTL/mouse/r5p_mouse.sv \
-# $PATH_R5P_RTL/soc/r5p_mouse_soc_simple_top.sv \
-# $PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
+# using Yosys
+PATH_R5P_RTL=../../hdl/rtl
+yosys --logfile ${PRJ}.syn.log -D YOSYS_STRINGPARAM --commands "synth_gowin -top ${PRJ} -json ${PRJ}.json" \
+$PATH_R5P_RTL/mouse/r5p_mouse.sv \
+$PATH_R5P_RTL/soc/r5p_mouse_soc_simple_top.sv \
+$PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
 
-# using Yosys-Slang
-yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
+# # using Yosys-Slang
+# yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
 
 #netlistsvg ${PRJ}.json -o ${PRJ}.svg
 
