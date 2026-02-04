@@ -728,7 +728,7 @@ module r5p_mouse #(
     assign tcb_xen = bus_xrw.x;
     assign tcb_ren = bus_xrw.r;
     assign tcb_wen = bus_xrw.w & (bus_gpr ? |bus_adr[2+:5] : 1'b1);
-    assign tcb_adr = bus_adr;
+    assign tcb_adr = bus_adr & LSU_MSK;
     assign tcb_siz = bus_siz;
     assign tcb_wdt = bus_wdt;
     assign bus_rdt = tcb_rdt;

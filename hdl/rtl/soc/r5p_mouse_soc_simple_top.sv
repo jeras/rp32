@@ -30,6 +30,7 @@ module r5p_mouse_soc_simple_top #(
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
+    parameter  bit [XLEN-1:0] LSU_MSK = 32'h8001_3fff,
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_SIZ = 2**14,  // 16kB
 `ifndef YOSYS_STRINGPARAM
@@ -82,7 +83,8 @@ module r5p_mouse_soc_simple_top #(
     r5p_mouse #(
         .IFU_RST (IFU_RST),
         .IFU_MSK (IFU_MSK),
-        .GPR_ADR (GPR_ADR)
+        .GPR_ADR (GPR_ADR),
+        .LSU_MSK (LSU_MSK)
     ) cpu (
         // system signals
         .clk     (clk),
