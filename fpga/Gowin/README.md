@@ -42,6 +42,4 @@ https://github.com/SantaCRC/tutorials
 
 https://github.com/zf3/psram-tang-nano-9k
 
-https://github.com/zf3/psram-tang-nano-9k
-
 https://github.com/calint/tang-nano-9k--riscv--cache-psram
