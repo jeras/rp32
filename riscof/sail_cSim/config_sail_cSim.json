@@ -11,7 +11,7 @@
 // top-level README) on how to get the associated schema.
 {
   "base": {
-    "xlen": 64,
+    "xlen": 32,
     "E": false,
     "writable_misa": true,
     "writable_fiom": true,
@@ -444,7 +444,7 @@
       "supported": true
     },
     "Svrsw60t59b": {
-      "supported": true
+      "supported": false
     },
     "Smcntrpmf": {
       "supported": true
