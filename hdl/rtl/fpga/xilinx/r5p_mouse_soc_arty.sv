@@ -36,7 +36,7 @@ module r5p_mouse_soc_arty #(
 // local parameters
 ////////////////////////////////////////////////////////////////////////////////
 
-    localparam int unsigned GDW = 32;
+    localparam int unsigned GPIO_DAT = 32;
 
 ///////////////////////////////////////////////////////////////////////////////
 // local signals
@@ -49,9 +49,9 @@ module r5p_mouse_soc_arty #(
     logic rst;
 
     // GPIO
-    logic [GDW-1:0] gpio_o;
-    logic [GDW-1:0] gpio_e;
-    logic [GDW-1:0] gpio_i;
+    logic [GPIO_DAT-1:0] gpio_o;
+    logic [GPIO_DAT-1:0] gpio_e;
+    logic [GPIO_DAT-1:0] gpio_i;
 
 ///////////////////////////////////////////////////////////////////////////////
 // PLL
@@ -87,7 +87,7 @@ module r5p_mouse_soc_arty #(
 ////////////////////////////////////////////////////////////////////////////////
 
     r5p_mouse_soc_top #(
-        .GDW       (GDW)
+        .GPIO_DAT  (GPIO_DAT)
     ) soc (
         // system signals
         .clk       (clk),
@@ -106,17 +106,17 @@ module r5p_mouse_soc_arty #(
 ////////////////////////////////////////////////////////////////////////////////
 
     // GPIO inputs
-    assign gpio_i = ck_io[GDW-1:0];
+    assign gpio_i = ck_io[GPIO_DAT-1:0];
 
     // GPIO outputs
     generate
-    for (genvar i=0; i<GDW; i++) begin
+    for (genvar i=0; i<GPIO_DAT; i++) begin
         assign ck_io[i] = gpio_e[i] ? gpio_o[i] : 1'bz;
     end
     endgenerate
 
     // unused IO
-    assign ck_io[42-1:GDW] = 1'bz;
+    assign ck_io[42-1:GPIO_DAT] = 1'bz;
 
 endmodule: r5p_mouse_soc_arty
 
