@@ -67,7 +67,7 @@ RTL+=${PATH_R5P}/rtl/soc/r5p_degu_soc_top.sv
 RTL+=${PATH_R5P}/rtl/fpga/gowin/r5p_degu_soc_tangnano9k.sv
 
 # SystemVerilog RISCOF bench (Test SV)
-#TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
+TSV+=${PATH_R5P}/tbn/riscv/riscv_asm_pkg.sv
 TSV+=${PATH_R5P}/tbn/riscv/trace_generic_pkg.sv
 TSV+=${PATH_R5P}/tbn/riscof/trace_spike_pkg.sv
 TSV+=${PATH_R5P}/tbn/riscof/trace_sail_pkg.sv

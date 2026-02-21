@@ -18,6 +18,7 @@
 
 module r5p_degu_riscof_tb
     import riscv_isa_pkg::*;
+    import riscv_asm_pkg::*;
     import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
@@ -46,8 +47,6 @@ module r5p_degu_riscof_tb
     // testbench parameters
     parameter  bit          ABI = 1'b1    // enable ABI translation for GPR names
 )();
-
-    import riscv_asm_pkg::*;
 
     // system signals
     logic clk = 1'b1;  // clock
