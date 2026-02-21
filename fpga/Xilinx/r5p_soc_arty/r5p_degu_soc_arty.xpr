@@ -183,7 +183,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../hdl/rtl/core/r5p_gpr_2r1w_xilinx_xpm.sv">
+      <File Path="$PPRDIR/../../../hdl/rtl/core/r5p_gpr_2r1w__xilinx_xpm.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -398,7 +398,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/gpio/tcb_peri_gpio_cdc_xilinx_xpm.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/gpio/tcb_peri_gpio_cdc__xilinx_xpm.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

@@ -389,12 +389,12 @@ function automatic dec_t dec32 (isa_t isa, op32_r_t op);
   `endif
 
   // immediates
-  dec32.i_b = imm_b_f(op);
-  dec32.i_i = imm_i_f(op);
-  dec32.i_l = imm_i_f(op);
-  dec32.i_s = imm_s_f(op);
-  dec32.i_u = imm_u_f(op);
-  dec32.i_j = imm_j_f(op);
+  dec32.i_b = imm_b_f(op32_b_t'(op));
+  dec32.i_i = imm_i_f(op32_i_t'(op));
+  dec32.i_l = imm_i_f(op32_i_t'(op));
+  dec32.i_s = imm_s_f(op32_s_t'(op));
+  dec32.i_u = imm_u_f(op32_u_t'(op));
+  dec32.i_j = imm_j_f(op32_j_t'(op));
 
   // CSR
   // TODO: organize better

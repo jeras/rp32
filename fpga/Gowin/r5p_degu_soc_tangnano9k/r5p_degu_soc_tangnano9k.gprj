@@ -27,7 +27,7 @@
         <File path="../../../hdl/rtl/riscv/rv64_csr_pkg.sv" type="file.verilog" enable="1"/>
         <File path="../../../hdl/rtl/riscv_csr_adr_map_pkg.sv" type="file.verilog" enable="0"/>
         <File path="../../../hdl/rtl/soc/r5p_degu_soc_top.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/soc/r5p_soc_memory_gowin_inference.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/soc/r5p_soc_memory__gowin_inference.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_arbiter.sv" type="file.verilog" enable="0"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_decoder.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_demultiplexer.sv" type="file.verilog" enable="1"/>

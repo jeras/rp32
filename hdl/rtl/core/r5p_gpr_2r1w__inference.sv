@@ -21,7 +21,7 @@ module r5p_gpr_2r1w #(
     int unsigned AW   = 5,     // can be 4 for RV32E base ISA
     int unsigned XLEN = 32,    // XLEN width
     bit          WBYP = 1'b0   // write bypass
-    // TODO: impelemt register read enable for power reduction
+    // TODO: implement register read enable for power reduction
 )(
     // system signals
     input  logic            clk,  // clock

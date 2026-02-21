@@ -49,7 +49,7 @@ RTL+=${PATH_R5P}/rtl/mouse/r5p_mouse.sv
 
 # SoC files
 #RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory.sv
-RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory_gowin_inference.sv
+RTL+=${PATH_R5P}/rtl/soc/r5p_soc_memory__gowin_inference.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_top.sv
 RTL+=${PATH_R5P}/rtl/soc/r5p_mouse_soc_simple_top.sv
 RTL+=${PATH_R5P}/rtl/fpga/gowin/r5p_mouse_soc_tangnano9k.sv

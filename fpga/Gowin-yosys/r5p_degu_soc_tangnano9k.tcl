@@ -44,7 +44,7 @@ $PATH_CPU_RTL/degu/r5p_lsu.sv \
 $PATH_CPU_RTL/degu/r5p_wbu.sv \
 $PATH_CPU_RTL/degu/r5p_degu_pkg.sv \
 $PATH_CPU_RTL/degu/r5p_degu.sv \
-$PATH_CPU_RTL/soc/r5p_soc_memory_gowin_inference.sv \
+$PATH_CPU_RTL/soc/r5p_soc_memory__gowin_inference.sv \
 $PATH_CPU_RTL/soc/r5p_degu_soc_top.sv \
 $PATH_CPU_RTL/fpga/gowin/r5p_degu_soc_tangnano9k.sv
 

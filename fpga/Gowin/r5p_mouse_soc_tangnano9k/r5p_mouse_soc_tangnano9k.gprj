@@ -7,7 +7,7 @@
     <FileList>
         <File path="../../../hdl/rtl/fpga/gowin/r5p_mouse_soc_tangnano9k.sv" type="file.verilog" enable="1"/>
         <File path="../../../hdl/rtl/soc/r5p_mouse_soc_top.sv" type="file.verilog" enable="1"/>
-        <File path="../../../hdl/rtl/soc/r5p_soc_memory_gowin_inference.sv" type="file.verilog" enable="1"/>
+        <File path="../../../hdl/rtl/soc/r5p_soc_memory__gowin_inference.sv" type="file.verilog" enable="1"/>
         <File path="../../../hdl/rtl/mouse/r5p_mouse.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_arbiter.sv" type="file.verilog" enable="0"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_decoder.sv" type="file.verilog" enable="1"/>

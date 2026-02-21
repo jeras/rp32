@@ -33,7 +33,7 @@ $PATH_TCB_RTL/peri/uart/tcb_peri_uart_fifo.sv \
 $PATH_TCB_RTL/peri/uart/tcb_peri_uart.sv \
 $PATH_TCB_RTL/lite_peri/uart/tcb_lite_peri_uart.sv \
 $PATH_R5P_RTL/mouse/r5p_mouse.sv \
-$PATH_R5P_RTL/soc/r5p_soc_memory_gowin_inference.sv \
+$PATH_R5P_RTL/soc/r5p_soc_memory__gowin_inference.sv \
 $PATH_R5P_RTL/soc/r5p_mouse_soc_simple_top.sv \
 $PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
 
