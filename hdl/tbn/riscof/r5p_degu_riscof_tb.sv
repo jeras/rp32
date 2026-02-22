@@ -134,7 +134,7 @@ module r5p_degu_riscof_tb
     );
 
     tcb_lite_vip_memory #(
-        .MFN  (""),
+        .FILE (""),
         .SIZE (MEM_SIZ),
         .IFN  (2),
         .WRM  (2'b10)

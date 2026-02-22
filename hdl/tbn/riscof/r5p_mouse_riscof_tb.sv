@@ -140,8 +140,8 @@ module r5p_mouse_riscof_tb
     );
 
     tcb_lite_vip_memory #(
-        .MFN  (""),
-        .PWR  (1'b0),
+        .INIT ('0),  // initialize to zero to have GPR x0=0
+        .FILE (""),
         .SIZE (MEM_SIZ),
         .IFN  (1)
     ) mem (
@@ -154,6 +154,10 @@ module r5p_mouse_riscof_tb
         string filename;
         // trace file if name is combined from plusargs (directory) and parameter (file)
         if ($value$plusargs({FILE_ARG, "=%s"}, filename)) begin
+            // Waveforms
+            $dumpfile({filename, "wave.fst"});
+            $dumpvars(0);
+            // memory initialization
             filename = {filename, FILE_PAR};
             $display("Loading file into memory: %s", filename);
             void'(mem.read_bin(filename));
@@ -162,6 +166,9 @@ module r5p_mouse_riscof_tb
             $display("ERROR: memory load file argument not found.");
             $finish;
         end
+//        // timeout
+//        repeat(280) @(posedge clk);
+//        $finish();
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -185,14 +192,10 @@ module r5p_mouse_riscof_tb
 `ifdef TRACE_SPIKE
 
     // GPR array
-    logic [8-1:0] mem_gpr [0:4*8-1];
     logic [XLEN-1:0] gpr [0:32-1];
 
     // copy GPR array from system memory
-    // TODO: apply proper streaming operator
-//    assign mem_gpr = mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8];
-//    assign gpr = {>> XLEN {mem_gpr}};
-//    assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*8]}};
+    assign gpr = {>> XLEN {mem.mem[GPR_ADR & (MEM_SIZ-1) +: 4*32]}};
 
     // tracer format class specialization (for Spike)
     typedef trace_spike_pkg::trace_spike #(XLEN) format_spike;
@@ -223,14 +226,5 @@ module r5p_mouse_riscof_tb
     );
 
 `endif
-
-////////////////////////////////////////////////////////////////////////////////
-// Waveforms
-////////////////////////////////////////////////////////////////////////////////
-
-    initial begin
-        $dumpfile("wave.fst");
-        $dumpvars(0);
-    end
 
 endmodule: r5p_mouse_riscof_tb
