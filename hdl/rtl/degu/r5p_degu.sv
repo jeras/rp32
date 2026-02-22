@@ -268,7 +268,7 @@ end
     unique case (opsiz(tcb_ifu.rsp.rdt[16-1:0]))
       2      : idu_tmp = dec16(ISA, tcb_ifu.rsp.rdt[16-1:0]);  // 16-bit C standard extension
       4      : idu_tmp = dec32(ISA, tcb_ifu.rsp.rdt[32-1:0]);  // 32-bit
-      default: idu_tmp = 'x;                                  // OP sizes above 4 bytes are not supported
+      default: idu_tmp = '{ill: ILL, opc: opc_t'('x), default: 'x};  // OP sizes above 4 bytes are not supported
     endcase
 
     // distributed I/C decoder mux

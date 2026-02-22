@@ -96,7 +96,7 @@ module r5p_htif
     int unsigned siz;
 
     // read/write data packed arrays
-    logic [tcb.BYT-1:0][8-1:0] wdt;
+    logic [tcb.CFG_BUS_BYT-1:0][8-1:0] wdt;
 
     // request address and size (TCB_LOG_SIZE mode)
     assign adr =    int'(tcb.req.adr);
@@ -109,15 +109,15 @@ module r5p_htif
     always @(posedge tcb.clk)
     if (tcb.trn) begin
         if (tcb.req.wen) begin: write
-            for (int unsigned b=0; b<tcb.BYT; b++) begin: bytes
-                case (tcb.MOD)
+            for (int unsigned b=0; b<tcb.CFG_BUS_BYT; b++) begin: bytes
+                case (tcb.CFG.BUS.MOD)
                     1'b0: begin: log_size
                         // write only transfer size bytes
                         if (b < siz)  mem[adr+b] <= wdt[b];
                     end: log_size
                     1'b1: begin: byte_ena
                         // write only enabled bytes
-                        if (tcb.req.byt[(adr+b)%tcb.BYT])  mem[adr+b] <= wdt[(adr+b)%tcb.BYT*8+:8];
+                        if (tcb.req.byt[(adr+b)%tcb.CFG_BUS_BYT])  mem[adr+b] <= wdt[(adr+b)%tcb.CFG_BUS_BYT*8+:8];
                     end: byte_ena
                 endcase
             end: bytes
