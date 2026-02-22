@@ -164,7 +164,7 @@ function automatic dec_t dec16 (isa_t isa, logic [16-1:0] op);
 `endif
 
   // temporary variable used only to reduce line length
-  dec_t t = 'x;
+  dec_t t = '{ill: ILL, opc: opc_t'('x), default: 'x};
 
   // GPR configurations
   // the name is constructed as {r (register), _/q (quarter), d (destination), s1/2 (source 1/2)}

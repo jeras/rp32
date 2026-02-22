@@ -16,10 +16,10 @@
 // limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////
 
-  import riscv_isa_i_pkg::*;
-  import riscv_isa_c_pkg::*;
 module r5p_degu
   import riscv_isa_pkg::*;
+  import riscv_isa_i_pkg::*;
+  import riscv_isa_c_pkg::*;
   //import riscv_csr_pkg::*;
   //import r5p_pkg::*;
   import r5p_degu_pkg::*;
@@ -34,7 +34,7 @@ module r5p_degu
   // extensions  (see `riscv_isa_pkg` for enumeration definition)
 //parameter  isa_ext_t    XTEN = RV_M | RV_C | RV_Zicsr,
   parameter  isa_ext_t    XTEN = RV_C,
-  // privilige modes
+  // privilege modes
   parameter  isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR

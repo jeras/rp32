@@ -132,6 +132,8 @@ typedef union packed {
   op32_u_t  u ;  // Upper immediate
   op32_j_t  j ;  // Jump
 } op32_t;
+`else
+  typedef logic [32-1:0] op32_t;
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -173,7 +175,6 @@ typedef union packed {
 
   typedef logic [5-1:0] gpr_idx_t;
 
-  // TODO: change when Verilator supports unpacked structures
   // GPR enable
   typedef struct packed {
     logic         rd;   // write enable register destination
@@ -258,8 +259,7 @@ typedef enum {
 // decoder structure
 ///////////////////////////////////////////////////////////////////////////////
 
-  // TODO: change when Verilator supports unpacked structures
-  typedef struct packed {
+  typedef struct {
     // instruction encodings
     ill_t     ill;  // illegal
     integer   siz;  // instruction size
@@ -408,9 +408,9 @@ endfunction: dec32
 ///////////////////////////////////////////////////////////////////////////////
 
 `ifndef LANGUAGE_UNSUPPORTED_UNION
-function automatic op32_t   enc32 (isa_t isa, dec_t ctl);
+function automatic op32_t enc32 (isa_t isa, dec_t ctl);
 `else
-function automatic op32_r_t enc32 (isa_t isa, dec_t ctl);
+function automatic op32_t enc32 (isa_t isa, dec_t ctl);
 `endif
 
   // idle
