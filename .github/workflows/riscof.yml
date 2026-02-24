@@ -53,7 +53,7 @@ jobs:
 
     - name: '📦 Install Sail RISC-V reference model'
       run: |
-        curl -L -O https://github.com/riscv/sail-riscv/releases/download/0.9/sail-riscv-Linux-x86_64.tar.gz
+        curl -L -O https://github.com/riscv/sail-riscv/releases/download/0.10/sail-riscv-Linux-x86_64.tar.gz
         mkdir $GITHUB_WORKSPACE/riscv-sail
         tar -xzf $GITHUB_WORKSPACE/sail-riscv-Linux-x86_64.tar.gz -C $GITHUB_WORKSPACE/riscv-sail
         echo $GITHUB_WORKSPACE/riscv-sail/sail-riscv-Linux-x86_64/bin >> $GITHUB_PATH
