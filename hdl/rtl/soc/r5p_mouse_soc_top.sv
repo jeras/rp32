@@ -189,7 +189,7 @@ module r5p_mouse_soc_top
     if (ENA_GPIO) begin: gen_gpio
 
         // GPIO controller
-        tcb_lite_peri_gpio #(
+        tcb_lite_dev_gpio #(
             .GPIO_DAT (GPIO_DAT),
             .SYS_MIN  (1'b1)
         ) gpio (
@@ -231,7 +231,7 @@ module r5p_mouse_soc_top
         localparam int unsigned UART_BDR = $clog2(BDR);  // a 9-bit counter is required
 
         // UART controller
-        tcb_lite_peri_uart #(
+        tcb_lite_dev_uart #(
             // UART parameters
             .UART_BDR       (UART_BDR),
             .FIFO_SIZ       (FIFO_SIZ),

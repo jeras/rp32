@@ -112,7 +112,7 @@ typedef enum logic [$bits(isa_ext_t)-1:0] {
 
 // ISA specification configuration
 // TODO: change when Verilator supports unpacked structures
-typedef struct packed {
+typedef struct {
   isa_base_t base;
   isa_ext_t  ext;
 } isa_spec_t;
@@ -140,8 +140,7 @@ typedef enum logic [$bits(isa_spec_t)-1:0] {
 } isa_spec_et;
 
 // ISA configuration
-// TODO: change when Verilator supports unpacked structures
-typedef struct packed {
+typedef struct {
   isa_spec_t spec;
   isa_priv_t priv;
 } isa_t;

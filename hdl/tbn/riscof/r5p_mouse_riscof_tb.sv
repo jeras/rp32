@@ -31,10 +31,11 @@ module r5p_mouse_riscof_tb
     parameter  isa_priv_t   MODES = MODES_M,
     // ISA
 `ifdef ENABLE_CSR
-    parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
+    parameter  isa_t        ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES},
 `else
-    parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+    parameter  isa_t        ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES_NONE},
 `endif
+    // core
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h801f_ff80,
@@ -139,10 +140,19 @@ module r5p_mouse_riscof_tb
         .man  (tcb_mem[0])
     );
 
+    localparam logic [8-1:0] MEM_INIT [0:MEM_SIZ-1] = '{
+        {GPR_ADR[22-1:5+2], 7'd0}: '0,
+        {GPR_ADR[22-1:5+2], 7'd1}: '0,
+        {GPR_ADR[22-1:5+2], 7'd2}: '0,
+        {GPR_ADR[22-1:5+2], 7'd3}: '0,
+        default: 'x
+    };
+
     tcb_lite_vip_memory #(
-        .INIT ('0),  // initialize to zero to have GPR x0=0
         .FILE (""),
         .SIZE (MEM_SIZ),
+//        .INIT (MEM_INIT),  // initialize GPR x0 to zero
+        .INIT ('0),  // initialize GPR x0 to zero
         .IFN  (1)
     ) mem (
         .sub  (tcb_mem[0:0])

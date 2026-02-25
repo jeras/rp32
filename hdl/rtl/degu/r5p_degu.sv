@@ -38,9 +38,9 @@ module r5p_degu
   parameter  isa_priv_t   MODES = MODES_M,
   // ISA
 `ifdef ENABLE_CSR
-  parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES}
+    parameter  isa_t        ISA = '{spec: '{base: RV32I, ext: XTEN}, priv: MODES},
 `else
-  parameter  isa_t        ISA = '{spec: RV32I, priv: MODES_NONE},
+    parameter  isa_t        ISA = '{spec: '{base: RV32I, ext: XTEN}, priv: MODES_NONE},
 `endif
 `endif
   // system bus implementation details

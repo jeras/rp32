@@ -34,7 +34,8 @@ puts "==========================================================================
 hierarchy -top test
 
 procs
-opt -full
+opt
+#opt -full
 
 write_json test_netlist.json
 write_verilog -sv test_netlist.sv

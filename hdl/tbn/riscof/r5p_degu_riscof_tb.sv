@@ -32,10 +32,11 @@ module r5p_degu_riscof_tb
     parameter  isa_priv_t   MODES = MODES_M,
     // ISA
 `ifdef ENABLE_CSR
-    parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
+    parameter  isa_t        ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES},
 `else
-    parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+    parameter  isa_t        ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES_NONE},
 `endif
+    // core
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h803f_ffff,
     // memory size

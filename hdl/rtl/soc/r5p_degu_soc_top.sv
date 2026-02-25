@@ -40,9 +40,9 @@ module r5p_degu_soc_top
     parameter  isa_priv_t   MODES = MODES_M,
     // ISA
 `ifdef ENABLE_CSR
-    parameter  isa_t        ISA = '{spec: '{base: RV_32I , ext: XTEN}, priv: MODES},
+    parameter  isa_t        ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES},
 `else
-    parameter  isa_t        ISA = '{spec: RV32IC, priv: MODES_NONE},
+    parameter  isa_t        ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES_NONE},
 `endif
 `endif
     // IFU bus
@@ -70,7 +70,7 @@ module r5p_degu_soc_top
 );
 
 `ifdef SYNOPSYS_VERILOG_COMPILER
-    parameter isa_t ISA = '{spec: RV32I, priv: MODES_NONE};
+    parameter isa_t ISA = '{spec: '{base: RV_32I, ext: XTEN}, priv: MODES_NONE};
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -222,7 +222,7 @@ module r5p_degu_soc_top
     if (ENA_GPIO) begin: gen_gpio
 
         // GPIO controller
-        tcb_lite_peri_gpio #(
+        tcb_lite_dev_gpio #(
             .GPIO_DAT (GPIO_DAT),
             .SYS_MIN  (1'b1)
         ) gpio (
@@ -264,7 +264,7 @@ module r5p_degu_soc_top
         localparam int unsigned UART_BDR = $clog2(BDR);  // a 9-bit counter is required
 
         // UART controller
-        tcb_lite_peri_uart #(
+        tcb_lite_dev_uart #(
             // UART parameters
             .UART_BDR       (UART_BDR),
             .FIFO_SIZ       (FIFO_SIZ),
