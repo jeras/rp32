@@ -398,56 +398,56 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/gpio/tcb_peri_gpio_cdc__xilinx_xpm.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/dev/gpio/tcb_dev_gpio_cdc__xilinx_xpm.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/gpio/tcb_peri_gpio.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/dev/gpio/tcb_dev_gpio.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/lite_peri/gpio/tcb_lite_peri_gpio.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/lite_dev/gpio/tcb_lite_dev_gpio.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_ser.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart_ser.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_des.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart_des.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_fifo.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart_fifo.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/lite_peri/uart/tcb_lite_peri_uart.sv">
+      <File Path="$PPRDIR/../../../submodules/tcb/hdl/rtl/lite_dev/uart/tcb_lite_dev_uart.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

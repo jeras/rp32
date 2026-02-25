@@ -39,14 +39,14 @@
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_register_backpressure.sv" type="file.verilog" enable="0"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_register_request.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/lite_lib/tcb_lite_lib_register_response.sv" type="file.verilog" enable="0"/>
-        <File path="../../../submodules/tcb/hdl/rtl/lite_peri/gpio/tcb_lite_peri_gpio.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/lite_peri/uart/tcb_lite_peri_uart.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/peri/gpio/tcb_peri_gpio.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/peri/gpio/tcb_peri_gpio_cdc_generic.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_des.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_fifo.sv" type="file.verilog" enable="1"/>
-        <File path="../../../submodules/tcb/hdl/rtl/peri/uart/tcb_peri_uart_ser.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/lite_dev/gpio/tcb_lite_dev_gpio.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/lite_dev/uart/tcb_lite_dev_uart.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/dev/gpio/tcb_dev_gpio.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/dev/gpio/tcb_dev_gpio_cdc_generic.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart_des.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart_fifo.sv" type="file.verilog" enable="1"/>
+        <File path="../../../submodules/tcb/hdl/rtl/dev/uart/tcb_dev_uart_ser.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/tcb_lite_if.sv" type="file.verilog" enable="1"/>
         <File path="../../../submodules/tcb/hdl/rtl/tcb_lite_pkg.sv" type="file.verilog" enable="1"/>
         <File path="src/r5p_degu_soc_tangnano9k.cst" type="file.cst" enable="1"/>
