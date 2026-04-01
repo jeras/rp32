@@ -119,7 +119,8 @@ module r5p_mouse_soc_top
                {12'h800, 4'b0000, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x8000_ffff - data memory
     ) tcb_lsu_dec (
         .mon  (tcb_cpu    ),
-        .sel  (tcb_cpu_sel)
+        .sel  (tcb_cpu_sel),
+        .err  ()
     );
 
     // demultiplexing memory/peripherals
@@ -155,7 +156,8 @@ module r5p_mouse_soc_top
                {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x00 ~ 0x3f - GPIO controller
     ) tcb_pb0_dec (
         .mon  (tcb_pb0),
-        .sel  (tcb_pb0_sel)
+        .sel  (tcb_pb0_sel),
+        .err  ()
     );
 
     // demultiplexing peripherals (GPIO/UART)
@@ -199,7 +201,7 @@ module r5p_mouse_soc_top
             .gpio_i  (gpio_i),
             // bus interface
             .sub     (tcb_per[0]),
-            .irq     ()
+            .irq     ()  // TODO
         );
 
     end: gen_gpio

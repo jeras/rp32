@@ -24,7 +24,7 @@ $PATH_TCB_RTL/lite_lib/tcb_lite_lib_multiplexer.sv \
 $PATH_TCB_RTL/lite_lib/tcb_lite_lib_decoder.sv \
 $PATH_TCB_RTL/lite_lib/tcb_lite_lib_demultiplexer.sv \
 $PATH_TCB_RTL/lite_lib/tcb_lite_lib_logsize2byteena.sv \
-$PATH_TCB_RTL/dev/gpio/tcb_dev_gpio_cdc_generic.sv \
+$PATH_TCB_RTL/dev/gpio/tcb_dev_gpio_cdc__generic.sv \
 $PATH_TCB_RTL/dev/gpio/tcb_dev_gpio.sv \
 $PATH_TCB_RTL/lite_dev/gpio/tcb_lite_dev_gpio.sv \
 $PATH_TCB_RTL/dev/uart/tcb_dev_uart_ser.sv \

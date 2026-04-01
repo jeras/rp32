@@ -19,8 +19,8 @@
 module r5p_soc_memory
     import tcb_lite_pkg::*;
 #(
-    string       FNM = "",    // binary initialization file name
-    int unsigned SIZ = 4096   // memory size in bytes (4kB by default)
+    parameter string       FNM = "",    // binary initialization file name
+    parameter int unsigned SIZ = 4096   // memory size in bytes (4kB by default)
 )(
     // TCB interface
     tcb_lite_if.sub sub
@@ -35,7 +35,7 @@ module r5p_soc_memory
     initial
     begin
         // TCB mode must be memory (RISC-V mode is not supported)
-        assert (sub.MOD == 1'b1) else $fatal("Unsupported TCB-Lite mode.");
+        assert (sub.CFG.BUS.MOD == 1'b1) else $fatal("Unsupported TCB-Lite mode.");
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,11 +43,11 @@ module r5p_soc_memory
 ////////////////////////////////////////////////////////////////////////////////
 
 `ifdef YOSYS_SLANG
-    localparam int unsigned MEM_DATA = sub.DAT;
-    localparam int unsigned MEM_SIZE = SIZ/(sub.DAT/8);
+    localparam int unsigned MEM_DATA =      sub.CFG.BUS.DAT;
+    localparam int unsigned MEM_SIZE = SIZ/(sub.CFG.BUS.DAT/8);
     `include "mem_if.vh"
 `else
-    logic [sub.DAT-1:0] mem [0:SIZ/(sub.DAT/8)-1];
+    logic [sub.CFG.BUS.DAT-1:0] mem [0:SIZ/(sub.CFG.BUS.DAT/8)-1];
     initial
     begin
         if (FNM != "") begin
@@ -64,9 +64,9 @@ module r5p_soc_memory
 // load/store
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic [ADR-sub.MAX-1:0] adr;
+    logic [ADR-sub.CFG_BUS_OFF-1:0] adr;
 
-    assign adr = sub.req.adr[ADR-1:sub.MAX];
+    assign adr = sub.req.adr[ADR-1:sub.CFG_BUS_OFF];
 
     // TODO: split R/W control seems to have a negative effect on synthesis
     always @(posedge sub.clk)

@@ -21,10 +21,10 @@ module r5p_degu_soc_top
     import tcb_lite_pkg::*;
 #(
     // constants used across the design in signal range sizing instead of literals
-    localparam int unsigned XLEN = 32,
-    localparam int unsigned XLOG = $clog2(XLEN),
-    localparam int unsigned BLEN = XLEN/8,
-    localparam int unsigned BLOG = $clog2(BLEN),
+    localparam int unsigned   XLEN = 32,
+    localparam int unsigned   XLOG = $clog2(XLEN),
+    localparam int unsigned   BLEN = XLEN/8,
+    localparam int unsigned   BLOG = $clog2(BLEN),
     // SoC peripherals
     parameter  bit            ENA_GPIO = 1'b1,
     parameter  bit            ENA_UART = 1'b1,
@@ -50,12 +50,20 @@ module r5p_degu_soc_top
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
     // IFU memory (size in bytes, file name)
     parameter  int unsigned   IFM_SIZ = 2**14,
+`ifndef YOSYS_STRINGPARAM
     parameter  string         IFM_FNM = "mem_if.mem",
+`else
+    parameter                 IFM_FNM = "mem_if.mem",
+`endif
     // LSU bus
     parameter  bit [XLEN-1:0] LSU_MSK = 32'h8000_7fff,
     // LSU memory (size)
     parameter  int unsigned   LSM_SIZ = 2**14,
+`ifndef YOSYS_STRINGPARAM
     parameter  string         LSM_FNM = "mem_ls.mem"
+`else
+    parameter                 LSM_FNM = "mem_ls.mem"
+`endif
 )(
     // system signals
     input  logic                clk,  // clock
@@ -144,7 +152,8 @@ module r5p_degu_soc_top
                {17'b0, 1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
     ) tcb_lsu_dec (
         .mon  (tcb_lsu    ),
-        .sel  (tcb_lsu_sel)
+        .sel  (tcb_lsu_sel),
+        .err  ()
     );
 
     // demultiplexing memory/peripherals
@@ -180,7 +189,8 @@ module r5p_degu_soc_top
                {17'bx, 15'bxx_xxxx_x0xx_xxxx}})  // 0x20_0000 ~ 0x2f_ffff - 0x00 ~ 0x3f - GPIO controller
     ) tcb_pb0_dec (
         .mon  (tcb_pb0),
-        .sel  (tcb_pb0_sel)
+        .sel  (tcb_pb0_sel),
+        .err  ()
     );
 
     // demultiplexing peripherals (GPIO/UART)
