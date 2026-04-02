@@ -115,8 +115,8 @@ module r5p_mouse_soc_top
     tcb_lite_lib_decoder #(
         .ADR (CFG_CPU.BUS.ADR),
         .IFN (2),
-        .DAM ({{12'h800, 4'b0001, 16'bxxxx_xxxx_xxxx_xxxx},   // 0x8001_0000 ~ 0x8001_ffff - peripherals
-               {12'h800, 4'b0000, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x8000_ffff - data memory
+        .DAM ({{12'h800, 4'b001x, 16'bxxxx_xxxx_xxxx_xxxx},   // 0x8002_0000 ~ 0x8003_ffff - peripherals
+               {12'h800, 4'b000x, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x8001_ffff - data memory
     ) tcb_lsu_dec (
         .mon  (tcb_cpu    ),
         .sel  (tcb_cpu_sel),

@@ -57,4 +57,9 @@ puts "==========================================================================
 puts "= synthesis with Yosys/Apicula"
 puts "================================================================================"
 
+procs
+write_verilog -norename $PRJ.proc.v
+opt
+write_verilog -norename $PRJ.opt.v
+
 synth_gowin -json $PRJ.json

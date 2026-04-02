@@ -148,8 +148,8 @@ module r5p_degu_soc_top
     tcb_lite_lib_decoder #(
         .ADR (CFG_LSU.BUS.ADR),
         .IFN (2),
-        .DAM ({{17'b0, 1'b1, 14'bxx_xxxx_xxxx_xxxx},   // 0x20_0000 ~ 0x2f_ffff - peripherals
-               {17'b0, 1'b0, 14'bxx_xxxx_xxxx_xxxx}})  // 0x00_0000 ~ 0x1f_ffff - data memory
+        .DAM ({{12'h800, 4'b001x, 16'bxxxx_xxxx_xxxx_xxxx},   // 0x8002_0000 ~ 0x803f_ffff - peripherals
+               {12'h800, 4'b000x, 16'bxxxx_xxxx_xxxx_xxxx}})  // 0x8000_0000 ~ 0x801f_ffff - data memory
     ) tcb_lsu_dec (
         .mon  (tcb_lsu    ),
         .sel  (tcb_lsu_sel),

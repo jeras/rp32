@@ -17,7 +17,8 @@ nextpnr-himbaechel --json   ${PRJ}.json \
                    --vopt   cst=tangnano9k.cst \
                    --sdc    ${PRJ}.sdc \
                    --write  ${PRJ}.pnr.json \
-                   --log    ${PRJ}.pnr.log
+                   --log    ${PRJ}.pnr.log \
+                   --sdf    ${PRJ}.sdf
 
 echo "================================================================================"
 echo "= pack"
