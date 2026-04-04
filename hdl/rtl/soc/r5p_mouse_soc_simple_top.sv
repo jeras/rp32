@@ -30,7 +30,7 @@ module r5p_mouse_soc_simple_top #(
     parameter  bit [XLEN-1:0] IFU_RST = 32'h8000_0000,
     parameter  bit [XLEN-1:0] IFU_MSK = 32'h8000_3fff,
     parameter  bit [XLEN-1:0] GPR_ADR = 32'h8000_3f80,
-    parameter  bit [XLEN-1:0] LSU_MSK = 32'h8001_3fff,
+    parameter  bit [XLEN-1:0] LSU_MSK = 32'h8003_3fff,
     // TCB memory (size in bytes, file name)
     parameter  int unsigned   MEM_SIZ = 2**14,  // 16kB
 `ifndef YOSYS_STRINGPARAM
@@ -127,8 +127,8 @@ module r5p_mouse_soc_simple_top #(
     dly_adr <= tcb_adr;
 
     // system bus address decoder
-    assign mem_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b0);
-    assign per_trn = (tcb_vld & tcb_rdy) & (tcb_adr[16] == 1'b1);
+    assign mem_trn = (tcb_vld & tcb_rdy) & (tcb_adr[17] == 1'b0);
+    assign per_trn = (tcb_vld & tcb_rdy) & (tcb_adr[17] == 1'b1);
 
     // system bus response multiplexer
     assign tcb_rdt = dly_adr[16] ? per_rdt : mem_rdt;
