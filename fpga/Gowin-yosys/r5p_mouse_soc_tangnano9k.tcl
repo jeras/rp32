@@ -47,11 +47,11 @@ puts "==========================================================================
 
 #scratchpad -set synth_gowin.flatten.separator "_"
 
-procs
-write_verilog -norename $PRJ.proc.v
-opt
-write_verilog -norename $PRJ.opt.v
+#procs
+#write_verilog -norename $PRJ.proc.v
+#opt
+#write_verilog -norename $PRJ.opt.v
 
 synth_gowin -json $PRJ.json
 
-write_verilog -norename $PRJ.gowin.v
+#write_verilog -norename $PRJ.gowin.v

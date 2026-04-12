@@ -8,6 +8,8 @@ PRJ=r5p_degu_soc_tangnano9k
 # using Yosys-Slang
 yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
 
+exit
+
 #netlistsvg ${PRJ}.json -o ${PRJ}.svg
 
 echo "================================================================================"
@@ -20,7 +22,8 @@ nextpnr-himbaechel --json   ${PRJ}.json \
                    --vopt   cst=tangnano9k.cst \
                    --sdc    ${PRJ}.sdc \
                    --write  ${PRJ}.pnr.json \
-                   --log    ${PRJ}.pnr.log
+                   --log    ${PRJ}.pnr.log \
+                   --sdf    ${PRJ}.sdf
 
 echo "================================================================================"
 echo "= pack"

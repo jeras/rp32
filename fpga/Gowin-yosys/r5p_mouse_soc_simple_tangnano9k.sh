@@ -4,13 +4,14 @@ PRJ=r5p_mouse_soc_simple_tangnano9k
 
 # using Yosys
 PATH_R5P_RTL=../../hdl/rtl
-yosys --logfile ${PRJ}.syn.log -D YOSYS_STRINGPARAM --commands "synth_gowin -top ${PRJ} -json ${PRJ}.json" \
-$PATH_R5P_RTL/mouse/r5p_mouse.sv \
-$PATH_R5P_RTL/soc/r5p_mouse_soc_simple_top.sv \
-$PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
+#yosys --logfile ${PRJ}.syn.log -D YOSYS_STRINGPARAM --commands "synth_gowin -top ${PRJ} -json ${PRJ}.json" \
+#$PATH_R5P_RTL/mouse/r5p_mouse.sv \
+#$PATH_R5P_RTL/soc/r5p_mouse_soc_simple_top.sv \
+#$PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
 
-# # using Yosys-Slang
-# yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
+## using Yosys-Slang
+#yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
+~/VLSI/yosys/yosys --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
 
 #netlistsvg ${PRJ}.json -o ${PRJ}.svg
 
@@ -24,7 +25,8 @@ nextpnr-himbaechel --json   ${PRJ}.json \
                    --vopt   cst=tangnano9k.cst \
                    --sdc    ${PRJ}.sdc \
                    --write  ${PRJ}.pnr.json \
-                   --log    ${PRJ}.pnr.log
+                   --log    ${PRJ}.pnr.log \
+                   --sdf    ${PRJ}.sdf
 
 echo "================================================================================"
 echo "= pack"
