@@ -68,6 +68,8 @@ puts "==========================================================================
 
 #synth_gowin -family gw1n -json $PRJ.json
 
+#exit
+
 #synth_gowin -noflatten -run :coarse -json $PRJ.json
 #write_verilog -norename $PRJ.coarse.v
 #synth_gowin -noflatten -run :map_ram -json $PRJ.json
@@ -109,56 +111,58 @@ puts "==========================================================================
 
         alumacc
         opt
-#        memory -nomap
+        memory -nomap
         opt_clean
 
 #    map_ram:
-#        memory_libmap -lib +/gowin/lutrams.txt -lib +/gowin/brams.txt [-no-auto-block] [-no-auto-distributed]    (-no-auto-block if -nobram, -no-auto-distributed if -nolutram)
-#        techmap -map +/gowin/lutrams_map.v -map +/gowin/brams_map.v
-#
+        #memory_libmap -lib +/gowin/lutrams.txt -lib +/gowin/brams.txt [-no-auto-block] [-no-auto-distributed]    (-no-auto-block if -nobram, -no-auto-distributed if -nolutram)
+        memory_libmap -lib +/gowin/lutrams.txt -lib +/gowin/brams.txt
+        techmap -map +/gowin/lutrams_map.v -map +/gowin/brams_map.v
+
 #    map_ffram:
-#        opt -fast -mux_undef -undriven -fine
-#        memory_map
-#        opt -undriven -fine
-#
+        opt -fast -mux_undef -undriven -fine
+        memory_map
+        opt -undriven -fine
+
 #    map_gates:
         techmap -map +/techmap.v -map +/gowin/arith_map.v
-#        opt -fast
-#        abc -dff -D 1    (only if -retime)
-#        iopadmap -bits -inpad IBUF O:I -outpad OBUF I:O -toutpad TBUF ~OEN:I:O -tinoutpad IOBUF ~OEN:O:I:IO    (unless -noiopads)
-#
-#    map_ffs:
-#        opt_clean
-#        dfflegalize -cell $_DFF_?_ 0 -cell $_DFFE_?P_ 0 -cell $_SDFF_?P?_ r -cell $_SDFFE_?P?P_ r -cell $_DFF_?P?_ r -cell $_DFFE_?P?P_ r -cell $_DLATCH_?_ x -cell $_DLATCH_?P?_ x
-#        techmap -map +/gowin/cells_map.v
-#        techmap -map +/gowin/cells_latch.v
-#        opt_expr -mux_undef
-#        simplemap
-#
-#    map_luts:
-#        sort
-#        read_verilog -icells -lib -specify +/abc9_model.v
-#        abc9 -maxlut 8 -W 500
-#        clean
-#
-#    map_cells:
-#        techmap -map +/gowin/cells_map.v
-#        opt_lut_ins -tech gowin
-#        setundef -undriven -params -zero    (only if -setundef)
-#        hilomap -singleton -hicell VCC V -locell GND G
-#        splitnets -ports    (only if -vout)
-#        clean
-        autoname
-#
-#    check:
-#        hierarchy -check
-#        stat
-#        check -noinit
-#        blackbox =A:whitebox
-#
-#    vout:
-#        write_verilog -simple-lhs -decimal -attr2comment -defparam -renameprefix gen <file-name>
-#        write_json <file-name>
-#
+        opt -fast
+        #abc -dff -D 1    (only if -retime)
+        #abc -dff -D 1
+        iopadmap -bits -inpad IBUF O:I -outpad OBUF I:O -toutpad TBUF ~OEN:I:O -tinoutpad IOBUF ~OEN:O:I:IO
 
-write_verilog -norename $PRJ.custom.v
+#    map_ffs:
+        opt_clean
+        dfflegalize -cell $_DFF_?_ 0 -cell $_DFFE_?P_ 0 -cell $_SDFF_?P?_ r -cell $_SDFFE_?P?P_ r -cell $_DFF_?P?_ r -cell $_DFFE_?P?P_ r -cell $_DLATCH_?_ x -cell $_DLATCH_?P?_ x
+        techmap -map +/gowin/cells_map.v
+        techmap -map +/gowin/cells_latch.v
+        opt_expr -mux_undef
+        simplemap
+
+#    map_luts:
+        sort
+        read_verilog -icells -lib -specify +/abc9_model.v
+        abc9 -maxlut 8 -W 500
+        clean
+
+#    map_cells:
+        techmap -map +/gowin/cells_map.v
+        opt_lut_ins -tech gowin
+        setundef -undriven -params -zero    (only if -setundef)
+        hilomap -singleton -hicell VCC V -locell GND G
+        splitnets -ports    (only if -vout)
+        clean
+        autoname
+
+#    check:
+        hierarchy -check
+        stat
+        check -noinit
+        blackbox =A:whitebox
+
+#    vout:
+        write_verilog -simple-lhs -decimal -attr2comment -defparam -renameprefix gen $PRJ.v
+        write_json $PRJ.json
+
+
+#write_verilog -norename $PRJ.custom.v

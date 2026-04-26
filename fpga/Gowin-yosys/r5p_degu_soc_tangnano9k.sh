@@ -8,7 +8,7 @@ PRJ=r5p_degu_soc_tangnano9k
 # using Yosys-Slang
 yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
 
-exit
+#exit
 
 #netlistsvg ${PRJ}.json -o ${PRJ}.svg
 
