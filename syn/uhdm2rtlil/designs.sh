@@ -79,7 +79,7 @@ design_select() {
       mouse_soc)
         TOP=r5p_mouse_soc_top
         SRCS="$R5P_TCB/tcb_lite_pkg.sv $R5P_TCB/tcb_lite_if.sv $(_tcb_soc_lib) \
-              $R5P_RTL/mouse/r5p_mouse.sv $R5P_RTL/soc/r5p_soc_memory.sv \
+              $R5P_RTL/mouse/r5p_mouse.sv $R5P_RTL/soc/r5p_soc_memory__gowin_inference.sv \
               $R5P_RTL/soc/r5p_mouse_soc_top.sv" ;;
       degu_soc)
         TOP=r5p_degu_soc_top
@@ -90,7 +90,7 @@ design_select() {
               $R5P_RTL/degu/r5p_alu.sv $R5P_RTL/degu/r5p_mdu.sv \
               $R5P_RTL/degu/r5p_lsu.sv $R5P_RTL/degu/r5p_wbu.sv \
               $R5P_RTL/degu/r5p_degu_pkg.sv $R5P_RTL/degu/r5p_degu.sv \
-              $R5P_RTL/soc/r5p_soc_memory.sv $R5P_RTL/soc/r5p_degu_soc_top.sv" ;;
+              $R5P_RTL/soc/r5p_soc_memory__gowin_inference.sv $R5P_RTL/soc/r5p_degu_soc_top.sv" ;;
       *)
         echo "unknown design '$1'; known: $(design_list)" >&2
         return 1 ;;
