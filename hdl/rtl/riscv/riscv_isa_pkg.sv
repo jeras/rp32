@@ -111,8 +111,10 @@ typedef enum logic [$bits(isa_ext_t)-1:0] {
 } isa_ext_et;
 
 // ISA specification configuration
-// TODO: change when Verilator supports unpacked structures
-typedef struct {
+// made `packed` so the enum below can use `logic [$bits(isa_spec_t)-1:0]` as
+// its base and drive it through synthesis / Yosys as a flat vector (the
+// upstream "change when Verilator supports unpacked structures" TODO).
+typedef struct packed {
   isa_base_t base;
   isa_ext_t  ext;
 } isa_spec_t;
