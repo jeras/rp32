@@ -31,21 +31,36 @@ Verilog front end cannot parse.
 ```bash
 cd syn/uhdm2rtlil
 
-# Synthesise the Mouse simple SoC to a gate-level netlist (work/*.v, *.json)
-./build.sh
-
-# Gate-level co-simulation: RTL vs synthesized netlist, cycle-by-cycle
-./cosim.sh            # -> "COSIM PASS" (0 mismatches over 6000 cycles)
+./build.sh --list             # list the catalogued designs
+./build.sh mouse_soc_simple   # synthesise one design (work/<top>_uhdm.v/.json)
+./cosim.sh                    # gate-level co-sim of the Mouse simple SoC
+./run.sh                      # synthesise ALL designs + co-sim, print a table
 ```
 
-`build.sh` defaults to `r5p_mouse_soc_simple_top` (the self‑contained Mouse SoC:
-the `r5p_mouse` core + on‑chip RAM initialised from `boot.hex` + GPIO/UART).
-Override the target with environment variables:
+The design catalog (cores + SoCs) lives in `designs.sh`; `build.sh <name>` picks
+one.  The full SoCs need the TCB submodule:
 
 ```bash
-# just the standalone core
-R5P_TOP=r5p_mouse R5P_SRCS="$PWD/../../hdl/rtl/mouse/r5p_mouse.sv" ./build.sh
+git submodule update --init submodules/tcb
 ```
+
+## Design status
+
+`./run.sh` synthesises every design and co-simulates the ones with a
+deterministic self-contained testbench:
+
+| design              | synth | co-sim | notes |
+|---------------------|:-----:|:------:|-------|
+| `mouse`             | ✅ | (det.) | standalone core; only deterministic streams are equiv-able |
+| `mouse_soc_simple`  | ✅ | ✅ **PASS** | complete Mouse SoC, inline RAM — 0 mismatches / 6000 cyc |
+| `mouse_soc`         | ⚠️ | n/a | full Mouse SoC synthesises but is functionally stuck — the TCB **interface-config** struct refs (`sub.CFG.HSK.DLY`, `sub.MOD`) are unresolved (front-end limitation); Verilator can't build the interface RTL either, so no co-sim |
+| `degu`              | ⚠️ | n/a | core synthesises with unresolved TCB interface-config reads |
+| `degu_soc`          | ⚠️ | n/a | as above |
+| `hamster`           | ⚠️ | n/a | core synthesises with unresolved decoder-struct reads (`idu_rdt.jmp.jmp`) |
+
+✅ = clean; ⚠️ = produces a netlist but with unresolved struct/interface reads
+(undriven wires ⇒ not functionally correct yet).  The remaining gaps are all
+SystemVerilog-interface-config resolution in the UHDM front end.
 
 ## The memory‑preserving synthesis flow
 
@@ -67,7 +82,9 @@ the combinational read port.
 
 | file            | purpose                                                          |
 |-----------------|------------------------------------------------------------------|
-| `build.sh`      | synthesise a design through uhdm2rtlil (memory‑preserving flow)  |
+| `designs.sh`    | design catalog: name → sources + top (cores + SoCs)             |
+| `build.sh`      | synthesise one design through uhdm2rtlil (memory‑preserving flow)|
+| `run.sh`        | synthesise all designs + co‑sim, print a status table           |
 | `cosim.sh`      | synth + Verilator co‑simulation (RTL vs gate netlist)            |
 | `cosim_tb.sv`   | testbench: RTL and gate netlist side by side, per‑cycle compare  |
 | `cosim_main.cpp`| Verilator driver (reset, free‑run, exit non‑zero on mismatch)    |

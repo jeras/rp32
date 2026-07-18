@@ -5,42 +5,39 @@
 #
 # Runs the Surelog SystemVerilog front end in-process (`read_sv`, from the
 # uhdm2rtlil plugin) and synthesises an rp32 design to a gate-level netlist
-# under ./work/  (r5p_<top>_uhdm.v / .json).
+# under ./work/  (<top>_uhdm.v / .json).
 #
-# Prerequisite: a built uhdm2rtlil checkout
-# (https://github.com/alainmarcel/uhdm2rtlil).  Point UHDM2RTLIL_ROOT at it
-# (defaults to ~/uhdm2rtlil):
+#   export UHDM2RTLIL_ROOT=/path/to/uhdm2rtlil   # built checkout (default ~/uhdm2rtlil)
+#   ./build.sh [design]        # design from designs.sh (default mouse_soc_simple)
+#   ./build.sh --list          # list known designs
 #
-#   export UHDM2RTLIL_ROOT=/path/to/uhdm2rtlil
-#   ./build.sh                                    # default: Mouse simple SoC
-#   R5P_TOP=r5p_mouse \
-#     R5P_SRCS="$PWD/../../hdl/rtl/mouse/r5p_mouse.sv" ./build.sh
-#
-# Environment overrides:
-#   R5P_TOP    top module          (default r5p_mouse_soc_simple_top)
-#   R5P_SRCS   source file list     (default: mouse core + simple SoC)
-#   R5P_OUT    output basename      (default <top>_uhdm)
-#   R5P_RENAME rename the netlist top to this (default: none) — used by the
-#              co-sim so the gate netlist and the RTL can share a Verilator build
+# See designs.sh for the design catalog (cores + SoCs).  R5P_RENAME renames the
+# netlist top (used by cosim.sh so RTL and gate can share a Verilator build).
 #
 # --- memory-preserving flow -------------------------------------------------
 # A design with an initialised ROM/RAM (`$readmemh`) must NOT be run through the
 # plain `synth`/`synth_*` shortcut: those run `opt_mem`, which trims an
 # initialised memory to its "used" width and MANGLES the `$meminit` constant
-# (e.g. 0x800200B7 -> garbage), so the fetched program reads back wrong.  We
+# (0x800200B7 -> garbage) and maps the RAM to hundreds of thousands of FFs.  We
 # drive the passes explicitly and keep the init:
 #     read_sv -> proc -> flatten -> memory_collect  (NO opt_mem / memory -nomap)
-# `flatten` before `memory_collect` is what lets the $readmemh init reach the
-# combinational read port.  See the uhdm2rtlil CLAUDE.md
-# "Debugging X-Propagation in the rp32 SoC" notes.
+# `flatten` before `memory_collect` lets the $readmemh init reach the read port.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-R5P_RTL="$(cd ../../hdl/rtl && pwd)"
+export R5P_RTL="$(cd ../../hdl/rtl && pwd)"
+export R5P_TCB="$(cd ../../submodules/tcb/hdl/rtl && pwd 2>/dev/null || echo /nonexistent)"
+source ./designs.sh
+
+if [ "${1:-}" = "--list" ]; then design_list; exit 0; fi
+
+DESIGN="${1:-mouse_soc_simple}"
+design_select "$DESIGN"
+OUT="${R5P_OUT:-${TOP}_uhdm}"
+
 ROOT="${UHDM2RTLIL_ROOT:-$HOME/uhdm2rtlil}"
 YOSYS="$ROOT/out/current/bin/yosys"
 PLUGIN="$ROOT/build/uhdm2rtlil.so"
-
 for f in "$YOSYS" "$PLUGIN"; do
     if [ ! -e "$f" ]; then
         echo "ERROR: $f not found." >&2
@@ -48,20 +45,20 @@ for f in "$YOSYS" "$PLUGIN"; do
         exit 1
     fi
 done
-
-TOP="${R5P_TOP:-r5p_mouse_soc_simple_top}"
-OUT="${R5P_OUT:-${TOP}_uhdm}"
-SRCS="${R5P_SRCS:-$R5P_RTL/mouse/r5p_mouse.sv $R5P_RTL/soc/r5p_mouse_soc_simple_top.sv}"
+if [ ! -d "$R5P_TCB" ]; then
+    echo "NOTE: TCB submodule not initialised (needed for degu/full SoCs):" >&2
+    echo "      git submodule update --init submodules/tcb" >&2
+fi
 
 mkdir -p work
-# The SoC reads its boot image via $readmemh("mem_if.mem", ...); provide it.
+# SoCs read their boot image via $readmemh("mem_if.mem", ...); provide it.
 cp -f boot.hex work/mem_if.mem
 
 echo "== uhdm2rtlil: $ROOT"
-echo "== top:        $TOP"
+echo "== design:     $DESIGN  (top $TOP)"
 
 ( cd work && "$YOSYS" -m "$PLUGIN" -p "
-    read_sv -parse -nobuiltin $SRCS
+    read_sv -parse -nobuiltin -top $TOP $SRCS
     hierarchy -check -top $TOP
     proc
     flatten
