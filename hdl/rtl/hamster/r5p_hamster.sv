@@ -264,7 +264,7 @@ assign add_zro = add_sum[32-1:0] == 32'd0;
 ///////////////////////////////////////////////////////////////////////////////
 
 always_comb
-unique case (idu_buf.alu.fn3)
+unique case (idu_buf.fn3)
   // bitwise logical operations
   AND    : log_val = log_op1 & log_op2;
   OR     : log_val = log_op1 | log_op2;
@@ -283,7 +283,7 @@ endfunction
 
 // bit inversion
 always_comb
-unique case (idu_buf.alu.fn3)
+unique case (idu_buf.fn3)
   // barrel shifter
   SR     : shf_tmp =        shf_op1 ;
   SL     : shf_tmp = bitrev(shf_op1);
@@ -292,7 +292,7 @@ endcase
 
 // sign extension to (32+1)
 always_comb
-unique case (idu_buf.alu.fn7[5])
+unique case (idu_buf.fn7[5])
   1'b1   : shf_ext = {shf_tmp[32-1], shf_tmp};
   1'b0   : shf_ext = {1'b0         , shf_tmp};
 endcase
@@ -341,7 +341,7 @@ end else begin
   // progress into the next state
   if (ctl_run & (bus_trn | ~bus_vld)) begin
     // GPR (write rd)
-    gpr_wad <= idu_buf.gpr.adr.rd;
+    gpr_wad <= idu_buf.rd;
     // system bus
     unique case (ctl_fsm)
       // instruction fetch state
@@ -350,7 +350,7 @@ end else begin
         ctl_fsm <= SLS;
         // PC: program counter
         // TODO: PC is only reloaded if the prediction is correct
-        if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != bru_tkn)) begin
+        if ((idu_buf.opc == BRANCH) && (idu_buf.i_b[12] != bru_tkn)) begin
           // on mispredicted branch ignore the fetched instruction
         end else begin
           ifu_pcr <= bus_adr;
@@ -370,7 +370,7 @@ end else begin
             bus_vld <= 1'b0;
             // GPR
             gpr_wen <= 1'b1;
-            bus_wdt <= idu_buf.uiu;
+            bus_wdt <= idu_buf.i_u;
           end
           AUIPC  : begin
             // TCB
@@ -384,7 +384,7 @@ end else begin
             bus_vld <= 1'b1;
             bus_wen <= 1'b0;
             bus_adr <= {add_sum[32-1:2], 2'b00};
-            case (idu_buf.ldu.fn3)
+            case (idu_buf.fn3)
               LB, LBU: case (add_sum[1:0])
                 2'b00: bus_ben <= 4'b0001;
                 2'b01: bus_ben <= 4'b0010;
@@ -403,14 +403,14 @@ end else begin
             gpr_wen <= 1'b0;
             // read data multiplexer
             rdm_adr <=  add_sum[ 2-1:0];
-            rdm_fn3 <= idu_buf.ldu.fn3;
+            rdm_fn3 <= fn3_ldu_et'(idu_buf.fn3);
           end
           STORE  : begin
             // TCB
             bus_vld <= 1'b1;
             bus_wen <= 1'b1;
             bus_adr <= {add_sum[32-1:2], 2'b00};
-            case (idu_buf.stu.fn3)
+            case (idu_buf.fn3)
               SB     : case (add_sum[1:0])
                 2'b00: begin bus_wdt[ 7: 0] <= gpr_rdt[ 7: 0]; bus_ben <= 4'b0001; end
                 2'b01: begin bus_wdt[15: 8] <= gpr_rdt[ 7: 0]; bus_ben <= 4'b0010; end
@@ -454,7 +454,7 @@ end else begin
         // FSM control (go to the next state)
         ctl_fsm <= SIF;
         // instruction buffer
-        if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != buf_tkn)) begin
+        if ((idu_buf.opc == BRANCH) && (idu_buf.i_b[12] != buf_tkn)) begin
           // on mispredicted branch ignore the fetched instruction
           ifu_buf <= NOP;
         end else begin
@@ -522,7 +522,7 @@ begin
     SIF: begin
       // GPR (read rs1)
       gpr_ren = 1'b1;
-      gpr_rad = idu_buf.gpr.adr.rs2;
+      gpr_rad = idu_buf.rs2;
       // LOAD: read data multiplexer
       rdm_dtw = bus_rdt[31: 0];
       rdm_dth = rdm_adr[1] ? rdm_dtw[31:16] : rdm_dtw[15: 0];
@@ -552,27 +552,27 @@ begin
           // adder
           add_inc = 1'b0;
           add_op1 = ext_sgn(bus_wdt);
-          add_op2 = ext_sgn(idu_buf.uiu.imm);
+          add_op2 = ext_sgn(idu_buf.i_u);
         end
         LOAD  : begin
           // adder for load address
           add_inc = 1'b0;
           add_op1 = ext_sgn(bus_wdt);
-          add_op2 = ext_sgn(32'(idu_buf.ldu.imm));
+          add_op2 = ext_sgn(32'(idu_buf.i_l));
         end
         STORE : begin
           // adder for store address
           add_inc = 1'b0;
           add_op1 = ext_sgn(bus_wdt);
-          add_op2 = ext_sgn(32'(idu_buf.stu.imm));
+          add_op2 = ext_sgn(32'(idu_buf.i_s));
         end
         OP     : begin
           // arithmetic operations
-          case (idu_buf.alu.fn3)
+          case (idu_buf.fn3)
             ADD    : begin
-              add_inc = idu_buf.alu.fn7[5];
+              add_inc = idu_buf.fn7[5];
               add_op1 = ext_sgn(bus_wdt);
-              add_op2 = ext_sgn(gpr_rdt ^ {32{idu_buf.alu.fn7[5]}});
+              add_op2 = ext_sgn(gpr_rdt ^ {32{idu_buf.fn7[5]}});
             end
             SLT    : begin
               add_inc = 1'b1;
@@ -596,36 +596,36 @@ begin
         end
         OP_IMM : begin
           // arithmetic operations
-          case (idu_buf.alu.fn3)
+          case (idu_buf.fn3)
             ADD    : begin
               add_inc = 1'b0;
               add_op1 = ext_sgn(bus_wdt);
-              add_op2 = ext_sgn(32'(idu_buf.alu.imm));
+              add_op2 = ext_sgn(32'(idu_buf.i_i));
             end
             SLT    : begin
               add_inc = 1'b1;
               add_op1 = ext_sgn( bus_wdt);
-              add_op2 = ext_sgn(~32'(idu_buf.alu.imm));
+              add_op2 = ext_sgn(~32'(idu_buf.i_i));
             end
             SLTU   : begin
               add_inc = 1'b1;
               add_op1 = {1'b0,  bus_wdt};
-              add_op2 = {1'b1, ~32'(idu_buf.alu.imm)};
+              add_op2 = {1'b1, ~32'(idu_buf.i_i)};
             end
             default: begin
             end
           endcase
           // logic operations
           log_op1 = bus_wdt;
-          log_op2 = 32'(idu_buf.alu.imm);
+          log_op2 = 32'(idu_buf.i_i);
           // shift operations
           shf_op1 = bus_wdt;
-          shf_op2 = idu_buf.alu.imm[5-1:0];
+          shf_op2 = idu_buf.i_i[5-1:0];
         end
         BRANCH : begin
           // subtraction
           add_inc = 1'b1;
-          unique case (idu_buf.bru.fn3)
+          unique case (idu_buf.fn3)
             BEQ    ,
             BNE    ,
             BLT    ,
@@ -643,7 +643,7 @@ begin
               add_op2 = 33'dx;
             end
           endcase
-          unique case (idu_buf.bru.fn3)
+          unique case (idu_buf.fn3)
             BEQ    : bru_tkn =  add_zro;
             BNE    : bru_tkn = ~add_zro;
             BLT    : bru_tkn =  add_sgn;
@@ -657,7 +657,7 @@ begin
         end
       endcase
       // ALU output
-      case (idu_buf.alu.fn3)
+      case (idu_buf.fn3)
         // adder based inw_bufuctions
         ADD : alu_out = add_sum[32-1:0];
         SLT ,
@@ -677,16 +677,16 @@ begin
     SLS: begin
       // GPR (read rs1)
       gpr_ren = 1'b1;
-      gpr_rad = idu_rdt.gpr.adr.rs1;
+      gpr_rad = idu_rdt.rs1;
       gpr_wdt = bus_wdt;
       // decode operation code
-      if ((idu_buf.opc == BRANCH) && (idu_buf.bru.imm[12] != buf_tkn)) begin
+      if ((idu_buf.opc == BRANCH) && (idu_buf.i_b[12] != buf_tkn)) begin
           // on mispredicted branch reverse static branch prediction decisions
-          if (~idu_buf.bru.imm[12]) begin
+          if (~idu_buf.i_b[12]) begin
             // backward branches are predicted taken
             add_inc = 1'b0;
             add_op1 = 33'(ifu_pcr);
-            add_op2 = 33'(idu_buf.bru.imm);
+            add_op2 = 33'(idu_buf.i_b);
           end else begin
             // forward branches are predicted not taken
             add_inc = 1'b0;
@@ -702,20 +702,20 @@ begin
           JAL    : begin
             add_inc = 1'b0;
             add_op1 = 33'(ifu_pcr);
-            add_op2 = 33'(idu_rdt.jmp.jmp);
+            add_op2 = 33'(idu_rdt.i_j);
           end
           JALR   : begin
             add_inc = 1'b0;
             add_op1 = 33'(gpr_rdt);
-            add_op2 = 33'(idu_rdt.jmp.imm);
+            add_op2 = 33'(idu_rdt.i_i);
           end
           BRANCH : begin
             // static branch prediction
-            if (idu_rdt.bru.imm[12]) begin
+            if (idu_rdt.i_b[12]) begin
               // backward branches are predicted taken
               add_inc = 1'b0;
               add_op1 = 33'(ifu_pcr);
-              add_op2 = 33'(idu_rdt.bru.imm);
+              add_op2 = 33'(idu_rdt.i_b);
             end else begin
               // forward branches are predicted not taken
               add_inc = 1'b0;
