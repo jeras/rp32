@@ -259,10 +259,14 @@ typedef enum {
 // decoder structure
 ///////////////////////////////////////////////////////////////////////////////
 
-  typedef struct {
+  // `packed` (and `siz` a fixed-width vector rather than `integer`) so the
+  // decoder struct is a bit-addressable type: r5p_* modules take `dec_t` as a
+  // PORT, and synthesis / Yosys can only map a flat netlist port onto a struct
+  // port when the struct is packed.
+  typedef struct packed {
     // instruction encodings
     ill_t     ill;  // illegal
-    integer   siz;  // instruction size
+    logic signed [31:0] siz;  // instruction size
     opc_t     opc;  // operation code
     fn3_t     fn3;  // func3
     fn7_t     fn7;  // func7
