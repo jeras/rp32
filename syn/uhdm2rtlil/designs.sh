@@ -80,7 +80,20 @@ design_select() {
         TOP=r5p_mouse_soc_top
         SRCS="$R5P_TCB/tcb_lite_pkg.sv $R5P_TCB/tcb_lite_if.sv $(_tcb_soc_lib) \
               $R5P_RTL/mouse/r5p_mouse.sv $R5P_RTL/soc/r5p_soc_memory__gowin_inference.sv \
-              $R5P_RTL/soc/r5p_mouse_soc_top.sv" ;;
+              $R5P_RTL/soc/r5p_mouse_soc_top.sv"
+        # COSIM stays "no": the gate-level co-sim needs Verilator to elaborate the
+        # ORIGINAL RTL as an independent reference, but Verilator (5.048) cannot
+        # unroll the tcb_lite_if delay-line loop
+        #   `for (genvar i=1; i<=CFG.HSK.DLY; i++)`
+        # (%Error-UNSUPPORTED: Can't unroll generate for) — CFG.HSK.DLY is an
+        # interface-parameter struct field it won't fold at elaboration.  That is
+        # exactly the SystemVerilog uhdm2rtlil handles and the native Verilog/
+        # Verilator flow can't, so there is no independent RTL reference to
+        # co-simulate the full TCB-interface SoC against.  The discrete
+        # `mouse_soc_simple` (no interfaces) IS Verilatable and stays cosim'd;
+        # the interface SoC's frontend correctness is covered by the per-module
+        # tests + its structural `check` in the uhdm2rtlil suite.
+        ;;
       degu_soc)
         TOP=r5p_degu_soc_top
         SRCS="$R5P_TCB/tcb_lite_pkg.sv $R5P_TCB/tcb_lite_if.sv $(_tcb_soc_lib) \
