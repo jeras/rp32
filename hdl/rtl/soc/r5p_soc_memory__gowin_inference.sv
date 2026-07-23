@@ -42,23 +42,16 @@ module r5p_soc_memory
 // array definition
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef YOSYS_SLANG
-    localparam int unsigned MEM_DATA =      sub.CFG.BUS.DAT;
-    localparam int unsigned MEM_SIZE = SIZ/(sub.CFG.BUS.DAT/8);
-    `include "mem_if.vh"
-`else
     logic [sub.CFG.BUS.DAT-1:0] mem [0:SIZ/(sub.CFG.BUS.DAT/8)-1];
     initial
     begin
         if (FNM != "") begin
-            $display("INFO: Reading initialization file %s into memory %m.", FNM);
             // TODO: binary mode
             $readmemh(FNM, mem);
         end else begin
-            $display("INFO: No initialization file name provided for memory %m.");
+            $error("Missing ROM contents HEX file.");
         end
     end
-`endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // load/store

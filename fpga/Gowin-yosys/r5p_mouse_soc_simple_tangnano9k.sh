@@ -9,8 +9,7 @@ $PATH_R5P_RTL/mouse/r5p_mouse.sv \
 $PATH_R5P_RTL/soc/r5p_mouse_soc_simple_top.sv \
 $PATH_R5P_RTL/fpga/gowin/r5p_mouse_soc_simple_tangnano9k.sv
 
-# # using Yosys-Slang
-# yosys --plugin slang --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
+# yosys --logfile ${PRJ}.syn.log --tcl-scriptfile ${PRJ}.tcl
 
 #netlistsvg ${PRJ}.json -o ${PRJ}.svg
 

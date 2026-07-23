@@ -11,7 +11,7 @@ set PRJ "r5p_degu_soc_tangnano9k"
 set PATH_TCB_RTL "../../submodules/tcb/hdl/rtl"
 set PATH_CPU_RTL "../../hdl/rtl"
 
-read_slang --top $PRJ -D YOSYS_SLANG -D LANGUAGE_UNSUPPORTED_UNION \
+read_slang --top $PRJ -D LANGUAGE_UNSUPPORTED_UNION \
 $PATH_TCB_RTL/tcb_lite_pkg.sv \
 $PATH_TCB_RTL/tcb_lite_if.sv \
 $PATH_TCB_RTL/lite_lib/tcb_lite_lib_error.sv \

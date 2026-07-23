@@ -8,18 +8,11 @@ main: main.o
 	llvm-objdump --arch=riscv32 --disassemble main.o > mem_if.asm
 	hexdump -v -e '"%08X\n"' mem_if.bin > mem_if.mem
 	hexdump -v -e '"%08X\n"' mem_ls.bin > mem_ls.mem
-#	the character '!' is used instead of a single quote '''
-#	\173 and \175 are curly brackets '{', '}'
-	printf "logic [MEM_DATA-1:0] mem [0:MEM_SIZE-1] = \047\173\n" > mem_if.vh
-	hexdump -v -e '"    32!h%08_ax/4:"' -e '" 32!h%08X,\n"' mem_if.bin >> mem_if.vh
-	sed -i 's/!/'\''/g' mem_if.vh
-	printf "    default: 32\047h00000000\n\175;\n" >> mem_if.vh
 
 clean:
 	$(RM) main *.o
 	$(RM) main *.bin
 	$(RM) main *.asm
 	$(RM) main *.mem
-	$(RM) main *.vh
 
 .PHONY: clean

@@ -1,8 +1,8 @@
     .global _start
 
 # clock periods at 27MHz / 2Hz (0.5s) / 4 (average CPI for mouse CPU)
-#.equ PERIOD, 27000000 / 2 / 4
-.equ PERIOD, 0x8  # value for HDL simulation and observing waveforms
+.equ PERIOD, 27000000 / 2 / 4
+#.equ PERIOD, 0x8  # value for HDL simulation and observing waveforms
 
 _start:
 
