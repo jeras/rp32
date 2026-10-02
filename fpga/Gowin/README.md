@@ -18,7 +18,7 @@ https://cdn.gowinsemi.com.cn/UG285E.pdf
 ## Gowin IDE
 
 ```
-sudo mv //opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/libfreetype.so.6 //opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/libfreetype.so.6.bkp
+sudo mv /opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/libfreetype.so.6 /opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/libfreetype.so.6.bkp
 ```
 
 ```
@@ -30,6 +30,11 @@ LD_LIBRARY_PATH=/opt/Gowin/Gowin_V1.9.11.03_Education_Linux/IDE/lib/ /opt/Gowin/
 Based on Sipeed datasheet, this devices were produced before version C existed.
 LQ144P GW1NR-9 PSRAM 64M 16 bits
 
+Based on [Gowin PSRAM Memory Interface HS IP](https://cdn.gowinsemi.com.cn/IPUG943E.pdf),
+the PSRAM device is W955D8MKY-6I.
+
+A model might be found in Gowin IDE PSRAM controller IP example.
+
 https://github.com/enjoy-digital/litex/blob/70b6dc93f658824de4d43a5e0904f2c415ea3ef4/litex/build/gowin/gowin.py#L92-L113
 https://github.com/litex-hub/litex-boards/blob/master/litex_boards/targets/sipeed_tang_nano_9k.py#L89-L115
 https://github.com/litex-hub/litex-boards/blob/master/litex_boards/platforms/sipeed_tang_nano_9k.py#L56-L62
@@ -39,6 +44,8 @@ https://www.reddit.com/r/GowinFPGA/comments/1kqzzs5/built_a_riscv_soc_on_a_tang_
 https://fabianalvarez.dev/posts/litex/first_steps/
 
 https://github.com/SantaCRC/tutorials
+
+### Open source implementations
 
 https://github.com/zf3/psram-tang-nano-9k
 
