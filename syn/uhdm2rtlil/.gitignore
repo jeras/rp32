@@ -1,0 +1,5 @@
+# build / run artifacts
+work/
+mem_if.mem
+*.log
+slpp_all/
